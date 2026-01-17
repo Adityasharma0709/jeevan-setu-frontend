@@ -1,0 +1,14 @@
+@reference "tailwindcss";
+
+
+.card {
+  @apply bg-white p-6 rounded-xl shadow text-center;
+}
+
+.card h3 {
+  @apply text-gray-500;
+}
+
+.card p {
+  @apply text-3xl font-bold mt-2;
+}

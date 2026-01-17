@@ -1,0 +1,17 @@
+<h3>Create Admin</h3>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <input placeholder="Name" formControlName="name">
+  <input placeholder="Email" formControlName="email">
+  <input placeholder="Password" formControlName="password">
+  <button>Create</button>
+</form>
+
+<hr>
+
+<h3>All Admins</h3>
+<ul>
+ <li *ngFor="let a of admins">
+  {{a.name}} - {{a.email}}
+ </li>
+</ul>

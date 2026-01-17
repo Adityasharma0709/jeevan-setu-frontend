@@ -1,0 +1,56 @@
+<div class="p-6">
+
+  <h1 class="text-2xl font-bold mb-6">
+    Super Admin Dashboard
+  </h1>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+    <div class="bg-white shadow rounded-xl p-6">
+      <p class="text-gray-500">Total Projects</p>
+      <h2 class="text-3xl font-bold text-indigo-600">
+        {{ stats?.totalProjects }}
+      </h2>
+    </div>
+
+    <div class="bg-white shadow rounded-xl p-6">
+      <p class="text-gray-500">Total Locations</p>
+      <h2 class="text-3xl font-bold text-green-600">
+        {{ stats?.totalLocations }}
+      </h2>
+    </div>
+<p>DEBUG: {{ stats?.totalProjects }}</p>
+
+  </div>
+
+  <!-- Beneficiaries Table -->
+  <div class="bg-white shadow rounded-xl p-6">
+
+    <h2 class="text-xl font-semibold mb-4">
+      Beneficiaries Per Project
+    </h2>
+
+    <table class="w-full border">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2">Code</th>
+          <th class="p-2">Project</th>
+          <th class="p-2">Count</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let p of stats?.beneficiariesPerProject">
+          <td class="p-2">{{ p.projectCode }}</td>
+          <td class="p-2">{{ p.name }}</td>
+          <td class="p-2 font-bold text-indigo-600">
+            {{ p._count.beneficiaries }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</div>

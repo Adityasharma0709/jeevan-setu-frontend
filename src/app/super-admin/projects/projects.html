@@ -1,0 +1,10 @@
+<h3>Projects</h3>
+
+<input [(ngModel)]="name" placeholder="Project name">
+<button (click)="create()">Create</button>
+
+<ul>
+ <li *ngFor="let p of projects">
+  {{p.projectCode}} - {{p.name}}
+ </li>
+</ul>

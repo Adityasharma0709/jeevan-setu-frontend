@@ -1,0 +1,7 @@
+.menu {
+  @apply block px-4 py-2 rounded hover:bg-blue-100 transition;
+}
+
+.menu.active {
+  @apply bg-blue-600 text-white;
+}

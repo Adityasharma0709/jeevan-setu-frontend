@@ -1,0 +1,81 @@
+<div class="flex min-h-screen bg-gray-100">
+
+  <!-- SIDEBAR -->
+  <aside
+    class="bg-white w-64 fixed md:static h-full shadow-lg transition-transform duration-300"
+    [class.-translate-x-full]="!isOpen"
+    [class.md:translate-x-0]="true"
+  >
+
+    <div class="p-5 text-xl font-bold border-b">
+      Jeevan Setu
+    </div>
+
+    <nav class="p-4 space-y-2">
+
+      <a
+        routerLink="/super-admin"
+        class="menu"
+        [class.active]="isActive('/super-admin')"
+      >Dashboard</a>
+
+      <a
+        routerLink="/super-admin/create-admin"
+        class="menu"
+        [class.active]="isActive('create-admin')"
+      >Create Admin</a>
+
+      <a
+        routerLink="/super-admin/projects"
+        class="menu"
+        [class.active]="isActive('projects')"
+      >Projects</a>
+
+      <a
+        routerLink="/super-admin/locations"
+        class="menu"
+        [class.active]="isActive('locations')"
+      >Locations</a>
+
+      <button
+        (click)="logout()"
+        class="menu text-red-600"
+      >
+        Logout
+      </button>
+
+    </nav>
+  </aside>
+
+
+  <!-- MAIN -->
+  <div class="flex-1 md:ml-64">
+
+    <!-- TOP BAR -->
+    <header class="bg-white p-4 shadow flex justify-between items-center">
+
+      <button
+        class="md:hidden"
+        (click)="toggle()"
+      >
+        ☰
+      </button>
+
+      <h2 class="font-semibold text-lg">
+        Super Admin Panel
+      </h2>
+
+      <span class="text-sm text-gray-500">
+        Welcome 👋
+      </span>
+    </header>
+
+
+    <!-- CONTENT -->
+    <main class="p-6">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+</div>
