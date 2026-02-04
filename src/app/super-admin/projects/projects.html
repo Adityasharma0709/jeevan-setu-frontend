@@ -1,10 +1,49 @@
-<h3>Projects</h3>
+<div class="p-6" *ngIf="projects$ | async as projects">
 
-<input [(ngModel)]="name" placeholder="Project name">
-<button (click)="create()">Create</button>
+  <h1 class="text-2xl font-bold mb-6">
+    Projects
+  </h1>
 
-<ul>
- <li *ngFor="let p of projects">
-  {{p.projectCode}} - {{p.name}}
- </li>
-</ul>
+  <div class="bg-white shadow rounded-xl p-6">
+
+    <table z-table class="w-full">
+
+      <thead z-table-header>
+        <tr z-table-row>
+          <th z-table-head>Code</th>
+          <th z-table-head>Name</th>
+          <th z-table-head>Status</th>
+        </tr>
+      </thead>
+
+      <tbody z-table-body>
+        <tr z-table-row *ngFor="let p of projects">
+
+          <td z-table-cell>
+            {{ p.projectCode }}
+          </td>
+
+          <td z-table-cell>
+            {{ p.name }}
+          </td>
+
+          <td z-table-cell>
+            <span
+              class="px-2 py-1 rounded text-sm"
+              [ngClass]="{
+                'bg-green-100 text-green-600': p.status === 'ACTIVE',
+                'bg-red-100 text-red-600': p.status !== 'ACTIVE'
+              }"
+            >
+              {{ p.status }}
+            </span>
+          </td>
+
+        </tr>
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>

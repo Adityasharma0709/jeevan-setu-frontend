@@ -1,7 +1,17 @@
-.menu {
-  @apply block px-4 py-2 rounded hover:bg-blue-100 transition;
+.menu-link {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #374151;
+  transition: 0.2s;
 }
 
-.menu.active {
-  @apply bg-blue-600 text-white;
+.menu-link:hover {
+  background: #f3f4f6;
+}
+
+.active-link {
+  background: #4f46e5;
+  color: white;
 }

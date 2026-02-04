@@ -1,17 +1,50 @@
-<h3>Create Admin</h3>
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-6">
 
-<form [formGroup]="form" (ngSubmit)="submit()">
-  <input placeholder="Name" formControlName="name">
-  <input placeholder="Email" formControlName="email">
-  <input placeholder="Password" formControlName="password">
-  <button>Create</button>
+  <z-form-field>
+    <label z-form-label zRequired>Name</label>
+    <z-form-control>
+      <input z-input type="text" formControlName="name" placeholder="Enter name" />
+    </z-form-control>
+    <z-form-message>Admin name</z-form-message>
+  </z-form-field>
+
+  <z-form-field>
+    <label z-form-label zRequired>Email</label>
+    <z-form-control>
+      <input z-input type="email" formControlName="email" placeholder="Enter email" />
+    </z-form-control>
+    <z-form-message>Admin email</z-form-message>
+  </z-form-field>
+
+  <z-form-field>
+    <label z-form-label zRequired>Password</label>
+    <z-form-control>
+      <input z-input type="password" formControlName="password" placeholder="Enter password" />
+    </z-form-control>
+    <z-form-message>Min 6 characters</z-form-message>
+  </z-form-field>
+
+  <button z-button type="submit">Create Admin</button>
 </form>
+<h3 class="mt-6 font-bold">All Admins</h3>
 
-<hr>
+<table z-table class="mt-4 w-full">
 
-<h3>All Admins</h3>
-<ul>
- <li *ngFor="let a of admins">
-  {{a.name}} - {{a.email}}
- </li>
-</ul>
+  <thead z-table-header>
+    <tr z-table-row>
+      <th z-table-head>Name</th>
+      <th z-table-head>Email</th>
+      <th z-table-head>Role</th>
+    </tr>
+  </thead>
+
+  <tbody z-table-body *ngIf="admins$ | async as admins">
+    <tr z-table-row *ngFor="let a of admins">
+      <td z-table-cell>{{ a.name }}</td>
+      <td z-table-cell>{{ a.email }}</td>
+      <td z-table-cell>{{ a.role }}</td>
+    </tr>
+  </tbody>
+
+</table>
+

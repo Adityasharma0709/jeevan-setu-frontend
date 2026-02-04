@@ -1,28 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from './dashboard.service';
-
+import { Observable } from 'rxjs';
+import {  ZardTableComponent,
+  ZardTableHeaderComponent,
+  ZardTableBodyComponent,
+  ZardTableRowComponent,
+  ZardTableHeadComponent,
+  ZardTableCellComponent} from '@/shared/components/table/table.component'
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],   // 🔥 REQUIRED for *ngFor
+  imports: [CommonModule,
+    ZardTableComponent,
+  ZardTableHeaderComponent,
+  ZardTableBodyComponent,
+  ZardTableRowComponent,
+  ZardTableHeadComponent,
+  ZardTableCellComponent
+  ],
   templateUrl: './dashboard.html'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
 
-  stats: any;   // 👈 correct variable
+  stats$!: Observable<any>;   // 👈 Observable
 
-  constructor(private api: DashboardService) {}
-
-  ngOnInit() {
-    this.loadDashboard();
-  }
-
-  loadDashboard() {
-    this.api.getSuperAdminStats()
-      .subscribe(res => {
-        console.log(res); // 👈 working
-        this.stats = res; //✅ FIXED
-      });
+  constructor(private api: DashboardService) {
+    this.stats$ = this.api.getSuperAdminStats(); // auto call
   }
 }

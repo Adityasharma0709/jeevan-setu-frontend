@@ -16,12 +16,12 @@ export class LocationsComponent {
  }
 
  load(){
-  this.api.get('/locations')
+  this.api.get('locations')
    .subscribe(res=>this.locations=res as any[]);
  }
 
  create(){
-  this.api.post('/locations',{state:this.state})
+  this.api.post('locations',{state:this.state})
    .subscribe(()=>{
      this.state='';
      this.load();

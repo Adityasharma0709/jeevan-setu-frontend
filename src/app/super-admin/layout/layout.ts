@@ -1,27 +1,31 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterModule, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-super-layout',
+  standalone: true,
   templateUrl: './layout.html',
-  imports: [RouterOutlet]
+  styleUrls: ['./layout.css'],
+  imports: [RouterOutlet, RouterModule, CommonModule]
 })
 export class Layout {
 
-  isOpen = false;
+  sidebarOpen = false;
 
   constructor(private router: Router) {}
 
-  toggle() {
-    this.isOpen = !this.isOpen;
+  toggleSidebar() {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  closeSidebar() {
+    this.sidebarOpen = false;
   }
 
   logout() {
     localStorage.clear();
     this.router.navigate(['/login']);
   }
-
-  isActive(route: string) {
-    return this.router.url.includes(route);
-  }
+  
 }

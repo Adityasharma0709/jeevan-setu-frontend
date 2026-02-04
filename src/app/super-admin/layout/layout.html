@@ -1,45 +1,66 @@
-<div class="flex min-h-screen bg-gray-100">
+<div class="flex h-screen bg-gray-100">
 
   <!-- SIDEBAR -->
   <aside
-    class="bg-white w-64 fixed md:static h-full shadow-lg transition-transform duration-300"
-    [class.-translate-x-full]="!isOpen"
-    [class.md:translate-x-0]="true"
+    class="
+      fixed md:static z-50
+      w-64
+      bg-white shadow
+      h-full
+      transform transition-transform duration-300
+      md:translate-x-0
+    "
+    [class.-translate-x-full]="!sidebarOpen"
   >
 
-    <div class="p-5 text-xl font-bold border-b">
+    <!-- LOGO -->
+    <div class="p-4 font-bold text-xl border-b">
       Jeevan Setu
     </div>
 
+    <!-- MENU -->
     <nav class="p-4 space-y-2">
 
       <a
         routerLink="/super-admin"
-        class="menu"
-        [class.active]="isActive('/super-admin')"
-      >Dashboard</a>
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="menu-link"
+        (click)="closeSidebar()"
+      >
+        Dashboard
+      </a>
 
       <a
         routerLink="/super-admin/create-admin"
-        class="menu"
-        [class.active]="isActive('create-admin')"
-      >Create Admin</a>
+        routerLinkActive="active-link"
+        class="menu-link"
+        (click)="closeSidebar()"
+      >
+        Admin Management
+      </a>
 
       <a
         routerLink="/super-admin/projects"
-        class="menu"
-        [class.active]="isActive('projects')"
-      >Projects</a>
+        routerLinkActive="active-link"
+        class="menu-link"
+        (click)="closeSidebar()"
+      >
+        Projects
+      </a>
 
       <a
         routerLink="/super-admin/locations"
-        class="menu"
-        [class.active]="isActive('locations')"
-      >Locations</a>
+        routerLinkActive="active-link"
+        class="menu-link"
+        (click)="closeSidebar()"
+      >
+        Locations
+      </a>
 
       <button
         (click)="logout()"
-        class="menu text-red-600"
+        class="menu-link text-red-600"
       >
         Logout
       </button>
@@ -47,35 +68,31 @@
     </nav>
   </aside>
 
+  <!-- OVERLAY -->
+  <div
+    *ngIf="sidebarOpen"
+    (click)="closeSidebar()"
+    class="fixed inset-0 bg-black/50 md:hidden"
+  ></div>
 
   <!-- MAIN -->
-  <div class="flex-1 md:ml-64">
+  <div class="flex-1">
 
-    <!-- TOP BAR -->
-    <header class="bg-white p-4 shadow flex justify-between items-center">
+    <!-- HEADER -->
+    <header class="bg-white shadow p-4 flex justify-between">
 
-      <button
-        class="md:hidden"
-        (click)="toggle()"
-      >
+      <!-- MOBILE BTN -->
+      <button class="md:hidden" (click)="toggleSidebar()">
         ☰
       </button>
 
-      <h2 class="font-semibold text-lg">
-        Super Admin Panel
-      </h2>
-
-      <span class="text-sm text-gray-500">
-        Welcome 👋
-      </span>
+      <h1 class="font-bold">Super Admin Panel</h1>
+      <span>Welcome 👋</span>
     </header>
 
-
-    <!-- CONTENT -->
     <main class="p-6">
       <router-outlet></router-outlet>
     </main>
 
   </div>
-
 </div>
