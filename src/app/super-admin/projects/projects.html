@@ -1,9 +1,19 @@
 <div class="p-6" *ngIf="projects$ | async as projects">
 
-  <h1 class="text-2xl font-bold mb-6">
-    Projects
-  </h1>
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Projects</h1>
 
+    <button
+      type="button"
+      z-button
+      (click)="openCreateDialog()"
+    >
+      + Create Project
+    </button>
+  </div>
+
+  <!-- TABLE -->
   <div class="bg-white shadow rounded-xl p-6">
 
     <table z-table class="w-full">
@@ -47,3 +57,24 @@
   </div>
 
 </div>
+
+<!-- CREATE PROJECT DIALOG -->
+<ng-template #createProjectDialog>
+
+  <form [formGroup]="form" class="space-y-4">
+
+    <input
+      z-input
+      formControlName="projectCode"
+      placeholder="Project Code"
+    />
+
+    <input
+      z-input
+      formControlName="name"
+      placeholder="Project Name"
+    />
+
+  </form>
+
+</ng-template>

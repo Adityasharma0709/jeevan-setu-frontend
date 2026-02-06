@@ -1,33 +1,19 @@
-import { Component } from '@angular/core';
+import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/services/api';
 import { Observable } from 'rxjs';
+
 import {
   ZardFormFieldComponent,
   ZardFormControlComponent,
   ZardFormLabelComponent,
   ZardFormMessageComponent
-}from '@/shared/components/form';
+} from '@/shared/components/form';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardInputDirective } from '@/shared/components/input';
-import {  ZardTableComponent,
-  ZardTableHeaderComponent,
-  ZardTableBodyComponent,
-  ZardTableRowComponent,
-  ZardTableHeadComponent,
-  ZardTableCellComponent,
-  ZardTableCaptionComponent } from '@/shared/components/table';
-@Component({
-  selector: 'app-create-admin',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule,  ZardFormFieldComponent,
-    ZardFormControlComponent,
-    ZardFormLabelComponent,
-    ZardFormMessageComponent,
-    ZardButtonComponent,
-    ZardInputDirective,
-     // Zard Table
+
+import {
   ZardTableComponent,
   ZardTableHeaderComponent,
   ZardTableBodyComponent,
@@ -35,11 +21,44 @@ import {  ZardTableComponent,
   ZardTableHeadComponent,
   ZardTableCellComponent,
   ZardTableCaptionComponent
+} from '@/shared/components/table';
+
+import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
+import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
+import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
+import { toast } from 'ngx-sonner';
+
+
+@Component({
+  selector: 'app-create-admin',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+
+    ZardFormFieldComponent,
+    ZardFormControlComponent,
+    ZardFormLabelComponent,
+    ZardFormMessageComponent,
+    ZardButtonComponent,
+    ZardInputDirective,
+
+    ZardTableComponent,
+    ZardTableHeaderComponent,
+    ZardTableBodyComponent,
+    ZardTableRowComponent,
+    ZardTableHeadComponent,
+    ZardTableCellComponent,
+    ZardTableCaptionComponent,
+    ZardDialogModule,
   ],
   templateUrl: './create-admin.html'
 })
 export class CreateAdminComponent {
 
+  @ViewChild('createAdminDialog')
+  createAdminDialog!: TemplateRef<any>;
+dialogRef!: ZardDialogRef<any>;
   form!: FormGroup;
   admins$!: Observable<any>;
 
@@ -48,65 +67,60 @@ export class CreateAdminComponent {
 
   constructor(
     private fb: FormBuilder,
-    private api: ApiService
+    private api: ApiService,
+    private dialog: ZardDialogService,
   ) {
-
     this.form = this.fb.group({
       name: [''],
       email: [''],
       password: ['']
     });
 
-    // Auto fetch
     this.admins$ = this.api.get('users/admins');
   }
 
-  submit() {
+openCreateDialog() {
+  this.dialogRef = this.dialog.create({
+    zTitle: 'Create Admin',
+    zContent: this.createAdminDialog,
+    zOkText: 'Create',
+    zCancelText: 'Cancel',
+    zWidth: '400px',
 
-    this.errorMsg = '';
-    this.successMsg = '';
+    zOnOk: () => {
+      this.submit();
+      return false; // prevent auto close
+    },
 
-    this.api.post('users/create-admin', this.form.value)
-      .subscribe({
+    zOnCancel: () => {
+      this.form.reset();
+    }
+  });
+}
 
-        next: () => {
-          this.successMsg = 'Admin created successfully ✅';
-          this.form.reset();
 
-          // refresh list
-          this.admins$ = this.api.get('users/admins');
-        },
 
-        error: (err) => {
+submit() {
+  this.api.post('users/create-admin', this.form.value)
+    .subscribe({
+      next: () => {
+        toast.success('Admin created successfully');
 
-          console.log(err);
+        this.form.reset();
+        this.admins$ = this.api.get('users/admins');
+        this.dialogRef?.close();
+      },
+      error: (err) => {
+        let msg = 'Something went wrong';
 
-          // Backend message
-          if (err.status === 400) {
-            this.errorMsg = err.error?.message || 'Bad Request';
-          }
+        if (err.status === 400) msg = err.error?.message || 'Bad Request';
+        else if (err.status === 409) msg = 'Email already exists';
+        else if (err.status === 401) msg = 'Session expired. Login again';
+        else if (err.status === 500) msg = 'Server error. Try later';
 
-          // Duplicate email
-          else if (err.status === 409) {
-            this.errorMsg = 'Email already exists ❌';
-          }
+        toast.error(msg);
+      }
+    });
+}
 
-          // Unauthorized
-          else if (err.status === 401) {
-            this.errorMsg = 'Session expired. Login again';
-          }
-
-          // Server error
-          else if (err.status === 500) {
-            this.errorMsg = 'Server error. Try later';
-          }
-
-          // Network
-          else {
-            this.errorMsg = 'Something went wrong';
-          }
-        }
-
-      });
-  }
 }

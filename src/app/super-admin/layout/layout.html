@@ -1,98 +1,127 @@
-<div class="flex h-screen bg-gray-100">
+<z-layout class="min-h-screen flex border">
+
+  <!-- FLOATING TOGGLE BUTTON (MOBILE) -->
+  <!-- <button
+    type="button"
+    z-button
+    zType="ghost"
+    zSize="sm"
+    class="fixed top-4 left-4 z-50 md:hidden"
+    (click)="toggleSidebar()"
+  >
+    <z-icon [zType]="sidebarCollapsed ? 'chevron-right' : 'chevron-left'" />
+  </button> -->
+
+  <!-- OVERLAY (MOBILE) -->
+  <div
+    *ngIf="!sidebarCollapsed && isMobile"
+    class="fixed inset-0 bg-black/40 z-40"
+    (click)="closeSidebar()"
+  ></div>
 
   <!-- SIDEBAR -->
-  <aside
-    class="
-      fixed md:static z-50
-      w-64
-      bg-white shadow
-      h-full
-      transform transition-transform duration-300
-      md:translate-x-0
-    "
-    [class.-translate-x-full]="!sidebarOpen"
+  <z-sidebar
+  [zWidth]="250"
+  [zCollapsible]="true"
+  [zCollapsed]="sidebarCollapsed"
+  [zCollapsedWidth]="70"
+  (zCollapsedChange)="sidebarCollapsed = $event"
+  class="p-0!"
+>
+  <nav
+    [class]="'flex h-full flex-col overflow-hidden ' + (sidebarCollapsed ? 'gap-1 p-1 pt-4' : 'gap-4 p-4')"
   >
 
-    <!-- LOGO -->
-    <div class="p-4 font-bold text-xl border-b">
-      Jeevan Setu
-    </div>
+    <!-- MAIN -->
+    <z-sidebar-group>
+      @if (!sidebarCollapsed) {
+        <z-sidebar-group-label>Menu</z-sidebar-group-label>
+      }
 
-    <!-- MENU -->
-    <nav class="p-4 space-y-2">
-
+      <!-- Dashboard -->
       <a
         routerLink="/super-admin"
         routerLinkActive="active-link"
         [routerLinkActiveOptions]="{ exact: true }"
         class="menu-link"
-        (click)="closeSidebar()"
+        [class.justify-center]="sidebarCollapsed"
+        [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
+        zPosition="right"
       >
-        Dashboard
+        <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+        @if (!sidebarCollapsed) { <span>Dashboard</span> }
       </a>
 
+      <!-- Admins -->
       <a
         routerLink="/super-admin/create-admin"
         routerLinkActive="active-link"
         class="menu-link"
-        (click)="closeSidebar()"
+        [class.justify-center]="sidebarCollapsed"
+        [zTooltip]="sidebarCollapsed ? 'Admins' : ''"
+        zPosition="right"
       >
-        Admin Management
+        <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+        @if (!sidebarCollapsed) { <span>Admins</span> }
       </a>
 
+      <!-- Projects -->
       <a
         routerLink="/super-admin/projects"
         routerLinkActive="active-link"
         class="menu-link"
-        (click)="closeSidebar()"
+        [class.justify-center]="sidebarCollapsed"
+        [zTooltip]="sidebarCollapsed ? 'Projects' : ''"
+        zPosition="right"
       >
-        Projects
+        <z-icon zType="layers" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+        @if (!sidebarCollapsed) { <span>Projects</span> }
       </a>
 
+      <!-- Locations -->
       <a
         routerLink="/super-admin/locations"
         routerLinkActive="active-link"
         class="menu-link"
-        (click)="closeSidebar()"
+        [class.justify-center]="sidebarCollapsed"
+        [zTooltip]="sidebarCollapsed ? 'Locations' : ''"
+        zPosition="right"
       >
-        Locations
+        <z-icon zType="arrow-up-right" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+        @if (!sidebarCollapsed) { <span>Locations</span> }
       </a>
+    </z-sidebar-group>
+
+    <!-- PUSH LOGOUT TO BOTTOM -->
+    <div class="mt-auto p-2 border-t">
 
       <button
+        type="button"
+        z-button
+        zType="ghost"
+        class="menu-link text-red-600 hover:bg-red-50"
+        [class.justify-center]="sidebarCollapsed"
+        [zTooltip]="sidebarCollapsed ? 'Logout' : ''"
+        zPosition="right"
         (click)="logout()"
-        class="menu-link text-red-600"
       >
-        Logout
+        <z-icon zType="log-out" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+        @if (!sidebarCollapsed) { <span>Logout</span> }
       </button>
 
-    </nav>
-  </aside>
+    </div>
 
-  <!-- OVERLAY -->
-  <div
-    *ngIf="sidebarOpen"
-    (click)="closeSidebar()"
-    class="fixed inset-0 bg-black/50 md:hidden"
-  ></div>
+  </nav>
+</z-sidebar>
 
-  <!-- MAIN -->
-  <div class="flex-1">
 
-    <!-- HEADER -->
-    <header class="bg-white shadow p-4 flex justify-between">
+  <!-- MAIN AREA -->
+  <z-layout class="flex flex-col flex-1">
 
-      <!-- MOBILE BTN -->
-      <button class="md:hidden" (click)="toggleSidebar()">
-        ☰
-      </button>
-
-      <h1 class="font-bold">Super Admin Panel</h1>
-      <span>Welcome 👋</span>
-    </header>
-
-    <main class="p-6">
+    <z-content class="flex-1 overflow-y-auto p-6 bg-gray-50">
       <router-outlet></router-outlet>
-    </main>
+    </z-content>
 
-  </div>
-</div>
+  </z-layout>
+
+</z-layout>
