@@ -122,5 +122,25 @@ submit() {
       }
     });
 }
+toggleAdminStatus(admin: any) {
+  const status =
+    admin.status === 'ACTIVE'
+      ? 'INACTIVE'
+      : 'ACTIVE';
+
+  this.api.patch(`users/admin/${admin.id}/status`, { status })
+    .subscribe({
+      next: () => {
+        toast.success(
+          status === 'ACTIVE'
+            ? 'Admin activated'
+            : 'Admin deactivated'
+        );
+
+        this.admins$ = this.api.get('users/admins');
+      },
+      error: () => toast.error('Failed to update status')
+    });
+}
 
 }

@@ -24,6 +24,7 @@ import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardDropdownDirective, ZardDropdownMenuComponent } from '@/shared/components/dropdown';
+import { ZardFormFieldComponent, ZardFormControlComponent } from "@/shared/components/form";
 @Component({
   selector: 'app-locations',
   standalone: true,
@@ -44,9 +45,10 @@ import { ZardDropdownDirective, ZardDropdownMenuComponent } from '@/shared/compo
     ZardMenuImports,
     ZardDropdownDirective,
     ZardDropdownMenuComponent,
-    ZardIconComponent
-
-  ],
+    ZardIconComponent,
+    ZardFormFieldComponent,
+    ZardFormControlComponent
+],
   templateUrl: './locations.html'
 })
 export class LocationsComponent {

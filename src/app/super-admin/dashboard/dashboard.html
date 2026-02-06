@@ -1,72 +1,135 @@
-<div class="p-6" *ngIf="stats$ | async as stats">
+<div class="p-4 md:p-6" *ngIf="stats$ | async as stats">
 
+  <!-- PAGE TITLE -->
   <h1 class="text-2xl font-bold mb-6">
     Super Admin Dashboard
   </h1>
 
-  <!-- Stats Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+  <!-- ================= STATS CARDS ================= -->
 
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
+
+    <!-- Projects -->
     <div class="bg-white shadow rounded-xl p-6">
+
       <p class="text-gray-500">Total Projects</p>
-      <h2 class="text-3xl font-bold text-indigo-600">
+
+      <h2 class="text-3xl font-bold text-indigo-600 mt-2">
         {{ stats.totalProjects }}
       </h2>
+
     </div>
 
+    <!-- Locations -->
     <div class="bg-white shadow rounded-xl p-6">
+
       <p class="text-gray-500">Total Locations</p>
-      <h2 class="text-3xl font-bold text-green-600">
+
+      <h2 class="text-3xl font-bold text-green-600 mt-2">
         {{ stats.totalLocations }}
       </h2>
+
     </div>
 
   </div>
 
-  <!-- Table Card -->
-  <div class="bg-white shadow rounded-xl p-6">
+  <!-- ================= TABLE CARD ================= -->
+
+  <div class="bg-white shadow rounded-xl p-4 md:p-6">
 
     <h2 class="text-xl font-semibold mb-4">
       Beneficiaries Per Project
     </h2>
 
-    <table z-table class="w-full">
+    <!-- ===== DESKTOP TABLE ===== -->
 
-      <thead z-table-header>
-        <tr z-table-row>
-          <th z-table-head>Code</th>
-          <th z-table-head>Project</th>
-          <th z-table-head>Count</th>
-        </tr>
-      </thead>
+    <div class="hidden md:block overflow-x-auto">
 
-      <tbody z-table-body>
-        <tr z-table-row *ngFor="let p of stats.beneficiariesPerProject">
+      <table z-table class="w-full">
 
-          <td z-table-cell>
-            {{ p.projectCode }}
-          </td>
+        <thead z-table-header>
+          <tr z-table-row>
+            <th z-table-head>Code</th>
+            <th z-table-head>Project</th>
+            <th z-table-head>Count</th>
+          </tr>
+        </thead>
 
-          <td z-table-cell>
-            {{ p.name }}
-          </td>
+        <tbody z-table-body>
 
-          <td z-table-cell>
-            <span
-              class="font-bold"
-              [ngClass]="{
-                'text-indigo-600': p._count.beneficiaries > 0,
-                'text-gray-400': p._count.beneficiaries === 0
-              }"
-            >
-              {{ p._count.beneficiaries }}
-            </span>
-          </td>
+          <tr
+            z-table-row
+            *ngFor="let p of stats.beneficiariesPerProject"
+          >
 
-        </tr>
-      </tbody>
+            <td z-table-cell>
+              {{ p.projectCode }}
+            </td>
 
-    </table>
+            <td z-table-cell>
+              {{ p.name }}
+            </td>
+
+            <td z-table-cell>
+
+              <span
+                class="font-bold"
+                [ngClass]="{
+                  'text-indigo-600': p._count.beneficiaries > 0,
+                  'text-gray-400': p._count.beneficiaries === 0
+                }"
+              >
+                {{ p._count.beneficiaries }}
+              </span>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <!-- ===== MOBILE CARDS ===== -->
+
+    <div class="md:hidden space-y-3">
+
+      <div
+        *ngFor="let p of stats.beneficiariesPerProject"
+        class="border rounded-lg p-4 bg-gray-50 shadow-sm"
+      >
+
+        <div class="flex justify-between items-center">
+
+          <div>
+
+            <h3 class="font-semibold">
+              {{ p.name }}
+            </h3>
+
+            <p class="text-sm text-gray-500">
+              Code: {{ p.projectCode }}
+            </p>
+
+          </div>
+
+          <span
+            class="text-lg font-bold"
+            [ngClass]="{
+              'text-indigo-600': p._count.beneficiaries > 0,
+              'text-gray-400': p._count.beneficiaries === 0
+            }"
+          >
+            {{ p._count.beneficiaries }}
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
 
   </div>
 
