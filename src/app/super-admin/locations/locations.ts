@@ -1,12 +1,14 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable } from 'rxjs';
+import { Observable, Subject, startWith, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
+
+import { ApiService } from '../../core/services/api';
+
 import { ZardDividerComponent } from '@/shared/components/divider';
 import { ZardDropdownImports } from '@/shared/components/dropdown/dropdown.imports';
 import { ZardMenuImports } from '@/shared/components/menu';
-import { ApiService } from '../../core/services/api';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardInputDirective } from '@/shared/components/input';
@@ -23,8 +25,15 @@ import {
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
-import { ZardDropdownDirective, ZardDropdownMenuComponent } from '@/shared/components/dropdown';
-import { ZardFormFieldComponent, ZardFormControlComponent } from "@/shared/components/form";
+import {
+  ZardDropdownDirective,
+  ZardDropdownMenuComponent,
+} from '@/shared/components/dropdown';
+import {
+  ZardFormFieldComponent,
+  ZardFormControlComponent,
+} from '@/shared/components/form';
+
 @Component({
   selector: 'app-locations',
   standalone: true,
@@ -47,26 +56,30 @@ import { ZardFormFieldComponent, ZardFormControlComponent } from "@/shared/compo
     ZardDropdownMenuComponent,
     ZardIconComponent,
     ZardFormFieldComponent,
-    ZardFormControlComponent
-],
-  templateUrl: './locations.html'
+    ZardFormControlComponent,
+  ],
+  templateUrl: './locations.html',
 })
 export class LocationsComponent {
-
   @ViewChild('createLocationDialog')
   createLocationDialog!: TemplateRef<any>;
 
   dialogRef!: ZardDialogRef<any>;
 
   form!: FormGroup;
-  locations$!: Observable<any>;
-  projects$!: Observable<any>;   // 👈 for dropdown
-selectedProjectName = '';
 
-selectProject(project: any) {
-  this.form.patchValue({ projectId: project.id });
-  this.selectedProjectName = project.name;
-}
+  // ✅ refresh trigger stream
+  private refresh$ = new Subject<void>();
+
+  // ✅ stable observable
+  locations$: Observable<any> = this.refresh$.pipe(
+    startWith(void 0),
+    switchMap(() => this.api.get('locations'))
+  );
+
+  projects$!: Observable<any>;
+
+  selectedProjectName = '';
 
   constructor(
     private fb: FormBuilder,
@@ -79,13 +92,24 @@ selectProject(project: any) {
       state: [''],
       district: [''],
       block: [''],
-      village: ['']
+      village: [''],
     });
 
-    this.locations$ = this.api.get('locations');
-    this.projects$ = this.api.get('projects'); // 👈 fetch projects
-    
+    this.projects$ = this.api.get('projects');
   }
+
+  // ======================
+  // PROJECT SELECT
+  // ======================
+
+  selectProject(project: any) {
+    this.form.patchValue({ projectId: project.id });
+    this.selectedProjectName = project.name;
+  }
+
+  // ======================
+  // CREATE DIALOG
+  // ======================
 
   openCreateDialog() {
     this.dialogRef = this.dialog.create({
@@ -102,48 +126,61 @@ selectProject(project: any) {
 
       zOnCancel: () => {
         this.form.reset();
-      }
+      },
     });
   }
+
+  // ======================
+  // CREATE LOCATION
+  // ======================
 
   submit() {
-    this.api.post('locations', this.form.value)
-      .subscribe({
-        next: () => {
-          toast.success('Location created successfully');
-          this.form.reset();
-          this.locations$ = this.api.get('locations');
-          this.dialogRef?.close();
-        },
-        error: (err) => {
-          let msg = 'Something went wrong';
+    this.api.post('locations', this.form.value).subscribe({
+      next: () => {
+        toast.success('Location created successfully');
 
-          if (err.status === 400) msg = err.error?.message || 'Bad Request';
-          else if (err.status === 409) msg = 'Location code already exists';
-          else if (err.status === 401) msg = 'Session expired. Login again';
-          else if (err.status === 500) msg = 'Server error. Try later';
+        this.form.reset();
 
-          toast.error(msg);
-        }
-      });
+        // ✅ trigger refresh safely
+        this.refresh$.next();
+
+        this.dialogRef?.close();
+      },
+      error: (err) => {
+        let msg = 'Something went wrong';
+
+        if (err.status === 400) msg = err.error?.message || 'Bad Request';
+        else if (err.status === 409) msg = 'Location code already exists';
+        else if (err.status === 401) msg = 'Session expired. Login again';
+        else if (err.status === 500) msg = 'Server error. Try later';
+
+        toast.error(msg);
+      },
+    });
   }
 
-toggleLocationStatus(location: any) {
-  const status =
-    location.status === 'ACTIVE'
-      ? 'INACTIVE'
-      : 'ACTIVE';
+  // ======================
+  // STATUS TOGGLE
+  // ======================
 
-  this.api.patch(`locations/${location.id}/status`, { status })
-    .subscribe(() => {
-      toast.success(
-        status === 'ACTIVE'
-          ? 'Location activated'
-          : 'Location deactivated'
-      );
+  toggleLocationStatus(location: any) {
+    const status =
+      location.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
-      this.locations$ = this.api.get('locations');
-    });
-}
+    this.api
+      .patch(`locations/${location.id}/status`, { status })
+      .subscribe({
+        next: () => {
+          toast.success(
+            status === 'ACTIVE'
+              ? 'Location activated'
+              : 'Location deactivated'
+          );
 
+          // ✅ safe refresh
+          this.refresh$.next();
+        },
+        error: () => toast.error('Failed to update status'),
+      });
+  }
 }

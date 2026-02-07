@@ -1,7 +1,7 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable } from 'rxjs';
+import { Observable, Subject, startWith, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 
 import { ApiService } from '../../core/services/api';
@@ -21,7 +21,10 @@ import {
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
-import { ZardFormControlComponent, ZardFormFieldComponent } from "@/shared/components/form";
+import {
+  ZardFormControlComponent,
+  ZardFormFieldComponent,
+} from '@/shared/components/form';
 
 interface Project {
   id: number;
@@ -29,6 +32,7 @@ interface Project {
   name: string;
   status: string;
 }
+
 @Component({
   selector: 'app-projects',
   standalone: true,
@@ -45,8 +49,8 @@ interface Project {
     ZardTableCellComponent,
     ZardDialogModule,
     ZardFormControlComponent,
-    ZardFormFieldComponent
-],
+    ZardFormFieldComponent,
+  ],
   templateUrl: './projects.html',
 })
 export class ProjectsComponent {
@@ -56,21 +60,31 @@ export class ProjectsComponent {
   dialogRef!: ZardDialogRef<any>;
 
   form!: FormGroup;
-  projects$!: Observable<Project[]>;
+
+  // ✅ refresh trigger stream
+  private refresh$ = new Subject<void>();
+
+  // ✅ stable observable (never reassigned)
+  projects$: Observable<Project[]> = this.refresh$.pipe(
+    startWith(void 0),
+    switchMap(() => this.api.get('projects') as Observable<Project[]>)
+  );
 
   constructor(
     private fb: FormBuilder,
     private api: ApiService,
-    private dialog: ZardDialogService,
+    private dialog: ZardDialogService
   ) {
     this.form = this.fb.group({
       projectCode: [''],
       name: [''],
-      description: ['']
+      description: [''],
     });
-
-    this.projects$ = this.api.get('projects') as Observable<Project[]>;
   }
+
+  // =============================
+  // CREATE PROJECT DIALOG
+  // =============================
 
   openCreateDialog() {
     this.dialogRef = this.dialog.create({
@@ -82,7 +96,7 @@ export class ProjectsComponent {
 
       zOnOk: () => {
         this.submit();
-        return false; // prevent auto close
+        return false;
       },
 
       zOnCancel: () => {
@@ -95,8 +109,11 @@ export class ProjectsComponent {
     this.api.post('projects', this.form.value).subscribe({
       next: () => {
         toast.success('Project created successfully');
+
         this.form.reset();
-        this.projects$ = this.api.get('projects') as Observable<Project[]>;
+
+        // ✅ trigger refresh safely
+        this.refresh$.next();
 
         this.dialogRef?.close();
       },
@@ -112,14 +129,24 @@ export class ProjectsComponent {
       },
     });
   }
-  toggleProjectStatus(project: any) {
+
+  // =============================
+  // STATUS TOGGLE
+  // =============================
+
+  toggleProjectStatus(project: Project) {
     const status = project.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
     this.api.patch(`projects/${project.id}/status`, { status }).subscribe({
       next: () => {
-        toast.success(status === 'ACTIVE' ? 'Project activated' : 'Project deactivated');
+        toast.success(
+          status === 'ACTIVE'
+            ? 'Project activated'
+            : 'Project deactivated'
+        );
 
-        this.projects$ = this.api.get('projects')as Observable<Project[]>;
+        // ✅ safe refresh
+        this.refresh$.next();
       },
       error: () => toast.error('Failed to update status'),
     });
