@@ -1,16 +1,62 @@
-<!-- PAGE HEADER -->
+<!-- ================= PAGE HEADER ================= -->
 
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
   <h2 class="text-xl font-bold">Locations</h2>
 
-  <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">Create Location</button>
+  <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">
+    Create Location
+  </button>
 </div>
 
+<!-- ================= EDIT DIALOG ================= -->
+
+<ng-template #editLocationDialog>
+  <form [formGroup]="editForm" class="space-y-4">
+
+    <z-form-field>
+      <label z-form-label>Location Code</label>
+      <z-form-control>
+        <input z-input formControlName="locationCode" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>State</label>
+      <z-form-control>
+        <input z-input formControlName="state" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>District</label>
+      <z-form-control>
+        <input z-input formControlName="district" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Block</label>
+      <z-form-control>
+        <input z-input formControlName="block" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Village</label>
+      <z-form-control>
+        <input z-input formControlName="village" />
+      </z-form-control>
+    </z-form-field>
+
+  </form>
+</ng-template>
 
 <!-- ================= DESKTOP TABLE ================= -->
 
 <div class="hidden md:block overflow-x-auto border rounded-lg">
+
   <table z-table class="w-full min-w-[1000px]">
+
     <thead z-table-header>
       <tr z-table-row>
         <th z-table-head>Code</th>
@@ -25,7 +71,9 @@
     </thead>
 
     <tbody z-table-body *ngIf="locations$ | async as locations">
+
       <tr z-table-row *ngFor="let l of locations">
+
         <td z-table-cell>{{ l.locationCode }}</td>
         <td z-table-cell>{{ l.project?.name }}</td>
         <td z-table-cell>{{ l.state }}</td>
@@ -33,18 +81,32 @@
         <td z-table-cell>{{ l.block }}</td>
         <td z-table-cell>{{ l.village }}</td>
 
+        <!-- STATUS -->
         <td z-table-cell>
           <span
             class="px-2 py-1 rounded text-xs font-medium"
             [ngClass]="
-              l.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              l.status === 'ACTIVE'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
             "
           >
             {{ l.status }}
           </span>
         </td>
 
-        <td z-table-cell>
+        <!-- ACTION -->
+        <td z-table-cell class="flex gap-2">
+
+          <button
+            z-button
+            zSize="sm"
+            zType="secondary"
+            (click)="openEditDialog(l)"
+          >
+            Edit
+          </button>
+
           <button
             z-button
             zSize="sm"
@@ -53,80 +115,121 @@
           >
             {{ l.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
           </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
 
+        </td>
+
+      </tr>
+
+    </tbody>
+
+  </table>
+
+</div>
 
 <!-- ================= MOBILE CARDS ================= -->
 
 <div class="md:hidden space-y-3" *ngIf="locations$ | async as locations">
-  <div *ngFor="let l of locations" class="border rounded-lg p-4 bg-white shadow-sm">
+
+  <div
+    *ngFor="let l of locations"
+    class="border rounded-lg p-4 bg-white shadow-sm"
+  >
+
     <div class="flex justify-between items-start">
+
       <div class="space-y-1 text-sm">
-        <h3 class="font-semibold">{{ l.locationCode }} — {{ l.project?.name }}</h3>
+
+        <h3 class="font-semibold">
+          {{ l.locationCode }} — {{ l.project?.name }}
+        </h3>
 
         <p><strong>State:</strong> {{ l.state }}</p>
         <p><strong>District:</strong> {{ l.district }}</p>
         <p><strong>Block:</strong> {{ l.block }}</p>
         <p><strong>Village:</strong> {{ l.village }}</p>
+
       </div>
 
       <span
         class="px-2 py-1 rounded text-xs font-medium"
         [ngClass]="
-          l.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          l.status === 'ACTIVE'
+            ? 'bg-green-100 text-green-700'
+            : 'bg-red-100 text-red-700'
         "
       >
         {{ l.status }}
       </span>
+
     </div>
 
-    <button
-      z-button
-      class="w-full mt-3"
-      [zType]="l.status === 'ACTIVE' ? 'destructive' : 'default'"
-      (click)="toggleLocationStatus(l)"
-    >
-      {{ l.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-    </button>
-  </div>
-</div>
+    <!-- MOBILE ACTION BUTTONS -->
 
-<!-- CREATE LOCATION DIALOG -->
-<ng-template #createLocationDialog>
-  <form [formGroup]="form" class="space-y-4">
-    <!-- PROJECT DROPDOWN -->
-    <!-- PROJECT DROPDOWN -->
-    <div class="w-full">
-      <!-- Trigger -->
+    <div class="flex gap-2 mt-3">
+
       <button
-        type="button"
         z-button
-        zType="outline"
-        class="w-full justify-between"
-        zDropdown
-        [zDropdownMenu]="projectMenu"
+        zType="secondary"
+        class="flex-1"
+        (click)="openEditDialog(l)"
       >
-        {{ selectedProjectName || 'Select Project' }}
-        <z-icon zType="chevron-down" />
+        Edit
       </button>
 
-      <!-- Menu -->
-      <z-dropdown-menu-content #projectMenu="zDropdownMenuContent" class="w-full">
-        <z-dropdown-menu-item *ngFor="let p of projects$ | async" (click)="selectProject(p)">
-          {{ p.name }}
-        </z-dropdown-menu-item>
-      </z-dropdown-menu-content>
+      <button
+        z-button
+        class="flex-1"
+        [zType]="l.status === 'ACTIVE' ? 'destructive' : 'default'"
+        (click)="toggleLocationStatus(l)"
+      >
+        {{ l.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+      </button>
+
     </div>
 
+  </div>
+
+</div>
+
+<!-- ================= CREATE LOCATION DIALOG ================= -->
+
+<ng-template #createLocationDialog>
+
+  <form [formGroup]="form" class="space-y-4">
+
+    <!-- PROJECT DROPDOWN -->
+
+    <button
+      type="button"
+      z-button
+      zType="outline"
+      class="w-full justify-between"
+      zDropdown
+      [zDropdownMenu]="projectMenu"
+    >
+      {{ selectedProjectName || 'Select Project' }}
+      <z-icon zType="chevron-down" />
+    </button>
+
+    <z-dropdown-menu-content #projectMenu="zDropdownMenuContent" class="w-full">
+
+      <z-dropdown-menu-item
+        *ngFor="let p of projects$ | async"
+        (click)="selectProject(p)"
+      >
+        {{ p.name }}
+      </z-dropdown-menu-item>
+
+    </z-dropdown-menu-content>
+
     <!-- INPUTS -->
+
     <input z-input placeholder="Location Code" formControlName="locationCode" />
     <input z-input placeholder="State" formControlName="state" />
     <input z-input placeholder="District" formControlName="district" />
     <input z-input placeholder="Block" formControlName="block" />
     <input z-input placeholder="Village" formControlName="village" />
+
   </form>
+
 </ng-template>

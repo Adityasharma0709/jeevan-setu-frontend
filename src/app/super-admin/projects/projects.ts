@@ -21,10 +21,7 @@ import {
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
-import {
-  ZardFormControlComponent,
-  ZardFormFieldComponent,
-} from '@/shared/components/form';
+import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 
 interface Project {
   id: number;
@@ -60,6 +57,7 @@ export class ProjectsComponent {
   dialogRef!: ZardDialogRef<any>;
 
   form!: FormGroup;
+  editForm!: FormGroup;
 
   // ✅ refresh trigger stream
   private refresh$ = new Subject<void>();
@@ -67,19 +65,24 @@ export class ProjectsComponent {
   // ✅ stable observable (never reassigned)
   projects$: Observable<Project[]> = this.refresh$.pipe(
     startWith(void 0),
-    switchMap(() => this.api.get('projects') as Observable<Project[]>)
+    switchMap(() => this.api.get('projects') as Observable<Project[]>),
   );
 
   constructor(
     private fb: FormBuilder,
     private api: ApiService,
-    private dialog: ZardDialogService
+    private dialog: ZardDialogService,
   ) {
     this.form = this.fb.group({
       projectCode: [''],
       name: [''],
       description: [''],
     });
+     this.editForm=this.fb.group({
+    projectCode: [''],
+    name: [''],
+    description: [''],
+  });
   }
 
   // =============================
@@ -131,6 +134,33 @@ export class ProjectsComponent {
   }
 
   // =============================
+  // EDIT PROJECT DIALOG
+  // =============================
+  @ViewChild('editProjectDialog')
+  editProjectDialog!: TemplateRef<any>;
+
+  openEditDialog(project: any) {
+    this.editForm.patchValue(project);
+
+    this.dialogRef = this.dialog.create({
+      zTitle: 'Edit Project',
+      zContent: this.editProjectDialog,
+      zOkText: 'Update',
+      zOnOk: () => {
+        this.updateProject(project.id);
+        return false;
+      },
+    });
+  }
+
+  updateProject(id: number) {
+    this.api.put(`projects/${id}`, this.editForm.value).subscribe(() => {
+      toast.success('Project updated');
+      this.refresh$.next();
+      this.dialogRef.close();
+    });
+  }
+  // =============================
   // STATUS TOGGLE
   // =============================
 
@@ -139,11 +169,7 @@ export class ProjectsComponent {
 
     this.api.patch(`projects/${project.id}/status`, { status }).subscribe({
       next: () => {
-        toast.success(
-          status === 'ACTIVE'
-            ? 'Project activated'
-            : 'Project deactivated'
-        );
+        toast.success(status === 'ACTIVE' ? 'Project activated' : 'Project deactivated');
 
         // ✅ safe refresh
         this.refresh$.next();

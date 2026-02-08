@@ -9,8 +9,9 @@ import {
   ZardFormFieldComponent,
   ZardFormControlComponent,
   ZardFormLabelComponent,
-  ZardFormMessageComponent
+  ZardFormMessageComponent,
 } from '@/shared/components/form';
+
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardInputDirective } from '@/shared/components/input';
 
@@ -21,7 +22,7 @@ import {
   ZardTableRowComponent,
   ZardTableHeadComponent,
   ZardTableCellComponent,
-  ZardTableCaptionComponent
+  ZardTableCaptionComponent,
 } from '@/shared/components/table';
 
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
@@ -49,43 +50,65 @@ import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
     ZardTableCaptionComponent,
     ZardDialogModule,
   ],
-  templateUrl: './create-admin.html'
+  templateUrl: './create-admin.html',
 })
 export class CreateAdminComponent {
+  /* ======================
+     TEMPLATE REFERENCES
+  ====================== */
 
   @ViewChild('createAdminDialog')
   createAdminDialog!: TemplateRef<any>;
 
-  dialogRef!: ZardDialogRef<any>;
-  form!: FormGroup;
+  @ViewChild('editAdminDialog')
+  editAdminDialog!: TemplateRef<any>;
 
-  // ✅ refresh trigger stream
+  dialogRef!: ZardDialogRef<any>;
+
+  /* ======================
+     FORMS
+  ====================== */
+
+  form: FormGroup;
+  editForm: FormGroup;
+
+  /* ======================
+     REFRESH STREAM
+  ====================== */
+
   private refresh$ = new Subject<void>();
 
-  // ✅ stable observable stream
   admins$: Observable<any> = this.refresh$.pipe(
     startWith(void 0),
-    switchMap(() => this.api.get('users/admins'))
+    switchMap(() => this.api.get('users/admins')),
   );
 
-  errorMsg = '';
-  successMsg = '';
+  /* ======================
+     CONSTRUCTOR
+  ====================== */
 
   constructor(
     private fb: FormBuilder,
     private api: ApiService,
     private dialog: ZardDialogService,
   ) {
+    // Create form
     this.form = this.fb.group({
       name: [''],
       email: [''],
-      password: ['']
+      password: [''],
+    });
+
+    // Edit form
+    this.editForm = this.fb.group({
+      name: [''],
+      email: [''],
     });
   }
 
-  // ======================
-  // CREATE DIALOG
-  // ======================
+  /* ======================
+     CREATE DIALOG
+  ====================== */
 
   openCreateDialog() {
     this.dialogRef = this.dialog.create({
@@ -100,65 +123,93 @@ export class CreateAdminComponent {
         return false;
       },
 
-      zOnCancel: () => {
-        this.form.reset();
-      }
+      zOnCancel: () => this.form.reset(),
     });
   }
 
-  // ======================
-  // CREATE ADMIN
-  // ======================
+  /* ======================
+     CREATE ADMIN
+  ====================== */
 
   submit() {
-    this.api.post('users/create-admin', this.form.value)
-      .subscribe({
-        next: () => {
-          toast.success('Admin created successfully');
+    this.api.post('users/create-admin', this.form.value).subscribe({
+      next: () => {
+        toast.success('Admin created successfully');
 
-          this.form.reset();
+        this.form.reset();
+        this.refresh$.next();
+        this.dialogRef?.close();
+      },
+      error: (err) => {
+        let msg = 'Something went wrong';
 
-          // ✅ safe refresh
-          this.refresh$.next();
+        if (err.status === 400) msg = err.error?.message || 'Bad Request';
+        else if (err.status === 409) msg = 'Email already exists';
+        else if (err.status === 401) msg = 'Session expired. Login again';
+        else if (err.status === 500) msg = 'Server error. Try later';
 
-          this.dialogRef?.close();
-        },
-        error: (err) => {
-          let msg = 'Something went wrong';
-
-          if (err.status === 400) msg = err.error?.message || 'Bad Request';
-          else if (err.status === 409) msg = 'Email already exists';
-          else if (err.status === 401) msg = 'Session expired. Login again';
-          else if (err.status === 500) msg = 'Server error. Try later';
-
-          toast.error(msg);
-        }
-      });
+        toast.error(msg);
+      },
+    });
   }
 
-  // ======================
-  // TOGGLE STATUS
-  // ======================
+  /* ======================
+     EDIT ADMIN
+  ====================== */
+
+  openEditDialog(admin: any) {
+    this.editForm.patchValue({
+      name: admin.name,
+      email: admin.email,
+    });
+
+    this.dialogRef = this.dialog.create({
+      zTitle: 'Edit Admin',
+      zContent: this.editAdminDialog,
+      zOkText: 'Update',
+
+      zOnOk: () => {
+        this.updateAdmin(admin.id);
+        return false;
+      },
+    });
+  }
+
+  updateAdmin(id: number) {
+    // ✅ clean payload (prevents 400 error)
+    const payload = {
+      name: this.editForm.value.name,
+      email: this.editForm.value.email,
+    };
+
+    this.api.put(`users/admin/${id}`, payload).subscribe({
+      next: () => {
+        toast.success('Admin updated');
+        this.refresh$.next();
+        this.dialogRef.close();
+      },
+      error: () => toast.error('Update failed'),
+    });
+  }
+
+  /* ======================
+     TOGGLE STATUS
+  ====================== */
 
   toggleAdminStatus(admin: any) {
-    const status =
-      admin.status === 'ACTIVE'
-        ? 'INACTIVE'
-        : 'ACTIVE';
+    const status = admin.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
-    this.api.patch(`users/admin/${admin.id}/status`, { status })
-      .subscribe({
-        next: () => {
-          toast.success(
-            status === 'ACTIVE'
-              ? 'Admin activated'
-              : 'Admin deactivated'
-          );
+    this.api.patch(`users/admin/${admin.id}/status`, { status }).subscribe({
+      next: () => {
+        toast.success(
+          status === 'ACTIVE'
+            ? 'Admin activated'
+            : 'Admin deactivated',
+        );
 
-          // ✅ safe refresh
-          this.refresh$.next();
-        },
-        error: () => toast.error('Failed to update status')
-      });
+        this.refresh$.next();
+      },
+      error: () => toast.error('Failed to update status'),
+    });
   }
 }

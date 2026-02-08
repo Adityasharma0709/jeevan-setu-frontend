@@ -6,6 +6,10 @@ import { toast } from 'ngx-sonner';
 
 import { ApiService } from '../../core/services/api';
 
+/* =========================
+   ZARD UI IMPORTS
+========================= */
+
 import { ZardDividerComponent } from '@/shared/components/divider';
 import { ZardDropdownImports } from '@/shared/components/dropdown/dropdown.imports';
 import { ZardMenuImports } from '@/shared/components/menu';
@@ -25,14 +29,35 @@ import {
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
-import {
-  ZardDropdownDirective,
-  ZardDropdownMenuComponent,
-} from '@/shared/components/dropdown';
-import {
-  ZardFormFieldComponent,
-  ZardFormControlComponent,
-} from '@/shared/components/form';
+
+import { ZardDropdownDirective, ZardDropdownMenuComponent } from '@/shared/components/dropdown';
+
+import { ZardFormFieldComponent, ZardFormControlComponent } from '@/shared/components/form';
+
+/* =========================
+   INTERFACES
+========================= */
+
+interface ProjectModel {
+  id: number;
+  name: string;
+}
+
+interface LocationModel {
+  id: number;
+  projectId: number;
+  locationCode: string;
+  state: string;
+  district: string;
+  block: string;
+  village: string;
+  status: string;
+  project?: ProjectModel;
+}
+
+/* =========================
+   COMPONENT
+========================= */
 
 @Component({
   selector: 'app-locations',
@@ -40,46 +65,68 @@ import {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+
     ZardButtonComponent,
     ZardInputDirective,
+    ZardIconComponent,
+
     ZardTableComponent,
     ZardTableHeaderComponent,
     ZardTableBodyComponent,
     ZardTableRowComponent,
     ZardTableHeadComponent,
     ZardTableCellComponent,
+
     ZardDialogModule,
-    ZardDividerComponent,
+
     ZardDropdownImports,
     ZardMenuImports,
     ZardDropdownDirective,
     ZardDropdownMenuComponent,
-    ZardIconComponent,
+
     ZardFormFieldComponent,
     ZardFormControlComponent,
+
+    ZardDividerComponent,
   ],
   templateUrl: './locations.html',
 })
 export class LocationsComponent {
-  @ViewChild('createLocationDialog')
-  createLocationDialog!: TemplateRef<any>;
+
+  /* =========================
+     TEMPLATE REFERENCES
+  ========================= */
+
+  @ViewChild('createLocationDialog') createLocationDialog!: TemplateRef<any>;
+  @ViewChild('editLocationDialog') editLocationDialog!: TemplateRef<any>;
 
   dialogRef!: ZardDialogRef<any>;
 
-  form!: FormGroup;
+  /* =========================
+     FORMS
+  ========================= */
 
-  // ✅ refresh trigger stream
+  form: FormGroup;
+  editForm: FormGroup;
+
+  /* =========================
+     DATA STREAMS
+  ========================= */
+
   private refresh$ = new Subject<void>();
 
-  // ✅ stable observable
-  locations$: Observable<any> = this.refresh$.pipe(
+  locations$: Observable<LocationModel[]> = this.refresh$.pipe(
     startWith(void 0),
-    switchMap(() => this.api.get('locations'))
+    switchMap(() => this.api.get('locations') as Observable<LocationModel[]>)
   );
 
-  projects$!: Observable<any>;
+  projects$: Observable<ProjectModel[]>;
 
   selectedProjectName = '';
+
+  /* =========================
+     CONSTRUCTOR
+  ========================= */
 
   constructor(
     private fb: FormBuilder,
@@ -95,21 +142,30 @@ export class LocationsComponent {
       village: [''],
     });
 
-    this.projects$ = this.api.get('projects');
+    this.editForm = this.fb.group({
+      projectId: [''],
+      locationCode: [''],
+      state: [''],
+      district: [''],
+      block: [''],
+      village: [''],
+    });
+
+    this.projects$ = this.api.get('projects') as Observable<ProjectModel[]>;
   }
 
-  // ======================
-  // PROJECT SELECT
-  // ======================
+  /* =========================
+     PROJECT SELECTION
+  ========================= */
 
-  selectProject(project: any) {
+  selectProject(project: ProjectModel) {
     this.form.patchValue({ projectId: project.id });
     this.selectedProjectName = project.name;
   }
 
-  // ======================
-  // CREATE DIALOG
-  // ======================
+  /* =========================
+     CREATE LOCATION
+  ========================= */
 
   openCreateDialog() {
     this.dialogRef = this.dialog.create({
@@ -124,26 +180,17 @@ export class LocationsComponent {
         return false;
       },
 
-      zOnCancel: () => {
-        this.form.reset();
-      },
+      zOnCancel: () => this.form.reset(),
     });
   }
-
-  // ======================
-  // CREATE LOCATION
-  // ======================
 
   submit() {
     this.api.post('locations', this.form.value).subscribe({
       next: () => {
         toast.success('Location created successfully');
-
         this.form.reset();
-
-        // ✅ trigger refresh safely
+        this.selectedProjectName = '';
         this.refresh$.next();
-
         this.dialogRef?.close();
       },
       error: (err) => {
@@ -159,28 +206,60 @@ export class LocationsComponent {
     });
   }
 
-  // ======================
-  // STATUS TOGGLE
-  // ======================
+  /* =========================
+     EDIT LOCATION
+  ========================= */
 
-  toggleLocationStatus(location: any) {
-    const status =
-      location.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+  openEditDialog(location: LocationModel) {
+    this.editForm.patchValue({
+      projectId: location.projectId,
+      locationCode: location.locationCode,
+      state: location.state,
+      district: location.district,
+      block: location.block,
+      village: location.village,
+    });
 
-    this.api
-      .patch(`locations/${location.id}/status`, { status })
-      .subscribe({
-        next: () => {
-          toast.success(
-            status === 'ACTIVE'
-              ? 'Location activated'
-              : 'Location deactivated'
-          );
+    this.dialogRef = this.dialog.create({
+      zTitle: 'Edit Location',
+      zContent: this.editLocationDialog,
+      zOkText: 'Update',
 
-          // ✅ safe refresh
-          this.refresh$.next();
-        },
-        error: () => toast.error('Failed to update status'),
-      });
+      zOnOk: () => {
+        this.updateLocation(location.id);
+        return false;
+      },
+    });
+  }
+
+  updateLocation(id: number) {
+    this.api.put(`locations/${id}`, this.editForm.value).subscribe({
+      next: () => {
+        toast.success('Location updated');
+        this.refresh$.next();
+        this.dialogRef.close();
+      },
+      error: () => toast.error('Failed to update location'),
+    });
+  }
+
+  /* =========================
+     STATUS TOGGLE
+  ========================= */
+
+  toggleLocationStatus(location: LocationModel) {
+    const status = location.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+
+    this.api.patch(`locations/${location.id}/status`, { status }).subscribe({
+      next: () => {
+        toast.success(
+          status === 'ACTIVE'
+            ? 'Location activated'
+            : 'Location deactivated'
+        );
+        this.refresh$.next();
+      },
+      error: () => toast.error('Failed to update status'),
+    });
   }
 }

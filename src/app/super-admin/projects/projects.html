@@ -1,142 +1,148 @@
-<!-- CREATE PROJECT DIALOG TEMPLATE -->
+<!-- ================= CREATE PROJECT DIALOG ================= -->
 
 <ng-template #createProjectDialog>
-
   <form [formGroup]="form" class="space-y-5">
+    <z-form-field>
+      <label z-form-label zRequired>Project Code</label>
+      <z-form-control>
+        <input z-input type="text" formControlName="projectCode" placeholder="Enter code" />
+      </z-form-control>
+    </z-form-field>
 
-```
-<z-form-field>
-  <label z-form-label zRequired>Project Code</label>
-  <z-form-control>
-    <input z-input type="text" formControlName="projectCode" placeholder="Enter code" />
-  </z-form-control>
-</z-form-field>
+    <z-form-field>
+      <label z-form-label zRequired>Name</label>
+      <z-form-control>
+        <input z-input type="text" formControlName="name" placeholder="Enter name" />
+      </z-form-control>
+    </z-form-field>
 
-<z-form-field>
-  <label z-form-label zRequired>Name</label>
-  <z-form-control>
-    <input z-input type="text" formControlName="name" placeholder="Enter name" />
-  </z-form-control>
-</z-form-field>
-
-<z-form-field>
-  <label z-form-label>Description</label>
-  <z-form-control>
-    <input z-input type="text" formControlName="description" placeholder="Optional" />
-  </z-form-control>
-</z-form-field>
-```
-
+    <z-form-field>
+      <label z-form-label>Description</label>
+      <z-form-control>
+        <input z-input type="text" formControlName="description" placeholder="Optional" />
+      </z-form-control>
+    </z-form-field>
   </form>
-
 </ng-template>
 
-<!-- PAGE HEADER -->
+<!-- ================= EDIT PROJECT DIALOG ================= -->
+
+<ng-template #editProjectDialog>
+  <form [formGroup]="editForm" class="space-y-4">
+    <z-form-field>
+      <label z-form-label>Project Code</label>
+      <z-form-control>
+        <input z-input formControlName="projectCode" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Name</label>
+      <z-form-control>
+        <input z-input formControlName="name" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Description</label>
+      <z-form-control>
+        <input z-input formControlName="description" />
+      </z-form-control>
+    </z-form-field>
+  </form>
+</ng-template>
+
+<!-- ================= PAGE HEADER ================= -->
 
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
   <h2 class="text-xl font-bold">Projects</h2>
 
-<button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">
-Create Project </button>
-
+  <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">Create Project</button>
 </div>
 
 <!-- ================= DESKTOP TABLE ================= -->
 
 <div class="hidden md:block overflow-x-auto border rounded-lg">
-
   <table z-table class="w-full min-w-[700px]">
+    ```
+    <thead z-table-header>
+      <tr z-table-row>
+        <th z-table-head>Code</th>
+        <th z-table-head>Name</th>
+        <th z-table-head>Status</th>
+        <th z-table-head>Action</th>
+      </tr>
+    </thead>
 
-<thead z-table-header>
-  <tr z-table-row>
-    <th z-table-head>Code</th>
-    <th z-table-head>Name</th>
-    <th z-table-head>Status</th>
-    <th z-table-head>Action</th>
-  </tr>
-</thead>
+    <tbody z-table-body *ngIf="projects$ | async as projects">
+      <tr z-table-row *ngFor="let p of projects">
+        <td z-table-cell>{{ p.projectCode }}</td>
 
-<tbody z-table-body *ngIf="projects$ | async as projects">
+        <td z-table-cell>{{ p.name }}</td>
 
-  <tr z-table-row *ngFor="let p of projects">
+        <td z-table-cell>
+          <span
+            class="px-2 py-1 rounded text-xs font-medium"
+            [ngClass]="
+              p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            "
+          >
+            {{ p.status }}
+          </span>
+        </td>
 
-    <td z-table-cell>{{ p.projectCode }}</td>
+        <td z-table-cell class="flex gap-2">
+          <!-- EDIT BUTTON -->
+          <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(p)">Edit</button>
 
-    <td z-table-cell>{{ p.name }}</td>
-
-    <td z-table-cell>
-      <span
-        class="px-2 py-1 rounded text-xs font-medium"
-        [ngClass]="
-          p.status === 'ACTIVE'
-            ? 'bg-green-100 text-green-700'
-            : 'bg-red-100 text-red-700'
-        "
-      >
-        {{ p.status }}
-      </span>
-    </td>
-
-    <td z-table-cell>
-      <button
-        z-button
-        zSize="sm"
-        [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
-        (click)="toggleProjectStatus(p)"
-      >
-        {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-      </button>
-    </td>
-
-  </tr>
-
-</tbody>
-
+          <!-- STATUS BUTTON -->
+          <button
+            z-button
+            zSize="sm"
+            [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
+            (click)="toggleProjectStatus(p)"
+          >
+            {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+          </button>
+        </td>
+      </tr>
+    </tbody>
   </table>
-
 </div>
 
 <!-- ================= MOBILE CARDS ================= -->
 
 <div class="md:hidden space-y-3" *ngIf="projects$ | async as projects">
+  <div *ngFor="let p of projects" class="border rounded-lg p-4 bg-white shadow-sm">
+    <div class="flex justify-between items-start">
+      <div>
+        <h3 class="font-semibold">{{ p.name }}</h3>
+        <p class="text-sm text-gray-500">Code: {{ p.projectCode }}</p>
+      </div>
 
-  <div
-    *ngFor="let p of projects"
-    class="border rounded-lg p-4 bg-white shadow-sm"
-  >
+      <span
+        class="px-2 py-1 rounded text-xs font-medium"
+        [ngClass]="
+          p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        "
+      >
+        {{ p.status }}
+      </span>
+    </div>
 
-<div class="flex justify-between items-start">
+    <div class="flex gap-2 mt-3">
+      <!-- EDIT BUTTON -->
+      <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(p)">Edit</button>
 
-  <div>
-    <h3 class="font-semibold">{{ p.name }}</h3>
-    <p class="text-sm text-gray-500">
-      Code: {{ p.projectCode }}
-    </p>
+      <!-- STATUS BUTTON -->
+      <button
+        z-button
+        class="flex-1"
+        [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
+        (click)="toggleProjectStatus(p)"
+      >
+        {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+      </button>
+    </div>
   </div>
-
-  <span
-    class="px-2 py-1 rounded text-xs font-medium"
-    [ngClass]="
-      p.status === 'ACTIVE'
-        ? 'bg-green-100 text-green-700'
-        : 'bg-red-100 text-red-700'
-    "
-  >
-    {{ p.status }}
-  </span>
-
-</div>
-
-<button
-  z-button
-  class="w-full mt-3"
-  [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
-  (click)="toggleProjectStatus(p)"
->
-  {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-</button>
-
-
-  </div>
-
 </div>
