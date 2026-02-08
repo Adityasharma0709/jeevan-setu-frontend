@@ -1,127 +1,113 @@
 <z-layout class="min-h-screen flex border">
 
-  <!-- FLOATING TOGGLE BUTTON (MOBILE) -->
-  <!-- <button
-    type="button"
-    z-button
-    zType="ghost"
-    zSize="sm"
-    class="fixed top-4 left-4 z-50 md:hidden"
-    (click)="toggleSidebar()"
-  >
-    <z-icon [zType]="sidebarCollapsed ? 'chevron-right' : 'chevron-left'" />
-  </button> -->
+  <!-- ================= MOBILE OVERLAY ================= -->
 
-  <!-- OVERLAY (MOBILE) -->
-  <div
-    *ngIf="!sidebarCollapsed && isMobile"
-    class="fixed inset-0 bg-black/40 z-40"
-    (click)="closeSidebar()"
-  ></div>
-
-  <!-- SIDEBAR -->
-  <z-sidebar
+  <!-- ================= SIDEBAR ================= -->
+<z-sidebar
   [zWidth]="250"
-  [zCollapsible]="true"
+  [zCollapsible]="isMobile"
   [zCollapsed]="sidebarCollapsed"
   [zCollapsedWidth]="70"
   (zCollapsedChange)="sidebarCollapsed = $event"
   class="p-0!"
 >
-  <nav
-    [class]="'flex h-full flex-col overflow-hidden ' + (sidebarCollapsed ? 'gap-1 p-1 pt-4' : 'gap-4 p-4')"
-  >
 
-    <!-- MAIN -->
-    <z-sidebar-group>
-      @if (!sidebarCollapsed) {
-        <z-sidebar-group-label>Menu</z-sidebar-group-label>
-      }
+    <nav
+      class="flex h-full flex-col overflow-hidden"
+      [ngClass]="sidebarCollapsed ? 'gap-1 p-1 pt-4' : 'gap-4 p-4'"
+    >
 
-      <!-- Dashboard -->
-      <a
-        routerLink="/super-admin"
-        routerLinkActive="active-link"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="menu-link"
-        [class.justify-center]="sidebarCollapsed"
-        [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
-        zPosition="right"
-      >
-        <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-        @if (!sidebarCollapsed) { <span>Dashboard</span> }
-      </a>
+      <!-- ===== MENU GROUP ===== -->
+      <z-sidebar-group>
 
-      <!-- Admins -->
-      <a
-        routerLink="/super-admin/create-admin"
-        routerLinkActive="active-link"
-        class="menu-link"
-        [class.justify-center]="sidebarCollapsed"
-        [zTooltip]="sidebarCollapsed ? 'Admins' : ''"
-        zPosition="right"
-      >
-        <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-        @if (!sidebarCollapsed) { <span>Admins</span> }
-      </a>
+        @if (!sidebarCollapsed) {
+          <z-sidebar-group-label>Menu</z-sidebar-group-label>
+        }
 
-      <!-- Projects -->
-      <a
-        routerLink="/super-admin/projects"
-        routerLinkActive="active-link"
-        class="menu-link"
-        [class.justify-center]="sidebarCollapsed"
-        [zTooltip]="sidebarCollapsed ? 'Projects' : ''"
-        zPosition="right"
-      >
-        <z-icon zType="layers" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-        @if (!sidebarCollapsed) { <span>Projects</span> }
-      </a>
+        <!-- Dashboard -->
+        <a
+          routerLink="/super-admin"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="menu-link"
+          [class.justify-center]="sidebarCollapsed"
+          [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
+          zPosition="right"
+        >
+          <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Dashboard</span> }
+        </a>
 
-      <!-- Locations -->
-      <a
-        routerLink="/super-admin/locations"
-        routerLinkActive="active-link"
-        class="menu-link"
-        [class.justify-center]="sidebarCollapsed"
-        [zTooltip]="sidebarCollapsed ? 'Locations' : ''"
-        zPosition="right"
-      >
-        <z-icon zType="arrow-up-right" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-        @if (!sidebarCollapsed) { <span>Locations</span> }
-      </a>
-    </z-sidebar-group>
+        <!-- Admins -->
+        <a
+          routerLink="/super-admin/create-admin"
+          routerLinkActive="active-link"
+          class="menu-link"
+          [class.justify-center]="sidebarCollapsed"
+          [zTooltip]="sidebarCollapsed ? 'Admins' : ''"
+          zPosition="right"
+        >
+          <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Admins</span> }
+        </a>
 
-    <!-- PUSH LOGOUT TO BOTTOM -->
-    <div class="mt-auto p-2 border-t">
+        <!-- Projects -->
+        <a
+          routerLink="/super-admin/projects"
+          routerLinkActive="active-link"
+          class="menu-link"
+          [class.justify-center]="sidebarCollapsed"
+          [zTooltip]="sidebarCollapsed ? 'Projects' : ''"
+          zPosition="right"
+        >
+          <z-icon zType="layers" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Projects</span> }
+        </a>
 
-      <button
-        type="button"
-        z-button
-        zType="ghost"
-        class="menu-link text-red-600 hover:bg-red-50"
-        [class.justify-center]="sidebarCollapsed"
-        [zTooltip]="sidebarCollapsed ? 'Logout' : ''"
-        zPosition="right"
-        (click)="logout()"
-      >
-        <z-icon zType="log-out" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-        @if (!sidebarCollapsed) { <span>Logout</span> }
-      </button>
+        <!-- Locations -->
+        <a
+          routerLink="/super-admin/locations"
+          routerLinkActive="active-link"
+          class="menu-link"
+          [class.justify-center]="sidebarCollapsed"
+          [zTooltip]="sidebarCollapsed ? 'Locations' : ''"
+          zPosition="right"
+        >
+          <z-icon zType="arrow-up-right" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Locations</span> }
+        </a>
 
-    </div>
+      </z-sidebar-group>
 
-  </nav>
-</z-sidebar>
+      <!-- ===== LOGOUT ===== -->
+      <div class="mt-auto p-2 border-t">
 
+        <button
+          type="button"
+          z-button
+          zType="ghost"
+          class="menu-link text-red-600 hover:bg-red-50"
+          [class.justify-center]="sidebarCollapsed"
+          [zTooltip]="sidebarCollapsed ? 'Logout' : ''"
+          zPosition="right"
+          (click)="logout()"
+        >
+          <z-icon zType="log-out" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Logout</span> }
+        </button>
 
-  <!-- MAIN AREA -->
-  <z-layout class="flex flex-col flex-1">
+      </div>
+
+    </nav>
+  </z-sidebar>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <div class="flex flex-col flex-1">
 
     <z-content class="flex-1 overflow-y-auto p-6 bg-gray-50">
       <router-outlet></router-outlet>
     </z-content>
 
-  </z-layout>
+  </div>
 
 </z-layout>

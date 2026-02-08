@@ -1,7 +1,5 @@
-import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
-
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardTooltipDirective } from '@/shared/components/tooltip';
 
@@ -13,12 +11,9 @@ import {
   SidebarGroupComponent,
   SidebarGroupLabelComponent,
 } from '@/shared/components/layout';
-
+import { CommonModule } from '@angular/common';
 @Component({
-  selector: 'app-super-layout',
-  standalone: true,
-  templateUrl: './layout.html',
-  styleUrls: ['./layout.css'],
+  selector: 'app-layout',
   imports: [
     CommonModule,
     RouterModule,
@@ -27,21 +22,26 @@ import {
     SidebarComponent,
     ContentComponent,
     FooterComponent,
+    ZardIconComponent,
     SidebarGroupComponent,
     SidebarGroupLabelComponent,
-    ZardIconComponent,
     ZardTooltipDirective,
   ],
+  templateUrl: './layout.html',
+  styleUrl: './layout.css',
 })
+
 export class Layout {
+
   sidebarCollapsed = false;
-  isMobile = window.innerWidth < 768;
+  isMobile = false;
 
   constructor(private router: Router) {}
 
-  // =========================
-  // SIDEBAR CONTROLS
-  // =========================
+  ngOnInit() {
+    this.isMobile = window.innerWidth < 768;
+    this.sidebarCollapsed = this.isMobile;
+  }
 
   toggleSidebar() {
     this.sidebarCollapsed = !this.sidebarCollapsed;
@@ -53,25 +53,19 @@ export class Layout {
     }
   }
 
-  // =========================
-  // LOGOUT
-  // =========================
-
   logout() {
     localStorage.clear();
     this.router.navigate(['/login']);
   }
 
-  // =========================
-  // RESPONSIVE LISTENER
-  // =========================
-
   @HostListener('window:resize')
   onResize() {
+    const wasMobile = this.isMobile;
     this.isMobile = window.innerWidth < 768;
 
-    if (this.isMobile) {
-      this.sidebarCollapsed = true;
+    if (this.isMobile !== wasMobile) {
+      this.sidebarCollapsed = this.isMobile;
     }
   }
 }
+
