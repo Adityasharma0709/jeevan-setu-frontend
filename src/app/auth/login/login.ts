@@ -8,28 +8,24 @@ import { Router } from '@angular/router';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './login.html'
+  templateUrl: './login.html',
 })
 export class LoginComponent {
-
   form;
 
   constructor(
     private fb: FormBuilder,
     private api: ApiService,
-    private router: Router
+    private router: Router,
   ) {
     this.form = this.fb.group({
       email: ['', Validators.required],
-      password: ['', Validators.required]
+      password: ['', Validators.required],
     });
   }
 
-submit() {
-
-  this.api.post('auth/login', this.form.value)
-    .subscribe((res: any) => {
-
+  submit() {
+    this.api.post('auth/login', this.form.value).subscribe((res: any) => {
       // save token
       localStorage.setItem('token', res.accessToken);
 
@@ -37,15 +33,13 @@ submit() {
 
       if (roles.includes('SUPER_ADMIN')) {
         this.router.navigate(['/super-admin']);
-      }
-      else if (roles.includes('ADMIN')) {
+      } else if (roles.includes('ADMIN')) {
         this.router.navigate(['/admin']);
-      }
-      else if (roles.includes('MANAGER')) {
+      } else if (roles.includes('MANAGER')) {
         this.router.navigate(['/manager']);
+      } else if (roles.includes('OUTREACH')) {
+        this.router.navigate(['/outreach']);
       }
-
     });
-}
-
+  }
 }

@@ -20,5 +20,22 @@ export const routes: Routes = [
       ),
   },
 
+  {
+    path: 'manager',
+    loadChildren: () =>
+      import('./manager/manager-module').then(
+        (m) => m.ManagerModule
+      ),
+  },
+
+  {
+    path: 'outreach',
+    loadChildren: () =>
+      import('./outreach/outreach-module').then(
+        (m) => m.OutreachModule
+      ),
+  },
+
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];
+

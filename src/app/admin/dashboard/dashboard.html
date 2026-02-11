@@ -1,1 +1,54 @@
-<p>dashboard works!</p>
+<div class="mb-8">
+    <h2 class="text-2xl font-bold mb-2">Admin Dashboard</h2>
+    <p class="text-gray-600">Overview of system activities and beneficiary groups.</p>
+</div>
+
+<div *ngIf="stats$ | async as stats" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Total Groups -->
+    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+        <div class="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <z-icon zType="users" />
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Total Groups</p>
+            <h3 class="text-2xl font-bold">{{ stats.totalGroups }}</h3>
+        </div>
+    </div>
+
+    <!-- Total Activities -->
+    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+        <div class="w-12 h-12 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+            <z-icon zType="activity" />
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Total Activities</p>
+            <h3 class="text-2xl font-bold">{{ stats.totalActivities }}</h3>
+        </div>
+    </div>
+
+    <!-- Total Sessions -->
+    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+        <div class="w-12 h-12 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+            <z-icon zType="calendar" />
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Total Sessions</p>
+            <h3 class="text-2xl font-bold">{{ stats.totalSessions }}</h3>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="stats$ | async as stats" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <h3 class="text-lg font-bold mb-4">Activity Participation</h3>
+        <div class="space-y-4">
+            <div *ngFor="let stat of stats.reportStats" class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Activity #{{ stat.activityId }}</span>
+                <span class="px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold">{{ stat._count }} Reports</span>
+            </div>
+            <div *ngIf="!stats.reportStats?.length" class="text-center py-8 text-gray-400 italic">
+                No report data available yet.
+            </div>
+        </div>
+    </div>
+</div>

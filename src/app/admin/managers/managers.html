@@ -1,1 +1,116 @@
-<p>managers works!</p>
+<!-- ================= PAGE HEADER ================= -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h2 class="text-xl font-bold">Managers Management</h2>
+    <button z-button (click)="openCreateDialog()">
+        <z-icon zType="plus" class="mr-2" />
+        Create Manager
+    </button>
+</div>
+
+<!-- ================= SEARCH & FILTERS ================= -->
+<div class="mb-6">
+    <div class="max-w-md">
+        <input z-input [formControl]="searchControl" placeholder="Search managers by name or email..." />
+    </div>
+</div>
+
+<!-- ================= MANAGERS TABLE ================= -->
+<div class="bg-white border rounded-lg overflow-hidden">
+    <table z-table class="w-full">
+        <thead z-table-header>
+            <tr z-table-row>
+                <th z-table-head>Name</th>
+                <th z-table-head>Email</th>
+                <th z-table-head>Status</th>
+                <th z-table-head class="text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody z-table-body>
+            <tr z-table-row *ngFor="let manager of managers$ | async">
+                <td z-table-cell class="font-medium">{{ manager.name }}</td>
+                <td z-table-cell class="text-gray-600">{{ manager.email }}</td>
+                <td z-table-cell>
+                    <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
+              manager.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            ">
+                        {{ manager.status }}
+                    </span>
+                </td>
+                <td z-table-cell class="text-right">
+                    <div class="flex justify-end gap-2">
+                        <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(manager)">
+                            Edit
+                        </button>
+                        <button z-button zType="default" zSize="sm" (click)="openAssignDialog(manager)">
+                            Assign Project
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr z-table-row *ngIf="(managers$ | async)?.length === 0">
+                <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
+                    No managers found.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ================= CREATE/EDIT DIALOG ================= -->
+<ng-template #managerDialog>
+    <form [formGroup]="managerForm" class="space-y-4 py-2">
+        <z-form-field>
+            <label z-form-label zRequired>Full Name</label>
+            <z-form-control>
+                <input z-input type="text" formControlName="name" placeholder="Enter name" />
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+            <label z-form-label zRequired>Email Address</label>
+            <z-form-control>
+                <input z-input type="email" formControlName="email" placeholder="manager@example.com" />
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field *ngIf="!isEditing">
+            <label z-form-label zRequired>Password</label>
+            <z-form-control>
+                <input z-input type="password" formControlName="password" placeholder="Enter password" />
+            </z-form-control>
+        </z-form-field>
+    </form>
+</ng-template>
+
+<!-- ================= ASSIGN PROJECT DIALOG ================= -->
+<ng-template #assignDialog>
+    <form [formGroup]="assignForm" class="space-y-5 py-2">
+        <p class="text-sm text-gray-600 mb-4">
+            Select a project and location to assign to <strong>{{ targetManager?.name }}</strong>.
+        </p>
+
+        <z-form-field>
+            <label z-form-label zRequired>Project</label>
+            <z-form-control>
+                <select z-input formControlName="projectId">
+                    <option value="">Select a project</option>
+                    <option *ngFor="let p of projects$ | async" [value]="p.id">
+                        {{ p.name }} ({{ p.projectCode }})
+                    </option>
+                </select>
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+            <label z-form-label zRequired>Location</label>
+            <z-form-control>
+                <select z-input formControlName="locationId" [disabled]="!assignForm.value.projectId">
+                    <option value="">Select a location</option>
+                    <option *ngFor="let l of locations$ | async" [value]="l.id">
+                        {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
+                    </option>
+                </select>
+            </z-form-control>
+        </z-form-field>
+    </form>
+</ng-template>

@@ -1,7 +1,8 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, startWith, switchMap } from 'rxjs';
+import { Observable, Subject, startWith, switchMap, map, combineLatest, of, tap, forkJoin } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { toast } from 'ngx-sonner';
 
 import { ApiService } from '../../core/services/api';
@@ -23,12 +24,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 
-interface Project {
-  id: number;
-  projectCode: string;
-  name: string;
-  status: string;
-}
+import { ProjectsService, Project } from './projects.service';
 
 @Component({
   selector: 'app-projects',
@@ -58,19 +54,54 @@ export class ProjectsComponent {
 
   form!: FormGroup;
   editForm!: FormGroup;
+  assignForm!: FormGroup;
+
+  // ✅ Search controls
+  projectSearch = new FormControl('');
+  adminSearch = new FormControl('');
+
+  isAssigning = false;
+  targetAdmin: any | null = null;
 
   // ✅ refresh trigger stream
   private refresh$ = new Subject<void>();
 
-  // ✅ stable observable (never reassigned)
-  projects$: Observable<Project[]> = this.refresh$.pipe(
-    startWith(void 0),
-    switchMap(() => this.api.get('projects') as Observable<Project[]>),
+  // ✅ server-side search stream
+  projects$: Observable<Project[]> = combineLatest([
+    this.refresh$.pipe(startWith(void 0)),
+    this.projectSearch.valueChanges.pipe(
+      startWith(''),
+      debounceTime(300),
+      distinctUntilChanged()
+    )
+  ]).pipe(
+    switchMap(([_, query]) => this.projectService.findAll(query || ''))
   );
+
+  admins$: Observable<any[]> = this.refresh$.pipe(
+    startWith(void 0),
+    switchMap(() => this.api.get('users/admins') as Observable<any[]>),
+  );
+
+  // ✅ Filtered admins (still client-side for now as no change requested for users)
+  filteredAdmins$: Observable<any[]> = combineLatest([
+    this.admins$,
+    this.adminSearch.valueChanges.pipe(startWith('')),
+  ]).pipe(
+    map(([admins, query]) => {
+      const q = query?.toLowerCase() || '';
+      return admins.filter(a =>
+        a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q)
+      );
+    })
+  );
+
+  locations$!: Observable<any[]>;
 
   constructor(
     private fb: FormBuilder,
     private api: ApiService,
+    private projectService: ProjectsService,
     private dialog: ZardDialogService,
   ) {
     this.form = this.fb.group({
@@ -78,11 +109,22 @@ export class ProjectsComponent {
       name: [''],
       description: [''],
     });
-     this.editForm=this.fb.group({
-    projectCode: [''],
-    name: [''],
-    description: [''],
-  });
+    this.editForm = this.fb.group({
+      projectCode: [''],
+      name: [''],
+      description: [''],
+    });
+
+    this.assignForm = this.fb.group({
+      projectId: [''],
+      locationId: [''],
+    });
+
+    // Reactive locations logic
+    this.locations$ = this.assignForm.get('projectId')!.valueChanges.pipe(
+      tap(() => this.assignForm.patchValue({ locationId: '' })),
+      switchMap(id => (id ? (this.api.get(`locations?projectId=${id}`) as Observable<any[]>) : of([])))
+    );
   }
 
   // =============================
@@ -109,7 +151,7 @@ export class ProjectsComponent {
   }
 
   submit() {
-    this.api.post('projects', this.form.value).subscribe({
+    this.projectService.create(this.form.value).subscribe({
       next: () => {
         toast.success('Project created successfully');
 
@@ -154,7 +196,7 @@ export class ProjectsComponent {
   }
 
   updateProject(id: number) {
-    this.api.put(`projects/${id}`, this.editForm.value).subscribe(() => {
+    this.projectService.update(id, this.editForm.value).subscribe(() => {
       toast.success('Project updated');
       this.refresh$.next();
       this.dialogRef.close();
@@ -167,7 +209,7 @@ export class ProjectsComponent {
   toggleProjectStatus(project: Project) {
     const status = project.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
-    this.api.patch(`projects/${project.id}/status`, { status }).subscribe({
+    this.projectService.updateStatus(project.id, status).subscribe({
       next: () => {
         toast.success(status === 'ACTIVE' ? 'Project activated' : 'Project deactivated');
 
@@ -177,4 +219,82 @@ export class ProjectsComponent {
       error: () => toast.error('Failed to update status'),
     });
   }
+
+  // =============================
+  // DISABLE PROJECT
+  // =============================
+
+  disableProject(id: number) {
+    if (!confirm('Are you sure you want to disable this project?')) return;
+
+    this.projectService.disable(id).subscribe({
+      next: () => {
+        toast.success('Project disabled');
+        this.refresh$.next();
+      },
+      error: () => toast.error('Failed to disable project'),
+    });
+  }
+
+  @ViewChild('assignDialog')
+  assignDialog!: TemplateRef<any>;
+
+  openAssignDialog(admin: any) {
+    this.targetAdmin = admin;
+
+    this.dialogRef = this.dialog.create({
+      zTitle: `Assign Projects to ${admin.name}`,
+      zContent: this.assignDialog,
+      zOkText: 'Assign',
+      zCancelText: 'Cancel',
+      zWidth: '400px',
+
+      zOnOk: () => {
+        this.assignProjects();
+        return false;
+      },
+      zOnCancel: () => {
+        this.targetAdmin = null;
+        this.assignForm.reset();
+      }
+    });
+  }
+
+  assignProjects() {
+    const { projectId, locationId } = this.assignForm.value;
+
+    if (!projectId || !locationId) {
+      toast.error('Please select both project and location');
+      return;
+    }
+
+    if (!this.targetAdmin) {
+      toast.error('No admin selected');
+      return;
+    }
+
+    this.isAssigning = true;
+
+    this.api.post('users/assign', {
+      userId: this.targetAdmin.id,
+      projectId: Number(projectId),
+      locationId: Number(locationId),
+    }).subscribe({
+      next: () => {
+        toast.success(`Successfully assigned to ${this.targetAdmin.name}`);
+        this.targetAdmin = null;
+        this.assignForm.reset();
+        this.refresh$.next();
+        this.isAssigning = false;
+        this.dialogRef?.close();
+      },
+      error: (err) => {
+        console.error('Assignment error:', err);
+        const msg = err.error?.message || 'Assignment failed';
+        toast.error(typeof msg === 'string' ? msg : 'Assignment failed');
+        this.isAssigning = false;
+      },
+    });
+  }
+
 }

@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 export class ApiService {
   private baseUrl = 'http://localhost:3000';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   post(url: string, data: any) {
     return this.http.post(`${this.baseUrl}/${url}`, data);
@@ -23,6 +23,11 @@ export class ApiService {
   patch(url: string, data: any) {
     return this.http.patch(`${this.baseUrl}/${url}`, data);
   }
+
+  // DELETE
+  delete(url: string) {
+    return this.http.delete(`${this.baseUrl}/${url}`);
+  }
 }
 
-export class Api {}
+export class Api { }

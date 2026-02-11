@@ -1,0 +1,231 @@
+<!-- ================= LIST VIEW ================= -->
+<div *ngIf="viewMode === 'list'" class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h2 class="text-xl font-bold">Beneficiaries</h2>
+    <button z-button (click)="toggleView()">Create Beneficiary</button>
+  </div>
+
+  <div class="border rounded-lg overflow-x-auto">
+    <table z-table class="w-full min-w-[800px]">
+      <thead z-table-header>
+        <tr z-table-row>
+          <th z-table-head>Name</th>
+          <th z-table-head>Mobile</th>
+          <th z-table-head>Guardian</th>
+          <th z-table-head>Location</th>
+          <th z-table-head>Actions</th>
+        </tr>
+      </thead>
+      <tbody z-table-body>
+        <tr z-table-row *ngFor="let b of (beneficiaries$ | async) || []">
+          <td z-table-cell>{{ b.name }}</td>
+          <td z-table-cell>{{ b.mobileNumber }}</td>
+          <td z-table-cell>{{ b.guardianName }}</td>
+          <td z-table-cell>{{ b.location?.village || '-' }}</td>
+          <td z-table-cell>
+            <button z-button zSize="sm" zType="destructive" (click)="delete(b.id)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="(beneficiaries$ | async)?.length === 0" class="text-center">
+          <td colspan="5" class="p-4 text-gray-500">No beneficiaries found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ================= FORM VIEW ================= -->
+<div *ngIf="viewMode === 'form'">
+  <div class="mb-6">
+    <button z-button zType="ghost" (click)="toggleView()">← Back to List</button>
+  </div>
+
+  <form [formGroup]="form" class="max-w-4xl mx-auto space-y-6">
+    <!-- ================= PROGRESS BAR ================= -->
+
+    <div class="space-y-2">
+      <div class="flex justify-between text-sm text-gray-600">
+        <span>Step {{ step }} of {{ totalSteps }}</span>
+        <span>{{ progress }}%</span>
+      </div>
+
+      <z-progress-bar [progress]="progress" zType="default" zSize="lg"> </z-progress-bar>
+    </div>
+
+    <!-- ================= STEP 1 ================= -->
+
+    <div *ngIf="step === 1" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+      <z-form-field>
+        <label z-form-label zRequired>Project</label>
+        <z-form-control>
+          <select z-input formControlName="projectId">
+            <option value="">Select project</option>
+            <option *ngFor="let p of projects$ | async" [value]="p.id">
+              {{ p.name }}
+            </option>
+          </select>
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Location</label>
+        <z-form-control>
+          <select class="w-full border rounded px-3 py-2" formControlName="locationId">
+            <option value="">Select location</option>
+
+            <option *ngFor="let l of (locations$ | async) || []" [value]="l.id">
+              {{ l.locationCode }} - {{ l.village }}
+            </option>
+          </select>
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Mobile Number</label>
+        <z-form-control>
+          <input z-input formControlName="mobileNumber" />
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Name</label>
+        <z-form-control>
+          <input z-input formControlName="name" />
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Gender</label>
+        <z-form-control>
+          <select z-input formControlName="gender">
+            <option value="">Select</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Guardian Name</label>
+        <z-form-control>
+          <input z-input formControlName="guardianName" />
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Date of Birth</label>
+        <z-form-control>
+          <input z-input type="date" formControlName="dateOfBirth" />
+        </z-form-control>
+      </z-form-field>
+    </div>
+
+    <!-- ================= STEP 2 ================= -->
+
+    <div *ngIf="step === 2" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <z-form-field>
+        <label z-form-label>Marital Status</label>
+        <z-form-control>
+          <select z-input formControlName="maritalStatus">
+            <option value="">Select</option>
+            <option>Single</option>
+            <option>Married</option>
+          </select>
+        </z-form-control>
+      </z-form-field>
+
+      <ng-container *ngIf="isMarried()">
+        <z-form-field>
+          <label z-form-label>Date of Marriage</label>
+          <z-form-control>
+            <input z-input type="date" formControlName="dateOfMarriage" />
+          </z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Woman Age at Marriage</label>
+          <z-form-control>
+            <input z-input type="number" formControlName="womanAgeAtMarriage" />
+          </z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Husband Age at Marriage</label>
+          <z-form-control>
+            <input z-input type="number" formControlName="husbandAgeAtMarriage" />
+          </z-form-control>
+        </z-form-field>
+      </ng-container>
+    </div>
+
+    <!-- ================= STEP 3 ================= -->
+
+    <div *ngIf="step === 3" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <z-form-field>
+        <label z-form-label zRequired>Qualification</label>
+        <z-form-control>
+          <input z-input formControlName="qualification" />
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Religion</label>
+        <z-form-control>
+          <input z-input formControlName="religion" />
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Caste</label>
+        <z-form-control>
+          <input z-input formControlName="caste" />
+        </z-form-control>
+      </z-form-field>
+    </div>
+
+    <!-- ================= STEP 4 ================= -->
+
+    <div *ngIf="step === 4" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <z-form-field>
+        <label z-form-label zRequired>Monthly Income</label>
+        <z-form-control>
+          <input z-input type="number" formControlName="monthlyIncome" />
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Economic Status</label>
+        <z-form-control>
+          <input z-input formControlName="economicStatus" />
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Primary Income Source</label>
+        <z-form-control>
+          <input z-input formControlName="primaryIncomeSource" />
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Employment Status</label>
+        <z-form-control>
+          <input z-input formControlName="employmentStatus" />
+        </z-form-control>
+      </z-form-field>
+    </div>
+
+    <!-- ================= NAVIGATION BUTTONS ================= -->
+
+    <div class="flex justify-between pt-4">
+      <button z-button type="button" zType="ghost" (click)="prev()" *ngIf="step > 1">Previous</button>
+
+      <button z-button type="button" (click)="next()" *ngIf="step < totalSteps">Next</button>
+
+      <button z-button type="button" (click)="submit()" *ngIf="step === totalSteps">
+        Submit
+      </button>
+    </div>
+  </form>
+</div>

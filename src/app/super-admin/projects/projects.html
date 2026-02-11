@@ -52,20 +52,56 @@
   </form>
 </ng-template>
 
+<!-- ================= ASSIGN PROJECT DIALOG ================= -->
+
+<ng-template #assignDialog>
+  <form [formGroup]="assignForm" class="space-y-5">
+    <z-form-field>
+      <label z-form-label zRequired>Project</label>
+      <z-form-control>
+        <select z-input formControlName="projectId">
+          <option value="">Select a project</option>
+          <option *ngFor="let p of projects$ | async" [value]="p.id">
+            {{ p.name }} ({{ p.projectCode }})
+          </option>
+        </select>
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>Location</label>
+      <z-form-control>
+        <select z-input formControlName="locationId" [disabled]="!assignForm.value.projectId">
+          <option value="">Select a location</option>
+          <option *ngFor="let l of locations$ | async" [value]="l.id">
+            {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
+          </option>
+        </select>
+      </z-form-control>
+    </z-form-field>
+  </form>
+</ng-template>
+
 <!-- ================= PAGE HEADER ================= -->
 
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-  <h2 class="text-xl font-bold">Projects</h2>
+  <div class="flex items-center gap-4">
+    <h2 class="text-xl font-bold">Projects</h2>
+  </div>
 
   <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">Create Project</button>
+</div>
+
+<!-- ================= SEARCH PROJECTS ================= -->
+<div class="mb-4">
+  <input z-input [formControl]="projectSearch" placeholder="Search projects by name or code..." class="max-w-md" />
 </div>
 
 <!-- ================= DESKTOP TABLE ================= -->
 
 <div class="hidden md:block overflow-x-auto border rounded-lg">
   <table z-table class="w-full min-w-[700px]">
-    ```
-    <thead z-table-header>
+    <thead z-table-header *ngIf="projects$ | async as projects">
       <tr z-table-row>
         <th z-table-head>Code</th>
         <th z-table-head>Name</th>
@@ -81,12 +117,9 @@
         <td z-table-cell>{{ p.name }}</td>
 
         <td z-table-cell>
-          <span
-            class="px-2 py-1 rounded text-xs font-medium"
-            [ngClass]="
+          <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
               p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            "
-          >
+            ">
             {{ p.status }}
           </span>
         </td>
@@ -96,20 +129,64 @@
           <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(p)">Edit</button>
 
           <!-- STATUS BUTTON -->
-          <button
-            z-button
-            zSize="sm"
-            [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
-            (click)="toggleProjectStatus(p)"
-          >
+          <button z-button zSize="sm" [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
+            (click)="toggleProjectStatus(p)">
             {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+          </button>
+
+          <!-- DISABLE BUTTON -->
+          <button z-button zSize="sm" zType="destructive" (click)="disableProject(p.id)">
+            Disable
           </button>
         </td>
       </tr>
     </tbody>
   </table>
 </div>
+<!-- ================= SEARCH ADMINS ================= -->
+<div class="mt-8 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  <h2 class="text-xl font-bold">Admins</h2>
+  <input z-input [formControl]="adminSearch" placeholder="Search admins by name or email..." class="max-w-md w-full" />
+</div>
 
+<div class="hidden md:block overflow-x-auto border rounded-lg">
+  <table z-table class="w-full min-w-[700px]">
+    <thead z-table-header *ngIf="filteredAdmins$ | async as admins">
+      <tr z-table-row>
+        <th z-table-head>Name</th>
+        <th z-table-head>Email</th>
+        <th z-table-head>Status</th>
+        <th z-table-head>Action</th>
+      </tr>
+    </thead>
+
+    <tbody z-table-body *ngIf="filteredAdmins$ | async as admins">
+      <tr z-table-row *ngFor="let a of admins">
+        <td z-table-cell>{{ a.name }}</td>
+
+        <td z-table-cell class="text-gray-600">
+          {{ a.email }}
+        </td>
+
+        <td z-table-cell>
+          <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
+              a.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            ">
+            {{ a.status }}
+          </span>
+        </td>
+
+        <td z-table-cell class="flex gap-2">
+          <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(a)">Edit</button>
+
+          <button z-button zSize="sm" zType="default" (click)="openAssignDialog(a)">
+            Assign Project
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 <!-- ================= MOBILE CARDS ================= -->
 
 <div class="md:hidden space-y-3" *ngIf="projects$ | async as projects">
@@ -120,12 +197,9 @@
         <p class="text-sm text-gray-500">Code: {{ p.projectCode }}</p>
       </div>
 
-      <span
-        class="px-2 py-1 rounded text-xs font-medium"
-        [ngClass]="
+      <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
           p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-        "
-      >
+        ">
         {{ p.status }}
       </span>
     </div>
@@ -135,13 +209,41 @@
       <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(p)">Edit</button>
 
       <!-- STATUS BUTTON -->
-      <button
-        z-button
-        class="flex-1"
-        [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
-        (click)="toggleProjectStatus(p)"
-      >
+      <button z-button class="flex-1" [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
+        (click)="toggleProjectStatus(p)">
         {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+      </button>
+
+      <!-- DISABLE BUTTON -->
+      <button z-button zType="destructive" class="flex-1" (click)="disableProject(p.id)">
+        Disable
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MOBILE ADMIN CARDS ================= -->
+<div class="md:hidden space-y-3 mt-8" *ngIf="filteredAdmins$ | async as admins">
+  <h2 class="text-lg font-bold border-t pt-4">Admins</h2>
+  <div *ngFor="let a of admins" class="border rounded-lg p-4 bg-white shadow-sm">
+    <div class="flex justify-between items-start">
+      <div>
+        <h3 class="font-semibold">{{ a.name }}</h3>
+        <p class="text-sm text-gray-500">{{ a.email }}</p>
+      </div>
+
+      <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
+          a.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        ">
+        {{ a.status }}
+      </span>
+    </div>
+
+    <div class="flex gap-2 mt-3">
+      <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(a)">Edit</button>
+
+      <button z-button zType="default" class="flex-1" (click)="openAssignDialog(a)">
+        Assign Project
       </button>
     </div>
   </div>

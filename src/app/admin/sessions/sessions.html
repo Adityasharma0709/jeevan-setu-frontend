@@ -1,1 +1,93 @@
-<p>sessions works!</p>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h2 class="text-xl font-bold">Activity Sessions</h2>
+    <div class="flex gap-2">
+        <select z-input [formControl]="activityControl" class="w-64">
+            <option value="">Select Activity to filter</option>
+            <option *ngFor="let activity of activities$ | async" [value]="activity.id">
+                {{ activity.name }}
+            </option>
+        </select>
+        <button z-button (click)="openCreateDialog()">
+            <z-icon zType="plus" class="mr-2" />
+            Create Session
+        </button>
+    </div>
+</div>
+
+<div class="bg-white border rounded-lg overflow-hidden">
+    <table z-table class="w-full">
+        <thead z-table-header>
+            <tr z-table-row>
+                <th z-table-head>Session Name</th>
+                <th z-table-head>Date</th>
+                <th z-table-head>Status</th>
+                <th z-table-head class="text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody z-table-body>
+            <tr z-table-row *ngFor="let session of sessions$ | async">
+                <td z-table-cell class="font-medium">{{ session.name }}</td>
+                <td z-table-cell class="text-gray-600">
+                    {{ session.sessionDate | date:'mediumDate' }}
+                </td>
+                <td z-table-cell>
+                    <span class="px-2 py-1 rounded text-xs font-medium"
+                        [ngClass]="session.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                        {{ session.status }}
+                    </span>
+                </td>
+                <td z-table-cell class="text-right">
+                    <div class="flex justify-end gap-2">
+                        <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(session)">
+                            Edit
+                        </button>
+                        <button *ngIf="session.status === 'ACTIVE'" z-button zType="destructive" zSize="sm"
+                            (click)="deactivateSession(session.id)">
+                            Deactivate
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr z-table-row *ngIf="!activityControl.value">
+                <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
+                    Please select an activity to view sessions.
+                </td>
+            </tr>
+            <tr z-table-row *ngIf="activityControl.value && (sessions$ | async)?.length === 0">
+                <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
+                    No active sessions found for this activity.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<ng-template #sessionDialog>
+    <form [formGroup]="sessionForm" class="space-y-4 py-2">
+        <z-form-field>
+            <label z-form-label zRequired>Session Name</label>
+            <z-form-control>
+                <input z-input type="text" formControlName="name" placeholder="e.g. Week 1 Introduction" />
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+            <label z-form-label zRequired>Activity</label>
+            <z-form-control>
+                <select z-input formControlName="activityId">
+                    <option value="">Choose activity</option>
+                    <option *ngFor="let activity of activities$ | async" [value]="activity.id">
+                        {{ activity.name }}
+                    </option>
+                </select>
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+            <label z-form-label zRequired>Session Date</label>
+            <z-form-control>
+                <input z-input type="date" formControlName="sessionDate" />
+            </z-form-control>
+        </z-form-field>
+    </form>
+</ng-template>
