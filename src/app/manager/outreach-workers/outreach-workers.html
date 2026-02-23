@@ -1,0 +1,127 @@
+<div class="p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Outreach Workers</h1>
+            <p class="text-gray-600">Raise account requests for Outreach Workers in your assigned projects and
+                locations. Admin will approve or reject these requests.</p>
+        </div>
+        <button z-button (click)="openRequestDialog('CREATE')">
+            <z-icon zType="plus" class="mr-2" />
+            Request New Account
+        </button>
+    </div>
+
+    <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
+        <div class="p-4 text-sm text-gray-500 border-b" *ngIf="isLoadingWorkers">
+            Loading outreach workers...
+        </div>
+        <table z-table class="w-full">
+            <thead z-table-header>
+                <tr z-table-row>
+                    <th z-table-head>Name</th>
+                    <th z-table-head>Email</th>
+                    <th z-table-head>Status</th>
+                    <th z-table-head class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody z-table-body>
+                <tr z-table-row *ngFor="let worker of workers">
+                    <td z-table-cell class="font-medium">{{ worker.name }}</td>
+                    <td z-table-cell class="text-gray-600">{{ worker.email }}</td>
+                    <td z-table-cell>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                            [ngClass]="worker.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                            {{ worker.status }}
+                        </span>
+                    </td>
+                    <td z-table-cell class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <button z-button zType="secondary" zSize="sm" (click)="openRequestDialog('MODIFY', worker)">
+                                <z-icon zType="settings" class="mr-1" /> Request Modification
+                            </button>
+                            <button *ngIf="worker.status === 'ACTIVE'" z-button zType="default" zSize="sm"
+                                (click)="openRequestDialog('DEACTIVATE', worker)"
+                                class="text-red-600 border-red-200 hover:bg-red-50">
+                                <z-icon zType="ban" class="mr-1" /> Request Deactivation
+                            </button>
+                            <button *ngIf="worker.status === 'INACTIVE'" z-button zType="default" zSize="sm"
+                                (click)="openRequestDialog('ACTIVATE', worker)"
+                                class="text-green-600 border-green-200 hover:bg-green-50">
+                                <z-icon zType="check" class="mr-1" /> Request Activation
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr z-table-row *ngIf="workers.length === 0">
+                    <td z-table-cell colspan="4" class="text-center py-12 text-gray-500">
+                        No outreach workers found.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<ng-template #requestDialog>
+    <form [formGroup]="requestForm" class="space-y-4 py-2">
+        <p class="text-sm text-gray-600 mb-4" *ngIf="currentAction === 'DEACTIVATE'">
+            Are you sure you want to request deactivation for <strong>{{ selectedWorker?.name }}</strong>?
+        </p>
+        <p class="text-sm text-gray-600 mb-4" *ngIf="currentAction === 'ACTIVATE'">
+            Are you sure you want to request activation for <strong>{{ selectedWorker?.name }}</strong>?
+        </p>
+
+        <z-form-field *ngIf="currentAction !== 'DEACTIVATE' && currentAction !== 'ACTIVATE'">
+            <label z-form-label zRequired>Full Name</label>
+            <z-form-control>
+                <input z-input type="text" formControlName="name" placeholder="Worker Name" />
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field *ngIf="currentAction !== 'DEACTIVATE' && currentAction !== 'ACTIVATE'">
+            <label z-form-label zRequired>Email Address</label>
+            <z-form-control>
+                <input z-input type="email" formControlName="email" placeholder="worker@example.com" />
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field *ngIf="currentAction === 'CREATE'">
+            <label z-form-label zRequired>Password</label>
+            <z-form-control>
+                <input z-input type="password" formControlName="password" placeholder="Minimum 6 characters" />
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field *ngIf="currentAction === 'CREATE'">
+            <label z-form-label zRequired>Project</label>
+            <z-form-control>
+                <select z-input formControlName="projectId">
+                    <option value="">Select project</option>
+                    <option *ngFor="let p of projects" [value]="p.id">
+                        {{ p.name }}
+                    </option>
+                </select>
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field *ngIf="currentAction === 'CREATE'">
+            <label z-form-label zRequired>Location</label>
+            <z-form-control>
+                <select z-input formControlName="locationId">
+                    <option value="">Select location</option>
+                    <option *ngFor="let l of locations" [value]="l.id">
+                        {{ l.name }}
+                    </option>
+                </select>
+            </z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+            <label z-form-label zRequired>Reason</label>
+            <z-form-control>
+                <textarea z-input formControlName="reason" placeholder="Explain why this request is being made..."
+                    rows="3"></textarea>
+            </z-form-control>
+        </z-form-field>
+    </form>
+</ng-template>

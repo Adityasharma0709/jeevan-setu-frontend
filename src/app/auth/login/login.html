@@ -1,19 +1,40 @@
-<h2>Login</h2>
+<main class="login-page">
+  <section class="login-card">
+    <!-- <div class="brand-mark" aria-hidden="true">JS</div> -->
+    <div class="brand flex items-center justify-center gap-2">
+      <h1 class="brand-title">JEEVAN SETU <z-icon zType="sparkles" class="sparkle-icon" aria-hidden="true"></z-icon></h1>
+    </div>
 
-<form [formGroup]="form" (ngSubmit)="submit()">
+    <p class="subtitle">Welcome back. Please sign in to continue.</p>
 
-  <input
-    type="email"
-    placeholder="Email"
-    formControlName="email"
-  >
+    <form [formGroup]="form" (ngSubmit)="submit()" class="login-form" novalidate>
+      <label class="field" for="email">Email</label>
+      <div class="input-wrap">
+        <z-icon zType="mail" zSize="lg" class="field-icon" />
+        <input id="email" type="email" placeholder="Email" formControlName="email" />
+      </div>
 
-  <input
-    type="password"
-    placeholder="Password"
-    formControlName="password"
-  >
+      <label class="field" for="password">Password</label>
+      <div class="password-wrap input-wrap">
+        <z-icon zType="shield" zSize="lg" class="field-icon" />
+        <input
+          id="password"
+          [type]="showPassword ? 'text' : 'password'"
+          placeholder="password"
+          formControlName="password"
+        />
+        <button type="button" class="toggle-btn" (click)="togglePasswordVisibility()">
+          <z-icon zType="eye" zSize="default" class="toggle-icon" />
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
 
-  <button type="submit">Login</button>
+      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
-</form>
+      <button class="login-btn" type="submit" [disabled]="isSubmitting">
+        <z-icon zType="arrow-right" zSize="lg" class="btn-icon" />
+        {{ isSubmitting ? 'Logging in...' : 'Login' }}
+      </button>
+    </form>
+  </section>
+</main>

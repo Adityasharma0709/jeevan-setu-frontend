@@ -1,1 +1,63 @@
-<p>dashboard works!</p>
+﻿<div class="space-y-6">
+  <div class="flex items-center justify-between gap-3 flex-wrap">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Outreach Dashboard</h1>
+      <p class="text-gray-600">Backend-aligned summary based on your assignments and beneficiaries.</p>
+    </div>
+    <div class="flex gap-2">
+      <button z-button routerLink="/outreach/beneficiaries">
+        <z-icon zType="user-plus" class="mr-2" />
+        Add Beneficiary
+      </button>
+      <button z-button zType="secondary" routerLink="/outreach/activity">
+        <z-icon zType="clipboard" class="mr-2" />
+        Submit Report
+      </button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="stats$ | async as stats">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <article class="stat-card">
+        <div class="stat-icon bg-blue-50 text-blue-700"><z-icon zType="users" /></div>
+        <p class="stat-label">Total Beneficiaries</p>
+        <h2 class="stat-value">{{ stats.totalBeneficiaries }}</h2>
+      </article>
+      <article class="stat-card">
+        <div class="stat-icon bg-indigo-50 text-indigo-700"><z-icon zType="folder" /></div>
+        <p class="stat-label">Assigned Projects</p>
+        <h2 class="stat-value">{{ stats.assignedProjects }}</h2>
+      </article>
+      <article class="stat-card">
+        <div class="stat-icon bg-emerald-50 text-emerald-700"><z-icon zType="tag" /></div>
+        <p class="stat-label">Assigned Locations</p>
+        <h2 class="stat-value">{{ stats.assignedLocations }}</h2>
+      </article>
+    </div>
+  </ng-container>
+
+  <section class="bg-white border rounded-xl overflow-hidden">
+    <header class="px-4 py-3 border-b flex items-center justify-between">
+      <h3 class="font-semibold text-gray-800">Recent Beneficiaries</h3>
+      <a routerLink="/outreach/beneficiaries" class="text-sm text-indigo-600 hover:underline">View all</a>
+    </header>
+
+    <div *ngIf="(recentBeneficiaries$ | async) as beneficiaries">
+      <div *ngIf="beneficiaries.length === 0" class="py-10 px-4 text-center text-gray-500">
+        No beneficiaries found for your assignment.
+      </div>
+
+      <ul *ngIf="beneficiaries.length > 0" class="divide-y">
+        <li *ngFor="let beneficiary of beneficiaries" class="px-4 py-3 flex items-center justify-between gap-3">
+          <div>
+            <p class="font-medium text-gray-900">{{ beneficiary.name }}</p>
+            <p class="text-xs text-gray-500">{{ beneficiary.uid }} | {{ beneficiary.mobileNumber }}</p>
+          </div>
+          <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+            {{ beneficiary.location?.village || 'No village' }}
+          </span>
+        </li>
+      </ul>
+    </div>
+  </section>
+</div>

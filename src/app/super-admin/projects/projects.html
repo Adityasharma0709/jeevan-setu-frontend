@@ -82,6 +82,132 @@
   </form>
 </ng-template>
 
+<!-- ================= PROJECT DETAILS DIALOG ================= -->
+
+<ng-template #projectDetailsDialog>
+  <div class="space-y-4">
+    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-500">Project</p>
+        <span
+          class="rounded-full px-2 py-1 text-xs font-medium"
+          [ngClass]="
+            selectedProjectDetails?.status === 'ACTIVE'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-700'
+          "
+        >
+          {{ selectedProjectDetails?.status || '-' }}
+        </span>
+      </div>
+      <p class="mt-1 text-lg font-semibold text-gray-900">{{ selectedProjectDetails?.name || '-' }}</p>
+      <p class="text-sm text-gray-600">Code: {{ selectedProjectDetails?.projectCode || '-' }}</p>
+    </div>
+    <div class="rounded-lg border border-gray-200 p-4">
+      <p class="text-sm text-gray-500">Description</p>
+      <p class="mt-1 font-medium text-gray-900">{{ selectedProjectDetails?.description || '-' }}</p>
+    </div>
+    <div class="rounded-lg border border-gray-200 p-4">
+      <p class="text-sm text-gray-500">Assigned Locations</p>
+      <p class="mt-1 font-medium text-gray-900">
+        {{ formatLocationCodes(selectedProjectDetails?.locations) }}
+      </p>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ================= ASSIGN LOCATION TO PROJECT DIALOG ================= -->
+
+<ng-template #assignLocationDialog>
+  <form [formGroup]="assignLocationForm" class="space-y-5">
+    <z-form-field>
+      <label z-form-label>Project</label>
+      <z-form-control>
+        <input z-input type="text" [value]="targetProject?.name || ''" disabled />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>Location</label>
+      <z-form-control>
+        <ng-container *ngIf="isLoadingLocations$ | async as isLoadingLocations; else locationSelect">
+          <select z-input formControlName="locationId" [disabled]="isLoadingLocations">
+            <option *ngIf="isLoadingLocations" value="" disabled>Loading locations...</option>
+            <option *ngIf="!isLoadingLocations && !availableLocations.length" value="" disabled>
+              No locations available
+            </option>
+            <option *ngIf="!isLoadingLocations && availableLocations.length" value="" disabled>
+              Select a location
+            </option>
+            <option *ngFor="let l of availableLocations" [value]="l.id">
+              {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
+              {{ l.project?.name ? (' (' + l.project?.name + ')') : '' }}
+            </option>
+          </select>
+        </ng-container>
+        <ng-template #locationSelect>
+          <select z-input formControlName="locationId">
+            <option *ngIf="!availableLocations.length" value="" disabled>No locations available</option>
+            <option *ngIf="availableLocations.length" value="" disabled>Select a location</option>
+            <option *ngFor="let l of availableLocations" [value]="l.id">
+              {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
+              {{ l.project?.name ? (' (' + l.project?.name + ')') : '' }}
+            </option>
+          </select>
+        </ng-template>
+      </z-form-control>
+    </z-form-field>
+  </form>
+</ng-template>
+
+<!-- ================= CREATE LOCATION FOR PROJECT DIALOG ================= -->
+
+<ng-template #createLocationDialog>
+  <form [formGroup]="locationForm" class="space-y-4">
+    <z-form-field>
+      <label z-form-label>Project</label>
+      <z-form-control>
+        <input z-input type="text" [value]="targetProject?.name || ''" disabled />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>Location Code</label>
+      <z-form-control>
+        <input z-input type="text" formControlName="locationCode" placeholder="Enter code" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>State</label>
+      <z-form-control>
+        <input z-input type="text" formControlName="state" placeholder="Enter state" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>District</label>
+      <z-form-control>
+        <input z-input type="text" formControlName="district" placeholder="Enter district" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>Block</label>
+      <z-form-control>
+        <input z-input type="text" formControlName="block" placeholder="Enter block" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>Village</label>
+      <z-form-control>
+        <input z-input type="text" formControlName="village" placeholder="Enter village" />
+      </z-form-control>
+    </z-form-field>
+  </form>
+</ng-template>
+
 <!-- ================= PAGE HEADER ================= -->
 
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -94,17 +220,23 @@
 
 <!-- ================= SEARCH PROJECTS ================= -->
 <div class="mb-4">
-  <input z-input [formControl]="projectSearch" placeholder="Search projects by name or code..." class="max-w-md" />
+  <input
+    z-input
+    [formControl]="projectSearch"
+    placeholder="Search projects by name or code..."
+    class="max-w-md"
+  />
 </div>
 
 <!-- ================= DESKTOP TABLE ================= -->
 
 <div class="hidden md:block overflow-x-auto border rounded-lg">
-  <table z-table class="w-full min-w-[700px]">
+  <table z-table class="w-full min-w-175">
     <thead z-table-header *ngIf="projects$ | async as projects">
       <tr z-table-row>
         <th z-table-head>Code</th>
         <th z-table-head>Name</th>
+        <th z-table-head>Locations</th>
         <th z-table-head>Status</th>
         <th z-table-head>Action</th>
       </tr>
@@ -117,27 +249,48 @@
         <td z-table-cell>{{ p.name }}</td>
 
         <td z-table-cell>
-          <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
+          <span *ngIf="p.locations?.length; else noLocations">
+            {{ getLocationCount(p.locations) }}:
+            {{ formatLocationCodes(p.locations) }}
+          </span>
+          <ng-template #noLocations>-</ng-template>
+        </td>
+
+        <td z-table-cell>
+          <span
+            class="px-2 py-1 rounded text-xs font-medium"
+            [ngClass]="
               p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            ">
+            "
+          >
             {{ p.status }}
           </span>
         </td>
 
         <td z-table-cell class="flex gap-2">
+          <button z-button zSize="sm" zType="secondary" (click)="openProjectDetails(p)">
+            View Details
+          </button>
+
           <!-- EDIT BUTTON -->
           <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(p)">Edit</button>
 
+          <!-- ASSIGN EXISTING LOCATION BUTTON -->
+          <button z-button zSize="sm" zType="default" (click)="openAssignLocationDialog(p)">
+            Assign Location
+          </button>
+
           <!-- STATUS BUTTON -->
-          <button z-button zSize="sm" [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
-            (click)="toggleProjectStatus(p)">
+          <button
+            z-button
+            zSize="sm"
+            [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
+            (click)="toggleProjectStatus(p)"
+          >
             {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
           </button>
 
           <!-- DISABLE BUTTON -->
-          <button z-button zSize="sm" zType="destructive" (click)="disableProject(p.id)">
-            Disable
-          </button>
         </td>
       </tr>
     </tbody>
@@ -146,7 +299,14 @@
 <!-- ================= SEARCH ADMINS ================= -->
 <div class="mt-8 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
   <h2 class="text-xl font-bold">Admins</h2>
-  <input z-input [formControl]="adminSearch" placeholder="Search admins by name or email..." class="max-w-md w-full" />
+</div>
+<div class="mb-4">
+  <input
+    z-input
+    [formControl]="adminSearch"
+    placeholder="Search admins by name or email..."
+    class="max-w-md w-full"
+  />
 </div>
 
 <div class="hidden md:block overflow-x-auto border rounded-lg">
@@ -169,15 +329,18 @@
         </td>
 
         <td z-table-cell>
-          <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
+          <span
+            class="px-2 py-1 rounded text-xs font-medium"
+            [ngClass]="
               a.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            ">
+            "
+          >
             {{ a.status }}
           </span>
         </td>
 
         <td z-table-cell class="flex gap-2">
-          <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(a)">Edit</button>
+          <!-- <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(a)">Edit</button> -->
 
           <button z-button zSize="sm" zType="default" (click)="openAssignDialog(a)">
             Assign Project
@@ -195,22 +358,42 @@
       <div>
         <h3 class="font-semibold">{{ p.name }}</h3>
         <p class="text-sm text-gray-500">Code: {{ p.projectCode }}</p>
+        <p class="text-sm text-gray-500" *ngIf="p.locations?.length">
+          Locations: {{ formatLocationCodes(p.locations) }}
+        </p>
+        <p class="text-sm text-gray-500" *ngIf="!p.locations?.length">Locations: -</p>
       </div>
 
-      <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
+      <span
+        class="px-2 py-1 rounded text-xs font-medium"
+        [ngClass]="
           p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-        ">
+        "
+      >
         {{ p.status }}
       </span>
     </div>
 
     <div class="flex gap-2 mt-3">
+      <button z-button zType="secondary" class="flex-1" (click)="openProjectDetails(p)">
+        View Details
+      </button>
+
       <!-- EDIT BUTTON -->
       <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(p)">Edit</button>
 
+      <!-- ASSIGN EXISTING LOCATION BUTTON -->
+      <button z-button zType="default" class="flex-1" (click)="openAssignLocationDialog(p)">
+        Assign Location
+      </button>
+
       <!-- STATUS BUTTON -->
-      <button z-button class="flex-1" [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
-        (click)="toggleProjectStatus(p)">
+      <button
+        z-button
+        class="flex-1"
+        [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
+        (click)="toggleProjectStatus(p)"
+      >
         {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
       </button>
 
@@ -232,15 +415,18 @@
         <p class="text-sm text-gray-500">{{ a.email }}</p>
       </div>
 
-      <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
+      <span
+        class="px-2 py-1 rounded text-xs font-medium"
+        [ngClass]="
           a.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-        ">
+        "
+      >
         {{ a.status }}
       </span>
     </div>
 
     <div class="flex gap-2 mt-3">
-      <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(a)">Edit</button>
+      <!-- <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(a)">Edit</button> -->
 
       <button z-button zType="default" class="flex-1" (click)="openAssignDialog(a)">
         Assign Project
@@ -248,3 +434,5 @@
     </div>
   </div>
 </div>
+
+

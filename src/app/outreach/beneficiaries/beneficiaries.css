@@ -1,11 +1,8 @@
-.input {
-@apply w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 outline-none;
+﻿:host {
+  display: block;
 }
 
-.btn-primary {
-@apply bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700;
-}
-
-.btn-secondary {
-@apply border px-6 py-2 rounded-lg hover:bg-gray-100;
+textarea[z-input] {
+  min-height: 90px;
+  resize: vertical;
 }

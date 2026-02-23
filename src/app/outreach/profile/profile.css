@@ -1,0 +1,8 @@
+﻿:host {
+  display: block;
+}
+
+textarea[z-input] {
+  min-height: 110px;
+  resize: vertical;
+}

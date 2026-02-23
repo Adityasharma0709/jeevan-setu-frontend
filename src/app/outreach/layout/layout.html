@@ -1,120 +1,66 @@
-<z-layout class="min-h-screen flex border">
+﻿<z-layout class="min-h-screen flex border">
+  <z-sidebar [zWidth]="250" [zCollapsible]="true" [zCollapsed]="sidebarCollapsed" [zCollapsedWidth]="70"
+    (zCollapsedChange)="sidebarCollapsed = $event" class="p-0!">
+    <nav [class]="'flex h-full flex-col overflow-hidden ' + (sidebarCollapsed ? 'gap-1 p-1 pt-4' : 'gap-4 p-4')">
+      <z-sidebar-group>
+        @if (!sidebarCollapsed) {
+        <z-sidebar-group-label>Outreach</z-sidebar-group-label>
+        }
 
-  <!-- ================= SIDEBAR ================= -->
+        <a routerLink="/outreach" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }"
+          class="menu-link" [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
+          zPosition="right">
+          <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Dashboard</span> }
+        </a>
 
-<z-sidebar
-[zWidth]="250"
-[zCollapsible]="isMobile"
-[zCollapsed]="sidebarCollapsed"
-[zCollapsedWidth]="70"
-(zCollapsedChange)="sidebarCollapsed = $event"
-class="p-0!"
+        <a routerLink="/outreach/search" routerLinkActive="active-link" class="menu-link"
+          [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Search' : ''" zPosition="right">
+          <z-icon zType="search" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Search</span> }
+        </a>
 
->
-<nav
-  class="flex h-full flex-col overflow-hidden"
-  [ngClass]="sidebarCollapsed ? 'gap-1 p-1 pt-4' : 'gap-4 p-4'"
->
+        <a routerLink="/outreach/requests" routerLinkActive="active-link" class="menu-link"
+          [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'My Requests' : ''"
+          zPosition="right">
+          <z-icon zType="inbox" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>My Requests</span> }
+        </a>
 
-  <!-- ===== MENU GROUP ===== -->
+        <a routerLink="/outreach/beneficiaries" routerLinkActive="active-link" class="menu-link"
+          [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Beneficiaries' : ''"
+          zPosition="right">
+          <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Beneficiaries</span> }
+        </a>
 
-  <z-sidebar-group>
+        <a routerLink="/outreach/activity" routerLinkActive="active-link" class="menu-link"
+          [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Activity' : ''" zPosition="right">
+          <z-icon zType="clipboard" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Activity</span> }
+        </a>
 
-    @if (!sidebarCollapsed) {
-      <z-sidebar-group-label>Outreach</z-sidebar-group-label>
-    }
+        <a routerLink="/outreach/profile" routerLinkActive="active-link" class="menu-link"
+          [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''" zPosition="right">
+          <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Profile</span> }
+        </a>
+      </z-sidebar-group>
 
-    <!-- Dashboard -->
-
-    <a
-      routerLink="/outreach"
-      routerLinkActive="active-link"
-      [routerLinkActiveOptions]="{ exact: true }"
-      class="menu-link"
-      [class.justify-center]="sidebarCollapsed"
-      [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
-      zPosition="right"
-    >
-      <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-      @if (!sidebarCollapsed) { <span>Dashboard</span> }
-    </a>
-
-    <!-- Profile -->
-
-    <a
-      routerLink="/outreach/profile"
-      routerLinkActive="active-link"
-      class="menu-link"
-      [class.justify-center]="sidebarCollapsed"
-      [zTooltip]="sidebarCollapsed ? 'Profile' : ''"
-      zPosition="right"
-    >
-      <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-      @if (!sidebarCollapsed) { <span>Profile</span> }
-    </a>
-
-    <!-- Beneficiaries -->
-
-    <a
-      routerLink="/outreach/beneficiaries"
-      routerLinkActive="active-link"
-      class="menu-link"
-      [class.justify-center]="sidebarCollapsed"
-      [zTooltip]="sidebarCollapsed ? 'Beneficiaries' : ''"
-      zPosition="right"
-    >
-      <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-      @if (!sidebarCollapsed) { <span>Beneficiaries</span> }
-    </a>
-
-    <!-- Activity Reporting -->
-
-    <a
-      routerLink="/outreach/activity"
-      routerLinkActive="active-link"
-      class="menu-link"
-      [class.justify-center]="sidebarCollapsed"
-      [zTooltip]="sidebarCollapsed ? 'Activity' : ''"
-      zPosition="right"
-    >
-      <z-icon zType="puzzle" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-      @if (!sidebarCollapsed) { <span>Activity</span> }
-    </a>
-
-  </z-sidebar-group>
-
-  <!-- ===== LOGOUT ===== -->
-
-  <div class="mt-auto p-2 border-t">
-
-    <button
-      type="button"
-      z-button
-      zType="ghost"
-      class="menu-link text-red-600 hover:bg-red-50"
-      [class.justify-center]="sidebarCollapsed"
-      [zTooltip]="sidebarCollapsed ? 'Logout' : ''"
-      zPosition="right"
-      (click)="logout()"
-    >
-      <z-icon zType="log-out" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-      @if (!sidebarCollapsed) { <span>Logout</span> }
-    </button>
-
-  </div>
-
-</nav>
-
+      <div class="mt-auto p-2 border-t">
+        <button type="button" z-button zType="ghost" class="menu-link text-red-600 hover:bg-red-50"
+          [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Logout' : ''" zPosition="right"
+          (click)="logout()">
+          <z-icon zType="log-out" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Logout</span> }
+        </button>
+      </div>
+    </nav>
   </z-sidebar>
 
-  <!-- ================= MAIN CONTENT ================= -->
-
-  <div class="flex flex-col flex-1">
-
-<z-content class="flex-1 overflow-y-auto p-6 bg-gray-50">
-  <router-outlet></router-outlet>
-</z-content>
-
-  </div>
-
+  <z-layout class="flex flex-col flex-1">
+    <z-content class="flex-1 overflow-y-auto p-6 bg-gray-50">
+      <router-outlet></router-outlet>
+    </z-content>
+  </z-layout>
 </z-layout>

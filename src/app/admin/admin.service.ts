@@ -1,12 +1,29 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, of, throwError } from 'rxjs';
 import { ApiService } from '../core/services/api';
 
 export interface Activity {
     id: number;
     name: string;
     description?: string;
+    projectId?: number;
+    project?: {
+        id: number;
+        name: string;
+    };
     status: string;
+    creator?: {
+        id: number;
+        name?: string;
+        email?: string;
+    };
+    createdBy?: {
+        id: number;
+        name?: string;
+        email?: string;
+    };
+    createdById?: number;
 }
 
 export interface Group {
@@ -30,6 +47,17 @@ export interface Session {
     sessionDate: string;
     description?: string;
     status: string;
+    creator?: {
+        id: number;
+        name?: string;
+        email?: string;
+    };
+    createdBy?: {
+        id: number;
+        name?: string;
+        email?: string;
+    };
+    createdById?: number;
 }
 
 @Injectable({
@@ -43,6 +71,18 @@ export class AdminService {
     // Dashboard
     getAdminDashboard(): Observable<any> {
         return this.api.get(`${this.endpoint}/dashboard/admin`);
+    }
+
+    getAssignedProjects(userId?: number): Observable<any[]> {
+        const url = userId ? `projects/user/${userId}` : 'projects';
+        return (this.api.get(url) as Observable<any[]>).pipe(
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    return of([]);
+                }
+                return throwError(() => error);
+            })
+        );
     }
 
     // Activities
@@ -104,7 +144,39 @@ export class AdminService {
         return this.api.patch(`${this.endpoint}/session/${id}/deactivate`, {});
     }
 
+    activateSession(id: number): Observable<any> {
+        return this.api.patch(`${this.endpoint}/session/${id}/activate`, {});
+    }
+
     getSessionsByActivity(activityId: number): Observable<Session[]> {
         return this.api.get(`${this.endpoint}/activity/${activityId}/sessions`) as Observable<Session[]>;
+    }
+
+    getAllSessions(): Observable<Session[]> {
+        return this.api.get(`${this.endpoint}/sessions`) as Observable<Session[]>;
+    }
+
+    getBeneficiaryRequests(): Observable<any[]> {
+        return this.api.get(`${this.endpoint}/beneficiary-requests`) as Observable<any[]>;
+    }
+
+    approveBeneficiaryRequest(id: number): Observable<any> {
+        return this.api.patch(`${this.endpoint}/beneficiary-requests/${id}/approve`, {});
+    }
+
+    rejectBeneficiaryRequest(id: number, reason?: string): Observable<any> {
+        return this.api.patch(`${this.endpoint}/beneficiary-requests/${id}/reject`, { reason });
+    }
+
+    getAccountRequests(): Observable<any[]> {
+        return this.api.get(`${this.endpoint}/profile-requests`) as Observable<any[]>;
+    }
+
+    approveAccountRequest(id: number): Observable<any> {
+        return this.api.patch(`${this.endpoint}/profile-requests/${id}/approve`, {});
+    }
+
+    rejectAccountRequest(id: number, reason?: string): Observable<any> {
+        return this.api.patch(`${this.endpoint}/profile-requests/${id}/reject`, { reason });
     }
 }

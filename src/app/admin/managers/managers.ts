@@ -20,6 +20,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-managers',
@@ -53,7 +54,6 @@ export class Managers {
   searchControl = new FormControl('');
 
   private refresh$ = new Subject<void>();
-  isSubmitting = false;
   isEditing = false;
   selectedManagerId: number | null = null;
   targetManager: User | null = null;
@@ -61,11 +61,14 @@ export class Managers {
   managers$!: Observable<User[]>;
   projects$!: Observable<any[]>;
   locations$!: Observable<any[]>;
+  managerLocations$!: Observable<any[]>;
+  private currentUserId: number | null = null;
 
   constructor(
     private fb: FormBuilder,
     private managersService: ManagersService,
-    private dialog: ZardDialogService
+    private dialog: ZardDialogService,
+    private authService: AuthService
   ) {
     this.managers$ = combineLatest([
       this.refresh$.pipe(startWith(void 0)),
@@ -78,7 +81,9 @@ export class Managers {
       switchMap(([_, query]) => this.managersService.findAll(query || ''))
     );
 
-    this.projects$ = this.managersService.getProjects();
+    const currentUser = this.authService.getCurrentUser();
+    this.currentUserId = Number(currentUser?.sub) || null;
+    this.projects$ = this.managersService.getProjects(currentUser?.sub);
     this.initForms();
   }
 
@@ -87,6 +92,8 @@ export class Managers {
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: [''], // Only required during creation
+      projectId: [''],
+      locationId: [''],
     });
 
     this.assignForm = this.fb.group({
@@ -98,12 +105,28 @@ export class Managers {
       tap(() => this.assignForm.patchValue({ locationId: '' })),
       switchMap(id => (id ? this.managersService.getLocations(id) : of([])))
     );
+
+    this.managerLocations$ = this.managerForm.get('projectId')!.valueChanges.pipe(
+      tap(() => this.managerForm.patchValue({ locationId: '' })),
+      switchMap(id => (id ? this.managersService.getLocations(Number(id)) : of([])))
+    );
   }
 
   openCreateDialog() {
     this.isEditing = false;
-    this.managerForm.reset();
-    this.managerForm.get('password')?.setValidators(Validators.required);
+    this.managerForm.reset({
+      name: '',
+      email: '',
+      password: '',
+      projectId: '',
+      locationId: '',
+    });
+    this.managerForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+    this.managerForm.get('projectId')?.setValidators(Validators.required);
+    this.managerForm.get('locationId')?.setValidators(Validators.required);
+    this.managerForm.get('password')?.updateValueAndValidity();
+    this.managerForm.get('projectId')?.updateValueAndValidity();
+    this.managerForm.get('locationId')?.updateValueAndValidity();
 
     this.dialogRef = this.dialog.create({
       zTitle: 'Create Manager',
@@ -119,9 +142,19 @@ export class Managers {
   openEditDialog(manager: User) {
     this.isEditing = true;
     this.selectedManagerId = manager.id;
-    this.managerForm.patchValue(manager);
+    this.managerForm.reset({
+      name: manager.name,
+      email: manager.email,
+      password: '',
+      projectId: '',
+      locationId: '',
+    });
     this.managerForm.get('password')?.clearValidators();
+    this.managerForm.get('projectId')?.clearValidators();
+    this.managerForm.get('locationId')?.clearValidators();
     this.managerForm.get('password')?.updateValueAndValidity();
+    this.managerForm.get('projectId')?.updateValueAndValidity();
+    this.managerForm.get('locationId')?.updateValueAndValidity();
 
     this.dialogRef = this.dialog.create({
       zTitle: 'Edit Manager',
@@ -140,23 +173,73 @@ export class Managers {
       return;
     }
 
-    this.isSubmitting = true;
+    const formValue = this.managerForm.getRawValue();
+    const selectedProjectId = formValue.projectId ? Number(formValue.projectId) : null;
+    const selectedLocationId = formValue.locationId ? Number(formValue.locationId) : null;
+    const createPayload = {
+      name: formValue.name,
+      email: formValue.email,
+      password: formValue.password,
+      projectId: selectedProjectId!,
+      locationId: selectedLocationId!,
+    };
+    const updatePayload = {
+      name: formValue.name,
+      email: formValue.email,
+      ...(formValue.password ? { password: formValue.password } : {}),
+    };
+    const shouldAssignInEdit = this.isEditing && !!selectedProjectId && !!selectedLocationId;
+    const shouldRejectPartialAssignment = this.isEditing && (!!selectedProjectId !== !!selectedLocationId);
+    if (shouldRejectPartialAssignment) {
+      toast.error('For edit reassignment, select both project and location');
+      return;
+    }
+
     const obs = this.isEditing
-      ? this.managersService.update(this.selectedManagerId!, this.managerForm.value)
-      : this.managersService.create(this.managerForm.value);
+      ? this.managersService.update(this.selectedManagerId!, updatePayload).pipe(
+        switchMap(() =>
+          shouldAssignInEdit
+            ? this.managersService.assignProject(this.selectedManagerId!, selectedProjectId!, selectedLocationId!)
+            : of(null)
+        )
+      )
+      : this.managersService.create(createPayload);
 
     obs.subscribe({
       next: () => {
-        toast.success(`Manager ${this.isEditing ? 'updated' : 'created'} successfully`);
+        const successMessage = this.isEditing
+          ? (shouldAssignInEdit ? 'Manager updated and reassigned successfully' : 'Manager updated successfully')
+          : 'Manager created successfully';
+        toast.success(successMessage);
         this.refresh$.next();
         this.dialogRef.close();
-        this.isSubmitting = false;
       },
       error: (err) => {
-        toast.error(err.error?.message || 'Something went wrong');
-        this.isSubmitting = false;
+        toast.error(this.getErrorMessage(err, 'Something went wrong'));
       }
     });
+  }
+
+  toggleManagerStatus(manager: User) {
+    if (!this.canToggleStatus(manager)) {
+      toast.error('You can only activate/deactivate managers created by you');
+      return;
+    }
+    const nextStatus = manager.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    this.managersService.updateStatus(manager.id, nextStatus).subscribe({
+      next: () => {
+        toast.success(nextStatus === 'ACTIVE' ? 'Manager activated' : 'Manager deactivated');
+        this.refresh$.next();
+      },
+      error: (err) => {
+        toast.error(this.getErrorMessage(err, 'Failed to update status'));
+      }
+    });
+  }
+
+  canToggleStatus(manager: User): boolean {
+    const creatorId = this.getCreatorId(manager);
+    return !!creatorId && !!this.currentUserId && creatorId === this.currentUserId;
   }
 
   openAssignDialog(manager: User) {
@@ -180,7 +263,6 @@ export class Managers {
       return;
     }
 
-    this.isSubmitting = true;
     const { projectId, locationId } = this.assignForm.value;
 
     this.managersService.assignProject(this.targetManager!.id, Number(projectId), Number(locationId)).subscribe({
@@ -188,12 +270,24 @@ export class Managers {
         toast.success('Project assigned successfully');
         this.refresh$.next();
         this.dialogRef.close();
-        this.isSubmitting = false;
       },
       error: (err) => {
-        toast.error(err.error?.message || 'Assignment failed');
-        this.isSubmitting = false;
+        toast.error(this.getErrorMessage(err, 'Assignment failed'));
       }
     });
+  }
+
+  private getErrorMessage(err: any, fallback: string): string {
+    const message = err?.error?.message;
+    if (Array.isArray(message)) return message.join(', ');
+    if (typeof message === 'string') return message;
+    if (message && typeof message === 'object') return JSON.stringify(message);
+    return fallback;
+  }
+
+  private getCreatorId(entity: any): number | null {
+    const directId = entity?.creator?.id ?? entity?.createdBy?.id ?? entity?.createdById ?? entity?.created_by;
+    const creatorId = Number(directId);
+    return Number.isFinite(creatorId) ? creatorId : null;
   }
 }

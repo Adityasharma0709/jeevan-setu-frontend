@@ -4,6 +4,7 @@ import { Layout } from './layout/layout';
 import { Dashboard } from './dashboard/dashboard';
 import { Profile } from './profile/profile';
 import { Requests } from './requests/requests';
+import { OutreachWorkers } from './outreach-workers/outreach-workers';
 import { roleGuard } from '../core/guards/role-guard';
 
 const routes: Routes = [
@@ -16,6 +17,8 @@ const routes: Routes = [
       { path: '', component: Dashboard },
       { path: 'profile', component: Profile },
       { path: 'requests', component: Requests },
+      { path: 'outreach-workers', component: OutreachWorkers },
+      { path: 'beneficiaries', loadComponent: () => import('./beneficiaries/beneficiaries').then(m => m.Beneficiaries) },
     ],
   },
 ];
@@ -24,4 +27,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
-export class ManagerRoutingModule {}
+export class ManagerRoutingModule { }

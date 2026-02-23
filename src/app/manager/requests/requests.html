@@ -1,1 +1,116 @@
-<p>requests works!</p>
+<div class="p-6 space-y-10">
+    <!-- <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Pending Requests</h1>
+        <p class="text-gray-600">Review and approve or reject outreach requests sent to you.</p>
+    </div> -->
+
+    <!-- <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
+        <table z-table class="w-full">
+            <thead z-table-header>
+                <tr z-table-row>
+                    <th z-table-head>Worker Name</th>
+                    <th z-table-head>Request Type</th>
+                    <th z-table-head>Status</th>
+                    <th z-table-head>Details</th>
+                    <th z-table-head>Requested At</th>
+                    <th z-table-head class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody z-table-body>
+                <tr z-table-row *ngFor="let request of requests">
+                    <td z-table-cell class="font-medium">{{ request.workerName }}</td>
+                    <td z-table-cell>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                            [ngClass]="getTypeBadgeClass(request.type)">
+                            {{ request.type }}
+                        </span>
+                    </td>
+                    <td z-table-cell>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                            [ngClass]="getStatusBadgeClass(request.status)">
+                            {{ request.status }}
+                        </span>
+                    </td>
+                    <td z-table-cell class="text-gray-600">
+                        <div class="text-sm">
+                            <span class="font-semibold">Current:</span> {{ request.currentValue }}
+                        </div>
+                        <div class="text-sm text-indigo-600">
+                            <span class="font-semibold">New:</span> {{ request.newValue }}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1" *ngIf="getDetailsText(request)">
+                            {{ getDetailsText(request) }}
+                        </div>
+                    </td>
+                    <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
+                    <td z-table-cell class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <button z-button zType="secondary" zSize="sm" (click)="approve(request)"
+                                class="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
+                                <z-icon zType="check" class="mr-1" /> Approve
+                            </button>
+                            <button z-button zType="default" zSize="sm" (click)="reject(request)"
+                                class="bg-red-50 text-red-700 border-red-200 hover:bg-red-100">
+                                <z-icon zType="x" class="mr-1" /> Reject
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr z-table-row *ngIf="requests.length === 0">
+                    <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
+                        <div class="flex flex-col items-center">
+                            <z-icon zType="circle-check" size="32" class="text-green-300 mb-2" />
+                            <p>No pending requests to review.</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div> -->
+
+    <div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">My Sent Requests</h2>
+        <p class="text-gray-600">Track requests created by you, along with status and target approver.</p>
+    </div>
+
+    <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
+        <table z-table class="w-full">
+            <thead z-table-header>
+                <tr z-table-row>
+                    <th z-table-head>Request Type</th>
+                    <th z-table-head>Sent To</th>
+                    <th z-table-head>Status</th>
+                    <th z-table-head>Requested At</th>
+                    <th z-table-head>Remarks</th>
+                </tr>
+            </thead>
+            <tbody z-table-body>
+                <tr z-table-row *ngFor="let request of myRequests">
+                    <td z-table-cell>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                            [ngClass]="getTypeBadgeClass(request.type)">
+                            {{ request.type }}
+                        </span>
+                    </td>
+                    <td z-table-cell class="font-medium">{{ request.sentTo }}</td>
+                    <td z-table-cell>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                            [ngClass]="getStatusBadgeClass(request.status)">
+                            {{ request.status }}
+                        </span>
+                    </td>
+                    <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
+                    <td z-table-cell class="text-sm text-gray-600">{{ request.remarks || '-' }}</td>
+                </tr>
+                <tr z-table-row *ngIf="myRequests.length === 0">
+                    <td z-table-cell colspan="5" class="text-center py-12 text-gray-500">
+                        <div class="flex flex-col items-center">
+                            <z-icon zType="circle-check" size="32" class="text-green-300 mb-2" />
+                            <p>No requests created by you yet.</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

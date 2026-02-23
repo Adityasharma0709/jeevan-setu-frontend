@@ -207,11 +207,14 @@
       zDropdown
       [zDropdownMenu]="projectMenu"
     >
-      {{ selectedProjectName || 'Select Project' }}
+      {{ selectedProjectName || 'Select Project (optional)' }}
       <z-icon zType="chevron-down" />
     </button>
 
     <z-dropdown-menu-content #projectMenu="zDropdownMenuContent" class="w-full">
+      <z-dropdown-menu-item (click)="clearProjectSelection()">
+        No Project
+      </z-dropdown-menu-item>
 
       <z-dropdown-menu-item
         *ngFor="let p of projects$ | async"

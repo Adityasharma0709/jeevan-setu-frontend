@@ -41,21 +41,20 @@
                         <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(session)">
                             Edit
                         </button>
-                        <button *ngIf="session.status === 'ACTIVE'" z-button zType="destructive" zSize="sm"
-                            (click)="deactivateSession(session.id)">
+                        <button *ngIf="session.status === 'ACTIVE' && canToggleStatus(session)" z-button zType="destructive" zSize="sm"
+                            (click)="deactivateSession(session)">
                             Deactivate
+                        </button>
+                        <button *ngIf="session.status === 'INACTIVE' && canToggleStatus(session)" z-button zType="default" zSize="sm"
+                            (click)="activateSession(session)">
+                            Activate
                         </button>
                     </div>
                 </td>
             </tr>
-            <tr z-table-row *ngIf="!activityControl.value">
+            <tr z-table-row *ngIf="(sessions$ | async)?.length === 0">
                 <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
-                    Please select an activity to view sessions.
-                </td>
-            </tr>
-            <tr z-table-row *ngIf="activityControl.value && (sessions$ | async)?.length === 0">
-                <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
-                    No active sessions found for this activity.
+                    No sessions found.
                 </td>
             </tr>
         </tbody>

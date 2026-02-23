@@ -1,1 +1,43 @@
-<p>profile works!</p>
+﻿<div class="max-w-3xl mx-auto space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">My Profile</h1>
+    <p class="text-gray-600">Submit profile updates via outreach request workflow.</p>
+  </div>
+
+  <section class="bg-white border rounded-xl p-6" *ngIf="!isLoading; else loadingTpl">
+    <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <z-form-field>
+        <label z-form-label zRequired>Name</label>
+        <z-form-control><input z-input formControlName="name" /></z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Email</label>
+        <z-form-control><input z-input formControlName="email" /></z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label>Mobile</label>
+        <z-form-control><input z-input formControlName="mobile" maxlength="10" /></z-form-control>
+      </z-form-field>
+
+      <z-form-field class="md:col-span-2">
+        <label z-form-label zRequired>Reason for change</label>
+        <z-form-control>
+          <textarea z-input formControlName="reason" rows="3" placeholder="Explain why this change is needed"></textarea>
+        </z-form-control>
+      </z-form-field>
+
+      <div class="md:col-span-2 flex justify-end pt-2 border-t">
+        <button z-button type="button" [disabled]="isSubmitting" (click)="submit()">
+          <z-icon zType="check" class="mr-2" />
+          {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <ng-template #loadingTpl>
+    <section class="bg-white border rounded-xl p-10 text-center text-gray-500">Loading profile...</section>
+  </ng-template>
+</div>

@@ -48,7 +48,7 @@
                         <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(group)">
                             Edit
                         </button>
-                        <button z-button [zType]="group.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
+                        <button *ngIf="canToggleStatus(group)" z-button [zType]="group.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
                             (click)="toggleGroupStatus(group)">
                             {{ group.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
                         </button>

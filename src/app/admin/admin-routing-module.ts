@@ -8,55 +8,69 @@ import { Managers } from './managers/managers';
 import { Groups } from './groups/groups';
 import { Activities } from './activities/activities';
 import { Sessions } from './sessions/sessions';
+import { Profile } from './profile/profile';
+import { Requests } from './requests/requests';
 
 const routes: Routes = [
 
-{
-path: '',
-component: Layout,   // 👈 Layout wrapper
-canActivate: [roleGuard],
-data: { roles: ['ADMIN'] },
-
-children: [
-
-  // Dashboard
   {
     path: '',
-    component: Dashboard
-  },
+    component: Layout,   // 👈 Layout wrapper
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN'] },
 
-  // Managers CRUD
-  {
-    path: 'managers',
-    component: Managers
-  },
+    children: [
 
-  // Beneficiary Groups
-  {
-    path: 'groups',
-    component: Groups
-  },
+      // Dashboard
+      {
+        path: '',
+        component: Dashboard
+      },
 
-  // Activities
-  {
-    path: 'activities',
-    component: Activities
-  },
+      // Managers CRUD
+      {
+        path: 'managers',
+        component: Managers
+      },
 
-  // Sessions
-  {
-    path: 'sessions',
-    component: Sessions
+      // Beneficiary Groups
+      {
+        path: 'groups',
+        component: Groups
+      },
+
+      // Activities
+      {
+        path: 'activities',
+        component: Activities
+      },
+
+      // Sessions
+      {
+        path: 'sessions',
+        component: Sessions
+      },
+
+      // Manager Beneficiary Requests
+      {
+        path: 'requests',
+        component: Requests
+      },
+
+      // Profile
+      {
+        path: 'profile',
+        component: Profile
+      }
+
+    ]
+
   }
-
-]
-
-}
 
 ];
 
 @NgModule({
-imports: [RouterModule.forChild(routes)],
-exports: [RouterModule]
+  imports: [RouterModule.forChild(routes)],
+  exports: [RouterModule]
 })
-export class AdminRoutingModule {}
+export class AdminRoutingModule { }

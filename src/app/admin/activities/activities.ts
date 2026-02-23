@@ -1,10 +1,11 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, TemplateRef, ViewChild, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, Subject, startWith, switchMap } from 'rxjs';
+import { Observable, Subject, combineLatest, map, startWith, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 
 import { AdminService, Activity } from '../admin.service';
+import { AuthService } from '../../core/services/auth';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardInputDirective } from '@/shared/components/input';
 import {
@@ -43,8 +44,13 @@ import { ZardIconComponent } from '@/shared/components/icon';
   templateUrl: './activities.html',
   styleUrl: './activities.css',
 })
-export class Activities {
+export class Activities implements OnInit {
   @ViewChild('activityDialog') activityDialog!: TemplateRef<any>;
+
+  private fb = inject(FormBuilder);
+  private adminService = inject(AdminService);
+  private authService = inject(AuthService);
+  private dialog = inject(ZardDialogService);
 
   dialogRef!: ZardDialogRef<any>;
   activityForm!: FormGroup;
@@ -55,16 +61,33 @@ export class Activities {
   selectedActivityId: number | null = null;
 
   activities$!: Observable<Activity[]>;
+  projects$!: Observable<any[]>;
+  private currentUserId: number | null = null;
+  private assignedProjectIds = new Set<number>();
 
-  constructor(
-    private fb: FormBuilder,
-    private adminService: AdminService,
-    private dialog: ZardDialogService
-  ) {
-    this.activities$ = this.refresh$.pipe(
-      startWith(void 0),
-      switchMap(() => this.adminService.getActivities())
+  ngOnInit() {
+    const currentUser = this.authService.getCurrentUser();
+    this.currentUserId = Number(currentUser?.sub) || null;
+
+    this.projects$ = this.adminService.getAssignedProjects(this.currentUserId || undefined);
+
+    this.projects$.subscribe({
+      next: (projects) => {
+        this.assignedProjectIds = new Set((projects || []).map((p) => Number(p.id)));
+      },
+      error: () => {
+        this.assignedProjectIds.clear();
+      }
+    });
+
+    this.activities$ = combineLatest([
+      this.refresh$.pipe(startWith(void 0)),
+      this.projects$.pipe(startWith([] as any[]))
+    ]).pipe(
+      switchMap(() => this.adminService.getActivities()),
+      map((activities) => (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity)))
     );
+
     this.initForm();
   }
 
@@ -72,6 +95,7 @@ export class Activities {
     this.activityForm = this.fb.group({
       name: ['', Validators.required],
       description: [''],
+      projectId: ['', Validators.required]
     });
   }
 
@@ -113,9 +137,25 @@ export class Activities {
     }
 
     this.isSubmitting = true;
+    const rawValue = this.activityForm.value;
+    const payload: any = {
+      name: rawValue.name,
+      description: rawValue.description
+    };
+
+    if (rawValue.projectId) {
+      const projectId = Number(rawValue.projectId);
+      if (!this.assignedProjectIds.has(projectId)) {
+        toast.error('You can only use projects assigned to you');
+        this.isSubmitting = false;
+        return;
+      }
+      payload.projectId = projectId;
+    }
+
     const obs = this.isEditing
-      ? this.adminService.updateActivity(this.selectedActivityId!, this.activityForm.value)
-      : this.adminService.createActivity(this.activityForm.value);
+      ? this.adminService.updateActivity(this.selectedActivityId!, payload)
+      : this.adminService.createActivity(payload);
 
     obs.subscribe({
       next: () => {
@@ -125,21 +165,63 @@ export class Activities {
         this.isSubmitting = false;
       },
       error: (err) => {
-        toast.error(err.error?.message || 'Something went wrong');
+        const msg = err.error?.message;
+        toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Something went wrong'));
         this.isSubmitting = false;
       }
     });
   }
 
-  deactivateActivity(id: number) {
+  deactivateActivity(activity: Activity) {
+    if (!this.canToggleStatus(activity)) {
+      toast.error('You can only deactivate activities from your assigned projects');
+      return;
+    }
     if (!confirm('Are you sure you want to deactivate this activity?')) return;
 
-    this.adminService.deactivateActivity(id).subscribe({
+    this.adminService.deactivateActivity(activity.id).subscribe({
       next: () => {
         toast.success('Activity deactivated');
         this.refresh$.next();
       },
       error: (err) => toast.error(err.error?.message || 'Failed to deactivate')
     });
+  }
+
+  activateActivity(activity: Activity) {
+    if (!this.canToggleStatus(activity)) {
+      toast.error('You can only activate activities from your assigned projects');
+      return;
+    }
+    if (!confirm('Are you sure you want to activate this activity?')) return;
+
+    this.adminService.activateActivity(activity.id).subscribe({
+      next: () => {
+        toast.success('Activity activated');
+        this.refresh$.next();
+      },
+      error: (err) => {
+        const msg = err.error?.message;
+        toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to activate'));
+      }
+    });
+  }
+
+  canToggleStatus(activity: Activity): boolean {
+    const creatorId = this.getCreatorId(activity);
+    const isOwnedByCurrentAdmin = !!creatorId && !!this.currentUserId && creatorId === this.currentUserId;
+    const isInAssignedProjects = this.isActivityInAssignedProjects(activity);
+    return isInAssignedProjects || isOwnedByCurrentAdmin;
+  }
+
+  private isActivityInAssignedProjects(activity: Activity): boolean {
+    if (!activity?.projectId) return false;
+    return this.assignedProjectIds.has(Number(activity.projectId));
+  }
+
+  private getCreatorId(entity: any): number | null {
+    const directId = entity?.creator?.id ?? entity?.createdBy?.id ?? entity?.createdById ?? entity?.created_by;
+    const creatorId = Number(directId);
+    return Number.isFinite(creatorId) ? creatorId : null;
   }
 }

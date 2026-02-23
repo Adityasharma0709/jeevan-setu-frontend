@@ -1,7 +1,7 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, startWith, switchMap, map, combineLatest, of, tap, forkJoin } from 'rxjs';
+import { Observable, Subject, startWith, switchMap, map, combineLatest, of, tap, forkJoin, BehaviorSubject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { toast } from 'ngx-sonner';
 
@@ -25,6 +25,24 @@ import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 
 import { ProjectsService, Project } from './projects.service';
+
+interface LocationModel {
+  id: number;
+  projectId: number | null;
+  locationCode: string;
+  state: string;
+  district: string;
+  block: string;
+  village: string;
+  project?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface ProjectWithLocations extends Project {
+  locations?: LocationModel[];
+}
 
 @Component({
   selector: 'app-projects',
@@ -55,19 +73,25 @@ export class ProjectsComponent {
   form!: FormGroup;
   editForm!: FormGroup;
   assignForm!: FormGroup;
+  locationForm!: FormGroup;
+  assignLocationForm!: FormGroup;
 
   // ✅ Search controls
   projectSearch = new FormControl('');
   adminSearch = new FormControl('');
 
   isAssigning = false;
+  isLoadingLocations$ = new BehaviorSubject<boolean>(false);
   targetAdmin: any | null = null;
+  targetProject: Project | null = null;
+  selectedProjectDetails: ProjectWithLocations | null = null;
+  availableLocations: LocationModel[] = [];
 
   // ✅ refresh trigger stream
   private refresh$ = new Subject<void>();
 
   // ✅ server-side search stream
-  projects$: Observable<Project[]> = combineLatest([
+  projects$: Observable<ProjectWithLocations[]> = combineLatest([
     this.refresh$.pipe(startWith(void 0)),
     this.projectSearch.valueChanges.pipe(
       startWith(''),
@@ -75,7 +99,24 @@ export class ProjectsComponent {
       distinctUntilChanged()
     )
   ]).pipe(
-    switchMap(([_, query]) => this.projectService.findAll(query || ''))
+    switchMap(([_, query]) => this.projectService.findAll(query || '').pipe(
+      switchMap((projects) => {
+        if (!projects.length) return of([]);
+
+        const locationCalls = projects.map((p) =>
+          this.api.get(`locations?projectId=${p.id}`) as Observable<LocationModel[]>
+        );
+
+        return forkJoin(locationCalls).pipe(
+          map((locationsByProject) =>
+            projects.map((p, index) => ({
+              ...p,
+              locations: locationsByProject[index] || [],
+            }))
+          )
+        );
+      })
+    ))
   );
 
   admins$: Observable<any[]> = this.refresh$.pipe(
@@ -117,6 +158,18 @@ export class ProjectsComponent {
 
     this.assignForm = this.fb.group({
       projectId: [''],
+      locationId: [''],
+    });
+
+    this.locationForm = this.fb.group({
+      locationCode: [''],
+      state: [''],
+      district: [''],
+      block: [''],
+      village: [''],
+    });
+
+    this.assignLocationForm = this.fb.group({
       locationId: [''],
     });
 
@@ -180,6 +233,8 @@ export class ProjectsComponent {
   // =============================
   @ViewChild('editProjectDialog')
   editProjectDialog!: TemplateRef<any>;
+  @ViewChild('projectDetailsDialog')
+  projectDetailsDialog!: TemplateRef<any>;
 
   openEditDialog(project: any) {
     this.editForm.patchValue(project);
@@ -196,10 +251,39 @@ export class ProjectsComponent {
   }
 
   updateProject(id: number) {
-    this.projectService.update(id, this.editForm.value).subscribe(() => {
-      toast.success('Project updated');
-      this.refresh$.next();
-      this.dialogRef.close();
+    this.projectService.update(id, this.editForm.value).subscribe({
+      next: () => {
+        toast.success('Project updated');
+        this.refresh$.next();
+        this.dialogRef.close();
+      },
+      error: (err) => {
+        let msg = 'Something went wrong';
+
+        if (err.status === 400) msg = err.error?.message || 'Bad Request';
+        else if (err.status === 409) msg = 'Project code already exists';
+        else if (err.status === 401) msg = 'Session expired. Login again';
+        else if (err.status === 500) msg = 'Server error. Try later';
+
+        toast.error(msg);
+      },
+    });
+  }
+
+  openProjectDetails(project: ProjectWithLocations) {
+    this.selectedProjectDetails = project;
+
+    this.dialogRef = this.dialog.create({
+      zTitle: `Project Details: ${project.name}`,
+      zContent: this.projectDetailsDialog,
+      zOkText: 'Close',
+      zWidth: '500px',
+      zOnOk: () => {
+        this.selectedProjectDetails = null;
+      },
+      zOnCancel: () => {
+        this.selectedProjectDetails = null;
+      },
     });
   }
   // =============================
@@ -260,6 +344,163 @@ export class ProjectsComponent {
     });
   }
 
+  // =============================
+  // ASSIGN EXISTING LOCATION TO PROJECT
+  // =============================
+
+  @ViewChild('assignLocationDialog')
+  assignLocationDialog!: TemplateRef<any>;
+
+  openAssignLocationDialog(project: Project) {
+    this.targetProject = project;
+    this.assignLocationForm.reset();
+    this.availableLocations = [];
+    this.isLoadingLocations$.next(true);
+
+    this.api.get('locations').subscribe({
+      next: (locations: any) => {
+        this.availableLocations = Array.isArray(locations) ? locations : [];
+        this.isLoadingLocations$.next(false);
+      },
+      error: () => {
+        this.availableLocations = [];
+        this.isLoadingLocations$.next(false);
+        toast.error('Failed to load locations');
+      },
+    });
+
+    this.dialogRef = this.dialog.create({
+      zTitle: `Assign Location to ${project.name}`,
+      zContent: this.assignLocationDialog,
+      zOkText: 'Assign',
+      zCancelText: 'Cancel',
+      zWidth: '450px',
+
+      zOnOk: () => {
+        this.assignExistingLocation();
+        return false;
+      },
+      zOnCancel: () => {
+        this.targetProject = null;
+        this.assignLocationForm.reset();
+      },
+    });
+  }
+
+  assignExistingLocation() {
+    if (!this.targetProject) {
+      toast.error('No project selected');
+      return;
+    }
+
+    const { locationId } = this.assignLocationForm.value;
+
+    if (!locationId) {
+      toast.error('Please select a location');
+      return;
+    }
+
+    const location = this.availableLocations.find(l => l.id === Number(locationId));
+
+    if (!location) {
+      toast.error('Selected location not found');
+      return;
+    }
+
+    if (location.projectId === this.targetProject.id) {
+      toast.info('Location is already assigned to this project');
+      return;
+    }
+
+    this.api.put(`locations/${location.id}`, {
+      projectId: this.targetProject.id,
+      locationCode: location.locationCode,
+      state: location.state,
+      district: location.district,
+      block: location.block,
+      village: location.village,
+    }).subscribe({
+      next: () => {
+        toast.success('Location assigned successfully');
+        this.assignLocationForm.reset();
+        this.targetProject = null;
+        this.refresh$.next();
+        this.dialogRef?.close();
+      },
+      error: () => toast.error('Failed to assign location'),
+    });
+  }
+
+  // =============================
+  // ADD LOCATION TO PROJECT
+  // =============================
+
+  @ViewChild('createLocationDialog')
+  createLocationDialog!: TemplateRef<any>;
+
+  openCreateLocationDialog(project: Project) {
+    this.targetProject = project;
+    this.locationForm.reset();
+
+    this.dialogRef = this.dialog.create({
+      zTitle: `Add Location to ${project.name}`,
+      zContent: this.createLocationDialog,
+      zOkText: 'Create',
+      zCancelText: 'Cancel',
+      zWidth: '450px',
+
+      zOnOk: () => {
+        this.submitLocation();
+        return false;
+      },
+      zOnCancel: () => {
+        this.targetProject = null;
+        this.locationForm.reset();
+      },
+    });
+  }
+
+  submitLocation() {
+    if (!this.targetProject) {
+      toast.error('No project selected');
+      return;
+    }
+
+    const { locationCode, state, district, block, village } = this.locationForm.value;
+
+    if (!locationCode || !state || !district || !block || !village) {
+      toast.error('Please fill all location fields');
+      return;
+    }
+
+    this.api.post('locations', {
+      projectId: this.targetProject.id,
+      locationCode,
+      state,
+      district,
+      block,
+      village,
+    }).subscribe({
+      next: () => {
+        toast.success('Location created successfully');
+        this.locationForm.reset();
+        this.targetProject = null;
+        this.refresh$.next();
+        this.dialogRef?.close();
+      },
+      error: (err) => {
+        let msg = 'Something went wrong';
+
+        if (err.status === 400) msg = err.error?.message || 'Bad Request';
+        else if (err.status === 409) msg = 'Location code already exists';
+        else if (err.status === 401) msg = 'Session expired. Login again';
+        else if (err.status === 500) msg = 'Server error. Try later';
+
+        toast.error(msg);
+      },
+    });
+  }
+
   assignProjects() {
     const { projectId, locationId } = this.assignForm.value;
 
@@ -297,4 +538,14 @@ export class ProjectsComponent {
     });
   }
 
+  formatLocationCodes(locations?: LocationModel[]) {
+    if (!locations || !locations.length) return '-';
+    return locations.map(l => l.locationCode).join(', ');
+  }
+
+  getLocationCount(locations?: LocationModel[]) {
+    return locations?.length ?? 0;
+  }
+
 }
+

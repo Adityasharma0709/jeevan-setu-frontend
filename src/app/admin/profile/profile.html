@@ -1,0 +1,42 @@
+<div class="max-w-4xl mx-auto py-8 px-4">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
+        <p class="text-gray-600">View and update your personal information.</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="p-6 sm:p-8">
+            <form [formGroup]="profileForm" (ngSubmit)="submit()" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <z-form-field>
+                        <label z-form-label zRequired>Full Name</label>
+                        <z-form-control>
+                            <input z-input type="text" formControlName="name" placeholder="Admin Name" />
+                        </z-form-control>
+                    </z-form-field>
+
+                    <z-form-field>
+                        <label z-form-label zRequired>Email Address</label>
+                        <z-form-control>
+                            <input z-input type="email" formControlName="email" placeholder="admin@example.com" />
+                        </z-form-control>
+                        <p class="mt-1 text-xs text-gray-500">Email cannot be changed.</p>
+                    </z-form-field>
+
+                    <z-form-field>
+                        <label z-form-label>Mobile Number</label>
+                        <z-form-control>
+                            <input z-input type="tel" formControlName="mobile" placeholder="9876543210" />
+                        </z-form-control>
+                    </z-form-field>
+                </div>
+
+                <div class="pt-6 border-t border-gray-100 flex justify-end">
+                    <button z-button type="submit" [disabled]="isSubmitting || profileForm.invalid">
+                        {{ isSubmitting ? 'Updating...' : 'Update Profile' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,58 @@
+<div class="p-6 space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Beneficiary Search</h1>
+            <p class="text-gray-600">Find beneficiaries by UID or Mobile Number.</p>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="bg-white p-4 rounded-xl border shadow-sm flex gap-4">
+        <div class="flex-1 relative">
+            <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size="18" />
+            <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="search()"
+                placeholder="Enter UID or Mobile Number"
+                class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
+        </div>
+        <button z-button (click)="search()" [disabled]="loading">
+            {{ loading ? 'Searching...' : 'Search' }}
+        </button>
+    </div>
+
+    <!-- Results Table -->
+    <div *ngIf="results.length > 0; else noResults" class="bg-white border rounded-xl overflow-hidden shadow-sm">
+        <table z-table class="w-full">
+            <thead z-table-header>
+                <tr z-table-row>
+                    <th z-table-head>UID</th>
+                    <th z-table-head>Name</th>
+                    <th z-table-head>Mobile</th>
+                    <th z-table-head>Location</th>
+                    <th z-table-head class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody z-table-body>
+                <tr z-table-row *ngFor="let ben of results">
+                    <td z-table-cell class="font-medium text-gray-900">{{ ben.uid }}</td>
+                    <td z-table-cell>{{ ben.name }}</td>
+                    <td z-table-cell>{{ ben.mobileNumber }}</td>
+                    <td z-table-cell>
+                        {{ ben.location?.village }}, {{ ben.location?.block }}
+                    </td>
+                    <td z-table-cell class="text-right">
+                        <button z-button zType="outline" size="sm" (click)="viewProfile(ben)">
+                            View Profile
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <ng-template #noResults>
+        <div *ngIf="searched" class="text-center py-12 text-gray-500 bg-white border rounded-xl">
+            <z-icon zType="search" size="48" class="text-gray-300 mb-4 mx-auto" />
+            <p>No beneficiaries found matching "{{ searchQuery }}"</p>
+        </div>
+    </ng-template>
+</div>

@@ -45,7 +45,7 @@ interface ProjectModel {
 
 interface LocationModel {
   id: number;
-  projectId: number;
+  projectId: number | null;
   locationCode: string;
   state: string;
   district: string;
@@ -134,7 +134,7 @@ export class LocationsComponent {
     private dialog: ZardDialogService
   ) {
     this.form = this.fb.group({
-      projectId: [''],
+      projectId: [null],
       locationCode: [''],
       state: [''],
       district: [''],
@@ -143,7 +143,7 @@ export class LocationsComponent {
     });
 
     this.editForm = this.fb.group({
-      projectId: [''],
+      projectId: [null],
       locationCode: [''],
       state: [''],
       district: [''],
@@ -161,6 +161,11 @@ export class LocationsComponent {
   selectProject(project: ProjectModel) {
     this.form.patchValue({ projectId: project.id });
     this.selectedProjectName = project.name;
+  }
+
+  clearProjectSelection() {
+    this.form.patchValue({ projectId: null });
+    this.selectedProjectName = '';
   }
 
   /* =========================

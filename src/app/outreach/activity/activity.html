@@ -1,1 +1,71 @@
-<p>activity works!</p>
+﻿<div class="max-w-4xl mx-auto space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Activity Report</h1>
+    <p class="text-gray-600">Submit session-level beneficiary reports to the backend `outreach/activity-report` API.</p>
+  </div>
+
+  <section class="bg-white border rounded-xl p-6">
+    <form [formGroup]="reportForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <z-form-field>
+        <label z-form-label zRequired>Activity</label>
+        <z-form-control>
+          <select z-input formControlName="activityId">
+            <option value="">Select activity</option>
+            <option *ngFor="let activity of activities$ | async" [value]="activity.id">{{ activity.name }}</option>
+          </select>
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Session</label>
+        <z-form-control>
+          <select z-input formControlName="sessionId">
+            <option value="">Select session</option>
+            <option *ngFor="let session of sessions$ | async" [value]="session.id">
+              {{ session.name }} ({{ session.sessionDate | date:'mediumDate' }})
+            </option>
+          </select>
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field class="md:col-span-2">
+        <label z-form-label zRequired>Beneficiary</label>
+        <z-form-control>
+          <select z-input formControlName="beneficiaryId">
+            <option value="">Select beneficiary</option>
+            <option *ngFor="let beneficiary of beneficiaries$ | async" [value]="beneficiary.id">
+              {{ beneficiary.name }} ({{ beneficiary.uid }})
+            </option>
+          </select>
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field>
+        <label z-form-label zRequired>Attendance</label>
+        <z-form-control>
+          <select z-input formControlName="attendanceStatus">
+            <option value="Present">Present</option>
+            <option value="Absent">Absent</option>
+          </select>
+        </z-form-control>
+      </z-form-field>
+
+      <z-form-field class="md:col-span-2">
+        <label z-form-label zRequired>Observation</label>
+        <z-form-control>
+          <textarea z-input rows="4" formControlName="observation" placeholder="Write key field observations"></textarea>
+        </z-form-control>
+      </z-form-field>
+
+      <div class="md:col-span-2 flex items-center justify-between gap-2 pt-2 border-t">
+        <p class="text-xs text-gray-500">
+          If activity/session dropdowns are empty, ask backend to allow outreach role for activity/session read endpoints.
+        </p>
+        <button z-button type="button" [disabled]="isSubmitting" (click)="submit()">
+          <z-icon zType="check" class="mr-2" />
+          {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, of, throwError } from 'rxjs';
 import { ApiService } from '../../core/services/api';
 
 export interface User {
@@ -8,6 +9,17 @@ export interface User {
     email: string;
     roles: string[];
     status: string;
+    creator?: {
+        id: number;
+        name?: string;
+        email?: string;
+    };
+    createdBy?: {
+        id: number;
+        name?: string;
+        email?: string;
+    };
+    createdById?: number;
 }
 
 @Injectable({
@@ -30,22 +42,28 @@ export class ManagersService {
      * Create a new manager
      */
     create(data: any): Observable<User> {
-        // Ensuring the role is set to MANAGER
-        return this.api.post(this.endpoint, { ...data, roles: ['MANAGER'] }) as Observable<User>;
+        return this.api.post(`${this.endpoint}/create-manager`, data) as Observable<User>;
     }
 
     /**
      * Update manager details
      */
     update(id: number, data: any): Observable<User> {
-        return this.api.put(`${this.endpoint}/${id}`, data) as Observable<User>;
+        return this.api.put(`${this.endpoint}/manager/${id}`, data) as Observable<User>;
+    }
+
+    /**
+     * Toggle manager status
+     */
+    updateStatus(id: number, status: 'ACTIVE' | 'INACTIVE'): Observable<User> {
+        return this.api.put(`${this.endpoint}/manager/${id}`, { status }) as Observable<User>;
     }
 
     /**
      * Assign project and location to a user (Manager)
      */
     assignProject(userId: number, projectId: number, locationId: number): Observable<any> {
-        return this.api.post('users/assign', {
+        return this.api.post(`${this.endpoint}/assign-project-location`, {
             userId,
             projectId,
             locationId,
@@ -53,10 +71,18 @@ export class ManagersService {
     }
 
     /**
-     * Get list of projects (for assignment dropdown)
+     * Get list of projects (optionally filtered by assigned user)
      */
-    getProjects(): Observable<any[]> {
-        return this.api.get('projects') as Observable<any[]>;
+    getProjects(userId?: number): Observable<any[]> {
+        const url = userId ? `projects/user/${userId}` : 'projects';
+        return (this.api.get(url) as Observable<any[]>).pipe(
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    return of([]);
+                }
+                return throwError(() => error);
+            })
+        );
     }
 
     /**

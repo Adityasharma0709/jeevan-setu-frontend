@@ -1,18 +1,16 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
-import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { ZardIconComponent } from '@/shared/components/icon';
-import { ZardTooltipDirective } from '@/shared/components/tooltip';
-
 import {
+  ContentComponent,
   LayoutComponent,
   SidebarComponent,
-  ContentComponent,
-  FooterComponent,
   SidebarGroupComponent,
   SidebarGroupLabelComponent,
 } from '@/shared/components/layout';
+import { ZardTooltipDirective } from '@/shared/components/tooltip';
 
 @Component({
   selector: 'app-outreach-layout',
@@ -27,7 +25,6 @@ import {
     LayoutComponent,
     SidebarComponent,
     ContentComponent,
-    FooterComponent,
     SidebarGroupComponent,
     SidebarGroupLabelComponent,
     ZardIconComponent,
@@ -35,20 +32,10 @@ import {
   ],
 })
 export class Layout {
-  sidebarCollapsed = false;
+  sidebarCollapsed = window.innerWidth < 768;
   isMobile = window.innerWidth < 768;
 
   constructor(private router: Router) {}
-
-  toggleSidebar() {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
-  }
-
-  closeSidebar() {
-    if (this.isMobile) {
-      this.sidebarCollapsed = true;
-    }
-  }
 
   logout() {
     localStorage.clear();
@@ -58,7 +45,6 @@ export class Layout {
   @HostListener('window:resize')
   onResize() {
     this.isMobile = window.innerWidth < 768;
-
     if (this.isMobile) {
       this.sidebarCollapsed = true;
     }

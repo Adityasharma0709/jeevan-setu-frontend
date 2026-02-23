@@ -1,10 +1,11 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, Subject, startWith, switchMap } from 'rxjs';
+import { Observable, Subject, combineLatest, map, startWith, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 
 import { AdminService, Group, Activity } from '../admin.service';
+import { AuthService } from '../../core/services/auth';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardInputDirective } from '@/shared/components/input';
 import {
@@ -59,18 +60,51 @@ export class Groups {
 
   groups$!: Observable<Group[]>;
   activities$!: Observable<Activity[]>;
+  private currentUserId: number | null = null;
+  private assignedProjectIds = new Set<number>();
+  private allowedActivityIds = new Set<number>();
 
   constructor(
     private fb: FormBuilder,
     private adminService: AdminService,
-    private dialog: ZardDialogService
+    private dialog: ZardDialogService,
+    private authService: AuthService
   ) {
-    this.groups$ = this.refresh$.pipe(
-      startWith(void 0),
-      switchMap(() => this.adminService.getGroups())
+    const currentUser = this.authService.getCurrentUser();
+    this.currentUserId = Number(currentUser?.sub) || null;
+
+    const assignedProjects$ = this.adminService.getAssignedProjects(this.currentUserId || undefined);
+    assignedProjects$.subscribe({
+      next: (projects) => {
+        this.assignedProjectIds = new Set((projects || []).map((p) => Number(p.id)));
+      },
+      error: () => {
+        this.assignedProjectIds.clear();
+      }
+    });
+
+    this.groups$ = combineLatest([
+      this.refresh$.pipe(startWith(void 0)),
+      assignedProjects$.pipe(startWith([] as any[]))
+    ]).pipe(
+      switchMap(() => this.adminService.getGroups()),
+      map((groups) => (groups || []).filter((group) => this.isGroupInAssignedProjects(group)))
     );
 
-    this.activities$ = this.adminService.getActivities();
+    this.activities$ = combineLatest([
+      this.adminService.getActivities(),
+      assignedProjects$.pipe(startWith([] as any[]))
+    ]).pipe(
+      map(([activities]) => (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity)))
+    );
+    this.activities$.subscribe({
+      next: (activities) => {
+        this.allowedActivityIds = new Set((activities || []).map((activity) => Number(activity.id)));
+      },
+      error: () => {
+        this.allowedActivityIds.clear();
+      }
+    });
     this.initForms();
   }
 
@@ -143,6 +177,10 @@ export class Groups {
   }
 
   toggleGroupStatus(group: Group) {
+    if (!this.canToggleStatus(group)) {
+      toast.error('You can only activate/deactivate groups created by you');
+      return;
+    }
     const obs = group.status === 'ACTIVE'
       ? this.adminService.deactivateGroup(group.id)
       : this.adminService.activateGroup(group.id);
@@ -177,10 +215,16 @@ export class Groups {
       return;
     }
 
+    const activityId = Number(this.tagForm.value.activityId);
+    if (!this.allowedActivityIds.has(activityId)) {
+      toast.error('You can only tag activities from projects assigned to you');
+      return;
+    }
+
     this.isSubmitting = true;
     this.adminService.tagGroupWithActivity({
       groupId: this.targetGroup!.id,
-      activityId: Number(this.tagForm.value.activityId)
+      activityId
     }).subscribe({
       next: () => {
         toast.success('Activity tagged successfully');
@@ -193,5 +237,30 @@ export class Groups {
         this.isSubmitting = false;
       }
     });
+  }
+
+  canToggleStatus(group: Group): boolean {
+    const creatorId = this.getCreatorId(group);
+    return !!creatorId && !!this.currentUserId && creatorId === this.currentUserId;
+  }
+
+  private isActivityInAssignedProjects(activity: Activity): boolean {
+    if (!activity?.projectId) return false;
+    return this.assignedProjectIds.has(Number(activity.projectId));
+  }
+
+  private isGroupInAssignedProjects(group: Group): boolean {
+    const linkedActivities = group?.activities || [];
+    if (!linkedActivities.length) {
+      const creatorId = this.getCreatorId(group);
+      return !!creatorId && !!this.currentUserId && creatorId === this.currentUserId;
+    }
+    return linkedActivities.some((ga: any) => this.isActivityInAssignedProjects(ga?.activity));
+  }
+
+  private getCreatorId(entity: any): number | null {
+    const directId = entity?.creator?.id ?? entity?.createdBy?.id ?? entity?.createdById ?? entity?.created_by;
+    const creatorId = Number(directId);
+    return Number.isFinite(creatorId) ? creatorId : null;
   }
 }

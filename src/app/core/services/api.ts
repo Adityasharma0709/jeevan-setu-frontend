@@ -10,8 +10,8 @@ export class ApiService {
   post(url: string, data: any) {
     return this.http.post(`${this.baseUrl}/${url}`, data);
   }
-  get(url: string) {
-    return this.http.get(`${this.baseUrl}/${url}`);
+  get(url: string, params?: any) {
+    return this.http.get(`${this.baseUrl}/${url}`, { params });
   }
 
   // PUT

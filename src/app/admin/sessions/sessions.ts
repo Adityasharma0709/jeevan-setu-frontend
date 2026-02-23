@@ -1,10 +1,11 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
-import { Observable, Subject, startWith, switchMap, of, tap } from 'rxjs';
+import { Observable, Subject, combineLatest, map, startWith, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 
 import { AdminService, Session, Activity } from '../admin.service';
+import { AuthService } from '../../core/services/auth';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardInputDirective } from '@/shared/components/input';
 import {
@@ -57,23 +58,60 @@ export class Sessions {
 
   activities$: Observable<Activity[]>;
   sessions$: Observable<Session[]>;
+  private currentUserId: number | null = null;
+  private currentUserEmail: string | null = null;
+  private assignedProjectIds = new Set<number>();
+  private allowedActivityIds = new Set<number>();
 
   constructor(
     private fb: FormBuilder,
     private adminService: AdminService,
-    private dialog: ZardDialogService
+    private dialog: ZardDialogService,
+    private authService: AuthService
   ) {
-    this.activities$ = this.adminService.getActivities();
+    const currentUser = this.authService.getCurrentUser();
+    this.currentUserId = Number(currentUser?.sub) || null;
+    this.currentUserEmail = currentUser?.email ? String(currentUser.email).toLowerCase() : null;
+
+    const assignedProjects$ = this.adminService.getAssignedProjects(this.currentUserId || undefined);
+    assignedProjects$.subscribe({
+      next: (projects) => {
+        this.assignedProjectIds = new Set((projects || []).map((p) => Number(p.id)));
+      },
+      error: () => {
+        this.assignedProjectIds.clear();
+      }
+    });
+
+    this.activities$ = combineLatest([
+      this.adminService.getActivities(),
+      assignedProjects$.pipe(startWith([] as any[]))
+    ]).pipe(
+      map(([activities]) => (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity)))
+    );
+    this.activities$.subscribe({
+      next: (activities) => {
+        this.allowedActivityIds = new Set((activities || []).map((activity) => Number(activity.id)));
+        this.refresh$.next();
+      },
+      error: () => {
+        this.allowedActivityIds.clear();
+        this.refresh$.next();
+      }
+    });
 
     this.sessions$ = this.activityControl.valueChanges.pipe(
       startWith(''),
-      switchMap(activityId => {
-        if (!activityId) return of([]);
-        return this.refresh$.pipe(
-          startWith(void 0),
-          switchMap(() => this.adminService.getSessionsByActivity(Number(activityId)))
-        );
-      })
+      switchMap((activityId) => this.refresh$.pipe(
+        startWith(void 0),
+        switchMap(() => this.adminService.getAllSessions()),
+        map((sessions) => {
+          const selectedActivityId = activityId ? Number(activityId) : null;
+          if (!selectedActivityId) return sessions || [];
+          return (sessions || []).filter((session) => Number(session.activityId) === selectedActivityId);
+        })
+      )),
+      map((sessions) => (sessions || []).filter((session) => this.isSessionAllowed(session)))
     );
 
     this.initForm();
@@ -135,6 +173,12 @@ export class Sessions {
       return;
     }
 
+    const selectedActivityId = Number(this.sessionForm.value.activityId);
+    if (!this.allowedActivityIds.has(selectedActivityId)) {
+      toast.error('You can only use activities from projects assigned to you');
+      return;
+    }
+
     this.isSubmitting = true;
     const obs = this.isEditing
       ? this.adminService.updateSession(this.selectedSessionId!, this.sessionForm.value)
@@ -154,15 +198,70 @@ export class Sessions {
     });
   }
 
-  deactivateSession(id: number) {
+  deactivateSession(session: Session) {
+    if (!this.canToggleStatus(session)) {
+      toast.error('You can only deactivate sessions from your assigned activities');
+      return;
+    }
     if (!confirm('Are you sure you want to deactivate this session?')) return;
 
-    this.adminService.deactivateSession(id).subscribe({
+    this.adminService.deactivateSession(session.id).subscribe({
       next: () => {
         toast.success('Session deactivated');
         this.refresh$.next();
       },
       error: (err) => toast.error(err.error?.message || 'Failed to deactivate')
     });
+  }
+
+  activateSession(session: Session) {
+    if (!this.canToggleStatus(session)) {
+      toast.error('You can only activate sessions from your assigned activities');
+      return;
+    }
+    if (!confirm('Are you sure you want to activate this session?')) return;
+
+    this.adminService.activateSession(session.id).subscribe({
+      next: () => {
+        setTimeout(() => toast.success('Session activated'), 0);
+        this.refresh$.next();
+      },
+      error: (err) => setTimeout(() => toast.error(err.error?.message || 'Failed to activate'), 0)
+    });
+  }
+
+  canToggleStatus(session: Session): boolean {
+    const activityAllowed = this.allowedActivityIds.has(Number(session?.activityId));
+    const isOwnSession = this.isOwnedByCurrentAdmin(session);
+    return activityAllowed || isOwnSession;
+  }
+
+  private isActivityInAssignedProjects(activity: Activity): boolean {
+    if (!activity?.projectId) return false;
+    return this.assignedProjectIds.has(Number(activity.projectId));
+  }
+
+  private isSessionAllowed(session: Session): boolean {
+    const activityAllowed = this.allowedActivityIds.has(Number(session?.activityId));
+    const isOwnSession = this.isOwnedByCurrentAdmin(session);
+    return activityAllowed || isOwnSession;
+  }
+
+  private getCreatorId(entity: any): number | null {
+    const directId = entity?.creator?.id ?? entity?.createdBy?.id ?? entity?.createdById ?? entity?.created_by;
+    const creatorId = Number(directId);
+    return Number.isFinite(creatorId) ? creatorId : null;
+  }
+
+  private isOwnedByCurrentAdmin(entity: any): boolean {
+    const creatorId = this.getCreatorId(entity);
+    if (!!creatorId && !!this.currentUserId && creatorId === this.currentUserId) {
+      return true;
+    }
+    const creatorEmail = entity?.creator?.email || entity?.createdBy?.email;
+    if (!creatorEmail || !this.currentUserEmail) {
+      return false;
+    }
+    return String(creatorEmail).toLowerCase() === this.currentUserEmail;
   }
 }

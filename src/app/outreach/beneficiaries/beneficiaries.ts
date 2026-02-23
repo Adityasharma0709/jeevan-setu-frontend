@@ -1,41 +1,27 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { Observable, Subject, startWith, switchMap, of, tap } from 'rxjs';
+﻿import { CommonModule } from '@angular/common';
+import { Component, TemplateRef, ViewChild, inject } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, Subject, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
-import { ApiService } from '@/core/services/api';
 
-import { ZardProgressBarComponent } from '@/shared/components/progress-bar/progress-bar.component';
-import {
-  ZardFormFieldComponent,
-  ZardFormControlComponent
-} from '@/shared/components/form';
+import { AuthService } from '@/core/services/auth';
 import { ZardButtonComponent } from '@/shared/components/button';
-import {
-  ZardTableComponent,
-  ZardTableHeaderComponent,
-  ZardTableBodyComponent,
-  ZardTableRowComponent,
-  ZardTableHeadComponent,
-  ZardTableCellComponent,
-} from '@/shared/components/table';
+import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
+import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
+import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
+import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
+import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardInputDirective, ZardSelectDirective } from '@/shared/components/input';
+import {
+  ZardTableBodyComponent,
+  ZardTableCellComponent,
+  ZardTableComponent,
+  ZardTableHeadComponent,
+  ZardTableHeaderComponent,
+  ZardTableRowComponent,
+} from '@/shared/components/table';
 
-interface Project {
-  id: number;
-  name: string;
-}
-
-interface LocationModel {
-  id: number;
-  projectId: number;
-  locationCode: string;
-  state: string;
-  district: string;
-  block: string;
-  village: string;
-  status: string;
-}
+import { Beneficiary, CreateBeneficiaryPayload, OutreachService } from '../outreach.service';
 
 @Component({
   selector: 'app-beneficiaries',
@@ -43,179 +29,178 @@ interface LocationModel {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    ZardProgressBarComponent,
-    ZardFormFieldComponent,
-    ZardFormControlComponent,
     ZardButtonComponent,
-    ZardTableComponent,
-    ZardTableHeaderComponent,
-    ZardTableBodyComponent,
-    ZardTableRowComponent,
-    ZardTableHeadComponent,
-    ZardTableCellComponent,
+    ZardDialogModule,
+    ZardFormControlComponent,
+    ZardFormFieldComponent,
+    ZardIconComponent,
     ZardInputDirective,
     ZardSelectDirective,
+    ZardTableBodyComponent,
+    ZardTableCellComponent,
+    ZardTableComponent,
+    ZardTableHeadComponent,
+    ZardTableHeaderComponent,
+    ZardTableRowComponent,
   ],
   templateUrl: './beneficiaries.html',
+  styleUrl: './beneficiaries.css',
 })
-export class Beneficiaries implements OnInit {
+export class Beneficiaries {
+  @ViewChild('updateDialog') updateDialog!: TemplateRef<any>;
 
-  form!: FormGroup;
-
-  step = 1;
-  totalSteps = 4;
-
-  viewMode: 'list' | 'form' = 'list';
-
-  // ==============================
-  // 🔥 REFRESH STREAM
-  // ==============================
+  private outreachService = inject(OutreachService);
+  private fb = inject(FormBuilder);
+  private dialog = inject(ZardDialogService);
+  private authService = inject(AuthService);
 
   private refresh$ = new Subject<void>();
+  private currentUserId = Number(this.authService.getCurrentUser()?.sub) || undefined;
 
-  projects$: Observable<Project[]> = this.refresh$.pipe(
-    startWith(void 0),
-    switchMap(() =>
-      this.api.get('projects') as Observable<Project[]>
-    )
+  dialogRef!: ZardDialogRef<any>;
+  selectedBeneficiary: Beneficiary | null = null;
+
+  showCreateForm = false;
+  isSubmitting = false;
+
+  searchControl = new FormControl('');
+
+  createForm: FormGroup = this.fb.group({
+    projectId: ['', Validators.required],
+    locationId: ['', Validators.required],
+    mobileNumber: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+    name: ['', Validators.required],
+    gender: ['', Validators.required],
+    guardianName: ['', Validators.required],
+    dateOfBirth: ['', Validators.required],
+    maritalStatus: ['Single'],
+    dateOfMarriage: [''],
+    womanAgeAtMarriage: [''],
+    husbandAgeAtMarriage: [''],
+    qualification: ['', Validators.required],
+    religion: ['', Validators.required],
+    caste: ['', Validators.required],
+    monthlyIncome: ['', [Validators.required, Validators.min(0)]],
+    economicStatus: ['', Validators.required],
+    primaryIncomeSource: ['', Validators.required],
+    employmentStatus: ['', Validators.required],
+  });
+
+  updateForm: FormGroup = this.fb.group({
+    mobileNumber: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+    reason: ['', Validators.required],
+  });
+
+  projects$ = this.outreachService.getAssignedProjects(this.currentUserId).pipe(
+    startWith([])
   );
 
-  beneficiaries$: Observable<any[]> = this.refresh$.pipe(
-    startWith(void 0),
-    switchMap(() =>
-      this.api.get('outreach/beneficiary-list') as Observable<any[]>
-    )
+  locations$ = this.createForm.get('projectId')!.valueChanges.pipe(
+    startWith(this.createForm.get('projectId')!.value),
+    switchMap((projectId) => (projectId ? this.outreachService.getLocationsByProject(Number(projectId)) : of([])))
   );
 
-  // ==============================
-  // 🔥 LOCATIONS STREAM
-  // ==============================
+  beneficiaries$ = combineLatest([
+    this.refresh$.pipe(startWith(void 0)),
+    this.searchControl.valueChanges.pipe(startWith(''), debounceTime(250), distinctUntilChanged()),
+  ]).pipe(
+    switchMap(([_, search]) => this.outreachService.getBeneficiaries((search || '').trim())),
+    map((rows) => rows || [])
+  );
 
-  locations$!: Observable<LocationModel[]>;
-
-  constructor(private fb: FormBuilder, private api: ApiService) { }
-
-  ngOnInit() {
-    this.form = this.fb.group({
-
-      projectId: ['', Validators.required],
-      locationId: ['', Validators.required],
-
-      mobileNumber: ['', Validators.required],
-      name: ['', Validators.required],
-      gender: ['', Validators.required],
-      guardianName: ['', Validators.required],
-      dateOfBirth: ['', Validators.required],
-
-      maritalStatus: [''],
-      dateOfMarriage: [''],
-      womanAgeAtMarriage: [''],
-      husbandAgeAtMarriage: [''],
-
-      qualification: ['', Validators.required],
-      religion: ['', Validators.required],
-      caste: ['', Validators.required],
-
-      monthlyIncome: ['', Validators.required],
-      economicStatus: ['', Validators.required],
-      primaryIncomeSource: ['', Validators.required],
-      employmentStatus: ['', Validators.required],
-    });
-
-    // 🔥 Project → Location reactive pipeline
-
-    this.locations$ = this.form.get('projectId')!.valueChanges.pipe(
-
-      tap(() => {
-        // reset location when project changes
-        this.form.patchValue({ locationId: '' });
-      }),
-
-      switchMap(projectId => {
-        if (!projectId) return of([]);
-        return this.api.get(
-          `locations?projectId=${projectId}`
-        ) as Observable<LocationModel[]>;
-      })
-    );
-
-    // trigger initial fetch
-    this.refresh$.next();
-  }
-
-  // ==============================
-  // UI Helpers
-  // ==============================
-
-  get progress(): number {
-    return Math.round((this.step / this.totalSteps) * 100);
-  }
-
-  toggleView() {
-    this.viewMode = this.viewMode === 'list' ? 'form' : 'list';
-    if (this.viewMode === 'form') {
-      this.step = 1;
-      this.form.reset();
+  toggleCreateForm() {
+    this.showCreateForm = !this.showCreateForm;
+    if (this.showCreateForm) {
+      this.createForm.reset({ maritalStatus: 'Single' });
     }
   }
 
-  next() {
-    if (this.step < this.totalSteps) this.step++;
-  }
-
-  prev() {
-    if (this.step > 1) this.step--;
-  }
-
   isMarried(): boolean {
-    return this.form.value.maritalStatus === 'Married';
+    return String(this.createForm.get('maritalStatus')?.value || '').toLowerCase() === 'married';
   }
 
-  submit() {
-    const rawValue = this.form.value;
+  openUpdateDialog(beneficiary: Beneficiary) {
+    this.selectedBeneficiary = beneficiary;
+    this.updateForm.reset({
+      mobileNumber: beneficiary.mobileNumber,
+      reason: '',
+    });
 
-    const payload = {
-      ...rawValue,
-      projectId: Number(rawValue.projectId),
-      locationId: Number(rawValue.locationId),
-      monthlyIncome: Number(rawValue.monthlyIncome),
-      womanAgeAtMarriage: rawValue.womanAgeAtMarriage ? Number(rawValue.womanAgeAtMarriage) : null,
-      husbandAgeAtMarriage: rawValue.husbandAgeAtMarriage ? Number(rawValue.husbandAgeAtMarriage) : null,
-    };
+    this.dialogRef = this.dialog.create({
+      zTitle: `Request update for ${beneficiary.name}`,
+      zContent: this.updateDialog,
+      zOkText: 'Submit',
+      zOnOk: () => {
+        this.submitUpdateRequest();
+        return false;
+      },
+    });
+  }
 
-    console.log(payload);
+  submitUpdateRequest() {
+    if (!this.selectedBeneficiary || this.updateForm.invalid) {
+      this.updateForm.markAllAsTouched();
+      return;
+    }
 
-    this.api
-      .post('outreach/beneficiary', payload)
+    this.isSubmitting = true;
+    this.outreachService
+      .requestBeneficiaryUpdate(this.selectedBeneficiary.id, this.updateForm.getRawValue())
       .subscribe({
         next: () => {
-          toast.success('Beneficiary saved successfully');
-          this.refresh$.next();
-          this.toggleView();
+          toast.success('Update request submitted for manager approval');
+          this.dialogRef?.close();
+          this.isSubmitting = false;
         },
-        error: err => {
-          console.error(err);
-          if (err.status === 403) {
-            toast.error(err.error?.message || 'You are not valid to perform this action');
-          } else if (err.status === 400) {
-            toast.error(err.error?.message || 'Bad Request');
-          } else {
-            toast.error('Something went wrong');
-          }
-        }
+        error: (err) => {
+          toast.error(err?.error?.message || 'Failed to submit update request');
+          this.isSubmitting = false;
+        },
       });
   }
 
-  delete(id: number) {
-    if (!confirm('Are you sure you want to delete this beneficiary?')) return;
+  submitCreate() {
+    if (this.createForm.invalid) {
+      this.createForm.markAllAsTouched();
+      toast.error('Please fill all required fields');
+      return;
+    }
 
-    this.api.delete(`outreach/beneficiary/${id}`).subscribe({
+    const raw = this.createForm.getRawValue();
+    const payload: CreateBeneficiaryPayload = {
+      projectId: Number(raw.projectId),
+      locationId: Number(raw.locationId),
+      mobileNumber: String(raw.mobileNumber),
+      name: String(raw.name),
+      gender: String(raw.gender),
+      guardianName: String(raw.guardianName),
+      dateOfBirth: String(raw.dateOfBirth),
+      maritalStatus: raw.maritalStatus ? String(raw.maritalStatus) : undefined,
+      dateOfMarriage: raw.dateOfMarriage ? String(raw.dateOfMarriage) : undefined,
+      womanAgeAtMarriage: raw.womanAgeAtMarriage ? Number(raw.womanAgeAtMarriage) : undefined,
+      husbandAgeAtMarriage: raw.husbandAgeAtMarriage ? Number(raw.husbandAgeAtMarriage) : undefined,
+      qualification: String(raw.qualification),
+      religion: String(raw.religion),
+      caste: String(raw.caste),
+      monthlyIncome: Number(raw.monthlyIncome),
+      economicStatus: String(raw.economicStatus),
+      primaryIncomeSource: String(raw.primaryIncomeSource),
+      employmentStatus: String(raw.employmentStatus),
+    };
+
+    this.isSubmitting = true;
+    this.outreachService.createBeneficiary(payload).subscribe({
       next: () => {
+        toast.success('Beneficiary created successfully');
         this.refresh$.next();
+        this.showCreateForm = false;
+        this.createForm.reset({ maritalStatus: 'Single' });
+        this.isSubmitting = false;
       },
-      error: err => {
-        console.error('Failed to delete', err);
-      }
+      error: (err) => {
+        toast.error(err?.error?.message || 'Failed to create beneficiary');
+        this.isSubmitting = false;
+      },
     });
   }
 }
