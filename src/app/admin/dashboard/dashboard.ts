@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { AdminService } from '../admin.service';
+import { AuthService } from '../../core/services/auth';
 import { ZardIconComponent } from '@/shared/components/icon';
 
 @Component({
@@ -13,10 +14,17 @@ import { ZardIconComponent } from '@/shared/components/icon';
 })
 export class Dashboard implements OnInit {
   stats$!: Observable<any>;
+  assignedProjects$!: Observable<any[]>;
 
-  constructor(private adminService: AdminService) { }
+  constructor(
+    private adminService: AdminService,
+    private authService: AuthService
+  ) { }
 
   ngOnInit() {
+    const currentUser = this.authService.getCurrentUser();
+    const currentUserId = Number(currentUser?.sub) || undefined;
     this.stats$ = this.adminService.getAdminDashboard();
+    this.assignedProjects$ = this.adminService.getAssignedProjects(currentUserId);
   }
 }
