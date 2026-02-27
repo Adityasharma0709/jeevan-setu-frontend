@@ -1,13 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { ApiService } from '../../core/services/api';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  private API = 'http://localhost:3000/users/dashboard';
-
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private api: ApiService) { }
 
   getSuperAdminStats() {
-    return this.http.get<any>(`${this.API}/super-admin`);
+    return this.http.get<any>(`${this.api.baseUrl}/users/dashboard/super-admin`);
   }
 }
