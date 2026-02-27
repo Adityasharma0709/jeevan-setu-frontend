@@ -41,7 +41,8 @@
                         <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(manager)">
                             Edit
                         </button>
-                        <button *ngIf="canToggleStatus(manager)" z-button [zType]="manager.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
+                        <button *ngIf="canToggleStatus(manager)" z-button
+                            [zType]="manager.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
                             (click)="toggleManagerStatus(manager)">
                             {{ manager.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
                         </button>
@@ -86,8 +87,7 @@
         </z-form-field>
 
         <z-form-field>
-            <label z-form-label zRequired *ngIf="!isEditing">Project</label>
-            <label z-form-label *ngIf="isEditing">Project (optional for reassignment)</label>
+            <label z-form-label>Project (optional)</label>
             <z-form-control>
                 <select z-input formControlName="projectId">
                     <option value="">Select a project</option>
@@ -99,8 +99,7 @@
         </z-form-field>
 
         <z-form-field>
-            <label z-form-label zRequired *ngIf="!isEditing">Location</label>
-            <label z-form-label *ngIf="isEditing">Location (optional for reassignment)</label>
+            <label z-form-label>Location (optional)</label>
             <z-form-control>
                 <select z-input formControlName="locationId" [disabled]="!managerForm.value.projectId">
                     <option value="">Select a location</option>

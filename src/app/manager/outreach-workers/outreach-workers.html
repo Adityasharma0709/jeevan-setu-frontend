@@ -110,7 +110,7 @@
                 <select z-input formControlName="locationId">
                     <option value="">Select location</option>
                     <option *ngFor="let l of locations" [value]="l.id">
-                        {{ l.name }}
+                        {{ l.village }} ({{ l.block }})
                     </option>
                 </select>
             </z-form-control>

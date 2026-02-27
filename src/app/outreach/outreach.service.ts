@@ -131,7 +131,7 @@ export class OutreachService {
   }
 
   getLocationsByProject(projectId: number): Observable<OutreachLocation[]> {
-    return (this.api.get(`locations?projectId=${projectId}`) as Observable<OutreachLocation[]>).pipe(
+    return (this.api.get(`${this.endpoint}/assigned-locations/${projectId}`) as Observable<OutreachLocation[]>).pipe(
       map((rows) => rows || []),
       catchError(() => of([]))
     );

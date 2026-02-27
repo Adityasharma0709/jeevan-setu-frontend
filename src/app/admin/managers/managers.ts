@@ -122,11 +122,7 @@ export class Managers {
       locationId: '',
     });
     this.managerForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-    this.managerForm.get('projectId')?.setValidators(Validators.required);
-    this.managerForm.get('locationId')?.setValidators(Validators.required);
     this.managerForm.get('password')?.updateValueAndValidity();
-    this.managerForm.get('projectId')?.updateValueAndValidity();
-    this.managerForm.get('locationId')?.updateValueAndValidity();
 
     this.dialogRef = this.dialog.create({
       zTitle: 'Create Manager',
@@ -176,13 +172,13 @@ export class Managers {
     const formValue = this.managerForm.getRawValue();
     const selectedProjectId = formValue.projectId ? Number(formValue.projectId) : null;
     const selectedLocationId = formValue.locationId ? Number(formValue.locationId) : null;
-    const createPayload = {
+    const createPayload: any = {
       name: formValue.name,
       email: formValue.email,
       password: formValue.password,
-      projectId: selectedProjectId!,
-      locationId: selectedLocationId!,
     };
+    if (selectedProjectId) createPayload.projectId = selectedProjectId;
+    if (selectedLocationId) createPayload.locationId = selectedLocationId;
     const updatePayload = {
       name: formValue.name,
       email: formValue.email,
