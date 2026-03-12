@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Observable, Subject, startWith, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { ApiService } from '../../core/services/api';
 
@@ -88,6 +89,7 @@ interface LocationModel {
     ZardFormControlComponent,
 
     ZardDividerComponent,
+    LottieComponent,
   ],
   templateUrl: './locations.html',
 })
@@ -114,6 +116,7 @@ export class LocationsComponent {
   ========================= */
 
   private refresh$ = new Subject<void>();
+  options: AnimationOptions = { path: '/loading.json' };
 
   locations$: Observable<LocationModel[]> = this.refresh$.pipe(
     startWith(void 0),

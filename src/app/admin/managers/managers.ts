@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
 import { Observable, Subject, startWith, switchMap, combineLatest, debounceTime, distinctUntilChanged, tap, of } from 'rxjs';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { ManagersService, User } from './managers.service';
 import { ZardButtonComponent } from '@/shared/components/button';
@@ -39,7 +40,8 @@ import { AuthService } from '../../core/services/auth';
     ZardDialogModule,
     ZardFormControlComponent,
     ZardFormFieldComponent,
-    ZardIconComponent
+    ZardIconComponent,
+    LottieComponent,
   ],
   templateUrl: './managers.html',
   styleUrl: './managers.css',
@@ -56,6 +58,7 @@ export class Managers {
   private refresh$ = new Subject<void>();
   isEditing = false;
   selectedManagerId: number | null = null;
+  options: AnimationOptions = { path: '/loading.json' };
   targetManager: User | null = null;
 
   managers$!: Observable<User[]>;

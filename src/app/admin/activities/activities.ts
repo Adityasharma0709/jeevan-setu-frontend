@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, Subject, combineLatest, map, startWith, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { AdminService, Activity } from '../admin.service';
 import { AuthService } from '../../core/services/auth';
@@ -40,6 +41,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardIconComponent,
+    LottieComponent,
   ],
   templateUrl: './activities.html',
   styleUrl: './activities.css',
@@ -54,6 +56,8 @@ export class Activities implements OnInit {
 
   dialogRef!: ZardDialogRef<any>;
   activityForm!: FormGroup;
+
+  options: AnimationOptions = { path: '/loading.json' };
 
   private refresh$ = new Subject<void>();
   isSubmitting = false;

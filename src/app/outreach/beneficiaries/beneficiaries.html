@@ -1,4 +1,4 @@
-﻿<div class="space-y-6">
+<div class="space-y-6">
   <div class="flex items-end justify-between gap-3 flex-wrap">
     <div class="flex-1 min-w-[280px] max-w-xl">
       <h1 class="text-2xl font-bold text-gray-900">Beneficiaries</h1>
@@ -144,40 +144,47 @@
     </form>
   </section>
 
-  <section class="bg-white border rounded-xl overflow-hidden">
-    <table z-table class="w-full">
-      <thead z-table-header>
-        <tr z-table-row>
-          <th z-table-head>UID</th>
-          <th z-table-head>Name</th>
-          <th z-table-head>Mobile</th>
-          <th z-table-head>Location</th>
-          <th z-table-head class="text-right">Actions</th>
-        </tr>
-      </thead>
+  <ng-container *ngIf="beneficiaries$ | async as beneficiaries; else bLoader" class="fade-in">
+    <section class="bg-white border rounded-xl overflow-hidden">
+      <table z-table class="w-full">
+        <thead z-table-header>
+          <tr z-table-row>
+            <th z-table-head>UID</th>
+            <th z-table-head>Name</th>
+            <th z-table-head>Mobile</th>
+            <th z-table-head>Location</th>
+            <th z-table-head class="text-right">Actions</th>
+          </tr>
+        </thead>
 
-      <tbody z-table-body>
-        <tr z-table-row *ngFor="let beneficiary of beneficiaries$ | async">
-          <td z-table-cell class="font-medium text-indigo-700">{{ beneficiary.uid }}</td>
-          <td z-table-cell>{{ beneficiary.name }}</td>
-          <td z-table-cell>{{ beneficiary.mobileNumber }}</td>
-          <td z-table-cell>
-            {{ beneficiary.location?.village || '-' }}
-          </td>
-          <td z-table-cell class="text-right">
-            <button z-button zType="secondary" zSize="sm" (click)="openUpdateDialog(beneficiary)">
-              Request Update
-            </button>
-          </td>
-        </tr>
+        <tbody z-table-body>
+          <tr z-table-row *ngFor="let beneficiary of beneficiaries">
+            <td z-table-cell class="font-medium text-indigo-700">{{ beneficiary.uid }}</td>
+            <td z-table-cell>{{ beneficiary.name }}</td>
+            <td z-table-cell>{{ beneficiary.mobileNumber }}</td>
+            <td z-table-cell>
+              {{ beneficiary.location?.village || '-' }}
+            </td>
+            <td z-table-cell class="text-right">
+              <button z-button zType="secondary" zSize="sm" (click)="openUpdateDialog(beneficiary)">
+                Request Update
+              </button>
+            </td>
+          </tr>
 
-        <tr z-table-row *ngIf="(beneficiaries$ | async)?.length === 0">
-          <td z-table-cell colspan="5" class="text-center text-gray-500 py-10">No beneficiaries found.</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-</div>
+          <tr z-table-row *ngIf="beneficiaries.length === 0">
+            <td z-table-cell colspan="5" class="text-center text-gray-500 py-10">No beneficiaries found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </ng-container>
+
+  <ng-template #bLoader>
+    <div class="flex items-center justify-center p-12 w-full min-h-[300px]">
+      <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+    </div>
+  </ng-template>
 
 <ng-template #updateDialog>
   <form [formGroup]="updateForm" class="space-y-4 py-2">

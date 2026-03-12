@@ -15,51 +15,59 @@
 </div>
 
 <!-- ================= MANAGERS TABLE ================= -->
-<div class="bg-white border rounded-lg overflow-hidden">
-    <table z-table class="w-full">
-        <thead z-table-header>
-            <tr z-table-row>
-                <th z-table-head>Name</th>
-                <th z-table-head>Email</th>
-                <th z-table-head>Status</th>
-                <th z-table-head class="text-right">Actions</th>
-            </tr>
-        </thead>
-        <tbody z-table-body>
-            <tr z-table-row *ngFor="let manager of managers$ | async">
-                <td z-table-cell class="font-medium">{{ manager.name }}</td>
-                <td z-table-cell class="text-gray-600">{{ manager.email }}</td>
-                <td z-table-cell>
-                    <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
+<ng-container *ngIf="managers$ | async as managers; else loader" class="fade-in">
+    <div class="bg-white border rounded-lg overflow-hidden">
+        <table z-table class="w-full">
+            <thead z-table-header>
+                <tr z-table-row>
+                    <th z-table-head>Name</th>
+                    <th z-table-head>Email</th>
+                    <th z-table-head>Status</th>
+                    <th z-table-head class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody z-table-body>
+                <tr z-table-row *ngFor="let manager of managers">
+                    <td z-table-cell class="font-medium">{{ manager.name }}</td>
+                    <td z-table-cell class="text-gray-600">{{ manager.email }}</td>
+                    <td z-table-cell>
+                        <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
               manager.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
             ">
-                        {{ manager.status }}
-                    </span>
-                </td>
-                <td z-table-cell class="text-right">
-                    <div class="flex justify-end gap-2">
-                        <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(manager)">
-                            Edit
-                        </button>
-                        <button *ngIf="canToggleStatus(manager)" z-button
-                            [zType]="manager.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
-                            (click)="toggleManagerStatus(manager)">
-                            {{ manager.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-                        </button>
-                        <button z-button zType="default" zSize="sm" (click)="openAssignDialog(manager)">
-                            Assign Project
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr z-table-row *ngIf="(managers$ | async)?.length === 0">
-                <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
-                    No managers found.
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+                            {{ manager.status }}
+                        </span>
+                    </td>
+                    <td z-table-cell class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(manager)">
+                                Edit
+                            </button>
+                            <button *ngIf="canToggleStatus(manager)" z-button
+                                [zType]="manager.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
+                                (click)="toggleManagerStatus(manager)">
+                                {{ manager.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                            </button>
+                            <button z-button zType="default" zSize="sm" (click)="openAssignDialog(manager)">
+                                Assign Project
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr z-table-row *ngIf="managers.length === 0">
+                    <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
+                        No managers found.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</ng-container>
+
+<ng-template #loader>
+    <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+        <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+    </div>
+</ng-template>
 
 <!-- ================= CREATE/EDIT DIALOG ================= -->
 <ng-template #managerDialog>

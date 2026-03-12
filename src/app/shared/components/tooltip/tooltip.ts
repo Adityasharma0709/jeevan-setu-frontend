@@ -217,19 +217,29 @@ export class ZardTooltipDirective implements OnInit, OnDestroy {
 
     const tooltipPortal = new ComponentPortal(ZardTooltipComponent);
     this.componentRef = this.overlayRef?.attach(tooltipPortal);
+    const componentRef = this.componentRef;
     this.componentRef?.onDestroy(() => {
       this.componentRef = undefined;
     });
-    this.componentRef?.instance.state.set('opened');
-    this.componentRef?.instance.setProps(this.tooltipText(), this.zPosition());
-    runInInjectionContext(this.injector, () => {
-      this.ariaEffectRef = effect(() => {
-        const tooltipId = this.componentRef?.instance.uniqueId()?.id();
-        if (tooltipId) {
-          this.renderer.setAttribute(this.elementRef.nativeElement, 'aria-describedby', tooltipId);
-          this.ariaEffectRef?.destroy();
-          this.ariaEffectRef = undefined;
-        }
+
+    queueMicrotask(() => {
+      if (!componentRef || this.componentRef !== componentRef) {
+        return;
+      }
+
+      componentRef.instance.state.set('opened');
+      componentRef.instance.setProps(this.tooltipText(), this.zPosition());
+      componentRef.changeDetectorRef.detectChanges();
+
+      runInInjectionContext(this.injector, () => {
+        this.ariaEffectRef = effect(() => {
+          const tooltipId = componentRef.instance.uniqueId()?.id();
+          if (tooltipId) {
+            this.renderer.setAttribute(this.elementRef.nativeElement, 'aria-describedby', tooltipId);
+            this.ariaEffectRef?.destroy();
+            this.ariaEffectRef = undefined;
+          }
+        });
       });
     });
     this.zShow.emit();
@@ -247,9 +257,18 @@ export class ZardTooltipDirective implements OnInit, OnDestroy {
     }
 
     this.renderer.removeAttribute(this.elementRef.nativeElement, 'aria-describedby');
-    this.componentRef.instance.state.set('closed');
-    this.zHide.emit();
-    this.overlayRef?.detach();
+    const componentRef = this.componentRef;
+
+    queueMicrotask(() => {
+      if (!componentRef || this.componentRef !== componentRef) {
+        return;
+      }
+
+      componentRef.instance.state.set('closed');
+      componentRef.changeDetectorRef.detectChanges();
+      this.zHide.emit();
+      this.overlayRef?.detach();
+    });
   }
 }
 

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OutreachService } from '../outreach.service';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import {
     ZardTableComponent,
     ZardTableHeaderComponent,
@@ -23,12 +24,15 @@ import { ZardIconComponent } from '@/shared/components/icon';
         ZardTableRowComponent,
         ZardTableHeadComponent,
         ZardTableCellComponent,
-        ZardIconComponent
+        ZardIconComponent,
+        LottieComponent,
     ],
     templateUrl: './requests.html'
 })
 export class Requests implements OnInit {
     myRequests: any[] = [];
+    isLoading = true;
+    options: AnimationOptions = { path: '/loading.json' };
 
     constructor(private outreachService: OutreachService) { }
 
@@ -37,12 +41,15 @@ export class Requests implements OnInit {
     }
 
     loadMyRequests() {
+        this.isLoading = true;
         this.outreachService.getMyRequests().subscribe({
             next: (data) => {
                 this.myRequests = data;
+                this.isLoading = false;
             },
             error: (err) => {
                 toast.error('Failed to load requests');
+                this.isLoading = false;
                 console.error(err);
             }
         });

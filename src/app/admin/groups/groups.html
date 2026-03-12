@@ -6,63 +6,71 @@
     </button>
 </div>
 
-<div class="bg-white border rounded-lg overflow-hidden">
-    <table z-table class="w-full">
-        <thead z-table-header>
-            <tr z-table-row>
-                <th z-table-head>Name</th>
-                <th z-table-head>Age Range</th>
-                <th z-table-head>Activities</th>
-                <th z-table-head>Status</th>
-                <th z-table-head class="text-right">Actions</th>
-            </tr>
-        </thead>
-        <tbody z-table-body>
-            <tr z-table-row *ngFor="let group of groups$ | async">
-                <td z-table-cell class="font-medium">{{ group.name }}</td>
-                <td z-table-cell class="text-gray-600">
-                    {{ group.minAge || 'Any' }} - {{ group.maxAge || 'Any' }}
-                </td>
-                <td z-table-cell>
-                    <div class="flex flex-wrap gap-1">
-                        <span *ngFor="let ga of group.activities"
-                            class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] border border-blue-100">
-                            {{ ga.activity.name }}
+<ng-container *ngIf="groups$ | async as groups; else loader" class="fade-in">
+    <div class="bg-white border rounded-lg overflow-hidden">
+        <table z-table class="w-full">
+            <thead z-table-header>
+                <tr z-table-row>
+                    <th z-table-head>Name</th>
+                    <th z-table-head>Age Range</th>
+                    <th z-table-head>Activities</th>
+                    <th z-table-head>Status</th>
+                    <th z-table-head class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody z-table-body>
+                <tr z-table-row *ngFor="let group of groups">
+                    <td z-table-cell class="font-medium">{{ group.name }}</td>
+                    <td z-table-cell class="text-gray-600">
+                        {{ group.minAge || 'Any' }} - {{ group.maxAge || 'Any' }}
+                    </td>
+                    <td z-table-cell>
+                        <div class="flex flex-wrap gap-1">
+                            <span *ngFor="let ga of group.activities"
+                                class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] border border-blue-100">
+                                {{ ga.activity.name }}
+                            </span>
+                            <span *ngIf="!group.activities?.length" class="text-gray-400 text-xs italic">
+                                No activities tagged
+                            </span>
+                        </div>
+                    </td>
+                    <td z-table-cell>
+                        <span class="px-2 py-1 rounded text-xs font-medium"
+                            [ngClass]="group.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                            {{ group.status }}
                         </span>
-                        <span *ngIf="!group.activities?.length" class="text-gray-400 text-xs italic">
-                            No activities tagged
-                        </span>
-                    </div>
-                </td>
-                <td z-table-cell>
-                    <span class="px-2 py-1 rounded text-xs font-medium"
-                        [ngClass]="group.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
-                        {{ group.status }}
-                    </span>
-                </td>
-                <td z-table-cell class="text-right">
-                    <div class="flex justify-end gap-2">
-                        <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(group)">
-                            Tag Activity
-                        </button>
-                        <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(group)">
-                            Edit
-                        </button>
-                        <button *ngIf="canToggleStatus(group)" z-button [zType]="group.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
-                            (click)="toggleGroupStatus(group)">
-                            {{ group.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr z-table-row *ngIf="(groups$ | async)?.length === 0">
-                <td z-table-cell colspan="5" class="text-center py-8 text-gray-500">
-                    No beneficiary groups found.
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+                    </td>
+                    <td z-table-cell class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(group)">
+                                Tag Activity
+                            </button>
+                            <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(group)">
+                                Edit
+                            </button>
+                            <button *ngIf="canToggleStatus(group)" z-button [zType]="group.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
+                                (click)="toggleGroupStatus(group)">
+                                {{ group.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr z-table-row *ngIf="groups.length === 0">
+                    <td z-table-cell colspan="5" class="text-center py-8 text-gray-500">
+                        No beneficiary groups found.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</ng-container>
+
+<ng-template #loader>
+    <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+        <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+    </div>
+</ng-template>
 
 <!-- Group Create/Edit Dialog -->
 <ng-template #groupDialog>
@@ -88,6 +96,19 @@
                 </z-form-control>
             </z-form-field>
         </div>
+
+        <z-form-field>
+            <label z-form-label>Tag Activity (Optional)</label>
+            <z-form-control>
+                <select z-input formControlName="activityId">
+                    <option value="">No Activity</option>
+                    <option *ngFor="let activity of activities$ | async" [value]="activity.id">
+                        {{ activity.name }}
+                    </option>
+                </select>
+            </z-form-control>
+            <p class="text-xs text-gray-500 mt-1">You can immediately tag an activity to this group.</p>
+        </z-form-field>
     </form>
 </ng-template>
 

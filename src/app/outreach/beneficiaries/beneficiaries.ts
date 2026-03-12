@@ -1,8 +1,9 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, TemplateRef, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, Subject, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { AuthService } from '@/core/services/auth';
 import { ZardButtonComponent } from '@/shared/components/button';
@@ -42,6 +43,7 @@ import { Beneficiary, CreateBeneficiaryPayload, OutreachService } from '../outre
     ZardTableHeadComponent,
     ZardTableHeaderComponent,
     ZardTableRowComponent,
+    LottieComponent,
   ],
   templateUrl: './beneficiaries.html',
   styleUrl: './beneficiaries.css',
@@ -59,6 +61,7 @@ export class Beneficiaries {
 
   dialogRef!: ZardDialogRef<any>;
   selectedBeneficiary: Beneficiary | null = null;
+  options: AnimationOptions = { path: '/loading.json' };
 
   showCreateForm = false;
   isSubmitting = false;

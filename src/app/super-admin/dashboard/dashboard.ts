@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { DashboardService } from './dashboard.service';
 import { Observable } from 'rxjs';
 import {  ZardTableComponent,
@@ -17,13 +18,15 @@ import {  ZardTableComponent,
   ZardTableBodyComponent,
   ZardTableRowComponent,
   ZardTableHeadComponent,
-  ZardTableCellComponent
+  ZardTableCellComponent,
+  LottieComponent,
   ],
   templateUrl: './dashboard.html'
 })
 export class DashboardComponent {
 
-  stats$!: Observable<any>;   // 👈 Observable
+  stats$!: Observable<any>;
+  options: AnimationOptions = { path: '/loading.json' };
 
   constructor(private api: DashboardService) {
     this.stats$ = this.api.getSuperAdminStats(); // auto call

@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { AdminService } from '../admin.service';
 import { ZardButtonComponent } from '@/shared/components/button';
 import {
@@ -25,13 +26,16 @@ import { ZardIconComponent } from '@/shared/components/icon';
     ZardTableRowComponent,
     ZardTableHeadComponent,
     ZardTableCellComponent,
-    ZardIconComponent
+    ZardIconComponent,
+    LottieComponent,
   ],
   templateUrl: './requests.html',
   styleUrl: './requests.css',
 })
 export class Requests implements OnInit {
   requests: any[] = [];
+  isLoading = true;
+  options: AnimationOptions = { path: '/loading.json' };
 
   constructor(
     private adminService: AdminService,
@@ -43,16 +47,17 @@ export class Requests implements OnInit {
   }
 
   loadRequests() {
+    this.isLoading = true;
     this.adminService.getBeneficiaryRequests().subscribe({
       next: (requests) => {
-        console.log('[Admin Requests API]', requests);
         const safeRequests = Array.isArray(requests) ? requests : [];
         this.requests = safeRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        console.log('[Admin Requests Sorted]', this.requests);
+        this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.requests = [];
+        this.isLoading = false;
         this.cdr.detectChanges();
         toast.error(err?.error?.message || 'Failed to load requests');
       }

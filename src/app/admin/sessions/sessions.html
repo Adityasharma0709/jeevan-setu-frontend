@@ -14,52 +14,60 @@
     </div>
 </div>
 
-<div class="bg-white border rounded-lg overflow-hidden">
-    <table z-table class="w-full">
-        <thead z-table-header>
-            <tr z-table-row>
-                <th z-table-head>Session Name</th>
-                <th z-table-head>Date</th>
-                <th z-table-head>Status</th>
-                <th z-table-head class="text-right">Actions</th>
-            </tr>
-        </thead>
-        <tbody z-table-body>
-            <tr z-table-row *ngFor="let session of sessions$ | async">
-                <td z-table-cell class="font-medium">{{ session.name }}</td>
-                <td z-table-cell class="text-gray-600">
-                    {{ session.sessionDate | date:'mediumDate' }}
-                </td>
-                <td z-table-cell>
-                    <span class="px-2 py-1 rounded text-xs font-medium"
-                        [ngClass]="session.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
-                        {{ session.status }}
-                    </span>
-                </td>
-                <td z-table-cell class="text-right">
-                    <div class="flex justify-end gap-2">
-                        <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(session)">
-                            Edit
-                        </button>
-                        <button *ngIf="session.status === 'ACTIVE' && canToggleStatus(session)" z-button zType="destructive" zSize="sm"
-                            (click)="deactivateSession(session)">
-                            Deactivate
-                        </button>
-                        <button *ngIf="session.status === 'INACTIVE' && canToggleStatus(session)" z-button zType="default" zSize="sm"
-                            (click)="activateSession(session)">
-                            Activate
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr z-table-row *ngIf="(sessions$ | async)?.length === 0">
-                <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
-                    No sessions found.
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+<ng-container *ngIf="sessions$ | async as sessions; else loader" class="fade-in">
+    <div class="bg-white border rounded-lg overflow-hidden">
+        <table z-table class="w-full">
+            <thead z-table-header>
+                <tr z-table-row>
+                    <th z-table-head>Session Name</th>
+                    <th z-table-head>Date</th>
+                    <th z-table-head>Status</th>
+                    <th z-table-head class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody z-table-body>
+                <tr z-table-row *ngFor="let session of sessions">
+                    <td z-table-cell class="font-medium">{{ session.name }}</td>
+                    <td z-table-cell class="text-gray-600">
+                        {{ session.sessionDate | date:'mediumDate' }}
+                    </td>
+                    <td z-table-cell>
+                        <span class="px-2 py-1 rounded text-xs font-medium"
+                            [ngClass]="session.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                            {{ session.status }}
+                        </span>
+                    </td>
+                    <td z-table-cell class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(session)">
+                                Edit
+                            </button>
+                            <button *ngIf="session.status === 'ACTIVE' && canToggleStatus(session)" z-button zType="destructive" zSize="sm"
+                                (click)="deactivateSession(session)">
+                                Deactivate
+                            </button>
+                            <button *ngIf="session.status === 'INACTIVE' && canToggleStatus(session)" z-button zType="default" zSize="sm"
+                                (click)="activateSession(session)">
+                                Activate
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr z-table-row *ngIf="sessions.length === 0">
+                    <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
+                        No sessions found.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</ng-container>
+
+<ng-template #loader>
+    <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+        <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+    </div>
+</ng-template>
 
 <ng-template #sessionDialog>
     <form [formGroup]="sessionForm" class="space-y-4 py-2">

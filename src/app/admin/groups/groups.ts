@@ -1,8 +1,9 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, Subject, combineLatest, map, startWith, switchMap } from 'rxjs';
+import { Observable, Subject, combineLatest, map, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { AdminService, Group, Activity } from '../admin.service';
 import { AuthService } from '../../core/services/auth';
@@ -40,6 +41,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardIconComponent,
+    LottieComponent,
   ],
   templateUrl: './groups.html',
   styleUrl: './groups.css',
@@ -52,6 +54,11 @@ export class Groups {
   groupForm!: FormGroup;
   tagForm!: FormGroup;
 
+  options: AnimationOptions = {
+    path: '/loading.json',
+  };
+
+  isLoading = true;
   private refresh$ = new Subject<void>();
   isSubmitting = false;
   isEditing = false;
@@ -84,11 +91,12 @@ export class Groups {
     });
 
     this.groups$ = combineLatest([
-      this.refresh$.pipe(startWith(void 0)),
+      this.refresh$.pipe(startWith(void 0), tap(() => this.isLoading = true)),
       assignedProjects$.pipe(startWith([] as any[]))
     ]).pipe(
       switchMap(() => this.adminService.getGroups()),
-      map((groups) => (groups || []).filter((group) => this.isGroupInAssignedProjects(group)))
+      map((groups) => (groups || []).filter((group) => this.isGroupInAssignedProjects(group))),
+      tap(() => this.isLoading = false)
     );
 
     this.activities$ = combineLatest([
@@ -113,6 +121,7 @@ export class Groups {
       name: ['', Validators.required],
       minAge: [null],
       maxAge: [null],
+      activityId: [''],
     });
 
     this.tagForm = this.fb.group({
@@ -157,10 +166,23 @@ export class Groups {
       return;
     }
 
+    const formValue = this.groupForm.value;
+    const payload = {
+      ...formValue,
+      minAge: formValue.minAge != null && formValue.minAge !== '' ? Number(formValue.minAge) : 0,
+      maxAge: formValue.maxAge != null && formValue.maxAge !== '' ? Number(formValue.maxAge) : 100,
+    };
+
+    if (formValue.activityId) {
+      payload.activityId = Number(formValue.activityId);
+    } else {
+      delete payload.activityId;
+    }
+
     this.isSubmitting = true;
     const obs = this.isEditing
-      ? this.adminService.updateGroup(this.selectedGroupId!, this.groupForm.value)
-      : this.adminService.createGroup(this.groupForm.value);
+      ? this.adminService.updateGroup(this.selectedGroupId!, payload)
+      : this.adminService.createGroup(payload);
 
     obs.subscribe({
       next: () => {
@@ -170,7 +192,11 @@ export class Groups {
         this.isSubmitting = false;
       },
       error: (err) => {
-        toast.error(err.error?.message || 'Something went wrong');
+        let errorMessage = 'Something went wrong';
+        if (err.error?.message) {
+          errorMessage = Array.isArray(err.error.message) ? err.error.message[0] : err.error.message;
+        }
+        toast.error(errorMessage);
         this.isSubmitting = false;
       }
     });
@@ -190,7 +216,13 @@ export class Groups {
         toast.success(`Group ${group.status === 'ACTIVE' ? 'deactivated' : 'activated'}`);
         this.refresh$.next();
       },
-      error: (err) => toast.error(err.error?.message || 'Action failed')
+      error: (err) => {
+        let errorMessage = 'Action failed';
+        if (err.error?.message) {
+          errorMessage = Array.isArray(err.error.message) ? err.error.message[0] : err.error.message;
+        }
+        toast.error(errorMessage);
+      }
     });
   }
 
@@ -233,7 +265,11 @@ export class Groups {
         this.isSubmitting = false;
       },
       error: (err) => {
-        toast.error(err.error?.message || 'Tagging failed');
+        let errorMessage = 'Tagging failed';
+        if (err.error?.message) {
+          errorMessage = Array.isArray(err.error.message) ? err.error.message[0] : err.error.message;
+        }
+        toast.error(errorMessage);
         this.isSubmitting = false;
       }
     });

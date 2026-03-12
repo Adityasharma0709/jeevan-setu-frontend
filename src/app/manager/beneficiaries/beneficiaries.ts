@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ManagerService, UserProfile } from '../manager.service';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ZardButtonComponent } from '@/shared/components/button';
 import {
     ZardTableComponent,
@@ -27,12 +28,15 @@ import { ZardIconComponent } from '@/shared/components/icon';
         ZardTableRowComponent,
         ZardTableHeadComponent,
         ZardTableCellComponent,
-        ZardIconComponent
+        ZardIconComponent,
+        LottieComponent,
     ],
     templateUrl: './beneficiaries.html'
 })
 export class Beneficiaries implements OnInit {
     beneficiaries: any[] = [];
+    isLoading = true;
+    options: AnimationOptions = { path: '/loading.json' };
     isModalOpen = false;
     selectedBeneficiary: any = null;
     updateForm: any = { name: '', mobileNumber: '' };
@@ -44,12 +48,15 @@ export class Beneficiaries implements OnInit {
     }
 
     loadBeneficiaries() {
+        this.isLoading = true;
         this.managerService.getBeneficiaries().subscribe({
             next: (data) => {
                 this.beneficiaries = data;
+                this.isLoading = false;
             },
             error: (err) => {
                 toast.error('Failed to load beneficiaries');
+                this.isLoading = false;
                 console.error(err);
             }
         });

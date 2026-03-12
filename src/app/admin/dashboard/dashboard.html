@@ -1,126 +1,139 @@
-<div class="mb-8">
-    <h2 class="text-2xl font-bold mb-2">Admin Dashboard</h2>
-    <p class="text-gray-600">Overview of system activities and beneficiary groups.</p>
-</div>
+<ng-container *ngIf="stats$ | async as stats; else loader" class="fade-in">
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-2">Admin Dashboard</h2>
+        <p class="text-gray-600">Overview of system activities and beneficiary groups.</p>
+    </div>
 
-<div *ngIf="stats$ | async as stats" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <!-- Total Groups -->
-    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-        <div class="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-            <z-icon zType="users" />
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Total Groups -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <z-icon zType="users" />
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 font-medium">Total Groups</p>
+                <h3 class="text-2xl font-bold">{{ stats.totalGroups }}</h3>
+            </div>
         </div>
-        <div>
-            <p class="text-sm text-gray-500 font-medium">Total Groups</p>
-            <h3 class="text-2xl font-bold">{{ stats.totalGroups }}</h3>
+
+        <!-- Total Activities -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+                <z-icon zType="activity" />
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 font-medium">Total Activities</p>
+                <h3 class="text-2xl font-bold">{{ stats.totalActivities }}</h3>
+            </div>
+        </div>
+
+        <!-- Total Sessions -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                <z-icon zType="calendar" />
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 font-medium">Total Sessions</p>
+                <h3 class="text-2xl font-bold">{{ stats.totalSessions }}</h3>
+            </div>
         </div>
     </div>
 
-    <!-- Total Activities -->
-    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-        <div class="w-12 h-12 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
-            <z-icon zType="activity" />
-        </div>
-        <div>
-            <p class="text-sm text-gray-500 font-medium">Total Activities</p>
-            <h3 class="text-2xl font-bold">{{ stats.totalActivities }}</h3>
-        </div>
-    </div>
-
-    <!-- Total Sessions -->
-    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-        <div class="w-12 h-12 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-            <z-icon zType="calendar" />
-        </div>
-        <div>
-            <p class="text-sm text-gray-500 font-medium">Total Sessions</p>
-            <h3 class="text-2xl font-bold">{{ stats.totalSessions }}</h3>
-        </div>
-    </div>
-</div>
-
-<div *ngIf="assignedProjects$ | async as projects" class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold">Assigned Projects</h3>
-        <span class="text-sm text-gray-500">{{ projects.length }} total</span>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="projects.length; else noAssignedProjects">
-        <div *ngFor="let p of projects" class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm flex flex-col h-full">
-            <div class="flex items-start justify-between gap-2 mb-3">
-                <div>
-                    <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Project</p>
-                    <p class="text-base font-semibold text-gray-900">{{ p.name || '-' }}</p>
-                    <p class="text-sm text-gray-600">Code: <span class="font-medium text-gray-800">{{ p.projectCode || p.code || '-' }}</span></p>
-                </div>
-                <span
-                    class="px-2.5 py-1 rounded-full text-xs font-semibold"
-                    [ngClass]="
-                        p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    "
-                >
-                    {{ p.status || 'UNKNOWN' }}
-                </span>
+    <!-- Assigned Projects -->
+    <ng-container *ngIf="assignedProjects$ | async as projects">
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">Assigned Projects</h3>
+                <span class="text-sm text-gray-500">{{ projects.length }} total</span>
             </div>
 
-            <div class="mt-auto space-y-2">
-                <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mt-4 border-t pt-3">Assigned Locations</p>
-                <div *ngIf="p.locations?.length; else noLoc" class="space-y-2">
-                    <details 
-                        *ngFor="let loc of p.locations" 
-                        class="group border border-gray-100 rounded-lg bg-gray-50 overflow-hidden"
-                    >
-                        <summary class="flex items-center justify-between cursor-pointer p-3 outline-none text-sm font-medium text-gray-800 hover:bg-gray-100 transition-colors list-none">
-                            <div class="flex items-center gap-2">
-                                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">{{ loc.locationCode || '-' }}</span>
-                            </div>
-                            <!-- Custom dropdown arrow -->
-                            <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </summary>
-                        <div class="p-3 border-t border-gray-100 bg-white text-sm text-gray-600 grid grid-cols-2 gap-2">
-                            <div>
-                                <p class="text-xs text-gray-400">Village</p>
-                                <p class="font-medium text-gray-800">{{ loc.village || '-' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400">Block</p>
-                                <p class="font-medium text-gray-800">{{ loc.block || '-' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400">District</p>
-                                <p class="font-medium text-gray-800">{{ loc.district || '-' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400">State</p>
-                                <p class="font-medium text-gray-800">{{ loc.state || '-' }}</p>
-                            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="projects.length; else noAssignedProjects">
+                <div *ngFor="let p of projects" class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm flex flex-col h-full">
+                    <div class="flex items-start justify-between gap-2 mb-3">
+                        <div>
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Project</p>
+                            <p class="text-base font-semibold text-gray-900">{{ p.name || '-' }}</p>
+                            <p class="text-sm text-gray-600">Code: <span class="font-medium text-gray-800">{{ p.projectCode || p.code || '-' }}</span></p>
                         </div>
-                    </details>
+                        <span
+                            class="px-2.5 py-1 rounded-full text-xs font-semibold"
+                            [ngClass]="
+                                p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            "
+                        >
+                            {{ p.status || 'UNKNOWN' }}
+                        </span>
+                    </div>
+
+                    <div class="mt-auto space-y-2">
+                        <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mt-4 border-t pt-3">Assigned Locations</p>
+                        <div *ngIf="p.locations?.length; else noLoc" class="space-y-2">
+                            <details
+                                *ngFor="let loc of p.locations"
+                                class="group border border-gray-100 rounded-lg bg-gray-50 overflow-hidden"
+                            >
+                                <summary class="flex items-center justify-between cursor-pointer p-3 outline-none text-sm font-medium text-gray-800 hover:bg-gray-100 transition-colors list-none">
+                                    <div class="flex items-center gap-2">
+                                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">{{ loc.locationCode || '-' }}</span>
+                                    </div>
+                                    <!-- Custom dropdown arrow -->
+                                    <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </summary>
+                                <div class="p-3 border-t border-gray-100 bg-white text-sm text-gray-600 grid grid-cols-2 gap-2">
+                                    <div>
+                                        <p class="text-xs text-gray-400">Village</p>
+                                        <p class="font-medium text-gray-800">{{ loc.village || '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400">Block</p>
+                                        <p class="font-medium text-gray-800">{{ loc.block || '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400">District</p>
+                                        <p class="font-medium text-gray-800">{{ loc.district || '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400">State</p>
+                                        <p class="font-medium text-gray-800">{{ loc.state || '-' }}</p>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                        <ng-template #noLoc>
+                            <p class="text-sm text-gray-500 italic">No locations assigned</p>
+                        </ng-template>
+                    </div>
                 </div>
-                <ng-template #noLoc>
-                    <p class="text-sm text-gray-500 italic">No locations assigned</p>
-                </ng-template>
+            </div>
+
+            <ng-template #noAssignedProjects>
+                <div class="text-center py-6 text-gray-400 italic">No projects assigned yet.</div>
+            </ng-template>
+        </div>
+    </ng-container>
+
+    <!-- Activity Participation -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <h3 class="text-lg font-bold mb-4">Activity Participation</h3>
+            <div class="space-y-4">
+                <div *ngFor="let stat of stats.reportStats" class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Activity #{{ stat.activityId }}</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold">{{ stat._count }} Reports</span>
+                </div>
+                <div *ngIf="!stats.reportStats?.length" class="text-center py-8 text-gray-400 italic">
+                    No report data available yet.
+                </div>
             </div>
         </div>
     </div>
+</ng-container>
 
-    <ng-template #noAssignedProjects>
-        <div class="text-center py-6 text-gray-400 italic">No projects assigned yet.</div>
-    </ng-template>
-</div>
-
-<div *ngIf="stats$ | async as stats" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-        <h3 class="text-lg font-bold mb-4">Activity Participation</h3>
-        <div class="space-y-4">
-            <div *ngFor="let stat of stats.reportStats" class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Activity #{{ stat.activityId }}</span>
-                <span class="px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold">{{ stat._count }} Reports</span>
-            </div>
-            <div *ngIf="!stats.reportStats?.length" class="text-center py-8 text-gray-400 italic">
-                No report data available yet.
-            </div>
-        </div>
+<ng-template #loader>
+    <div class="flex items-center justify-center w-full min-h-[60vh]">
+        <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
     </div>
-</div>
+</ng-template>

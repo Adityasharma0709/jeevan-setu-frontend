@@ -2,6 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, Templat
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ManagerService, OutreachWorker } from '../manager.service';
 import { AuthService } from '../../core/services/auth';
 import { ZardButtonComponent } from '@/shared/components/button';
@@ -37,7 +38,8 @@ import { ZardIconComponent } from '@/shared/components/icon';
         ZardDialogModule,
         ZardFormControlComponent,
         ZardFormFieldComponent,
-        ZardIconComponent
+        ZardIconComponent,
+        LottieComponent,
     ],
     templateUrl: './outreach-workers.html',
     styleUrl: './outreach-workers.css',
@@ -54,6 +56,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     projects: any[] = [];
     locations: any[] = [];
     isLoadingWorkers = false;
+    options: AnimationOptions = { path: '/loading.json' };
     private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
     constructor(

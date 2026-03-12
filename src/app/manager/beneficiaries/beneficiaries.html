@@ -6,6 +6,7 @@
         </div>
     </div>
 
+<ng-container *ngIf="!isLoading; else loader" class="fade-in">
     <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
         <table z-table class="w-full">
             <thead z-table-header>
@@ -42,6 +43,14 @@
             </tbody>
         </table>
     </div>
+</ng-container>
+
+<ng-template #loader>
+  <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+    <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+  </div>
+</ng-template>
+
 </div>
 
 <!-- Update Modal -->

@@ -4,17 +4,19 @@ import { Observable } from 'rxjs';
 import { AdminService } from '../admin.service';
 import { AuthService } from '../../core/services/auth';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ZardIconComponent],
+  imports: [CommonModule, ZardIconComponent, LottieComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnInit {
   stats$!: Observable<any>;
   assignedProjects$!: Observable<any[]>;
+  options: AnimationOptions = { path: '/loading.json' };
 
   constructor(
     private adminService: AdminService,

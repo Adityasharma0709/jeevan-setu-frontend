@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Observable, Subject, startWith, switchMap, map, combineLatest, of, tap, forkJoin, BehaviorSubject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { ApiService } from '../../core/services/api';
 
@@ -61,6 +62,7 @@ interface ProjectWithLocations extends Project {
     ZardDialogModule,
     ZardFormControlComponent,
     ZardFormFieldComponent,
+    LottieComponent,
   ],
   templateUrl: './projects.html',
 })
@@ -81,6 +83,7 @@ export class ProjectsComponent {
   adminSearch = new FormControl('');
 
   isAssigning = false;
+  options: AnimationOptions = { path: '/loading.json' };
   isLoadingLocations$ = new BehaviorSubject<boolean>(false);
   targetAdmin: any | null = null;
   targetProject: Project | null = null;

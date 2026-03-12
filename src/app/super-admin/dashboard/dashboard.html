@@ -1,4 +1,5 @@
-<div class="p-4 md:p-6" *ngIf="stats$ | async as stats">
+<ng-container *ngIf="stats$ | async as stats; else loader" class="fade-in">
+<div class="p-4 md:p-6">
 
   <!-- PAGE TITLE -->
   <h1 class="text-2xl font-bold mb-6">
@@ -134,3 +135,10 @@
   </div>
 
 </div>
+</ng-container>
+
+<ng-template #loader>
+  <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+    <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+  </div>
+</ng-template>

@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Observable, Subject, startWith, switchMap } from 'rxjs';
 import { ApiService } from '../../core/services/api';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import {
   ZardFormFieldComponent,
@@ -49,6 +50,7 @@ import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
     ZardTableCellComponent,
     ZardTableCaptionComponent,
     ZardDialogModule,
+    LottieComponent,
   ],
   templateUrl: './create-admin.html',
 })
@@ -77,6 +79,7 @@ export class CreateAdminComponent {
   ====================== */
 
   private refresh$ = new Subject<void>();
+  options: AnimationOptions = { path: '/loading.json' };
 
   admins$: Observable<any> = this.refresh$.pipe(
     startWith(void 0),

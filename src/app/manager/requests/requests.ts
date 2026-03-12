@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ManagerService } from '../manager.service';
 import { ZardButtonComponent } from '@/shared/components/button';
 import {
@@ -25,7 +26,8 @@ import { ZardIconComponent } from '@/shared/components/icon';
     ZardTableRowComponent,
     ZardTableHeadComponent,
     ZardTableCellComponent,
-    ZardIconComponent
+    ZardIconComponent,
+    LottieComponent,
   ],
   templateUrl: './requests.html',
   styleUrl: './requests.css',
@@ -33,6 +35,8 @@ import { ZardIconComponent } from '@/shared/components/icon';
 export class Requests implements OnInit {
   requests: any[] = [];
   myRequests: any[] = [];
+  isLoading = true;
+  options: AnimationOptions = { path: '/loading.json' };
 
   constructor(
     private managerService: ManagerService,
@@ -53,10 +57,12 @@ export class Requests implements OnInit {
           .filter((request) => String(request?.status || 'PENDING').toUpperCase() === 'PENDING')
           .map((request) => this.normalizeRequest(request));
         console.log('[Manager Pending Requests Normalized]', this.requests);
+        this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: () => {
         this.requests = [];
+        this.isLoading = false;
         this.cdr.detectChanges();
         toast.error('Failed to load requests');
       }

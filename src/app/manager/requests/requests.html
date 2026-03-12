@@ -1,3 +1,4 @@
+<ng-container *ngIf="!isLoading; else managerReqLoader" class="fade-in">
 <div class="p-6 space-y-10">
     <!-- <div>
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Pending Requests</h1>
@@ -114,3 +115,10 @@
         </table>
     </div>
 </div>
+</ng-container>
+
+<ng-template #managerReqLoader>
+  <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+    <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+  </div>
+</ng-template>

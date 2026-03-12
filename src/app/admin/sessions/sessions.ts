@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
 import { Observable, Subject, combineLatest, map, startWith, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { AdminService, Session, Activity } from '../admin.service';
 import { AuthService } from '../../core/services/auth';
@@ -40,6 +41,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardIconComponent,
+    LottieComponent,
   ],
   templateUrl: './sessions.html',
   styleUrl: './sessions.css',
@@ -54,6 +56,7 @@ export class Sessions {
   private refresh$ = new Subject<void>();
   isSubmitting = false;
   isEditing = false;
+  options: AnimationOptions = { path: '/loading.json' };
   selectedSessionId: number | null = null;
 
   activities$: Observable<Activity[]>;
