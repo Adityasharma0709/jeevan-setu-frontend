@@ -34,6 +34,9 @@ export class ZardStringTemplateOutletDirective<T = unknown> implements OnDestroy
   #lastOutletWasTemplate = false;
   #lastTemplateRef: TemplateRef<void> | null = null;
   #lastContext?: ZardStringTemplateOutletContext;
+  #pendingUpdate = false;
+  #nextOutlet: TemplateRef<void> | T | null = null;
+  #nextContext: ZardStringTemplateOutletContext | undefined;
 
   readonly zStringTemplateOutletContext = input<ZardStringTemplateOutletContext | undefined>(undefined);
   readonly zStringTemplateOutlet = input.required<T | TemplateRef<void>>();
@@ -93,25 +96,40 @@ export class ZardStringTemplateOutletDirective<T = unknown> implements OnDestroy
     const stringTemplateOutlet = this.zStringTemplateOutlet();
     const stringTemplateOutletContext = this.zStringTemplateOutletContext();
 
-    if (!this.#isFirstChange && isTemplateRef(stringTemplateOutlet)) {
-      this.#isFirstChange = true;
+    this.#nextOutlet = stringTemplateOutlet;
+    this.#nextContext = stringTemplateOutletContext;
+
+    if (this.#pendingUpdate) {
+      return;
     }
 
-    if (!isTemplateRef(stringTemplateOutlet)) {
-      this.context['$implicit'] = stringTemplateOutlet as T;
-    }
+    this.#pendingUpdate = true;
+    queueMicrotask(() => {
+      this.#pendingUpdate = false;
+      if (this.#nextOutlet === null) {
+        return;
+      }
 
-    const recreateView = this.#shouldViewBeRecreated(stringTemplateOutlet, stringTemplateOutletContext);
-    this.#updateTrackingState(stringTemplateOutlet, stringTemplateOutletContext);
+      const outlet = this.#nextOutlet;
+      const context = this.#nextContext;
 
-    if (recreateView) {
-      this.#recreateView(
-        stringTemplateOutlet as TemplateRef<ZardStringTemplateOutletContext>,
-        stringTemplateOutletContext,
-      );
-    } else {
-      this.#updateContext(stringTemplateOutlet, stringTemplateOutletContext);
-    }
+      if (!this.#isFirstChange && isTemplateRef(outlet)) {
+        this.#isFirstChange = true;
+      }
+
+      if (!isTemplateRef(outlet)) {
+        this.context['$implicit'] = outlet as T;
+      }
+
+      const recreateView = this.#shouldViewBeRecreated(outlet, context);
+      this.#updateTrackingState(outlet, context);
+
+      if (recreateView) {
+        this.#recreateView(outlet as TemplateRef<ZardStringTemplateOutletContext>, context);
+      } else {
+        this.#updateContext(outlet, context);
+      }
+    });
   });
 
   #recreateView(

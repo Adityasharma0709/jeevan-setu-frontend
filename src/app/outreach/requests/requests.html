@@ -1,5 +1,4 @@
-<ng-container *ngIf="!isLoading; else outReqLoader" class="fade-in">
-<div class="p-6 space-y-6">
+<div class="p-6 space-y-6 fade-in">
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 mb-2">My Requests</h1>
@@ -7,93 +6,93 @@
         </div>
     </div>
 
-    <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
-        <table z-table class="w-full">
-            <thead z-table-header>
-                <tr z-table-row>
-                    <th z-table-head>Type</th>
-                    <th z-table-head>Details</th>
-                    <th z-table-head>Status</th>
-                    <th z-table-head>Sent To</th>
-                    <th z-table-head>Requested At</th>
-                    <th z-table-head>Remarks</th>
-                </tr>
-            </thead>
-            <tbody z-table-body>
-                <tr z-table-row *ngFor="let req of myRequests">
-                    <td z-table-cell>
-                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium" [ngClass]="{
-                'bg-blue-50 text-blue-700': req.requestType === 'UPDATE_BENEFICIARY',
-                'bg-purple-50 text-purple-700': req.requestType === 'MODIFY_BENEFICIARY'
-              }">
-                            {{ req.requestType.replace('_', ' ') }}
-                        </span>
-                    </td>
-                    <td z-table-cell class="max-w-xs truncate">
-                        <ng-container *ngIf="req.payload?.changes">
-                            <div *ngFor="let key of getChangedKeys(req.payload.changes)" class="text-xs text-gray-500">
-                                {{ key }}: {{ req.payload.changes[key] }}
-                            </div>
-                        </ng-container>
-                        <span *ngIf="!req.payload?.changes" class="text-gray-400">-</span>
-                    </td>
-                    <td z-table-cell>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                            [ngClass]="{
-                'bg-yellow-50 text-yellow-700': req.status === 'PENDING',
-                'bg-green-50 text-green-700': req.status === 'APPROVED',
-                'bg-red-50 text-red-700': req.status === 'REJECTED'
-              }">
-                            <span class="w-1.5 h-1.5 rounded-full" [ngClass]="{
-                'bg-yellow-500': req.status === 'PENDING',
-                'bg-green-500': req.status === 'APPROVED',
-                'bg-red-500': req.status === 'REJECTED'
-              }"></span>
-                            {{ req.status | titlecase }}
-                        </span>
-                    </td>
-                    <td z-table-cell>
-                        <div class="flex items-center gap-2">
-                            <!-- Show Target Admin if Pending or if no approver yet -->
-                            <div *ngIf="req.targetAdmin && req.status === 'PENDING'" class="flex flex-col">
-                                <span class="text-sm font-medium text-gray-900">{{ req.targetAdmin.name }}</span>
-                                <span class="text-xs text-gray-500">{{ req.targetAdmin.email }}</span>
-                            </div>
+    <ng-container *ngIf="state$ | async as state">
+        <ng-container *ngIf="state.status === 'loading'; else requestsContent">
+            <div class="flex items-center justify-center py-6">
+                <ng-lottie [options]="options" height="140px" width="140px"></ng-lottie>
+            </div>
+        </ng-container>
 
-                            <!-- Show Approver if decided -->
-                            <div *ngIf="req.approvedBy" class="flex flex-col">
-                                <span class="text-sm font-medium text-gray-900">{{ req.approvedBy.name }}</span>
-                                <span class="text-xs text-gray-500">{{ req.approvedBy.email }}</span>
-                            </div>
+        <ng-template #requestsContent>
+            <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
+                <table z-table class="w-full">
+                    <thead z-table-header>
+                        <tr z-table-row>
+                            <th z-table-head>Type</th>
+                            <th z-table-head>Details</th>
+                            <th z-table-head>Status</th>
+                            <th z-table-head>Sent To</th>
+                            <th z-table-head>Requested At</th>
+                            <th z-table-head>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody z-table-body>
+                        <tr z-table-row *ngFor="let req of state.requests">
+                            <td z-table-cell>
+                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium" [ngClass]="{
+                        'bg-blue-50 text-blue-700': req.requestType === 'UPDATE_BENEFICIARY',
+                        'bg-purple-50 text-purple-700': req.requestType === 'MODIFY_BENEFICIARY'
+                      }">
+                                    {{ req.requestType.replace('_', ' ') }}
+                                </span>
+                            </td>
+                            <td z-table-cell class="max-w-xs truncate">
+                                <ng-container *ngIf="req.payload?.changes">
+                                    <div *ngFor="let key of getChangedKeys(req.payload.changes)" class="text-xs text-gray-500">
+                                        {{ key }}: {{ req.payload.changes[key] }}
+                                    </div>
+                                </ng-container>
+                                <span *ngIf="!req.payload?.changes" class="text-gray-400">-</span>
+                            </td>
+                            <td z-table-cell>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                                    [ngClass]="{
+                        'bg-yellow-50 text-yellow-700': req.status === 'PENDING',
+                        'bg-green-50 text-green-700': req.status === 'APPROVED',
+                        'bg-red-50 text-red-700': req.status === 'REJECTED'
+                      }">
+                                    <span class="w-1.5 h-1.5 rounded-full" [ngClass]="{
+                        'bg-yellow-500': req.status === 'PENDING',
+                        'bg-green-500': req.status === 'APPROVED',
+                        'bg-red-500': req.status === 'REJECTED'
+                      }"></span>
+                                    {{ req.status | titlecase }}
+                                </span>
+                            </td>
+                            <td z-table-cell>
+                                <div class="flex items-center gap-2">
+                                    <div *ngIf="req.targetAdmin && req.status === 'PENDING'" class="flex flex-col">
+                                        <span class="text-sm font-medium text-gray-900">{{ req.targetAdmin.name }}</span>
+                                        <span class="text-xs text-gray-500">{{ req.targetAdmin.email }}</span>
+                                    </div>
 
-                            <!-- Fallback -->
-                            <span *ngIf="!req.targetAdmin && !req.approvedBy" class="text-gray-400">Pending (No
-                                Target)</span>
-                        </div>
-                    </td>
-                    <td z-table-cell class="text-gray-500 text-sm">
-                        {{ req.createdAt | date:'medium' }}
-                    </td>
-                    <td z-table-cell class="text-gray-500 text-sm">
-                        {{ req.remarks || '-' }}
-                    </td>
-                </tr>
-                <tr z-table-row *ngIf="myRequests.length === 0">
-                    <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
-                        <div class="flex flex-col items-center">
-                            <z-icon zType="inbox" size="32" class="text-gray-300 mb-2" />
-                            <p>You haven't sent any requests yet.</p>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+                                    <div *ngIf="req.approvedBy" class="flex flex-col">
+                                        <span class="text-sm font-medium text-gray-900">{{ req.approvedBy.name }}</span>
+                                        <span class="text-xs text-gray-500">{{ req.approvedBy.email }}</span>
+                                    </div>
+
+                                    <span *ngIf="!req.targetAdmin && !req.approvedBy" class="text-gray-400">Pending (No
+                                        Target)</span>
+                                </div>
+                            </td>
+                            <td z-table-cell class="text-gray-500 text-sm">
+                                {{ req.createdAt | date:'medium' }}
+                            </td>
+                            <td z-table-cell class="text-gray-500 text-sm">
+                                {{ req.remarks || '-' }}
+                            </td>
+                        </tr>
+                        <tr z-table-row *ngIf="state.requests.length === 0">
+                            <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <z-icon zType="inbox" size="32" class="text-gray-300 mb-2" />
+                                    <p>You haven't sent any requests yet.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </ng-template>
+    </ng-container>
 </div>
-</ng-container>
-
-<ng-template #outReqLoader>
-  <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
-    <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
-  </div>
-</ng-template>

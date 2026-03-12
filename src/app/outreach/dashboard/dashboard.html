@@ -1,4 +1,4 @@
-﻿<div class="space-y-6">
+<div class="space-y-6">
   <div class="flex items-center justify-between gap-3 flex-wrap">
     <div>
       <h1 class="text-2xl font-bold text-gray-900">Outreach Dashboard</h1>
@@ -16,48 +16,56 @@
     </div>
   </div>
 
-  <ng-container *ngIf="stats$ | async as stats">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <article class="stat-card">
-        <div class="stat-icon bg-blue-50 text-blue-700"><z-icon zType="users" /></div>
-        <p class="stat-label">Total Beneficiaries</p>
-        <h2 class="stat-value">{{ stats.totalBeneficiaries }}</h2>
-      </article>
-      <article class="stat-card">
-        <div class="stat-icon bg-indigo-50 text-indigo-700"><z-icon zType="folder" /></div>
-        <p class="stat-label">Assigned Projects</p>
-        <h2 class="stat-value">{{ stats.assignedProjects }}</h2>
-      </article>
-      <article class="stat-card">
-        <div class="stat-icon bg-emerald-50 text-emerald-700"><z-icon zType="tag" /></div>
-        <p class="stat-label">Assigned Locations</p>
-        <h2 class="stat-value">{{ stats.assignedLocations }}</h2>
-      </article>
-    </div>
-  </ng-container>
-
-  <section class="bg-white border rounded-xl overflow-hidden">
-    <header class="px-4 py-3 border-b flex items-center justify-between">
-      <h3 class="font-semibold text-gray-800">Recent Beneficiaries</h3>
-      <a routerLink="/outreach/beneficiaries" class="text-sm text-indigo-600 hover:underline">View all</a>
-    </header>
-
-    <div *ngIf="(recentBeneficiaries$ | async) as beneficiaries">
-      <div *ngIf="beneficiaries.length === 0" class="py-10 px-4 text-center text-gray-500">
-        No beneficiaries found for your assignment.
+  <ng-container *ngIf="stats$ | async as stats; else dashboardLoader">
+    <ng-container *ngIf="recentBeneficiaries$ | async as beneficiaries; else dashboardLoader">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <article class="stat-card">
+          <div class="stat-icon bg-blue-50 text-blue-700"><z-icon zType="users" /></div>
+          <p class="stat-label">Total Beneficiaries</p>
+          <h2 class="stat-value">{{ stats.totalBeneficiaries }}</h2>
+        </article>
+        <article class="stat-card">
+          <div class="stat-icon bg-indigo-50 text-indigo-700"><z-icon zType="folder" /></div>
+          <p class="stat-label">Assigned Projects</p>
+          <h2 class="stat-value">{{ stats.assignedProjects }}</h2>
+        </article>
+        <article class="stat-card">
+          <div class="stat-icon bg-emerald-50 text-emerald-700"><z-icon zType="tag" /></div>
+          <p class="stat-label">Assigned Locations</p>
+          <h2 class="stat-value">{{ stats.assignedLocations }}</h2>
+        </article>
       </div>
 
-      <ul *ngIf="beneficiaries.length > 0" class="divide-y">
-        <li *ngFor="let beneficiary of beneficiaries" class="px-4 py-3 flex items-center justify-between gap-3">
-          <div>
-            <p class="font-medium text-gray-900">{{ beneficiary.name }}</p>
-            <p class="text-xs text-gray-500">{{ beneficiary.uid }} | {{ beneficiary.mobileNumber }}</p>
+      <section class="bg-white border rounded-xl overflow-hidden">
+        <header class="px-4 py-3 border-b flex items-center justify-between">
+          <h3 class="font-semibold text-gray-800">Recent Beneficiaries</h3>
+          <a routerLink="/outreach/beneficiaries" class="text-sm text-indigo-600 hover:underline">View all</a>
+        </header>
+
+        <div>
+          <div *ngIf="beneficiaries.length === 0" class="py-10 px-4 text-center text-gray-500">
+            No beneficiaries found for your assignment.
           </div>
-          <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-            {{ beneficiary.location?.village || 'No village' }}
-          </span>
-        </li>
-      </ul>
-    </div>
-  </section>
+
+          <ul *ngIf="beneficiaries.length > 0" class="divide-y">
+            <li *ngFor="let beneficiary of beneficiaries" class="px-4 py-3 flex items-center justify-between gap-3">
+              <div>
+                <p class="font-medium text-gray-900">{{ beneficiary.name }}</p>
+                <p class="text-xs text-gray-500">{{ beneficiary.uid }} | {{ beneficiary.mobileNumber }}</p>
+              </div>
+              <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                {{ beneficiary.location?.village || 'No village' }}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </ng-container>
+  </ng-container>
 </div>
+
+<ng-template #dashboardLoader>
+  <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+    <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+  </div>
+</ng-template>

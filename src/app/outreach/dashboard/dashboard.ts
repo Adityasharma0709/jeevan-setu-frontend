@@ -6,13 +6,14 @@ import { catchError, map, of, shareReplay } from 'rxjs';
 import { AuthService } from '@/core/services/auth';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { OutreachService } from '../outreach.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, ZardButtonComponent, ZardIconComponent],
+  imports: [CommonModule, RouterLink, ZardButtonComponent, ZardIconComponent, LottieComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -21,6 +22,7 @@ export class Dashboard {
   private authService = inject(AuthService);
 
   private currentUserId = Number(this.authService.getCurrentUser()?.sub) || undefined;
+  options: AnimationOptions = { path: '/loading.json' };
 
   stats$ = this.outreachService.getDashboardStats(this.currentUserId).pipe(
     catchError(() =>
@@ -38,4 +40,5 @@ export class Dashboard {
     catchError(() => of([])),
     shareReplay(1)
   );
+
 }

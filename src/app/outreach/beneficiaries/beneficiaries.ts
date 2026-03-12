@@ -4,6 +4,7 @@ import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } 
 import { combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, Subject, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
+import type { AnimationItem } from 'lottie-web';
 
 import { AuthService } from '@/core/services/auth';
 import { ZardButtonComponent } from '@/shared/components/button';
@@ -62,6 +63,12 @@ export class Beneficiaries {
   dialogRef!: ZardDialogRef<any>;
   selectedBeneficiary: Beneficiary | null = null;
   options: AnimationOptions = { path: '/loading.json' };
+  plusToXOptions: AnimationOptions = {
+    path: '/PlustoX/plusToX.json',
+    autoplay: false,
+    loop: false,
+  };
+  private plusToXAnimation?: AnimationItem;
 
   showCreateForm = false;
   isSubmitting = false;
@@ -90,7 +97,22 @@ export class Beneficiaries {
   });
 
   updateForm: FormGroup = this.fb.group({
-    mobileNumber: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+    name: [''],
+    mobileNumber: ['', [Validators.pattern('^[0-9]{10}$')]],
+    gender: [''],
+    guardianName: [''],
+    dateOfBirth: [''],
+    maritalStatus: [''],
+    dateOfMarriage: [''],
+    womanAgeAtMarriage: [''],
+    husbandAgeAtMarriage: [''],
+    qualification: [''],
+    religion: [''],
+    caste: [''],
+    monthlyIncome: [''],
+    economicStatus: [''],
+    primaryIncomeSource: [''],
+    employmentStatus: [''],
     reason: ['', Validators.required],
   });
 
@@ -116,6 +138,23 @@ export class Beneficiaries {
     if (this.showCreateForm) {
       this.createForm.reset({ maritalStatus: 'Single' });
     }
+    this.playPlusToXAnimation();
+  }
+
+  onPlusToXCreated(animation: AnimationItem) {
+    this.plusToXAnimation = animation;
+    const endFrame = this.plusToXAnimation.getDuration(true);
+    const startFrame = this.showCreateForm ? endFrame : 0;
+    this.plusToXAnimation.goToAndStop(startFrame, true);
+  }
+
+  private playPlusToXAnimation() {
+    if (!this.plusToXAnimation) {
+      return;
+    }
+
+    this.plusToXAnimation.setDirection(this.showCreateForm ? 1 : -1);
+    this.plusToXAnimation.play();
   }
 
   isMarried(): boolean {
@@ -125,7 +164,22 @@ export class Beneficiaries {
   openUpdateDialog(beneficiary: Beneficiary) {
     this.selectedBeneficiary = beneficiary;
     this.updateForm.reset({
-      mobileNumber: beneficiary.mobileNumber,
+      name: beneficiary.name || '',
+      mobileNumber: beneficiary.mobileNumber || '',
+      gender: beneficiary.gender || '',
+      guardianName: beneficiary.guardianName || '',
+      dateOfBirth: beneficiary.dateOfBirth ? this.toInputDate(beneficiary.dateOfBirth) : '',
+      maritalStatus: beneficiary.maritalStatus || '',
+      dateOfMarriage: beneficiary.dateOfMarriage ? this.toInputDate(beneficiary.dateOfMarriage) : '',
+      womanAgeAtMarriage: beneficiary.womanAgeAtMarriage ?? '',
+      husbandAgeAtMarriage: beneficiary.husbandAgeAtMarriage ?? '',
+      qualification: beneficiary.qualification || '',
+      religion: beneficiary.religion || '',
+      caste: beneficiary.caste || '',
+      monthlyIncome: beneficiary.monthlyIncome ?? '',
+      economicStatus: beneficiary.economicStatus || '',
+      primaryIncomeSource: beneficiary.primaryIncomeSource || '',
+      employmentStatus: beneficiary.employmentStatus || '',
       reason: '',
     });
 
@@ -147,19 +201,89 @@ export class Beneficiaries {
     }
 
     this.isSubmitting = true;
-    this.outreachService
-      .requestBeneficiaryUpdate(this.selectedBeneficiary.id, this.updateForm.getRawValue())
-      .subscribe({
-        next: () => {
-          toast.success('Update request submitted for manager approval');
-          this.dialogRef?.close();
-          this.isSubmitting = false;
-        },
-        error: (err) => {
-          toast.error(err?.error?.message || 'Failed to submit update request');
-          this.isSubmitting = false;
-        },
-      });
+    const raw = this.updateForm.getRawValue();
+    const changes: Record<string, unknown> = {};
+    const b = this.selectedBeneficiary;
+
+    if (raw.name && raw.name !== b.name) changes['name'] = String(raw.name);
+    if (raw.mobileNumber && raw.mobileNumber !== b.mobileNumber) changes['mobileNumber'] = String(raw.mobileNumber);
+
+    const dob = b.dateOfBirth ? this.toInputDate(b.dateOfBirth) : '';
+    if (raw.dateOfBirth && raw.dateOfBirth !== dob) {
+      changes['dateOfBirth'] = new Date(raw.dateOfBirth).toISOString();
+    }
+
+    if (raw.gender && raw.gender !== b.gender) changes['gender'] = String(raw.gender);
+    if (raw.guardianName && raw.guardianName !== b.guardianName) changes['guardianName'] = String(raw.guardianName);
+
+    if (raw.qualification && raw.qualification !== b.qualification) changes['qualification'] = String(raw.qualification);
+    if (raw.religion && raw.religion !== b.religion) changes['religion'] = String(raw.religion);
+    if (raw.caste && raw.caste !== b.caste) changes['caste'] = String(raw.caste);
+
+    if (raw.monthlyIncome !== '' && Number(raw.monthlyIncome) !== Number(b.monthlyIncome)) {
+      changes['monthlyIncome'] = Number(raw.monthlyIncome);
+    }
+    if (raw.primaryIncomeSource && raw.primaryIncomeSource !== b.primaryIncomeSource) {
+      changes['primaryIncomeSource'] = String(raw.primaryIncomeSource);
+    }
+    if (raw.economicStatus && raw.economicStatus !== b.economicStatus) {
+      changes['economicStatus'] = String(raw.economicStatus);
+    }
+    if (raw.employmentStatus && raw.employmentStatus !== b.employmentStatus) {
+      changes['employmentStatus'] = String(raw.employmentStatus);
+    }
+
+    if (raw.maritalStatus && raw.maritalStatus !== b.maritalStatus) {
+      changes['maritalStatus'] = String(raw.maritalStatus);
+    }
+
+    const dom = b.dateOfMarriage ? this.toInputDate(b.dateOfMarriage) : '';
+    if (this.isUpdateMarried(raw.maritalStatus)) {
+      if (raw.dateOfMarriage && raw.dateOfMarriage !== dom) {
+        changes['dateOfMarriage'] = new Date(raw.dateOfMarriage).toISOString();
+      }
+      if (raw.womanAgeAtMarriage !== '' && Number(raw.womanAgeAtMarriage) !== Number(b.womanAgeAtMarriage)) {
+        changes['womanAgeAtMarriage'] = Number(raw.womanAgeAtMarriage);
+      }
+      if (raw.husbandAgeAtMarriage !== '' && Number(raw.husbandAgeAtMarriage) !== Number(b.husbandAgeAtMarriage)) {
+        changes['husbandAgeAtMarriage'] = Number(raw.husbandAgeAtMarriage);
+      }
+    }
+
+    if (!Object.keys(changes).length) {
+      toast.error('No changes detected');
+      this.isSubmitting = false;
+      return;
+    }
+
+    const payload = {
+      reason: String(raw.reason || ''),
+      changes,
+    };
+
+    this.outreachService.requestBeneficiaryUpdate(this.selectedBeneficiary.id, payload).subscribe({
+      next: () => {
+        toast.success('Update request submitted for manager approval');
+        this.dialogRef?.close();
+        this.isSubmitting = false;
+      },
+      error: (err) => {
+        toast.error(err?.error?.message || 'Failed to submit update request');
+        this.isSubmitting = false;
+      },
+    });
+  }
+
+  isUpdateMarried(value?: string | null) {
+    return String(value || '').toLowerCase() === 'married';
+  }
+
+  private toInputDate(value: string) {
+    try {
+      return new Date(value).toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
   }
 
   submitCreate() {
