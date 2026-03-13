@@ -1,7 +1,7 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, startWith, switchMap } from 'rxjs';
+import { Observable, Subject, startWith, switchMap, shareReplay } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
@@ -120,7 +120,8 @@ export class LocationsComponent {
 
   locations$: Observable<LocationModel[]> = this.refresh$.pipe(
     startWith(void 0),
-    switchMap(() => this.api.get('locations') as Observable<LocationModel[]>)
+    switchMap(() => this.api.get('locations') as Observable<LocationModel[]>),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   projects$: Observable<ProjectModel[]>;
@@ -154,7 +155,9 @@ export class LocationsComponent {
       village: [''],
     });
 
-    this.projects$ = this.api.get('projects') as Observable<ProjectModel[]>;
+    this.projects$ = (this.api.get('projects') as Observable<ProjectModel[]>).pipe(
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
   }
 
   /* =========================

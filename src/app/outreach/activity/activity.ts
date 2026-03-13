@@ -35,7 +35,7 @@ export class Activity {
 
   reportForm = this.fb.group({
     activityId: ['', Validators.required],
-    sessionId: ['', Validators.required],
+    sessionId: [''],
     beneficiaryId: ['', Validators.required],
     attendanceStatus: ['Present', Validators.required],
     observation: ['', Validators.required],
@@ -54,7 +54,7 @@ export class Activity {
   submit() {
     if (this.reportForm.invalid) {
       this.reportForm.markAllAsTouched();
-      toast.error('Please complete all report fields');
+      toast.error('Please complete all required fields');
       return;
     }
 
@@ -65,7 +65,7 @@ export class Activity {
       .submitReport({
         beneficiaryId: Number(raw.beneficiaryId),
         activityId: Number(raw.activityId),
-        sessionId: Number(raw.sessionId),
+        sessionId: raw.sessionId ? Number(raw.sessionId) : undefined,
         reportData: {
           attendanceStatus: raw.attendanceStatus,
           observation: raw.observation,

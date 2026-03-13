@@ -1,12 +1,13 @@
 <!-- ================= PAGE HEADER ================= -->
 
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-  <h2 class="text-xl font-bold">Locations</h2>
+<ng-container *ngIf="locations$ | async as locations; else pageLoader">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <h2 class="text-xl font-bold">Locations</h2>
 
-  <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">
-    Create Location
-  </button>
-</div>
+    <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">
+      Create Location
+    </button>
+  </div>
 
 <!-- ================= EDIT DIALOG ================= -->
 
@@ -70,7 +71,7 @@
       </tr>
     </thead>
 
-    <tbody z-table-body *ngIf="locations$ | async as locations">
+    <tbody z-table-body>
 
       <tr z-table-row *ngFor="let l of locations">
 
@@ -128,7 +129,7 @@
 
 <!-- ================= MOBILE CARDS ================= -->
 
-<div class="md:hidden space-y-3" *ngIf="locations$ | async as locations">
+<div class="md:hidden space-y-3">
 
   <div
     *ngFor="let l of locations"
@@ -237,9 +238,10 @@
 
 </ng-template>
 
+</ng-container>
 
-<!-- Lottie Loader -->
-
-<div *ngIf="!(locations$ | async)" class="flex items-center justify-center p-12 w-full min-h-[400px]">
-  <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
-</div>
+<ng-template #pageLoader>
+  <div class="flex items-center justify-center p-12 w-full min-h-[70vh]">
+    <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+  </div>
+</ng-template>

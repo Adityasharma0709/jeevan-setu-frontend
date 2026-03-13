@@ -97,7 +97,7 @@ export interface OutreachSession {
 export interface CreateReportPayload {
   beneficiaryId: number;
   activityId: number;
-  sessionId: number;
+  sessionId?: number;
   reportData: Record<string, unknown>;
 }
 

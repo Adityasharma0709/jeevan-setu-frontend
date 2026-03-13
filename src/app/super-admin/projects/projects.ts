@@ -1,7 +1,7 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, startWith, switchMap, map, combineLatest, of, tap, forkJoin, BehaviorSubject } from 'rxjs';
+import { Observable, Subject, startWith, switchMap, map, combineLatest, of, tap, forkJoin, BehaviorSubject, shareReplay } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
@@ -120,11 +120,14 @@ export class ProjectsComponent {
         );
       })
     ))
+    ,
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   admins$: Observable<any[]> = this.refresh$.pipe(
     startWith(void 0),
     switchMap(() => this.api.get('users/admins') as Observable<any[]>),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   // ✅ Filtered admins (still client-side for now as no change requested for users)
@@ -137,7 +140,13 @@ export class ProjectsComponent {
       return admins.filter(a =>
         a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q)
       );
-    })
+    }),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  vm$ = combineLatest([this.projects$, this.filteredAdmins$]).pipe(
+    map(([projects, admins]) => ({ projects, admins })),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   locations$!: Observable<any[]>;

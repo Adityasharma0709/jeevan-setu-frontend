@@ -77,6 +77,18 @@ export class ManagerService {
         return this.api.get(`${this.endpoint}/profile-requests`) as Observable<any[]>;
     }
 
+    getBeneficiaryRequests(): Observable<any[]> {
+        return this.api.get(`${this.endpoint}/beneficiary-requests`) as Observable<any[]>;
+    }
+
+    approveBeneficiaryRequest(id: number): Observable<any> {
+        return this.api.patch(`${this.endpoint}/request/${id}/approve`, {});
+    }
+
+    rejectBeneficiaryRequest(id: number, reason?: string): Observable<any> {
+        return this.api.patch(`${this.endpoint}/request/${id}/reject`, { reason });
+    }
+
     getMyRequests(): Observable<any[]> {
         return this.api.get(`${this.endpoint}/my-requests`) as Observable<any[]>;
     }

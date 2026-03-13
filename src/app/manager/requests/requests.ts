@@ -33,7 +33,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
   styleUrl: './requests.css',
 })
 export class Requests implements OnInit {
-  requests: any[] = [];
+  incomingRequests: any[] = [];
   myRequests: any[] = [];
   isLoading = true;
   options: AnimationOptions = { path: '/loading.json' };
@@ -44,38 +44,54 @@ export class Requests implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.loadRequests();
+    this.loadIncomingRequests();
     this.loadMyRequests();
   }
 
-  loadRequests() {
-    this.managerService.getPendingRequests().subscribe({
+  loadIncomingRequests() {
+    this.managerService.getBeneficiaryRequests().subscribe({
       next: (requests) => {
-        console.log('[Manager Pending Requests API]', requests);
+        console.log('[Manager Incoming Beneficiary Requests API]', requests);
         const safeRequests = Array.isArray(requests) ? requests : [];
-        this.requests = safeRequests
+        this.incomingRequests = safeRequests
           .filter((request) => String(request?.status || 'PENDING').toUpperCase() === 'PENDING')
-          .map((request) => this.normalizeRequest(request));
-        console.log('[Manager Pending Requests Normalized]', this.requests);
+          .map((request) => this.normalizeIncomingRequest(request));
+        console.log('[Manager Incoming Beneficiary Requests Normalized]', this.incomingRequests);
         this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: () => {
-        this.requests = [];
+        this.incomingRequests = [];
         this.isLoading = false;
         this.cdr.detectChanges();
-        toast.error('Failed to load requests');
+        toast.error('Failed to load incoming requests');
       }
     });
   }
 
-  approve(request: any) {
-    this.updateStatus(request.id, 'APPROVED');
+  approveIncoming(request: any) {
+    this.managerService.approveBeneficiaryRequest(request.id).subscribe({
+      next: () => {
+        toast.success('Request approved successfully');
+        this.loadIncomingRequests();
+      },
+      error: (err) => {
+        toast.error(err?.error?.message || 'Failed to approve request');
+      }
+    });
   }
 
-  reject(request: any) {
+  rejectIncoming(request: any) {
     const reason = prompt('Enter rejection reason (optional):') || undefined;
-    this.updateStatus(request.id, 'REJECTED', reason);
+    this.managerService.rejectBeneficiaryRequest(request.id, reason).subscribe({
+      next: () => {
+        toast.success('Request rejected successfully');
+        this.loadIncomingRequests();
+      },
+      error: (err) => {
+        toast.error(err?.error?.message || 'Failed to reject request');
+      }
+    });
   }
 
   loadMyRequests() {
@@ -100,49 +116,21 @@ export class Requests implements OnInit {
     });
   }
 
-  private normalizeRequest(request: any): any {
+  private normalizeIncomingRequest(request: any): any {
     const payload = request?.payload || request?.data || {};
     const type = this.getRequestType(request);
-    const workerName =
-      request?.workerName ||
-      request?.requestedBy?.name ||
-      request?.outreachWorker?.name ||
-      request?.user?.name ||
-      'Unknown';
-
-    let currentValue =
-      request?.currentValue ||
-      payload?.currentValue ||
-      payload?.current ||
-      payload?.oldValue ||
-      '-';
-
-    let newValue =
-      request?.newValue ||
-      payload?.newValue ||
-      payload?.new ||
-      payload?.value ||
-      '-';
-
-    if (type === 'PROFILE_UPDATE') {
-      const updates: string[] = [];
-      if (payload?.name) updates.push(`Name: ${payload.name}`);
-      if (payload?.mobile || payload?.mobileNumber) {
-        updates.push(`Mobile: ${payload.mobile || payload.mobileNumber}`);
-      }
-      if (updates.length) {
-        currentValue = 'Profile details';
-        newValue = updates.join(', ');
-      }
-    }
+    const workerName = request?.requestedBy?.name || request?.outreachWorker?.name || 'Unknown';
+    const workerEmail = request?.requestedBy?.email || request?.outreachWorker?.email || '-';
+    const beneficiaryId = payload?.beneficiaryId || request?.beneficiaryId || '-';
+    const changesPreview = this.buildChangesPreview(payload?.changes || payload?.data || {});
 
     return {
       ...request,
       workerName,
+      workerEmail,
       type,
-      currentValue,
-      newValue,
-      reason: payload?.reason || request?.reason || '',
+      beneficiaryId,
+      changesPreview,
       createdAt: request?.createdAt || request?.requestedAt || new Date().toISOString(),
     };
   }
@@ -151,6 +139,7 @@ export class Requests implements OnInit {
     const rawType = String(request?.type || request?.requestType || '').toUpperCase();
     if (['EMAIL', 'EMAIL_UPDATE', 'UPDATE_EMAIL'].includes(rawType)) return 'EMAIL_UPDATE';
     if (['MOBILE', 'MOBILE_UPDATE', 'UPDATE_MOBILE'].includes(rawType)) return 'MOBILE_UPDATE';
+    if (rawType.includes('UPDATE_BENEFICIARY') || rawType.includes('MODIFY_BENEFICIARY')) return 'BENEFICIARY_UPDATE';
     if (rawType.includes('PROFILE') || rawType.includes('MODIFY')) return 'PROFILE_UPDATE';
     if (rawType.includes('CREATE')) return 'CREATE_REQUEST';
     if (rawType.includes('DEACTIVATE')) return 'DEACTIVATE_REQUEST';
@@ -161,6 +150,7 @@ export class Requests implements OnInit {
     if (type === 'EMAIL_UPDATE') return 'bg-blue-100 text-blue-700';
     if (type === 'MOBILE_UPDATE') return 'bg-purple-100 text-purple-700';
     if (type === 'PROFILE_UPDATE') return 'bg-amber-100 text-amber-700';
+    if (type === 'BENEFICIARY_UPDATE') return 'bg-sky-100 text-sky-700';
     if (type === 'CREATE_REQUEST') return 'bg-green-100 text-green-700';
     if (type === 'DEACTIVATE_REQUEST') return 'bg-red-100 text-red-700';
     return 'bg-gray-100 text-gray-700';
@@ -173,7 +163,7 @@ export class Requests implements OnInit {
   }
 
   private updateStatus(id: number, status: 'APPROVED' | 'REJECTED', reason?: string) {
-    const request = this.requests.find(r => r.id === id);
+    const request = this.incomingRequests.find(r => r.id === id);
 
     this.managerService.updateRequestStatus(id, status, reason).subscribe({
       next: () => {
@@ -190,13 +180,53 @@ export class Requests implements OnInit {
           this.myRequests = [processedRequest, ...this.myRequests];
         }
 
-        this.loadRequests(); // Refetch pending
+        this.loadIncomingRequests(); // Refetch pending
         // this.loadMyRequests(); // Removed to prevent overwrite
       },
       error: (err) => {
         toast.error(err.error?.message || 'Action failed');
       }
     });
+  }
+
+  getBeneficiaryLabel(request: any): string {
+    const id = request?.beneficiaryId || request?.payload?.beneficiaryId || '-';
+    return `Beneficiary #${id}`;
+  }
+
+  getChangesPreview(request: any): string {
+    return request?.changesPreview || '-';
+  }
+
+  private buildChangesPreview(changes: Record<string, any>): string {
+    if (!changes || typeof changes !== 'object') return '-';
+
+    const entries = Object.entries(changes).filter(([, value]) => {
+      return value !== undefined && value !== null && value !== '';
+    });
+
+    if (entries.length === 0) return '-';
+
+    const formatted = entries.slice(0, 3).map(([key, value]) => {
+      const label = this.formatFieldLabel(key);
+      return `${label}: ${this.formatValue(value)}`;
+    });
+
+    const remaining = entries.length - 3;
+    return remaining > 0 ? `${formatted.join(', ')} +${remaining} more` : formatted.join(', ');
+  }
+
+  private formatFieldLabel(key: string): string {
+    return key
+      .replace(/_/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  private formatValue(value: any): string {
+    if (value === null || value === undefined) return '-';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
   }
 
   getStatusBadgeClass(status: string): string {
