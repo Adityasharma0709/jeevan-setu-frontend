@@ -6,7 +6,7 @@
     </button>
 </div>
 
-<ng-container *ngIf="activities$ | async as activities; else loader" class="fade-in">
+<ng-container *ngIf="vm$ | async as vm; else loader" class="fade-in">
     <div class="bg-white border rounded-lg overflow-hidden">
         <table z-table class="w-full">
             <thead z-table-header>
@@ -19,7 +19,7 @@
                 </tr>
             </thead>
             <tbody z-table-body>
-                <tr z-table-row *ngFor="let activity of activities">
+                <tr z-table-row *ngFor="let activity of vm.activities">
                     <td z-table-cell class="font-medium">{{ activity.name }}</td>
                     <td z-table-cell>
                         <span *ngIf="activity.project" class="text-xs bg-gray-100 px-2 py-1 rounded">
@@ -50,7 +50,7 @@
                         </div>
                     </td>
                 </tr>
-                <tr z-table-row *ngIf="activities.length === 0">
+                <tr z-table-row *ngIf="vm.activities.length === 0">
                     <td z-table-cell colspan="5" class="text-center py-8 text-gray-500">
                         No active activities found.
                     </td>

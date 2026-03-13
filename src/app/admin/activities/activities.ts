@@ -1,7 +1,7 @@
 import { Component, TemplateRef, ViewChild, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, Subject, combineLatest, map, startWith, switchMap } from 'rxjs';
+import { Observable, Subject, catchError, combineLatest, map, of, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
@@ -66,6 +66,7 @@ export class Activities implements OnInit {
 
   activities$!: Observable<Activity[]>;
   projects$!: Observable<any[]>;
+  vm$!: Observable<{ activities: Activity[]; projects: any[] }>;
   private currentUserId: number | null = null;
   private assignedProjectIds = new Set<number>();
 
@@ -73,23 +74,30 @@ export class Activities implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     this.currentUserId = Number(currentUser?.sub) || null;
 
-    this.projects$ = this.adminService.getAssignedProjects(this.currentUserId || undefined);
-
-    this.projects$.subscribe({
-      next: (projects) => {
+    this.projects$ = this.adminService.getAssignedProjects(this.currentUserId || undefined).pipe(
+      map((projects) => projects || []),
+      tap((projects) => {
         this.assignedProjectIds = new Set((projects || []).map((p) => Number(p.id)));
-      },
-      error: () => {
+      }),
+      catchError(() => {
         this.assignedProjectIds.clear();
-      }
-    });
+        return of([] as any[]);
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
 
-    this.activities$ = combineLatest([
-      this.refresh$.pipe(startWith(void 0)),
-      this.projects$.pipe(startWith([] as any[]))
-    ]).pipe(
+    this.activities$ = combineLatest([this.refresh$.pipe(startWith(void 0)), this.projects$]).pipe(
       switchMap(() => this.adminService.getActivities()),
-      map((activities) => (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity)))
+      map((activities) =>
+        (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity))
+      ),
+      catchError(() => of([] as Activity[])),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.vm$ = combineLatest([this.activities$, this.projects$]).pipe(
+      map(([activities, projects]) => ({ activities, projects })),
+      shareReplay({ bufferSize: 1, refCount: true }),
     );
 
     this.initForm();
