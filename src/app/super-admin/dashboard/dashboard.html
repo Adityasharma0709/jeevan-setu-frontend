@@ -1,4 +1,4 @@
-<ng-container *ngIf="stats$ | async as stats; else loader" class="fade-in">
+<ng-container *ngIf="vm$ | async as vm; else loader" class="fade-in">
 <div class="p-4 md:p-6">
 
   <!-- PAGE TITLE -->
@@ -8,7 +8,7 @@
 
   <!-- ================= STATS CARDS ================= -->
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-8">
 
     <!-- Projects -->
     <div class="bg-white shadow rounded-xl p-6">
@@ -16,7 +16,7 @@
       <p class="text-gray-500">Total Projects</p>
 
       <h2 class="text-3xl font-bold text-indigo-600 mt-2">
-        {{ stats.totalProjects }}
+        {{ vm.stats?.totalProjects ?? '-' }}
       </h2>
 
     </div>
@@ -27,20 +27,68 @@
       <p class="text-gray-500">Total Locations</p>
 
       <h2 class="text-3xl font-bold text-green-600 mt-2">
-        {{ stats.totalLocations }}
+        {{ vm.stats?.totalLocations ?? '-' }}
+      </h2>
+
+    </div>
+
+    <!-- Admins -->
+    <div class="bg-white shadow rounded-xl p-6">
+
+      <p class="text-gray-500">Total Admins</p>
+
+      <h2 class="text-3xl font-bold text-blue-600 mt-2">
+        {{ vm.stats?.totalAdmins ?? '-' }}
+      </h2>
+
+    </div>
+
+    <!-- Managers -->
+    <div class="bg-white shadow rounded-xl p-6">
+
+      <p class="text-gray-500">Total Managers</p>
+
+      <h2 class="text-3xl font-bold text-amber-600 mt-2">
+        {{ vm.stats?.totalManagers ?? '-' }}
+      </h2>
+
+    </div>
+
+    <!-- Outreach -->
+    <div class="bg-white shadow rounded-xl p-6">
+
+      <p class="text-gray-500">Total Outreach</p>
+
+      <h2 class="text-3xl font-bold text-rose-600 mt-2">
+        {{ vm.stats?.totalOutreach ?? '-' }}
       </h2>
 
     </div>
 
   </div>
 
-  <!-- ================= TABLE CARD ================= -->
+  <!-- ================= RECENT PROJECTS ================= -->
 
-  <div class="bg-white shadow rounded-xl p-4 md:p-6">
+  <div class="bg-white shadow rounded-xl p-4 md:p-6 mb-8">
 
-    <h2 class="text-xl font-semibold mb-4">
-      Beneficiaries Per Project
-    </h2>
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <h2 class="text-xl font-semibold">
+        Recently Created Projects
+      </h2>
+
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500 whitespace-nowrap">Filter:</span>
+        <select
+          class="px-3 py-2 rounded-md border text-sm bg-white"
+          [value]="vm.statusFilter"
+          (change)="setStatusFilter($any($event.target).value)"
+        >
+          <option value="ALL">All</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+      </div>
+    </div>
 
     <!-- ===== DESKTOP TABLE ===== -->
 
@@ -52,16 +100,14 @@
           <tr z-table-row>
             <th z-table-head>Code</th>
             <th z-table-head>Project</th>
-            <th z-table-head>Count</th>
+            <th z-table-head>Status</th>
+            <th z-table-head>Created</th>
           </tr>
         </thead>
 
         <tbody z-table-body>
 
-          <tr
-            z-table-row
-            *ngFor="let p of stats.beneficiariesPerProject"
-          >
+          <tr z-table-row *ngFor="let p of vm.recentProjects">
 
             <td z-table-cell>
               {{ p.projectCode }}
@@ -72,19 +118,31 @@
             </td>
 
             <td z-table-cell>
-
               <span
-                class="font-bold"
+                class="font-semibold"
                 [ngClass]="{
-                  'text-indigo-600': p._count.beneficiaries > 0,
-                  'text-gray-400': p._count.beneficiaries === 0
+                  'text-green-600': p.status === 'ACTIVE',
+                  'text-gray-500': p.status !== 'ACTIVE'
                 }"
               >
-                {{ p._count.beneficiaries }}
+                {{ p.status || '-' }}
               </span>
-
             </td>
 
+            <td z-table-cell class="text-sm text-gray-500">
+              {{
+                ($any(p).createdAt || $any(p).created_at)
+                  ? (($any(p).createdAt || $any(p).created_at) | date:'short')
+                  : '-'
+              }}
+            </td>
+
+          </tr>
+
+          <tr z-table-row *ngIf="!vm.recentProjects.length">
+            <td z-table-cell colspan="4" class="text-gray-500 text-sm py-6 text-center">
+              No projects found
+            </td>
           </tr>
 
         </tbody>
@@ -98,15 +156,14 @@
     <div class="md:hidden space-y-3">
 
       <div
-        *ngFor="let p of stats.beneficiariesPerProject"
+        *ngFor="let p of vm.recentProjects"
         class="border rounded-lg p-4 bg-gray-50 shadow-sm"
       >
 
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-start gap-3">
 
-          <div>
-
-            <h3 class="font-semibold">
+          <div class="min-w-0">
+            <h3 class="font-semibold truncate">
               {{ p.name }}
             </h3>
 
@@ -114,20 +171,78 @@
               Code: {{ p.projectCode }}
             </p>
 
+            <p class="text-sm text-gray-500">
+              Created:
+              {{
+                ($any(p).createdAt || $any(p).created_at)
+                  ? (($any(p).createdAt || $any(p).created_at) | date:'short')
+                  : '-'
+              }}
+            </p>
           </div>
 
           <span
-            class="text-lg font-bold"
+            class="text-sm font-semibold shrink-0"
             [ngClass]="{
-              'text-indigo-600': p._count.beneficiaries > 0,
-              'text-gray-400': p._count.beneficiaries === 0
+              'text-green-600': p.status === 'ACTIVE',
+              'text-gray-500': p.status !== 'ACTIVE'
             }"
           >
-            {{ p._count.beneficiaries }}
+            {{ p.status || '-' }}
           </span>
 
         </div>
 
+      </div>
+
+      <div *ngIf="!vm.recentProjects.length" class="text-gray-500 text-sm py-4 text-center">
+        No projects found
+      </div>
+
+    </div>
+
+    <!-- ===== PAGINATION ===== -->
+
+    <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+
+      <p class="text-sm text-gray-500">
+        Showing
+        {{
+          vm.totalRecentProjects
+            ? ((vm.page - 1) * vm.pageSize + 1)
+            : 0
+        }}
+        -
+        {{
+          vm.totalRecentProjects
+            ? ((vm.page * vm.pageSize < vm.totalRecentProjects) ? (vm.page * vm.pageSize) : vm.totalRecentProjects)
+            : 0
+        }}
+        of {{ vm.totalRecentProjects }}
+      </p>
+
+      <div class="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="vm.page <= 1"
+          class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        >
+          Prev
+        </button>
+
+        <span class="text-sm text-gray-600">
+          Page {{ vm.page }} / {{ vm.pageCount }}
+        </span>
+
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="vm.page >= vm.pageCount"
+          class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        >
+          Next
+        </button>
       </div>
 
     </div>

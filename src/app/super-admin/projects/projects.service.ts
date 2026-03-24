@@ -8,6 +8,8 @@ export interface Project {
     name: string;
     status: string;
     description?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 @Injectable({

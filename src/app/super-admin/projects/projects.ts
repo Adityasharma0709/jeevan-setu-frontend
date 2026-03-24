@@ -1,7 +1,7 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, startWith, switchMap, map, combineLatest, of, tap, forkJoin, BehaviorSubject, shareReplay } from 'rxjs';
+import { Observable, Subject, startWith, switchMap, map, combineLatest, of, forkJoin, BehaviorSubject, shareReplay, tap } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
@@ -45,6 +45,16 @@ interface ProjectWithLocations extends Project {
   locations?: LocationModel[];
 }
 
+interface ProjectPagerVm {
+  items: ProjectWithLocations[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  from: number;
+  to: number;
+}
+
 @Component({
   selector: 'app-projects',
   standalone: true,
@@ -74,24 +84,29 @@ export class ProjectsComponent {
 
   form!: FormGroup;
   editForm!: FormGroup;
-  assignForm!: FormGroup;
   locationForm!: FormGroup;
   assignLocationForm!: FormGroup;
+  assignAdminForm!: FormGroup;
 
   // ✅ Search controls
   projectSearch = new FormControl('');
-  adminSearch = new FormControl('');
-
-  isAssigning = false;
   options: AnimationOptions = { path: '/loading.json' };
   isLoadingLocations$ = new BehaviorSubject<boolean>(false);
-  targetAdmin: any | null = null;
-  targetProject: Project | null = null;
+  targetProject: ProjectWithLocations | null = null;
   selectedProjectDetails: ProjectWithLocations | null = null;
   availableLocations: LocationModel[] = [];
 
+  readonly pageSize = 10;
+  private readonly page$ = new BehaviorSubject<number>(1);
+
   // ✅ refresh trigger stream
   private refresh$ = new Subject<void>();
+
+  admins$: Observable<any[]> = this.refresh$.pipe(
+    startWith(void 0),
+    switchMap(() => this.api.get('users/admins') as Observable<any[]>),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
 
   // ✅ server-side search stream
   projects$: Observable<ProjectWithLocations[]> = combineLatest([
@@ -102,6 +117,7 @@ export class ProjectsComponent {
       distinctUntilChanged()
     )
   ]).pipe(
+    tap(() => this.goToPage(1)),
     switchMap(([_, query]) => this.projectService.findAll(query || '').pipe(
       switchMap((projects) => {
         if (!projects.length) return of([]);
@@ -124,32 +140,35 @@ export class ProjectsComponent {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  admins$: Observable<any[]> = this.refresh$.pipe(
-    startWith(void 0),
-    switchMap(() => this.api.get('users/admins') as Observable<any[]>),
-    shareReplay({ bufferSize: 1, refCount: true }),
-  );
+  pager$: Observable<ProjectPagerVm> = combineLatest([this.projects$, this.page$]).pipe(
+    map(([projects, page]) => {
+      const sorted = this.sortByMostRecent(projects);
+      const total = sorted.length;
+      const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+      const safePage = Math.min(Math.max(1, page), totalPages);
 
-  // ✅ Filtered admins (still client-side for now as no change requested for users)
-  filteredAdmins$: Observable<any[]> = combineLatest([
-    this.admins$,
-    this.adminSearch.valueChanges.pipe(startWith('')),
-  ]).pipe(
-    map(([admins, query]) => {
-      const q = query?.toLowerCase() || '';
-      return admins.filter(a =>
-        a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q)
-      );
+      const startIndex = (safePage - 1) * this.pageSize;
+      const endIndexExclusive = Math.min(startIndex + this.pageSize, total);
+      const items = sorted.slice(startIndex, endIndexExclusive);
+
+      const from = total === 0 ? 0 : startIndex + 1;
+      const to = total === 0 ? 0 : endIndexExclusive;
+
+      return {
+        items,
+        page: safePage,
+        pageSize: this.pageSize,
+        total,
+        totalPages,
+        from,
+        to,
+      };
+    }),
+    tap((vm) => {
+      if (vm.page !== this.page$.getValue()) this.page$.next(vm.page);
     }),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
-
-  vm$ = combineLatest([this.projects$, this.filteredAdmins$]).pipe(
-    map(([projects, admins]) => ({ projects, admins })),
-    shareReplay({ bufferSize: 1, refCount: true }),
-  );
-
-  locations$!: Observable<any[]>;
 
   constructor(
     private fb: FormBuilder,
@@ -158,7 +177,7 @@ export class ProjectsComponent {
     private dialog: ZardDialogService,
   ) {
     this.form = this.fb.group({
-      projectCode: [''],
+      projectCode: [{ value: '', disabled: true }],
       name: [''],
       description: [''],
     });
@@ -166,11 +185,6 @@ export class ProjectsComponent {
       projectCode: [''],
       name: [''],
       description: [''],
-    });
-
-    this.assignForm = this.fb.group({
-      projectId: [''],
-      locationId: [''],
     });
 
     this.locationForm = this.fb.group({
@@ -185,11 +199,32 @@ export class ProjectsComponent {
       locationId: [''],
     });
 
-    // Reactive locations logic
-    this.locations$ = this.assignForm.get('projectId')!.valueChanges.pipe(
-      tap(() => this.assignForm.patchValue({ locationId: '' })),
-      switchMap(id => (id ? (this.api.get(`locations?projectId=${id}`) as Observable<any[]>) : of([])))
-    );
+    this.assignAdminForm = this.fb.group({
+      adminId: [''],
+      locationId: [''],
+    });
+  }
+
+  goToPage(page: number) {
+    const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+    this.page$.next(nextPage);
+  }
+
+  private sortByMostRecent(projects: ProjectWithLocations[]) {
+    const items = [...projects];
+    items.sort((a, b) => {
+      const createdDelta = this.getCreatedAtMs(b) - this.getCreatedAtMs(a);
+      if (createdDelta !== 0) return createdDelta;
+      return (b.id ?? 0) - (a.id ?? 0);
+    });
+    return items;
+  }
+
+  private getCreatedAtMs(project: ProjectWithLocations) {
+    const createdAt = project.createdAt;
+    if (!createdAt) return 0;
+    const ms = Date.parse(createdAt);
+    return Number.isFinite(ms) ? ms : 0;
   }
 
   // =============================
@@ -197,6 +232,7 @@ export class ProjectsComponent {
   // =============================
 
   openCreateDialog() {
+    this.form.reset();
     this.dialogRef = this.dialog.create({
       zTitle: 'Create Project',
       zContent: this.createProjectDialog,
@@ -217,8 +253,9 @@ export class ProjectsComponent {
 
   submit() {
     this.projectService.create(this.form.value).subscribe({
-      next: () => {
-        toast.success('Project created successfully');
+      next: (res: any) => {
+        const code = res?.projectCode as string | undefined;
+        toast.success(code ? `Project created (Code: ${code})` : 'Project created successfully');
 
         this.form.reset();
 
@@ -332,27 +369,67 @@ export class ProjectsComponent {
     });
   }
 
-  @ViewChild('assignDialog')
-  assignDialog!: TemplateRef<any>;
+  // =============================
+  // ASSIGN ADMIN TO PROJECT
+  // =============================
 
-  openAssignDialog(admin: any) {
-    this.targetAdmin = admin;
+  @ViewChild('assignAdminDialog')
+  assignAdminDialog!: TemplateRef<any>;
+
+  openAssignAdminDialog(project: ProjectWithLocations) {
+    this.targetProject = project;
+    this.assignAdminForm.reset();
 
     this.dialogRef = this.dialog.create({
-      zTitle: `Assign Projects to ${admin.name}`,
-      zContent: this.assignDialog,
+      zTitle: `Assign Admin to ${project.name}`,
+      zContent: this.assignAdminDialog,
       zOkText: 'Assign',
       zCancelText: 'Cancel',
-      zWidth: '400px',
+      zWidth: '450px',
 
       zOnOk: () => {
-        this.assignProjects();
+        this.assignAdminToProject();
         return false;
       },
+
       zOnCancel: () => {
-        this.targetAdmin = null;
-        this.assignForm.reset();
-      }
+        this.targetProject = null;
+        this.assignAdminForm.reset();
+      },
+    });
+  }
+
+  assignAdminToProject() {
+    if (!this.targetProject) {
+      toast.error('No project selected');
+      return;
+    }
+
+    const { adminId, locationId } = this.assignAdminForm.value;
+
+    if (!adminId) {
+      toast.error('Please select an admin');
+      return;
+    }
+
+    if (!locationId) {
+      toast.error('Please select a location');
+      return;
+    }
+
+    this.api.post('users/assign-project-location', {
+      userId: Number(adminId),
+      projectId: Number(this.targetProject.id),
+      locationId: Number(locationId),
+    }).subscribe({
+      next: () => {
+        toast.success('Admin assigned successfully');
+        this.assignAdminForm.reset();
+        this.targetProject = null;
+        this.refresh$.next();
+        this.dialogRef?.close();
+      },
+      error: () => toast.error('Failed to assign admin'),
     });
   }
 
@@ -509,43 +586,6 @@ export class ProjectsComponent {
         else if (err.status === 500) msg = 'Server error. Try later';
 
         toast.error(msg);
-      },
-    });
-  }
-
-  assignProjects() {
-    const { projectId, locationId } = this.assignForm.value;
-
-    if (!projectId || !locationId) {
-      toast.error('Please select both project and location');
-      return;
-    }
-
-    if (!this.targetAdmin) {
-      toast.error('No admin selected');
-      return;
-    }
-
-    this.isAssigning = true;
-
-    this.api.post('users/assign', {
-      userId: this.targetAdmin.id,
-      projectId: Number(projectId),
-      locationId: Number(locationId),
-    }).subscribe({
-      next: () => {
-        toast.success(`Successfully assigned to ${this.targetAdmin.name}`);
-        this.targetAdmin = null;
-        this.assignForm.reset();
-        this.refresh$.next();
-        this.isAssigning = false;
-        this.dialogRef?.close();
-      },
-      error: (err) => {
-        console.error('Assignment error:', err);
-        const msg = err.error?.message || 'Assignment failed';
-        toast.error(typeof msg === 'string' ? msg : 'Assignment failed');
-        this.isAssigning = false;
       },
     });
   }

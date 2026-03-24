@@ -3,9 +3,9 @@
 <ng-template #createProjectDialog>
   <form [formGroup]="form" class="space-y-5">
     <z-form-field>
-      <label z-form-label zRequired>Project Code</label>
+      <label z-form-label>Project Code</label>
       <z-form-control>
-        <input z-input type="text" formControlName="projectCode" placeholder="Enter code" />
+        <input z-input type="text" formControlName="projectCode" placeholder="Auto-generated (e.g., PR01)" />
       </z-form-control>
     </z-form-field>
 
@@ -52,36 +52,6 @@
   </form>
 </ng-template>
 
-<!-- ================= ASSIGN PROJECT DIALOG ================= -->
-
-<ng-template #assignDialog>
-  <form [formGroup]="assignForm" class="space-y-5">
-    <z-form-field>
-      <label z-form-label zRequired>Project</label>
-      <z-form-control>
-        <select z-input formControlName="projectId">
-          <option value="">Select a project</option>
-          <option *ngFor="let p of projects$ | async" [value]="p.id">
-            {{ p.name }} ({{ p.projectCode }})
-          </option>
-        </select>
-      </z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label zRequired>Location</label>
-      <z-form-control>
-        <select z-input formControlName="locationId" [disabled]="!assignForm.value.projectId">
-          <option value="">Select a location</option>
-          <option *ngFor="let l of locations$ | async" [value]="l.id">
-            {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
-          </option>
-        </select>
-      </z-form-control>
-    </z-form-field>
-  </form>
-</ng-template>
-
 <!-- ================= PROJECT DETAILS DIALOG ================= -->
 
 <ng-template #projectDetailsDialog>
@@ -114,6 +84,50 @@
       </p>
     </div>
   </div>
+</ng-template>
+
+<!-- ================= ASSIGN ADMIN TO PROJECT DIALOG ================= -->
+
+<ng-template #assignAdminDialog>
+  <form [formGroup]="assignAdminForm" class="space-y-5">
+    <z-form-field>
+      <label z-form-label>Project</label>
+      <z-form-control>
+        <input z-input type="text" [value]="targetProject?.name || ''" disabled />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>Admin</label>
+      <z-form-control>
+        <select z-input formControlName="adminId">
+          <option value="" disabled>Select an admin</option>
+          <option *ngFor="let a of admins$ | async" [value]="a.id">
+            {{ a.name }} ({{ a.email }})
+          </option>
+        </select>
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>Location</label>
+      <z-form-control>
+        <select
+          z-input
+          formControlName="locationId"
+          [disabled]="!(targetProject?.locations?.length)"
+        >
+          <option *ngIf="!targetProject?.locations?.length" value="" disabled>
+            No locations assigned to this project
+          </option>
+          <option *ngIf="targetProject?.locations?.length" value="" disabled>Select a location</option>
+          <option *ngFor="let l of targetProject?.locations || []" [value]="l.id">
+            {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
+          </option>
+        </select>
+      </z-form-control>
+    </z-form-field>
+  </form>
 </ng-template>
 
 <!-- ================= ASSIGN LOCATION TO PROJECT DIALOG ================= -->
@@ -230,32 +244,23 @@
 
 <!-- ================= DESKTOP TABLE ================= -->
 
-<ng-container *ngIf="vm$ | async as vm; else pageLoader" class="fade-in">
+<ng-container *ngIf="pager$ | async as pager; else pageLoader" class="fade-in">
   <div class="hidden md:block overflow-x-auto border rounded-lg">
     <table z-table class="w-full min-w-175">
       <thead z-table-header>
         <tr z-table-row>
           <th z-table-head>Code</th>
           <th z-table-head>Name</th>
-          <th z-table-head>Locations</th>
           <th z-table-head>Status</th>
           <th z-table-head>Action</th>
         </tr>
       </thead>
 
       <tbody z-table-body>
-        <tr z-table-row *ngFor="let p of vm.projects">
+        <tr z-table-row *ngFor="let p of pager.items">
           <td z-table-cell>{{ p.projectCode }}</td>
 
           <td z-table-cell>{{ p.name }}</td>
-
-          <td z-table-cell>
-            <span *ngIf="p.locations?.length; else noLocations">
-              {{ getLocationCount(p.locations) }}:
-              {{ formatLocationCodes(p.locations) }}
-            </span>
-            <ng-template #noLocations>-</ng-template>
-          </td>
 
           <td z-table-cell>
             <span
@@ -276,9 +281,9 @@
             <!-- EDIT BUTTON -->
             <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(p)">Edit</button>
 
-            <!-- ASSIGN EXISTING LOCATION BUTTON -->
-            <button z-button zSize="sm" zType="default" (click)="openAssignLocationDialog(p)">
-              Assign Location
+            <!-- ASSIGN ADMIN BUTTON -->
+            <button z-button zSize="sm" zType="default" (click)="openAssignAdminDialog(p)">
+              Assign Admin
             </button>
 
             <!-- STATUS BUTTON -->
@@ -300,15 +305,11 @@
 
   <!-- ================= MOBILE CARDS ================= -->
   <div class="md:hidden space-y-3">
-    <div *ngFor="let p of vm.projects" class="border rounded-lg p-4 bg-white shadow-sm">
+    <div *ngFor="let p of pager.items" class="border rounded-lg p-4 bg-white shadow-sm">
       <div class="flex justify-between items-start">
         <div>
           <h3 class="font-semibold">{{ p.name }}</h3>
           <p class="text-sm text-gray-500">Code: {{ p.projectCode }}</p>
-          <p class="text-sm text-gray-500" *ngIf="p.locations?.length">
-            Locations: {{ formatLocationCodes(p.locations) }}
-          </p>
-          <p class="text-sm text-gray-500" *ngIf="!p.locations?.length">Locations: -</p>
         </div>
 
         <span
@@ -329,9 +330,9 @@
         <!-- EDIT BUTTON -->
         <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(p)">Edit</button>
 
-        <!-- ASSIGN EXISTING LOCATION BUTTON -->
-        <button z-button zType="default" class="flex-1" (click)="openAssignLocationDialog(p)">
-          Assign Location
+        <!-- ASSIGN ADMIN BUTTON -->
+        <button z-button zType="default" class="flex-1" (click)="openAssignAdminDialog(p)">
+          Assign Admin
         </button>
 
         <!-- STATUS BUTTON -->
@@ -352,89 +353,30 @@
     </div>
   </div>
 
-<!-- ================= SEARCH ADMINS ================= -->
-<div class="mt-8 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-  <h2 class="text-xl font-bold">Admins</h2>
-</div>
-<div class="mb-4">
-  <input
-    z-input
-    [formControl]="adminSearch"
-    placeholder="Search admins by name or email..."
-    class="max-w-md w-full"
-  />
-</div>
+  <!-- ================= PAGINATION ================= -->
+  <div class="mt-6 flex w-full items-center justify-end gap-4" *ngIf="pager.totalPages > 1">
+    <button
+      z-button
+      zSize="sm"
+      zType="secondary"
+      [disabled]="pager.page === 1"
+      (click)="goToPage(pager.page - 1)"
+    >
+      Prev
+    </button>
 
-<div class="hidden md:block overflow-x-auto border rounded-lg">
-  <table z-table class="w-full min-w-[700px]">
-    <thead z-table-header>
-      <tr z-table-row>
-        <th z-table-head>Name</th>
-        <th z-table-head>Email</th>
-        <th z-table-head>Status</th>
-        <th z-table-head>Action</th>
-      </tr>
-    </thead>
+    <span class="text-sm text-gray-600">Page {{ pager.page }} / {{ pager.totalPages }}</span>
 
-    <tbody z-table-body>
-      <tr z-table-row *ngFor="let a of vm.admins">
-        <td z-table-cell>{{ a.name }}</td>
-
-        <td z-table-cell class="text-gray-600">
-          {{ a.email }}
-        </td>
-
-        <td z-table-cell>
-          <span
-            class="px-2 py-1 rounded text-xs font-medium"
-            [ngClass]="
-              a.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            "
-          >
-            {{ a.status }}
-          </span>
-        </td>
-
-        <td z-table-cell class="flex gap-2">
-          <!-- <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(a)">Edit</button> -->
-
-          <button z-button zSize="sm" zType="default" (click)="openAssignDialog(a)">
-            Assign Project
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-<!-- ================= MOBILE ADMIN CARDS ================= -->
-<div class="md:hidden space-y-3 mt-8">
-  <h2 class="text-lg font-bold border-t pt-4">Admins</h2>
-  <div *ngFor="let a of vm.admins" class="border rounded-lg p-4 bg-white shadow-sm">
-    <div class="flex justify-between items-start">
-      <div>
-        <h3 class="font-semibold">{{ a.name }}</h3>
-        <p class="text-sm text-gray-500">{{ a.email }}</p>
-      </div>
-
-      <span
-        class="px-2 py-1 rounded text-xs font-medium"
-        [ngClass]="
-          a.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-        "
-      >
-        {{ a.status }}
-      </span>
-    </div>
-
-    <div class="flex gap-2 mt-3">
-      <!-- <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(a)">Edit</button> -->
-
-      <button z-button zType="default" class="flex-1" (click)="openAssignDialog(a)">
-        Assign Project
-      </button>
-    </div>
+    <button
+      z-button
+      zSize="sm"
+      zType="secondary"
+      [disabled]="pager.page === pager.totalPages"
+      (click)="goToPage(pager.page + 1)"
+    >
+      Next
+    </button>
   </div>
-</div>
 
 </ng-container>
 

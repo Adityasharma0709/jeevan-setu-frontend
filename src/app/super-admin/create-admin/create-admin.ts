@@ -1,7 +1,8 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, startWith, switchMap } from 'rxjs';
+import { Observable, Subject, BehaviorSubject, combineLatest, map, shareReplay, startWith, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
@@ -30,6 +31,8 @@ import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 
+type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
+
 @Component({
   selector: 'app-create-admin',
   standalone: true,
@@ -55,6 +58,22 @@ import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
   templateUrl: './create-admin.html',
 })
 export class CreateAdminComponent {
+  adminSearch = new FormControl('');
+  statusFilter = new FormControl<StatusFilter>('ALL');
+
+  vm$!: Observable<{
+    admins: any[];
+    totalAdmins: number;
+    page: number;
+    pageSize: number;
+    pageCount: number;
+  }>;
+
+  private readonly pageSize = 10;
+  private readonly page$ = new BehaviorSubject<number>(1);
+  private lastPage = 1;
+  private lastPageCount = 1;
+
   /* ======================
      TEMPLATE REFERENCES
   ====================== */
@@ -81,9 +100,41 @@ export class CreateAdminComponent {
   private refresh$ = new Subject<void>();
   options: AnimationOptions = { path: '/loading.json' };
 
-  admins$: Observable<any> = this.refresh$.pipe(
+  private readonly rawAdmins$: Observable<any[]> = this.refresh$.pipe(
     startWith(void 0),
-    switchMap(() => this.api.get('users/admins')),
+    switchMap(() => this.api.get('users/admins') as Observable<any[]>),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  private readonly filteredAdmins$: Observable<any[]> = combineLatest([
+    this.rawAdmins$,
+    this.adminSearch.valueChanges.pipe(
+      startWith(''),
+      debounceTime(300),
+      distinctUntilChanged(),
+    ),
+    this.statusFilter.valueChanges.pipe(startWith('ALL' as StatusFilter)),
+  ]).pipe(
+    map(([admins, query, status]) => {
+      const q = (query || '').toLowerCase().trim();
+      const s = (status || 'ALL').toUpperCase();
+
+      const sorted = [...(admins || [])].sort(
+        (a: any, b: any) => this.getAdminSortTime(b) - this.getAdminSortTime(a)
+      );
+
+      return sorted.filter((a: any) => {
+        const name = (a?.name || '').toLowerCase();
+        const email = (a?.email || '').toLowerCase();
+        const adminStatus = (a?.status || '').toUpperCase();
+
+        const matchesSearch = !q || name.includes(q) || email.includes(q);
+        const matchesStatus = s === 'ALL' || adminStatus === s;
+
+        return matchesSearch && matchesStatus;
+      });
+    }),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   /* ======================
@@ -97,6 +148,7 @@ export class CreateAdminComponent {
   ) {
     // Create form
     this.form = this.fb.group({
+      usercode: [{ value: '', disabled: true }],
       name: [''],
       email: [''],
       password: [''],
@@ -107,6 +159,30 @@ export class CreateAdminComponent {
       name: [''],
       email: [''],
     });
+
+    this.vm$ = combineLatest([
+      this.filteredAdmins$,
+      this.page$.asObservable(),
+    ]).pipe(
+      map(([admins, page]) => {
+        const totalAdmins = admins.length;
+        const pageCount = Math.max(1, Math.ceil(totalAdmins / this.pageSize));
+        const safePage = Math.min(Math.max(1, page), pageCount);
+        const startIndex = (safePage - 1) * this.pageSize;
+
+        this.lastPage = safePage;
+        this.lastPageCount = pageCount;
+
+        return {
+          admins: admins.slice(startIndex, startIndex + this.pageSize),
+          totalAdmins,
+          page: safePage,
+          pageSize: this.pageSize,
+          pageCount,
+        };
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
   }
 
   /* ======================
@@ -114,6 +190,7 @@ export class CreateAdminComponent {
   ====================== */
 
   openCreateDialog() {
+    this.form.reset();
     this.dialogRef = this.dialog.create({
       zTitle: 'Create Admin',
       zContent: this.createAdminDialog,
@@ -136,8 +213,9 @@ export class CreateAdminComponent {
 
   submit() {
     this.api.post('users/create-admin', this.form.value).subscribe({
-      next: () => {
-        toast.success('Admin created successfully');
+      next: (res: any) => {
+        const code = res?.safeUser?.usercode as string | undefined;
+        toast.success(code ? `Admin created (Code: ${code})` : 'Admin created successfully');
 
         this.form.reset();
         this.refresh$.next();
@@ -214,5 +292,24 @@ export class CreateAdminComponent {
       },
       error: () => toast.error('Failed to update status'),
     });
+  }
+
+  prevPage() {
+    this.page$.next(Math.max(1, this.lastPage - 1));
+  }
+
+  nextPage() {
+    this.page$.next(Math.min(this.lastPageCount, this.lastPage + 1));
+  }
+
+  private getAdminSortTime(admin: any): number {
+    const createdAt = admin?.createdAt ?? admin?.created_at ?? admin?.createdOn;
+    if (createdAt) {
+      const t = new Date(createdAt).getTime();
+      if (!Number.isNaN(t)) return t;
+    }
+
+    const id = admin?.id;
+    return typeof id === 'number' ? id : 0;
   }
 }
