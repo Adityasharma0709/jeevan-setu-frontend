@@ -55,11 +55,6 @@
                         <div class="min-w-0">
                             <p class="text-sm font-semibold text-gray-900 truncate">{{ g.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5">Age: {{ g.minAge ?? '-' }} – {{ g.maxAge ?? '-' }}</p>
-                            <p *ngIf="g.creator?.id === currentUserId" class="text-xs text-gray-500 mt-1">
-                                Created by:
-                                <span class="font-medium text-gray-700">{{ g.creator?.name || '-' }}</span>
-                                <span *ngIf="g.creator?.email" class="text-gray-400">({{ g.creator.email }})</span>
-                            </p>
                         </div>
                         <span
                             class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
@@ -91,11 +86,6 @@
                                 Project:
                                 <span class="font-medium text-gray-700">{{ a.project?.name || '-' }}</span>
                                 <span class="text-gray-400" *ngIf="a.project?.projectCode">({{ a.project.projectCode }})</span>
-                            </p>
-                            <p *ngIf="a.creator?.id === currentUserId" class="text-xs text-gray-500 mt-1">
-                                Created by:
-                                <span class="font-medium text-gray-700">{{ a.creator?.name || '-' }}</span>
-                                <span *ngIf="a.creator?.email" class="text-gray-400">({{ a.creator.email }})</span>
                             </p>
                         </div>
                         <span
@@ -132,11 +122,6 @@
                                 Date:
                                 <span class="font-medium text-gray-700">{{ s.sessionDate | date: 'mediumDate' }}</span>
                             </p>
-                            <p *ngIf="s.creator?.id === currentUserId" class="text-xs text-gray-500 mt-1">
-                                Created by:
-                                <span class="font-medium text-gray-700">{{ s.creator?.name || '-' }}</span>
-                                <span *ngIf="s.creator?.email" class="text-gray-400">({{ s.creator.email }})</span>
-                            </p>
                         </div>
                         <span
                             class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
@@ -154,73 +139,89 @@
     </div>
 
     <!-- Assigned Projects -->
-    <ng-container *ngIf="assignedProjects$ | async as projects">
+    <ng-container *ngIf="assignedProjectsVm$ | async as vm">
         <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold">Assigned Projects</h3>
-                <span class="text-sm text-gray-500">{{ projects.length }} total</span>
+                <div class="flex items-center gap-3">
+                    <select
+                        [formControl]="projectStatusFilter"
+                        class="w-[140px] px-3 py-2 rounded-md border text-sm bg-white"
+                    >
+                        <option value="ALL">All</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                    <span class="text-sm text-gray-500">{{ vm.shown }} / {{ vm.total }} shown</span>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="projects.length; else noAssignedProjects">
-                <div *ngFor="let p of projects" class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm flex flex-col h-full">
-                    <div class="flex items-start justify-between gap-2 mb-3">
-                        <div>
-                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Project</p>
-                            <p class="text-base font-semibold text-gray-900">{{ p.name || '-' }}</p>
-                            <p class="text-sm text-gray-600">Code: <span class="font-medium text-gray-800">{{ p.projectCode || p.code || '-' }}</span></p>
-                        </div>
-                        <span
-                            class="px-2.5 py-1 rounded-full text-xs font-semibold"
-                            [ngClass]="
-                                p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                            "
-                        >
-                            {{ p.status || 'UNKNOWN' }}
-                        </span>
-                    </div>
-
-                    <div class="mt-auto space-y-2">
-                        <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mt-4 border-t pt-3">Assigned Locations</p>
-                        <div *ngIf="p.locations?.length; else noLoc" class="space-y-2">
-                            <details
-                                *ngFor="let loc of p.locations"
-                                class="group border border-gray-100 rounded-lg bg-gray-50 overflow-hidden"
+            <div *ngIf="vm.total; else noAssignedProjects">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="vm.projects.length; else noFilteredProjects">
+                    <div *ngFor="let p of vm.projects" class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm flex flex-col h-full">
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Project</p>
+                                <p class="text-base font-semibold text-gray-900">{{ p.name || '-' }}</p>
+                                <p class="text-sm text-gray-600">Code: <span class="font-medium text-gray-800">{{ p.projectCode || p.code || '-' }}</span></p>
+                            </div>
+                            <span
+                                class="px-2.5 py-1 rounded-full text-xs font-semibold"
+                                [ngClass]="
+                                    p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                "
                             >
-                                <summary class="flex items-center justify-between cursor-pointer p-3 outline-none text-sm font-medium text-gray-800 hover:bg-gray-100 transition-colors list-none">
-                                    <div class="flex items-center gap-2">
-                                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">{{ loc.locationCode || '-' }}</span>
-                                    </div>
-                                    <!-- Custom dropdown arrow -->
-                                    <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </summary>
-                                <div class="p-3 border-t border-gray-100 bg-white text-sm text-gray-600 grid grid-cols-2 gap-2">
-                                    <div>
-                                        <p class="text-xs text-gray-400">Village</p>
-                                        <p class="font-medium text-gray-800">{{ loc.village || '-' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-400">Block</p>
-                                        <p class="font-medium text-gray-800">{{ loc.block || '-' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-400">District</p>
-                                        <p class="font-medium text-gray-800">{{ loc.district || '-' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-400">State</p>
-                                        <p class="font-medium text-gray-800">{{ loc.state || '-' }}</p>
-                                    </div>
-                                </div>
-                            </details>
+                                {{ p.status || 'UNKNOWN' }}
+                            </span>
                         </div>
-                        <ng-template #noLoc>
-                            <p class="text-sm text-gray-500 italic">No locations assigned</p>
-                        </ng-template>
+
+                        <div class="mt-auto space-y-2">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mt-4 border-t pt-3">Assigned Locations</p>
+                            <div *ngIf="p.locations?.length; else noLoc" class="space-y-2">
+                                <details
+                                    *ngFor="let loc of p.locations"
+                                    class="group border border-gray-100 rounded-lg bg-gray-50 overflow-hidden"
+                                >
+                                    <summary class="flex items-center justify-between cursor-pointer p-3 outline-none text-sm font-medium text-gray-800 hover:bg-gray-100 transition-colors list-none">
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">{{ loc.locationCode || '-' }}</span>
+                                        </div>
+                                        <!-- Custom dropdown arrow -->
+                                        <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </summary>
+                                    <div class="p-3 border-t border-gray-100 bg-white text-sm text-gray-600 grid grid-cols-2 gap-2">
+                                        <div>
+                                            <p class="text-xs text-gray-400">Village</p>
+                                            <p class="font-medium text-gray-800">{{ loc.village || '-' }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400">Block</p>
+                                            <p class="font-medium text-gray-800">{{ loc.block || '-' }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400">District</p>
+                                            <p class="font-medium text-gray-800">{{ loc.district || '-' }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400">State</p>
+                                            <p class="font-medium text-gray-800">{{ loc.state || '-' }}</p>
+                                        </div>
+                                    </div>
+                                </details>
+                            </div>
+                            <ng-template #noLoc>
+                                <p class="text-sm text-gray-500 italic">No locations assigned</p>
+                            </ng-template>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <ng-template #noFilteredProjects>
+                <div class="text-center py-6 text-gray-400 italic">No projects match this filter.</div>
+            </ng-template>
 
             <ng-template #noAssignedProjects>
                 <div class="text-center py-6 text-gray-400 italic">No projects assigned yet.</div>

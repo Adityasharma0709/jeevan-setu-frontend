@@ -104,7 +104,11 @@ export class Groups {
       this.adminService.getActivities(),
       assignedProjects$.pipe(startWith([] as any[]))
     ]).pipe(
-      map(([activities]) => (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity)))
+      map(([activities]) =>
+        (activities || []).filter(
+          (activity) => this.isActivityInAssignedProjects(activity) && activity.status === 'ACTIVE'
+        )
+      )
     );
     this.activities$.subscribe({
       next: (activities) => {

@@ -92,7 +92,7 @@ export class AdminService {
 
     // Activities
     getActivities(): Observable<Activity[]> {
-        return this.api.get(`${this.endpoint}/activities/active`) as Observable<Activity[]>;
+        return this.api.get(`${this.endpoint}/activities`) as Observable<Activity[]>;
     }
 
     createActivity(data: any): Observable<Activity> {

@@ -1,21 +1,29 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { combineLatest, map, Observable, shareReplay } from 'rxjs';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { combineLatest, distinctUntilChanged, map, Observable, shareReplay, startWith } from 'rxjs';
 import { AdminService } from '../admin.service';
 import { AuthService } from '../../core/services/auth';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
+type ProjectStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ZardIconComponent, LottieComponent],
+  imports: [CommonModule, ReactiveFormsModule, ZardIconComponent, LottieComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnInit {
   stats$!: Observable<any>;
-  assignedProjects$!: Observable<any[]>;
+  assignedProjectsVm$!: Observable<{
+    projects: any[];
+    total: number;
+    shown: number;
+    filter: ProjectStatusFilter;
+  }>;
   myGroups$!: Observable<any[]>;
   myActivities$!: Observable<any[]>;
   mySessions$!: Observable<any[]>;
@@ -28,6 +36,8 @@ export class Dashboard implements OnInit {
   currentUserId?: number;
   options: AnimationOptions = { path: '/loading.json' };
 
+  projectStatusFilter = new FormControl<ProjectStatusFilter>('ALL', { nonNullable: true });
+
   constructor(
     private adminService: AdminService,
     private authService: AuthService
@@ -38,7 +48,36 @@ export class Dashboard implements OnInit {
     const currentUserId = Number(currentUser?.sub) || undefined;
     this.currentUserId = currentUserId;
     this.stats$ = this.adminService.getAdminDashboard();
-    this.assignedProjects$ = this.adminService.getAssignedProjects(currentUserId);
+
+    const assignedProjects$ = this.adminService.getAssignedProjects(currentUserId).pipe(
+      map((rows) => (Array.isArray(rows) ? rows : [])),
+      shareReplay(1)
+    );
+
+    const status$ = this.projectStatusFilter.valueChanges.pipe(
+      startWith(this.projectStatusFilter.value),
+      distinctUntilChanged()
+    );
+
+    this.assignedProjectsVm$ = combineLatest([assignedProjects$, status$]).pipe(
+      map(([projects, status]) => {
+        const normalizedStatus = (status ?? 'ALL').toString().toUpperCase() as ProjectStatusFilter;
+        const filtered =
+          normalizedStatus === 'ALL'
+            ? projects
+            : projects.filter(
+              (p) => (p?.status ?? '').toString().toUpperCase() === normalizedStatus
+            );
+
+        return {
+          projects: filtered,
+          total: projects.length,
+          shown: filtered.length,
+          filter: normalizedStatus,
+        };
+      }),
+      shareReplay(1)
+    );
 
     this.myGroups$ = this.adminService.getGroups().pipe(
       map((rows) => (rows ?? []).filter((g) => g?.creator?.id === this.currentUserId)),
