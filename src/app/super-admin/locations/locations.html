@@ -228,7 +228,15 @@
 
     <!-- INPUTS -->
 
-    <input z-input placeholder="Location Code" formControlName="locationCode" />
+    <input
+      z-input
+      placeholder="Location Code (auto-generated, e.g., UP01)"
+      formControlName="locationCode"
+      readonly
+      aria-readonly="true"
+      autocomplete="off"
+      class="bg-gray-100 cursor-not-allowed"
+    />
     <input z-input placeholder="State" formControlName="state" />
     <input z-input placeholder="District" formControlName="district" />
     <input z-input placeholder="Block" formControlName="block" />

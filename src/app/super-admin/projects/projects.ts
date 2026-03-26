@@ -556,20 +556,26 @@ export class ProjectsComponent {
     }
 
     const { locationCode, state, district, block, village } = this.locationForm.value;
+    const trimmedCode = (locationCode ?? '').toString().trim();
 
-    if (!locationCode || !state || !district || !block || !village) {
+    if (!state || !district || !block || !village) {
       toast.error('Please fill all location fields');
       return;
     }
 
-    this.api.post('locations', {
+    const payload: any = {
       projectId: this.targetProject.id,
-      locationCode,
       state,
       district,
       block,
       village,
-    }).subscribe({
+    };
+
+    if (trimmedCode) {
+      payload.locationCode = trimmedCode;
+    }
+
+    this.api.post('locations', payload).subscribe({
       next: () => {
         toast.success('Location created successfully');
         this.locationForm.reset();

@@ -1,4 +1,4 @@
-﻿<z-layout class="min-h-screen flex border">
+<z-layout class="h-dvh overflow-hidden flex border">
   <z-sidebar [zWidth]="250" [zCollapsible]="true" [zCollapsed]="sidebarCollapsed" [zCollapsedWidth]="70"
     (zCollapsedChange)="sidebarCollapsed = $event" class="p-0!">
     <nav [class]="'flex h-full flex-col overflow-hidden ' + (sidebarCollapsed ? 'gap-1 p-1 pt-4' : 'gap-4 p-4')">
@@ -59,7 +59,7 @@
   </z-sidebar>
 
   <z-layout class="flex flex-col flex-1">
-    <z-content class="flex-1 overflow-y-auto p-6 bg-gray-50">
+    <z-content class="flex-1 min-h-0 overflow-y-auto p-6 bg-gray-50">
       <router-outlet></router-outlet>
     </z-content>
   </z-layout>

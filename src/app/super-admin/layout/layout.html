@@ -1,11 +1,11 @@
-<z-layout class="min-h-screen flex border">
+<z-layout class="h-dvh overflow-hidden flex border">
 
   <!-- ================= MOBILE OVERLAY ================= -->
 
   <!-- ================= SIDEBAR ================= -->
 <z-sidebar
   [zWidth]="250"
-  [zCollapsible]="isMobile"
+  [zCollapsible]="true"
   [zCollapsed]="sidebarCollapsed"
   [zCollapsedWidth]="70"
   (zCollapsedChange)="sidebarCollapsed = $event"
@@ -102,9 +102,9 @@
   </z-sidebar>
 
   <!-- ================= MAIN CONTENT ================= -->
-  <div class="flex flex-col flex-1">
+  <div class="flex flex-col flex-1 min-h-0">
 
-    <z-content class="flex-1 overflow-y-auto p-6 bg-gray-50">
+    <z-content class="flex-1 min-h-0 overflow-y-auto p-6 bg-gray-50">
       <router-outlet></router-outlet>
     </z-content>
 
