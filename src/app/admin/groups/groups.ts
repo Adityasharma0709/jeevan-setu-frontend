@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, TemplateRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, Subject, combineLatest, map, startWith, switchMap, tap } from 'rxjs';
@@ -64,6 +64,7 @@ export class Groups {
   isEditing = false;
   selectedGroupId: number | null = null;
   targetGroup: Group | null = null;
+  readonly groupStatusLoadingIds = signal<Set<number>>(new Set());
 
   groups$!: Observable<Group[]>;
   activities$!: Observable<Activity[]>;
@@ -207,6 +208,15 @@ export class Groups {
       toast.error('You can only activate/deactivate groups created by you');
       return;
     }
+
+    const groupId = Number(group?.id);
+    if (!Number.isFinite(groupId)) return;
+    if (this.groupStatusLoadingIds().has(groupId)) return;
+
+    const nextSet = new Set(this.groupStatusLoadingIds());
+    nextSet.add(groupId);
+    this.groupStatusLoadingIds.set(nextSet);
+
     const obs = group.status === 'ACTIVE'
       ? this.adminService.deactivateGroup(group.id)
       : this.adminService.activateGroup(group.id);
@@ -215,6 +225,10 @@ export class Groups {
       next: () => {
         toast.success(`Group ${group.status === 'ACTIVE' ? 'deactivated' : 'activated'}`);
         this.refresh$.next();
+
+        const done = new Set(this.groupStatusLoadingIds());
+        done.delete(groupId);
+        this.groupStatusLoadingIds.set(done);
       },
       error: (err) => {
         let errorMessage = 'Action failed';
@@ -222,8 +236,16 @@ export class Groups {
           errorMessage = Array.isArray(err.error.message) ? err.error.message[0] : err.error.message;
         }
         toast.error(errorMessage);
+
+        const done = new Set(this.groupStatusLoadingIds());
+        done.delete(groupId);
+        this.groupStatusLoadingIds.set(done);
       }
     });
+  }
+
+  isGroupStatusLoading(groupId: number): boolean {
+    return this.groupStatusLoadingIds().has(groupId);
   }
 
   openTagDialog(group: Group) {

@@ -43,10 +43,12 @@
                                 Edit
                             </button>
                             <button *ngIf="session.status === 'ACTIVE' && canToggleStatus(session)" z-button zType="destructive" zSize="sm"
+                                [zLoading]="isSessionStatusLoading(session.id)" [zDisabled]="isSessionStatusLoading(session.id)"
                                 (click)="deactivateSession(session)">
                                 Deactivate
                             </button>
                             <button *ngIf="session.status === 'INACTIVE' && canToggleStatus(session)" z-button zType="default" zSize="sm"
+                                [zLoading]="isSessionStatusLoading(session.id)" [zDisabled]="isSessionStatusLoading(session.id)"
                                 (click)="activateSession(session)">
                                 Activate
                             </button>

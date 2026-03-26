@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, TemplateRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
 import { Observable, Subject, combineLatest, map, startWith, switchMap } from 'rxjs';
@@ -58,6 +58,7 @@ export class Sessions {
   isEditing = false;
   options: AnimationOptions = { path: '/loading.json' };
   selectedSessionId: number | null = null;
+  readonly sessionStatusLoadingIds = signal<Set<number>>(new Set());
 
   activities$: Observable<Activity[]>;
   sessions$: Observable<Session[]>;
@@ -208,12 +209,29 @@ export class Sessions {
     }
     if (!confirm('Are you sure you want to deactivate this session?')) return;
 
+    const sessionId = Number(session?.id);
+    if (!Number.isFinite(sessionId)) return;
+    if (this.sessionStatusLoadingIds().has(sessionId)) return;
+
+    const nextSet = new Set(this.sessionStatusLoadingIds());
+    nextSet.add(sessionId);
+    this.sessionStatusLoadingIds.set(nextSet);
+
     this.adminService.deactivateSession(session.id).subscribe({
       next: () => {
         toast.success('Session deactivated');
         this.refresh$.next();
+
+        const done = new Set(this.sessionStatusLoadingIds());
+        done.delete(sessionId);
+        this.sessionStatusLoadingIds.set(done);
       },
-      error: (err) => toast.error(err.error?.message || 'Failed to deactivate')
+      error: (err) => {
+        const done = new Set(this.sessionStatusLoadingIds());
+        done.delete(sessionId);
+        this.sessionStatusLoadingIds.set(done);
+        toast.error(err.error?.message || 'Failed to deactivate');
+      }
     });
   }
 
@@ -224,13 +242,34 @@ export class Sessions {
     }
     if (!confirm('Are you sure you want to activate this session?')) return;
 
+    const sessionId = Number(session?.id);
+    if (!Number.isFinite(sessionId)) return;
+    if (this.sessionStatusLoadingIds().has(sessionId)) return;
+
+    const nextSet = new Set(this.sessionStatusLoadingIds());
+    nextSet.add(sessionId);
+    this.sessionStatusLoadingIds.set(nextSet);
+
     this.adminService.activateSession(session.id).subscribe({
       next: () => {
         setTimeout(() => toast.success('Session activated'), 0);
         this.refresh$.next();
+
+        const done = new Set(this.sessionStatusLoadingIds());
+        done.delete(sessionId);
+        this.sessionStatusLoadingIds.set(done);
       },
-      error: (err) => setTimeout(() => toast.error(err.error?.message || 'Failed to activate'), 0)
+      error: (err) => {
+        const done = new Set(this.sessionStatusLoadingIds());
+        done.delete(sessionId);
+        this.sessionStatusLoadingIds.set(done);
+        setTimeout(() => toast.error(err.error?.message || 'Failed to activate'), 0);
+      }
     });
+  }
+
+  isSessionStatusLoading(sessionId: number): boolean {
+    return this.sessionStatusLoadingIds().has(sessionId);
   }
 
   canToggleStatus(session: Session): boolean {

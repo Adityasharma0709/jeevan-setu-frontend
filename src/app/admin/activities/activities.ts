@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, OnInit, inject } from '@angular/core';
+import { Component, TemplateRef, ViewChild, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, Subject, catchError, combineLatest, map, of, shareReplay, startWith, switchMap, tap } from 'rxjs';
@@ -63,6 +63,7 @@ export class Activities implements OnInit {
   isSubmitting = false;
   isEditing = false;
   selectedActivityId: number | null = null;
+  readonly activityStatusLoadingIds = signal<Set<number>>(new Set());
 
   activities$!: Observable<Activity[]>;
   projects$!: Observable<any[]>;
@@ -191,12 +192,29 @@ export class Activities implements OnInit {
     }
     if (!confirm('Are you sure you want to deactivate this activity?')) return;
 
+    const activityId = Number(activity?.id);
+    if (!Number.isFinite(activityId)) return;
+    if (this.activityStatusLoadingIds().has(activityId)) return;
+
+    const nextSet = new Set(this.activityStatusLoadingIds());
+    nextSet.add(activityId);
+    this.activityStatusLoadingIds.set(nextSet);
+
     this.adminService.deactivateActivity(activity.id).subscribe({
       next: () => {
         toast.success('Activity deactivated');
         this.refresh$.next();
+
+        const done = new Set(this.activityStatusLoadingIds());
+        done.delete(activityId);
+        this.activityStatusLoadingIds.set(done);
       },
-      error: (err) => toast.error(err.error?.message || 'Failed to deactivate')
+      error: (err) => {
+        const done = new Set(this.activityStatusLoadingIds());
+        done.delete(activityId);
+        this.activityStatusLoadingIds.set(done);
+        toast.error(err.error?.message || 'Failed to deactivate');
+      }
     });
   }
 
@@ -207,16 +225,35 @@ export class Activities implements OnInit {
     }
     if (!confirm('Are you sure you want to activate this activity?')) return;
 
+    const activityId = Number(activity?.id);
+    if (!Number.isFinite(activityId)) return;
+    if (this.activityStatusLoadingIds().has(activityId)) return;
+
+    const nextSet = new Set(this.activityStatusLoadingIds());
+    nextSet.add(activityId);
+    this.activityStatusLoadingIds.set(nextSet);
+
     this.adminService.activateActivity(activity.id).subscribe({
       next: () => {
         toast.success('Activity activated');
         this.refresh$.next();
+
+        const done = new Set(this.activityStatusLoadingIds());
+        done.delete(activityId);
+        this.activityStatusLoadingIds.set(done);
       },
       error: (err) => {
+        const done = new Set(this.activityStatusLoadingIds());
+        done.delete(activityId);
+        this.activityStatusLoadingIds.set(done);
         const msg = err.error?.message;
         toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to activate'));
       }
     });
+  }
+
+  isActivityStatusLoading(activityId: number): boolean {
+    return this.activityStatusLoadingIds().has(activityId);
   }
 
   canToggleStatus(activity: Activity): boolean {

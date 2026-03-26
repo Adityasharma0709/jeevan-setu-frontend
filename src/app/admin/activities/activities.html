@@ -40,10 +40,12 @@
                                 Edit
                             </button>
                             <button *ngIf="activity.status === 'ACTIVE' && canToggleStatus(activity)" z-button zType="destructive" zSize="sm"
+                                [zLoading]="isActivityStatusLoading(activity.id)" [zDisabled]="isActivityStatusLoading(activity.id)"
                                 (click)="deactivateActivity(activity)">
                                 Deactivate
                             </button>
                             <button *ngIf="activity.status === 'INACTIVE' && canToggleStatus(activity)" z-button zType="default" zSize="sm"
+                                [zLoading]="isActivityStatusLoading(activity.id)" [zDisabled]="isActivityStatusLoading(activity.id)"
                                 (click)="activateActivity(activity)">
                                 Activate
                             </button>

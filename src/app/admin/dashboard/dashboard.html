@@ -13,7 +13,7 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500 font-medium">Total Groups</p>
-                <h3 class="text-2xl font-bold">{{ stats.totalGroups }}</h3>
+                <h3 class="text-2xl font-bold">{{ (myGroupsCount$ | async) ?? 0 }}</h3>
             </div>
         </div>
 
@@ -24,7 +24,7 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500 font-medium">Total Activities</p>
-                <h3 class="text-2xl font-bold">{{ stats.totalActivities }}</h3>
+                <h3 class="text-2xl font-bold">{{ (myActivitiesCount$ | async) ?? 0 }}</h3>
             </div>
         </div>
 
@@ -35,8 +35,121 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500 font-medium">Total Sessions</p>
-                <h3 class="text-2xl font-bold">{{ stats.totalSessions }}</h3>
+                <h3 class="text-2xl font-bold">{{ (mySessionsCount$ | async) ?? 0 }}</h3>
             </div>
+        </div>
+    </div>
+
+    <!-- Recently Created (with creator) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Groups -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">Recent Groups</h3>
+                <span class="text-sm text-gray-500">{{ (myGroups$ | async)?.length || 0 }} total</span>
+            </div>
+
+            <ng-container *ngIf="myGroups$ | async as groups">
+                <div *ngIf="groups.length; else noGroups" class="space-y-3 max-h-80 overflow-auto pr-1">
+                    <div *ngFor="let g of groups | slice: 0 : 6" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 truncate">{{ g.name || '-' }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Age: {{ g.minAge ?? '-' }} – {{ g.maxAge ?? '-' }}</p>
+                            <p *ngIf="g.creator?.id === currentUserId" class="text-xs text-gray-500 mt-1">
+                                Created by:
+                                <span class="font-medium text-gray-700">{{ g.creator?.name || '-' }}</span>
+                                <span *ngIf="g.creator?.email" class="text-gray-400">({{ g.creator.email }})</span>
+                            </p>
+                        </div>
+                        <span
+                            class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
+                            [ngClass]="g.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                        >
+                            {{ g.status || 'UNKNOWN' }}
+                        </span>
+                    </div>
+                </div>
+                <ng-template #noGroups>
+                    <div class="text-center py-6 text-gray-400 italic">No groups created yet.</div>
+                </ng-template>
+            </ng-container>
+        </div>
+
+        <!-- Activities -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">Recent Activities</h3>
+                <span class="text-sm text-gray-500">{{ (myActivities$ | async)?.length || 0 }} total</span>
+            </div>
+
+            <ng-container *ngIf="myActivities$ | async as activities">
+                <div *ngIf="activities.length; else noActivities" class="space-y-3 max-h-80 overflow-auto pr-1">
+                    <div *ngFor="let a of activities | slice: 0 : 6" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 truncate">{{ a.name || '-' }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5" *ngIf="a.project">
+                                Project:
+                                <span class="font-medium text-gray-700">{{ a.project?.name || '-' }}</span>
+                                <span class="text-gray-400" *ngIf="a.project?.projectCode">({{ a.project.projectCode }})</span>
+                            </p>
+                            <p *ngIf="a.creator?.id === currentUserId" class="text-xs text-gray-500 mt-1">
+                                Created by:
+                                <span class="font-medium text-gray-700">{{ a.creator?.name || '-' }}</span>
+                                <span *ngIf="a.creator?.email" class="text-gray-400">({{ a.creator.email }})</span>
+                            </p>
+                        </div>
+                        <span
+                            class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
+                            [ngClass]="a.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                        >
+                            {{ a.status || 'UNKNOWN' }}
+                        </span>
+                    </div>
+                </div>
+                <ng-template #noActivities>
+                    <div class="text-center py-6 text-gray-400 italic">No activities created yet.</div>
+                </ng-template>
+            </ng-container>
+        </div>
+
+        <!-- Sessions -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">Recent Sessions</h3>
+                <span class="text-sm text-gray-500">{{ (mySessions$ | async)?.length || 0 }} total</span>
+            </div>
+
+            <ng-container *ngIf="mySessions$ | async as sessions">
+                <div *ngIf="sessions.length; else noSessions" class="space-y-3 max-h-80 overflow-auto pr-1">
+                    <div *ngFor="let s of sessions | slice: 0 : 6" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 truncate">{{ s.name || '-' }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                Activity:
+                                <span class="font-medium text-gray-700">{{ s.activity?.name || '-' }}</span>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                Date:
+                                <span class="font-medium text-gray-700">{{ s.sessionDate | date: 'mediumDate' }}</span>
+                            </p>
+                            <p *ngIf="s.creator?.id === currentUserId" class="text-xs text-gray-500 mt-1">
+                                Created by:
+                                <span class="font-medium text-gray-700">{{ s.creator?.name || '-' }}</span>
+                                <span *ngIf="s.creator?.email" class="text-gray-400">({{ s.creator.email }})</span>
+                            </p>
+                        </div>
+                        <span
+                            class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
+                            [ngClass]="s.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                        >
+                            {{ s.status || 'UNKNOWN' }}
+                        </span>
+                    </div>
+                </div>
+                <ng-template #noSessions>
+                    <div class="text-center py-6 text-gray-400 italic">No sessions created yet.</div>
+                </ng-template>
+            </ng-container>
         </div>
     </div>
 
@@ -120,13 +233,15 @@
         <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <h3 class="text-lg font-bold mb-4">Activity Participation</h3>
             <div class="space-y-4">
-                <div *ngFor="let stat of stats.reportStats" class="flex items-center justify-between">
-                    <span class="text-sm text-gray-600">Activity #{{ stat.activityId }}</span>
-                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold">{{ stat._count }} Reports</span>
-                </div>
-                <div *ngIf="!stats.reportStats?.length" class="text-center py-8 text-gray-400 italic">
-                    No report data available yet.
-                </div>
+                <ng-container *ngIf="myReportStats$ | async as reportStats">
+                    <div *ngFor="let stat of reportStats" class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">{{ stat.activityName || ('Activity #' + stat.activityId) }}</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold">{{ stat._count }} Reports</span>
+                    </div>
+                    <div *ngIf="!reportStats?.length" class="text-center py-8 text-gray-400 italic">
+                        No report data available yet.
+                    </div>
+                </ng-container>
             </div>
         </div>
     </div>

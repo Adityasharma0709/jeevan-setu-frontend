@@ -11,6 +11,7 @@ export interface Activity {
     project?: {
         id: number;
         name: string;
+        projectCode?: string;
     };
     status: string;
     creator?: {
@@ -47,6 +48,10 @@ export interface Session {
     sessionDate: string;
     description?: string;
     status: string;
+    activity?: {
+        id: number;
+        name: string;
+    };
     creator?: {
         id: number;
         name?: string;

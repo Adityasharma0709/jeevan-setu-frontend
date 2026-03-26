@@ -44,6 +44,7 @@
                             </button>
                             <button *ngIf="canToggleStatus(manager)" z-button
                                 [zType]="manager.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
+                                [zLoading]="isManagerStatusLoading(manager.id)" [zDisabled]="isManagerStatusLoading(manager.id)"
                                 (click)="toggleManagerStatus(manager)">
                                 {{ manager.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
                             </button>

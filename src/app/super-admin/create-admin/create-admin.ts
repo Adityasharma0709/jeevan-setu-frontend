@@ -1,4 +1,5 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Observable, Subject, BehaviorSubject, combineLatest, map, shareReplay, startWith, switchMap } from 'rxjs';
@@ -58,6 +59,10 @@ type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
   templateUrl: './create-admin.html',
 })
 export class CreateAdminComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  readonly createAdminLoading = signal(false);
+  readonly updateAdminLoading = signal(false);
+  readonly adminStatusLoadingIds = signal<Set<number>>(new Set());
   adminSearch = new FormControl('');
   statusFilter = new FormControl<StatusFilter>('ALL');
 
@@ -105,6 +110,8 @@ export class CreateAdminComponent {
     switchMap(() => this.api.get('users/admins') as Observable<any[]>),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
+
+  private adminsSnapshot: any[] = [];
 
   private readonly filteredAdmins$: Observable<any[]> = combineLatest([
     this.rawAdmins$,
@@ -183,6 +190,12 @@ export class CreateAdminComponent {
       }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
+
+    this.rawAdmins$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((admins) => {
+        this.adminsSnapshot = Array.isArray(admins) ? admins : [];
+      });
   }
 
   /* ======================
@@ -190,21 +203,71 @@ export class CreateAdminComponent {
   ====================== */
 
   openCreateDialog() {
-    this.form.reset();
+    this.resetCreateForm();
+    this.createAdminLoading.set(false);
     this.dialogRef = this.dialog.create({
       zTitle: 'Create Admin',
       zContent: this.createAdminDialog,
       zOkText: 'Create',
       zCancelText: 'Cancel',
       zWidth: '400px',
+      zOkLoading: this.createAdminLoading,
 
       zOnOk: () => {
         this.submit();
         return false;
       },
 
-      zOnCancel: () => this.form.reset(),
+      zOnCancel: () => {
+        this.createAdminLoading.set(false);
+        this.resetCreateForm();
+      },
     });
+  }
+
+  private resetCreateForm(): void {
+    const nextCode = this.getNextAdminCode();
+    this.form.reset({
+      usercode: { value: nextCode, disabled: true },
+      name: '',
+      email: '',
+      password: '',
+    });
+  }
+
+  private getNextAdminCode(): string {
+    const codes = this.adminsSnapshot.map((a) => a?.usercode);
+    return this.nextSerialCode('AC', codes, 2);
+  }
+
+  private nextSerialCode(prefix: string, codes: Array<string | null | undefined>, minDigits: number): string {
+    const safePrefix = (prefix ?? '')
+      .toString()
+      .toUpperCase()
+      .replace(/[^A-Z]/g, '')
+      .padEnd(2, 'A')
+      .slice(0, 2);
+
+    const safeMinDigits = Math.max(2, Math.floor(Number(minDigits) || 2));
+    let maxValue = 0;
+    let digitsWidth = safeMinDigits;
+
+    for (const raw of codes) {
+      const code = (raw ?? '').toString().trim().toUpperCase();
+      const match = code.match(/^([A-Z]{2})(\d+)$/);
+      if (!match) continue;
+      if (match[1] !== safePrefix) continue;
+
+      digitsWidth = Math.max(digitsWidth, match[2].length);
+
+      const value = Number(match[2]);
+      if (!Number.isFinite(value)) continue;
+      if (value > maxValue) maxValue = value;
+    }
+
+    const nextValue = maxValue + 1;
+    const digits = nextValue.toString().padStart(digitsWidth, '0');
+    return `${safePrefix}${digits}`;
   }
 
   /* ======================
@@ -212,10 +275,12 @@ export class CreateAdminComponent {
   ====================== */
 
   submit() {
+    this.createAdminLoading.set(true);
     this.api.post('users/create-admin', this.form.value).subscribe({
       next: (res: any) => {
         const code = res?.safeUser?.usercode as string | undefined;
         toast.success(code ? `Admin created (Code: ${code})` : 'Admin created successfully');
+        this.createAdminLoading.set(false);
 
         this.form.reset();
         this.refresh$.next();
@@ -229,6 +294,7 @@ export class CreateAdminComponent {
         else if (err.status === 401) msg = 'Session expired. Login again';
         else if (err.status === 500) msg = 'Server error. Try later';
 
+        this.createAdminLoading.set(false);
         toast.error(msg);
       },
     });
@@ -243,11 +309,13 @@ export class CreateAdminComponent {
       name: admin.name,
       email: admin.email,
     });
+    this.updateAdminLoading.set(false);
 
     this.dialogRef = this.dialog.create({
       zTitle: 'Edit Admin',
       zContent: this.editAdminDialog,
       zOkText: 'Update',
+      zOkLoading: this.updateAdminLoading,
 
       zOnOk: () => {
         this.updateAdmin(admin.id);
@@ -263,13 +331,18 @@ export class CreateAdminComponent {
       email: this.editForm.value.email,
     };
 
+    this.updateAdminLoading.set(true);
     this.api.put(`users/admin/${id}`, payload).subscribe({
       next: () => {
         toast.success('Admin updated');
+        this.updateAdminLoading.set(false);
         this.refresh$.next();
         this.dialogRef.close();
       },
-      error: () => toast.error('Update failed'),
+      error: () => {
+        this.updateAdminLoading.set(false);
+        toast.error('Update failed');
+      },
     });
   }
 
@@ -277,10 +350,26 @@ export class CreateAdminComponent {
      TOGGLE STATUS
   ====================== */
 
+  isAdminStatusLoading(adminId: number): boolean {
+    return this.adminStatusLoadingIds().has(adminId);
+  }
+
+  private setAdminStatusLoading(adminId: number, loading: boolean): void {
+    const next = new Set(this.adminStatusLoadingIds());
+    if (loading) next.add(adminId);
+    else next.delete(adminId);
+    this.adminStatusLoadingIds.set(next);
+  }
+
   toggleAdminStatus(admin: any) {
+    const adminId = Number(admin?.id);
+    if (!Number.isFinite(adminId)) return;
+    if (this.isAdminStatusLoading(adminId)) return;
+
     const status = admin.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
-    this.api.patch(`users/admin/${admin.id}/status`, { status }).subscribe({
+    this.setAdminStatusLoading(adminId, true);
+    this.api.patch(`users/admin/${adminId}/status`, { status }).subscribe({
       next: () => {
         toast.success(
           status === 'ACTIVE'
@@ -289,8 +378,12 @@ export class CreateAdminComponent {
         );
 
         this.refresh$.next();
+        this.setAdminStatusLoading(adminId, false);
       },
-      error: () => toast.error('Failed to update status'),
+      error: () => {
+        this.setAdminStatusLoading(adminId, false);
+        toast.error('Failed to update status');
+      },
     });
   }
 

@@ -50,6 +50,7 @@
                                 Edit
                             </button>
                             <button *ngIf="canToggleStatus(group)" z-button [zType]="group.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
+                                [zLoading]="isGroupStatusLoading(group.id)" [zDisabled]="isGroupStatusLoading(group.id)"
                                 (click)="toggleGroupStatus(group)">
                                 {{ group.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
                             </button>

@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, TemplateRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
 import { Observable, Subject, startWith, switchMap, combineLatest, debounceTime, distinctUntilChanged, tap, of } from 'rxjs';
@@ -66,6 +66,7 @@ export class Managers {
   locations$!: Observable<any[]>;
   managerLocations$!: Observable<any[]>;
   private currentUserId: number | null = null;
+  readonly managerStatusLoadingIds = signal<Set<number>>(new Set());
 
   constructor(
     private fb: FormBuilder,
@@ -224,16 +225,36 @@ export class Managers {
       toast.error('You can only activate/deactivate managers created by you');
       return;
     }
+    const managerId = Number(manager?.id);
+    if (!Number.isFinite(managerId)) return;
+    if (this.managerStatusLoadingIds().has(managerId)) return;
+
+    const nextSet = new Set(this.managerStatusLoadingIds());
+    nextSet.add(managerId);
+    this.managerStatusLoadingIds.set(nextSet);
+
     const nextStatus = manager.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     this.managersService.updateStatus(manager.id, nextStatus).subscribe({
       next: () => {
         toast.success(nextStatus === 'ACTIVE' ? 'Manager activated' : 'Manager deactivated');
         this.refresh$.next();
+
+        const done = new Set(this.managerStatusLoadingIds());
+        done.delete(managerId);
+        this.managerStatusLoadingIds.set(done);
       },
       error: (err) => {
         toast.error(this.getErrorMessage(err, 'Failed to update status'));
+
+        const done = new Set(this.managerStatusLoadingIds());
+        done.delete(managerId);
+        this.managerStatusLoadingIds.set(done);
       }
     });
+  }
+
+  isManagerStatusLoading(managerId: number): boolean {
+    return this.managerStatusLoadingIds().has(managerId);
   }
 
   canToggleStatus(manager: User): boolean {
