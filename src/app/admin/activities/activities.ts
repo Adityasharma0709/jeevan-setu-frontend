@@ -69,11 +69,13 @@ export class Activities implements OnInit {
   projects$!: Observable<any[]>;
   vm$!: Observable<{ activities: Activity[]; projects: any[] }>;
   private currentUserId: number | null = null;
+  private currentUserEmail: string | null = null;
   private assignedProjectIds = new Set<number>();
 
   ngOnInit() {
     const currentUser = this.authService.getCurrentUser();
     this.currentUserId = Number(currentUser?.sub) || null;
+    this.currentUserEmail = currentUser?.email ? String(currentUser.email).toLowerCase() : null;
 
     this.projects$ = this.adminService.getAssignedProjects(this.currentUserId || undefined).pipe(
       map((projects) => projects || []),
@@ -87,11 +89,10 @@ export class Activities implements OnInit {
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
-    this.activities$ = combineLatest([this.refresh$.pipe(startWith(void 0)), this.projects$]).pipe(
+    this.activities$ = this.refresh$.pipe(
+      startWith(void 0),
       switchMap(() => this.adminService.getActivities()),
-      map((activities) =>
-        (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity))
-      ),
+      map((activities) => (activities || []).filter((activity) => this.isOwnedByCurrentAdmin(activity))),
       catchError(() => of([] as Activity[])),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
@@ -187,7 +188,7 @@ export class Activities implements OnInit {
 
   deactivateActivity(activity: Activity) {
     if (!this.canToggleStatus(activity)) {
-      toast.error('You can only deactivate activities from your assigned projects');
+      toast.error('You can only deactivate activities created by you');
       return;
     }
     if (!confirm('Are you sure you want to deactivate this activity?')) return;
@@ -220,7 +221,7 @@ export class Activities implements OnInit {
 
   activateActivity(activity: Activity) {
     if (!this.canToggleStatus(activity)) {
-      toast.error('You can only activate activities from your assigned projects');
+      toast.error('You can only activate activities created by you');
       return;
     }
     if (!confirm('Are you sure you want to activate this activity?')) return;
@@ -257,20 +258,24 @@ export class Activities implements OnInit {
   }
 
   canToggleStatus(activity: Activity): boolean {
-    const creatorId = this.getCreatorId(activity);
-    const isOwnedByCurrentAdmin = !!creatorId && !!this.currentUserId && creatorId === this.currentUserId;
-    const isInAssignedProjects = this.isActivityInAssignedProjects(activity);
-    return isInAssignedProjects || isOwnedByCurrentAdmin;
-  }
-
-  private isActivityInAssignedProjects(activity: Activity): boolean {
-    if (!activity?.projectId) return false;
-    return this.assignedProjectIds.has(Number(activity.projectId));
+    return this.isOwnedByCurrentAdmin(activity);
   }
 
   private getCreatorId(entity: any): number | null {
     const directId = entity?.creator?.id ?? entity?.createdBy?.id ?? entity?.createdById ?? entity?.created_by;
     const creatorId = Number(directId);
     return Number.isFinite(creatorId) ? creatorId : null;
+  }
+
+  private isOwnedByCurrentAdmin(entity: any): boolean {
+    const creatorId = this.getCreatorId(entity);
+    if (!!creatorId && !!this.currentUserId && creatorId === this.currentUserId) {
+      return true;
+    }
+    const creatorEmail = entity?.creator?.email || entity?.createdBy?.email;
+    if (!creatorEmail || !this.currentUserEmail) {
+      return false;
+    }
+    return String(creatorEmail).toLowerCase() === this.currentUserEmail;
   }
 }

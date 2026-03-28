@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../core/services/api';
 
@@ -23,8 +23,12 @@ export class ProjectsService {
     /**
      * Get all projects with optional search
      */
-    findAll(search?: string): Observable<Project[]> {
-        const url = search ? `${this.endpoint}?search=${encodeURIComponent(search)}` : this.endpoint;
+    findAll(search?: string, status?: 'ACTIVE' | 'INACTIVE' | 'ALL'): Observable<Project[]> {
+        const query: string[] = [];
+        if (search) query.push(`search=${encodeURIComponent(search)}`);
+        if (status) query.push(`status=${encodeURIComponent(status)}`);
+
+        const url = query.length ? `${this.endpoint}?${query.join('&')}` : this.endpoint;
         return this.api.get(url) as Observable<Project[]>;
     }
 
@@ -70,3 +74,4 @@ export class ProjectsService {
         return this.api.get(`${this.endpoint}/user/${userId}`) as Observable<Project[]>;
     }
 }
+

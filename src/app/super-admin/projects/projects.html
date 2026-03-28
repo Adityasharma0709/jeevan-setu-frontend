@@ -1,4 +1,4 @@
-<!-- ================= CREATE PROJECT DIALOG ================= -->
+﻿<!-- ================= CREATE PROJECT DIALOG ================= -->
 
 <ng-template #createProjectDialog>
   <form [formGroup]="form" class="space-y-5">
@@ -288,7 +288,7 @@
             <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(p)">Edit</button>
 
             <!-- ASSIGN ADMIN BUTTON -->
-            <button z-button zSize="sm" zType="default" (click)="openAssignAdminDialog(p)">
+            <button *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'" z-button zSize="sm" zType="default" (click)="openAssignAdminDialog(p)">
               Assign Admin
             </button>
 
@@ -345,7 +345,7 @@
         <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(p)">Edit</button>
 
         <!-- ASSIGN ADMIN BUTTON -->
-        <button z-button zType="default" class="flex-1" (click)="openAssignAdminDialog(p)">
+        <button *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'" z-button zType="default" class="flex-1" (click)="openAssignAdminDialog(p)">
           Assign Admin
         </button>
 
@@ -411,5 +411,7 @@
     <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
   </div>
 </ng-template>
+
+
 
 

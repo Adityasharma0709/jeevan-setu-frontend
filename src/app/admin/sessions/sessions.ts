@@ -115,7 +115,7 @@ export class Sessions {
           return (sessions || []).filter((session) => Number(session.activityId) === selectedActivityId);
         })
       )),
-      map((sessions) => (sessions || []).filter((session) => this.isSessionAllowed(session)))
+      map((sessions) => (sessions || []).filter((session) => this.isOwnedByCurrentAdmin(session)))
     );
 
     this.initForm();
@@ -204,7 +204,7 @@ export class Sessions {
 
   deactivateSession(session: Session) {
     if (!this.canToggleStatus(session)) {
-      toast.error('You can only deactivate sessions from your assigned activities');
+      toast.error('You can only deactivate sessions created by you');
       return;
     }
     if (!confirm('Are you sure you want to deactivate this session?')) return;
@@ -237,7 +237,7 @@ export class Sessions {
 
   activateSession(session: Session) {
     if (!this.canToggleStatus(session)) {
-      toast.error('You can only activate sessions from your assigned activities');
+      toast.error('You can only activate sessions created by you');
       return;
     }
     if (!confirm('Are you sure you want to activate this session?')) return;
@@ -273,20 +273,12 @@ export class Sessions {
   }
 
   canToggleStatus(session: Session): boolean {
-    const activityAllowed = this.allowedActivityIds.has(Number(session?.activityId));
-    const isOwnSession = this.isOwnedByCurrentAdmin(session);
-    return activityAllowed || isOwnSession;
+    return this.isOwnedByCurrentAdmin(session);
   }
 
   private isActivityInAssignedProjects(activity: Activity): boolean {
     if (!activity?.projectId) return false;
     return this.assignedProjectIds.has(Number(activity.projectId));
-  }
-
-  private isSessionAllowed(session: Session): boolean {
-    const activityAllowed = this.allowedActivityIds.has(Number(session?.activityId));
-    const isOwnSession = this.isOwnedByCurrentAdmin(session);
-    return activityAllowed || isOwnSession;
   }
 
   private getCreatorId(entity: any): number | null {

@@ -1,4 +1,4 @@
-<!-- ================= PAGE HEADER ================= -->
+﻿<!-- ================= PAGE HEADER ================= -->
 
 <ng-container *ngIf="vm$ | async as vm; else pageLoader">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -194,7 +194,7 @@
             View Details
           </button>
 
-          <button
+          <button *ngIf="(l.status || '').toUpperCase() === 'ACTIVE'"
             z-button
             zSize="sm"
             zType="default"
@@ -253,7 +253,7 @@
       <div class="space-y-1 text-sm">
 
         <h3 class="font-semibold">
-          {{ l.locationCode }} — {{ l.project?.name }}
+          {{ l.locationCode }} â€” {{ l.project?.name }}
         </h3>
 
         <p><strong>State:</strong> {{ l.state }}</p>
@@ -289,7 +289,7 @@
         View
       </button>
 
-      <button
+      <button *ngIf="(l.status || '').toUpperCase() === 'ACTIVE'"
         z-button
         zType="default"
         class="flex-1"
@@ -421,3 +421,6 @@
     <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
   </div>
 </ng-template>
+
+
+

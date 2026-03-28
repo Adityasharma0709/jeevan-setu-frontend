@@ -4,6 +4,7 @@ import { Router, RouterModule, RouterOutlet } from '@angular/router';
 
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardTooltipDirective } from '@/shared/components/tooltip';
+import { ApiService } from '../../core/services/api';
 
 import {
   LayoutComponent,
@@ -37,7 +38,10 @@ export class Layout {
   sidebarCollapsed = false;
   isMobile = window.innerWidth < 768;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private api: ApiService,
+  ) {}
 
   // =========================
   // SIDEBAR CONTROLS
@@ -58,6 +62,7 @@ export class Layout {
   // =========================
 
   logout() {
+    this.api.clearCache();
     localStorage.clear();
     this.router.navigate(['/login']);
   }

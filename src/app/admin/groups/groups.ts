@@ -69,6 +69,7 @@ export class Groups {
   groups$!: Observable<Group[]>;
   activities$!: Observable<Activity[]>;
   private currentUserId: number | null = null;
+  private currentUserEmail: string | null = null;
   private assignedProjectIds = new Set<number>();
   private allowedActivityIds = new Set<number>();
 
@@ -80,6 +81,7 @@ export class Groups {
   ) {
     const currentUser = this.authService.getCurrentUser();
     this.currentUserId = Number(currentUser?.sub) || null;
+    this.currentUserEmail = currentUser?.email ? String(currentUser.email).toLowerCase() : null;
 
     const assignedProjects$ = this.adminService.getAssignedProjects(this.currentUserId || undefined);
     assignedProjects$.subscribe({
@@ -91,13 +93,12 @@ export class Groups {
       }
     });
 
-    this.groups$ = combineLatest([
-      this.refresh$.pipe(startWith(void 0), tap(() => this.isLoading = true)),
-      assignedProjects$.pipe(startWith([] as any[]))
-    ]).pipe(
+    this.groups$ = this.refresh$.pipe(
+      startWith(void 0),
+      tap(() => this.isLoading = true),
       switchMap(() => this.adminService.getGroups()),
-      map((groups) => (groups || []).filter((group) => this.isGroupInAssignedProjects(group))),
-      tap(() => this.isLoading = false)
+      map((groups) => (groups || []).filter((group) => this.isOwnedByCurrentAdmin(group))),
+      tap(() => this.isLoading = false),
     );
 
     this.activities$ = combineLatest([
@@ -302,8 +303,7 @@ export class Groups {
   }
 
   canToggleStatus(group: Group): boolean {
-    const creatorId = this.getCreatorId(group);
-    return !!creatorId && !!this.currentUserId && creatorId === this.currentUserId;
+    return this.isOwnedByCurrentAdmin(group);
   }
 
   private isActivityInAssignedProjects(activity: Activity): boolean {
@@ -311,18 +311,21 @@ export class Groups {
     return this.assignedProjectIds.has(Number(activity.projectId));
   }
 
-  private isGroupInAssignedProjects(group: Group): boolean {
-    const linkedActivities = group?.activities || [];
-    if (!linkedActivities.length) {
-      const creatorId = this.getCreatorId(group);
-      return !!creatorId && !!this.currentUserId && creatorId === this.currentUserId;
-    }
-    return linkedActivities.some((ga: any) => this.isActivityInAssignedProjects(ga?.activity));
-  }
-
   private getCreatorId(entity: any): number | null {
     const directId = entity?.creator?.id ?? entity?.createdBy?.id ?? entity?.createdById ?? entity?.created_by;
     const creatorId = Number(directId);
     return Number.isFinite(creatorId) ? creatorId : null;
+  }
+
+  private isOwnedByCurrentAdmin(entity: any): boolean {
+    const creatorId = this.getCreatorId(entity);
+    if (!!creatorId && !!this.currentUserId && creatorId === this.currentUserId) {
+      return true;
+    }
+    const creatorEmail = entity?.creator?.email || entity?.createdBy?.email;
+    if (!creatorEmail || !this.currentUserEmail) {
+      return false;
+    }
+    return String(creatorEmail).toLowerCase() === this.currentUserEmail;
   }
 }

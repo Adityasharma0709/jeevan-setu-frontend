@@ -1,4 +1,4 @@
-import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+﻿import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -98,7 +98,7 @@ export class ProjectsComponent {
   assignLocationForm!: FormGroup;
   assignAdminForm!: FormGroup;
 
-  // ✅ Search controls
+  // âœ… Search controls
   projectSearch = new FormControl('');
   statusFilter = new FormControl<ProjectStatusFilter>('ALL');
   options: AnimationOptions = { path: '/loading.json' };
@@ -113,7 +113,7 @@ export class ProjectsComponent {
   private lastPage = 1;
   private lastTotalPages = 1;
 
-  // ✅ refresh trigger stream
+  // âœ… refresh trigger stream
   private refresh$ = new Subject<void>();
 
   admins$: Observable<any[]> = this.refresh$.pipe(
@@ -122,7 +122,7 @@ export class ProjectsComponent {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  // ✅ server-side search stream
+  // âœ… server-side search stream
   projects$: Observable<ProjectWithLocations[]> = combineLatest([
     this.refresh$.pipe(startWith(void 0)),
     this.projectSearch.valueChanges.pipe(
@@ -133,7 +133,7 @@ export class ProjectsComponent {
     this.statusFilter.valueChanges.pipe(startWith('ALL' as ProjectStatusFilter), distinctUntilChanged()),
   ]).pipe(
     tap(() => this.goToPage(1)),
-    switchMap(([_, query, status]) => this.projectService.findAll(query || '').pipe(
+    switchMap(([_, query, status]) => this.projectService.findAll(query || '', status ?? 'ALL').pipe(
       map((projects) => {
         const s = (status ?? 'ALL').toString().toUpperCase();
         if (s === 'ALL') return projects;
@@ -353,7 +353,7 @@ export class ProjectsComponent {
 
         this.form.reset();
 
-        // ✅ trigger refresh safely
+        // âœ… trigger refresh safely
         this.refresh$.next();
 
         this.dialogRef?.close();
@@ -523,7 +523,7 @@ export class ProjectsComponent {
       next: () => {
         toast.success(status === 'ACTIVE' ? 'Project activated' : 'Project deactivated');
 
-        // ✅ safe refresh
+        // âœ… safe refresh
         this.refresh$.next();
         this.setProjectStatusLoading(project.id, false);
       },
@@ -818,4 +818,6 @@ export class ProjectsComponent {
   }
 
 }
+
+
 
