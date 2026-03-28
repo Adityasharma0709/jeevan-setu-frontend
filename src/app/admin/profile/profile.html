@@ -32,8 +32,13 @@
                 </div>
 
                 <div class="pt-6 border-t border-gray-100 flex justify-end">
-                    <button z-button type="submit" [disabled]="isSubmitting || profileForm.invalid">
-                        {{ isSubmitting ? 'Updating...' : 'Update Profile' }}
+                    <button
+                        z-button
+                        type="submit"
+                        [zLoading]="isSubmitting"
+                        [zDisabled]="isSubmitting || isLoading || profileForm.invalid"
+                    >
+                        Update Profile
                     </button>
                 </div>
             </form>

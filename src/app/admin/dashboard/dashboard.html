@@ -4,6 +4,14 @@
         <p class="text-gray-600">Overview of system activities and beneficiary groups.</p>
     </div>
 
+    <ng-template #sectionLoader>
+        <div class="flex items-center justify-center py-10 w-full min-h-[160px]">
+            <div class="bg-gray-100 rounded-full p-4 ring-1 ring-gray-200">
+                <ng-lottie [options]="subLoaderOptions" height="96px" width="96px"></ng-lottie>
+            </div>
+        </div>
+    </ng-template>
+
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <!-- Total Groups -->
@@ -46,12 +54,22 @@
         <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold">Recent Groups</h3>
-                <span class="text-sm text-gray-500">{{ (myGroups$ | async)?.length || 0 }} total</span>
+                <div class="flex items-center gap-3">
+                    <select
+                        [formControl]="recentGroupsStatusFilter"
+                        class="w-[120px] px-3 py-2 rounded-md border text-sm bg-white"
+                    >
+                        <option value="ALL">All</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                    <span class="text-sm text-gray-500 whitespace-nowrap">{{ (recentGroupsVm$ | async)?.total || 0 }} total</span>
+                </div>
             </div>
 
-            <ng-container *ngIf="myGroups$ | async as groups">
-                <div *ngIf="groups.length; else noGroups" class="space-y-3 max-h-80 overflow-auto pr-1">
-                    <div *ngFor="let g of groups | slice: 0 : 6" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
+            <ng-container *ngIf="recentGroupsVm$ | async as vm; else sectionLoader">
+                <div *ngIf="vm.total; else noGroups" class="space-y-3">
+                    <div *ngFor="let g of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-sm font-semibold text-gray-900 truncate">{{ g.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5">Age: {{ g.minAge ?? '-' }} – {{ g.maxAge ?? '-' }}</p>
@@ -64,6 +82,29 @@
                         </span>
                     </div>
                 </div>
+
+                <div class="mt-4 flex items-center justify-between gap-2" *ngIf="vm.totalPages > 1">
+                    <button
+                        type="button"
+                        (click)="prevRecentGroupsPage()"
+                        [disabled]="vm.page <= 1"
+                        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Prev
+                    </button>
+
+                    <span class="text-sm text-gray-600">Page {{ vm.page }} / {{ vm.totalPages }}</span>
+
+                    <button
+                        type="button"
+                        (click)="nextRecentGroupsPage()"
+                        [disabled]="vm.page >= vm.totalPages"
+                        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Next
+                    </button>
+                </div>
+
                 <ng-template #noGroups>
                     <div class="text-center py-6 text-gray-400 italic">No groups created yet.</div>
                 </ng-template>
@@ -74,12 +115,22 @@
         <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold">Recent Activities</h3>
-                <span class="text-sm text-gray-500">{{ (myActivities$ | async)?.length || 0 }} total</span>
+                <div class="flex items-center gap-3">
+                    <select
+                        [formControl]="recentActivitiesStatusFilter"
+                        class="w-[120px] px-3 py-2 rounded-md border text-sm bg-white"
+                    >
+                        <option value="ALL">All</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                    <span class="text-sm text-gray-500 whitespace-nowrap">{{ (recentActivitiesVm$ | async)?.total || 0 }} total</span>
+                </div>
             </div>
 
-            <ng-container *ngIf="myActivities$ | async as activities">
-                <div *ngIf="activities.length; else noActivities" class="space-y-3 max-h-80 overflow-auto pr-1">
-                    <div *ngFor="let a of activities | slice: 0 : 6" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
+            <ng-container *ngIf="recentActivitiesVm$ | async as vm; else sectionLoader">
+                <div *ngIf="vm.total; else noActivities" class="space-y-3">
+                    <div *ngFor="let a of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-sm font-semibold text-gray-900 truncate">{{ a.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5" *ngIf="a.project">
@@ -96,6 +147,29 @@
                         </span>
                     </div>
                 </div>
+
+                <div class="mt-4 flex items-center justify-between gap-2" *ngIf="vm.totalPages > 1">
+                    <button
+                        type="button"
+                        (click)="prevRecentActivitiesPage()"
+                        [disabled]="vm.page <= 1"
+                        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Prev
+                    </button>
+
+                    <span class="text-sm text-gray-600">Page {{ vm.page }} / {{ vm.totalPages }}</span>
+
+                    <button
+                        type="button"
+                        (click)="nextRecentActivitiesPage()"
+                        [disabled]="vm.page >= vm.totalPages"
+                        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Next
+                    </button>
+                </div>
+
                 <ng-template #noActivities>
                     <div class="text-center py-6 text-gray-400 italic">No activities created yet.</div>
                 </ng-template>
@@ -106,12 +180,22 @@
         <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold">Recent Sessions</h3>
-                <span class="text-sm text-gray-500">{{ (mySessions$ | async)?.length || 0 }} total</span>
+                <div class="flex items-center gap-3">
+                    <select
+                        [formControl]="recentSessionsStatusFilter"
+                        class="w-[120px] px-3 py-2 rounded-md border text-sm bg-white"
+                    >
+                        <option value="ALL">All</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                    <span class="text-sm text-gray-500 whitespace-nowrap">{{ (recentSessionsVm$ | async)?.total || 0 }} total</span>
+                </div>
             </div>
 
-            <ng-container *ngIf="mySessions$ | async as sessions">
-                <div *ngIf="sessions.length; else noSessions" class="space-y-3 max-h-80 overflow-auto pr-1">
-                    <div *ngFor="let s of sessions | slice: 0 : 6" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
+            <ng-container *ngIf="recentSessionsVm$ | async as vm; else sectionLoader">
+                <div *ngIf="vm.total; else noSessions" class="space-y-3">
+                    <div *ngFor="let s of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-sm font-semibold text-gray-900 truncate">{{ s.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5">
@@ -131,6 +215,29 @@
                         </span>
                     </div>
                 </div>
+
+                <div class="mt-4 flex items-center justify-between gap-2" *ngIf="vm.totalPages > 1">
+                    <button
+                        type="button"
+                        (click)="prevRecentSessionsPage()"
+                        [disabled]="vm.page <= 1"
+                        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Prev
+                    </button>
+
+                    <span class="text-sm text-gray-600">Page {{ vm.page }} / {{ vm.totalPages }}</span>
+
+                    <button
+                        type="button"
+                        (click)="nextRecentSessionsPage()"
+                        [disabled]="vm.page >= vm.totalPages"
+                        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Next
+                    </button>
+                </div>
+
                 <ng-template #noSessions>
                     <div class="text-center py-6 text-gray-400 italic">No sessions created yet.</div>
                 </ng-template>
@@ -139,26 +246,31 @@
     </div>
 
     <!-- Assigned Projects -->
-    <ng-container *ngIf="assignedProjectsVm$ | async as vm">
-        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold">Assigned Projects</h3>
-                <div class="flex items-center gap-3">
-                    <select
-                        [formControl]="projectStatusFilter"
-                        class="w-[140px] px-3 py-2 rounded-md border text-sm bg-white"
-                    >
-                        <option value="ALL">All</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="INACTIVE">Inactive</option>
-                    </select>
-                    <span class="text-sm text-gray-500">{{ vm.shown }} / {{ vm.total }} shown</span>
-                </div>
+    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold">Assigned Projects</h3>
+            <div class="flex items-center gap-3">
+                <select
+                    [formControl]="projectStatusFilter"
+                    class="w-[140px] px-3 py-2 rounded-md border text-sm bg-white"
+                >
+                    <option value="ALL">All</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                </select>
+                <ng-container *ngIf="assignedProjectsVm$ | async as pager; else assignedProjectsCountLoader">
+                    <span class="text-sm text-gray-500">{{ pager.total }} / {{ pager.totalAll }} shown</span>
+                </ng-container>
+                <ng-template #assignedProjectsCountLoader>
+                    <span class="text-sm text-gray-500">Loading...</span>
+                </ng-template>
             </div>
+        </div>
 
-            <div *ngIf="vm.total; else noAssignedProjects">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="vm.projects.length; else noFilteredProjects">
-                    <div *ngFor="let p of vm.projects" class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm flex flex-col h-full">
+        <ng-container *ngIf="assignedProjectsVm$ | async as pager; else sectionLoader">
+            <div *ngIf="pager.totalAll; else noAssignedProjects">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="pager.total; else noFilteredProjects">
+                    <div *ngFor="let p of pager.items" class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm flex flex-col h-full">
                         <div class="flex items-start justify-between gap-2 mb-3">
                             <div>
                                 <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Project</p>
@@ -219,6 +331,37 @@
                 </div>
             </div>
 
+            <!-- ===== PAGINATION ===== -->
+            <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <p class="text-sm text-gray-500">
+                    Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }}
+                </p>
+
+                <div class="flex items-center justify-end gap-2">
+                    <button
+                        type="button"
+                        (click)="prevPage()"
+                        [disabled]="pager.page <= 1"
+                        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Prev
+                    </button>
+
+                    <span class="text-sm text-gray-600">
+                        Page {{ pager.page }} / {{ pager.totalPages }}
+                    </span>
+
+                    <button
+                        type="button"
+                        (click)="nextPage()"
+                        [disabled]="pager.page >= pager.totalPages"
+                        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+
             <ng-template #noFilteredProjects>
                 <div class="text-center py-6 text-gray-400 italic">No projects match this filter.</div>
             </ng-template>
@@ -226,15 +369,15 @@
             <ng-template #noAssignedProjects>
                 <div class="text-center py-6 text-gray-400 italic">No projects assigned yet.</div>
             </ng-template>
-        </div>
-    </ng-container>
+        </ng-container>
+    </div>
 
     <!-- Activity Participation -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <h3 class="text-lg font-bold mb-4">Activity Participation</h3>
             <div class="space-y-4">
-                <ng-container *ngIf="myReportStats$ | async as reportStats">
+                <ng-container *ngIf="myReportStats$ | async as reportStats; else sectionLoader">
                     <div *ngFor="let stat of reportStats" class="flex items-center justify-between">
                         <span class="text-sm text-gray-600">{{ stat.activityName || ('Activity #' + stat.activityId) }}</span>
                         <span class="px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold">{{ stat._count }} Reports</span>

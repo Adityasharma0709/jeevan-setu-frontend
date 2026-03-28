@@ -1,7 +1,7 @@
 import { Component, TemplateRef, ViewChild, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, Subject, catchError, combineLatest, map, of, shareReplay, startWith, switchMap, tap } from 'rxjs';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { BehaviorSubject, Observable, Subject, catchError, combineLatest, debounceTime, distinctUntilChanged, map, of, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
@@ -64,13 +64,29 @@ export class Activities implements OnInit {
   isEditing = false;
   selectedActivityId: number | null = null;
   readonly activityStatusLoadingIds = signal<Set<number>>(new Set());
+  searchControl = new FormControl('');
 
   activities$!: Observable<Activity[]>;
+  pager$!: Observable<{
+    items: Activity[];
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    from: number;
+    to: number;
+  }>;
   projects$!: Observable<any[]>;
-  vm$!: Observable<{ activities: Activity[]; projects: any[] }>;
   private currentUserId: number | null = null;
   private currentUserEmail: string | null = null;
   private assignedProjectIds = new Set<number>();
+
+  statusFilter = new FormControl<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL', { nonNullable: true });
+
+  readonly pageSize = 10;
+  private readonly page$ = new BehaviorSubject<number>(1);
+  private lastPage = 1;
+  private lastTotalPages = 1;
 
   ngOnInit() {
     const currentUser = this.authService.getCurrentUser();
@@ -89,20 +105,92 @@ export class Activities implements OnInit {
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
-    this.activities$ = this.refresh$.pipe(
-      startWith(void 0),
+    const status$ = this.statusFilter.valueChanges.pipe(
+      startWith(this.statusFilter.value),
+      distinctUntilChanged(),
+      tap(() => this.goToPage(1)),
+    );
+
+    const search$ = this.searchControl.valueChanges.pipe(
+      startWith(''),
+      debounceTime(300),
+      distinctUntilChanged(),
+      tap(() => this.goToPage(1)),
+    );
+
+    const baseActivities$ = combineLatest([this.refresh$.pipe(startWith(void 0)), search$]).pipe(
       switchMap(() => this.adminService.getActivities()),
       map((activities) => (activities || []).filter((activity) => this.isOwnedByCurrentAdmin(activity))),
+      map((activities) => {
+        const query = (this.searchControl.value || '').toString().trim().toLowerCase();
+        if (!query) return activities;
+
+        const includes = (value: unknown) => String(value ?? '').toLowerCase().includes(query);
+        return (activities || []).filter((a) =>
+          includes(a.name) ||
+          includes(a.description) ||
+          includes(a.project?.name) ||
+          includes(a.project?.projectCode)
+        );
+      }),
       catchError(() => of([] as Activity[])),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
-    this.vm$ = combineLatest([this.activities$, this.projects$]).pipe(
-      map(([activities, projects]) => ({ activities, projects })),
+    this.activities$ = combineLatest([baseActivities$, status$]).pipe(
+      map(([activities, status]) => {
+        const normalized = (status ?? 'ALL').toString().toUpperCase() as 'ALL' | 'ACTIVE' | 'INACTIVE';
+        if (normalized === 'ALL') return activities;
+        return (activities || []).filter((a) => (a?.status ?? '').toString().toUpperCase() === normalized);
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.pager$ = combineLatest([this.activities$, this.page$]).pipe(
+      map(([activities, page]) => {
+        const total = (activities || []).length;
+        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+
+        const startIndex = (safePage - 1) * this.pageSize;
+        const endIndexExclusive = Math.min(startIndex + this.pageSize, total);
+        const items = (activities || []).slice(startIndex, endIndexExclusive);
+
+        const from = total === 0 ? 0 : startIndex + 1;
+        const to = total === 0 ? 0 : endIndexExclusive;
+
+        return {
+          items,
+          page: safePage,
+          pageSize: this.pageSize,
+          total,
+          totalPages,
+          from,
+          to,
+        };
+      }),
+      tap((vm) => {
+        if (vm.page !== this.page$.getValue()) this.page$.next(vm.page);
+        this.lastPage = vm.page;
+        this.lastTotalPages = vm.totalPages;
+      }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
     this.initForm();
+  }
+
+  goToPage(page: number) {
+    const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+    this.page$.next(nextPage);
+  }
+
+  prevPage() {
+    this.page$.next(Math.max(1, this.lastPage - 1));
+  }
+
+  nextPage() {
+    this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
   }
 
   private initForm() {

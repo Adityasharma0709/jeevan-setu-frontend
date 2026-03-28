@@ -52,6 +52,11 @@ export class ManagerService {
     getProjects(userId?: number): Observable<any[]> {
         const url = userId ? `projects/user/${userId}` : 'projects';
         return (this.api.get(url) as Observable<any[]>).pipe(
+            map((projects) =>
+                (projects || []).filter(
+                    (p) => (p?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+                ),
+            ),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     return of([]);

@@ -8,6 +8,7 @@ export interface OutreachProject {
   id: number;
   name: string;
   projectCode: string;
+  status?: string;
 }
 
 export interface OutreachLocation {
@@ -123,6 +124,11 @@ export class OutreachService {
     if (!userId) return of([]);
 
     return (this.api.get(`projects/user/${userId}`) as Observable<OutreachProject[]>).pipe(
+      map((projects) =>
+        (projects || []).filter(
+          (p) => (p?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+        ),
+      ),
       catchError((error: HttpErrorResponse) => {
         if (error.status === 404) return of([]);
         return throwError(() => error);

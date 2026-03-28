@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, catchError, of, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { ApiService } from '../../core/services/api';
 
 export interface User {
@@ -76,6 +76,11 @@ export class ManagersService {
     getProjects(userId?: number): Observable<any[]> {
         const url = userId ? `projects/user/${userId}` : 'projects';
         return (this.api.get(url) as Observable<any[]>).pipe(
+            map((projects) =>
+                (projects || []).filter(
+                    (p) => (p?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+                ),
+            ),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     return of([]);

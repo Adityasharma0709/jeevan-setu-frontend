@@ -1,7 +1,7 @@
 import { Component, TemplateRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
-import { Observable, Subject, startWith, switchMap, combineLatest, debounceTime, distinctUntilChanged, tap, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, startWith, switchMap, combineLatest, debounceTime, distinctUntilChanged, tap, of, map, shareReplay } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
@@ -54,6 +54,7 @@ export class Managers {
   managerForm!: FormGroup;
   assignForm!: FormGroup;
   searchControl = new FormControl('');
+  statusFilter = new FormControl<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL', { nonNullable: true });
 
   private refresh$ = new Subject<void>();
   isEditing = false;
@@ -62,11 +63,26 @@ export class Managers {
   targetManager: User | null = null;
 
   managers$!: Observable<User[]>;
+  pager$!: Observable<{
+    items: User[];
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    from: number;
+    to: number;
+  }>;
   projects$!: Observable<any[]>;
   locations$!: Observable<any[]>;
   managerLocations$!: Observable<any[]>;
+  private projectsCache: any[] = [];
   private currentUserId: number | null = null;
   readonly managerStatusLoadingIds = signal<Set<number>>(new Set());
+
+  readonly pageSize = 10;
+  private readonly page$ = new BehaviorSubject<number>(1);
+  private lastPage = 1;
+  private lastTotalPages = 1;
 
   constructor(
     private fb: FormBuilder,
@@ -74,7 +90,14 @@ export class Managers {
     private dialog: ZardDialogService,
     private authService: AuthService
   ) {
-    this.managers$ = combineLatest([
+    const status$ = this.statusFilter.valueChanges.pipe(
+      startWith(this.statusFilter.value),
+      distinctUntilChanged(),
+      tap(() => this.goToPage(1)),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    const baseManagers$ = combineLatest([
       this.refresh$.pipe(startWith(void 0)),
       this.searchControl.valueChanges.pipe(
         startWith(''),
@@ -82,13 +105,73 @@ export class Managers {
         distinctUntilChanged()
       )
     ]).pipe(
-      switchMap(([_, query]) => this.managersService.findAll(query || ''))
+      tap(() => this.goToPage(1)),
+      switchMap(([_, query]) => this.managersService.findAll(query || '')),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.managers$ = combineLatest([baseManagers$, status$]).pipe(
+      map(([managers, status]) => {
+        const normalized = (status ?? 'ALL').toString().toUpperCase() as 'ALL' | 'ACTIVE' | 'INACTIVE';
+        if (normalized === 'ALL') return managers || [];
+        return (managers || []).filter((m) => (m?.status ?? '').toString().toUpperCase() === normalized);
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.pager$ = combineLatest([this.managers$, this.page$]).pipe(
+      map(([managers, page]) => {
+        const total = (managers || []).length;
+        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+
+        const startIndex = (safePage - 1) * this.pageSize;
+        const endIndexExclusive = Math.min(startIndex + this.pageSize, total);
+        const items = (managers || []).slice(startIndex, endIndexExclusive);
+
+        const from = total === 0 ? 0 : startIndex + 1;
+        const to = total === 0 ? 0 : endIndexExclusive;
+
+        return {
+          items,
+          page: safePage,
+          pageSize: this.pageSize,
+          total,
+          totalPages,
+          from,
+          to,
+        };
+      }),
+      tap((vm) => {
+        if (vm.page !== this.page$.getValue()) this.page$.next(vm.page);
+        this.lastPage = vm.page;
+        this.lastTotalPages = vm.totalPages;
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
     );
 
     const currentUser = this.authService.getCurrentUser();
     this.currentUserId = Number(currentUser?.sub) || null;
-    this.projects$ = this.managersService.getProjects(currentUser?.sub);
+    this.projects$ = this.managersService.getProjects(currentUser?.sub).pipe(
+      tap((projects) => {
+        this.projectsCache = Array.isArray(projects) ? projects : [];
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
     this.initForms();
+  }
+
+  goToPage(page: number) {
+    const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+    this.page$.next(nextPage);
+  }
+
+  prevPage() {
+    this.page$.next(Math.max(1, this.lastPage - 1));
+  }
+
+  nextPage() {
+    this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
   }
 
   private initForms() {
@@ -176,6 +259,13 @@ export class Managers {
     const formValue = this.managerForm.getRawValue();
     const selectedProjectId = formValue.projectId ? Number(formValue.projectId) : null;
     const selectedLocationId = formValue.locationId ? Number(formValue.locationId) : null;
+    if (selectedProjectId) {
+      const selectedProject = this.projectsCache.find((p) => Number(p?.id) === selectedProjectId);
+      if (!selectedProject) {
+        toast.error('Selected project is inactive or unavailable');
+        return;
+      }
+    }
     const createPayload: any = {
       name: formValue.name,
       email: formValue.email,
@@ -284,8 +374,21 @@ export class Managers {
     }
 
     const { projectId, locationId } = this.assignForm.value;
+    const projectIdNum = Number(projectId);
+    const locationIdNum = Number(locationId);
 
-    this.managersService.assignProject(this.targetManager!.id, Number(projectId), Number(locationId)).subscribe({
+    if (!Number.isFinite(projectIdNum) || !Number.isFinite(locationIdNum)) {
+      toast.error('Please select both project and location');
+      return;
+    }
+
+    const selectedProject = this.projectsCache.find((p) => Number(p?.id) === projectIdNum);
+    if (!selectedProject) {
+      toast.error('Selected project is inactive or unavailable');
+      return;
+    }
+
+    this.managersService.assignProject(this.targetManager!.id, projectIdNum, locationIdNum).subscribe({
       next: () => {
         toast.success('Project assigned successfully');
         this.refresh$.next();

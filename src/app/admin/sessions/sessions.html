@@ -1,20 +1,40 @@
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-    <h2 class="text-xl font-bold">Activity Sessions</h2>
-    <div class="flex gap-2">
-        <select z-input [formControl]="activityControl" class="w-64">
-            <option value="">Select Activity to filter</option>
-            <option *ngFor="let activity of activities$ | async" [value]="activity.id">
-                {{ activity.name }}
-            </option>
-        </select>
-        <button z-button (click)="openCreateDialog()">
-            <z-icon zType="plus" class="mr-2" />
-            Create Session
-        </button>
-    </div>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <h2 class="text-xl font-bold">Sessions</h2>
+    <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">
+        <z-icon zType="plus" class="mr-2" />
+        Create Session
+    </button>
 </div>
 
-<ng-container *ngIf="sessions$ | async as sessions; else loader" class="fade-in">
+<div class="flex flex-col md:flex-row gap-3 mb-4">
+    <div class="flex-1">
+        <input
+            z-input
+            type="text"
+            [formControl]="searchControl"
+            placeholder="Search session (name)"
+            class="w-full"
+        />
+    </div>
+
+    <select z-input [formControl]="activityControl" class="w-full md:w-[260px]">
+        <option value="">All activities</option>
+        <option *ngFor="let activity of activities$ | async" [value]="activity.id">
+            {{ activity.name }}
+        </option>
+    </select>
+
+    <select
+        [formControl]="statusFilter"
+        class="w-full md:w-[200px] px-3 py-2 rounded-md border text-sm bg-white"
+    >
+        <option value="ALL">All</option>
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+    </select>
+</div>
+
+<ng-container *ngIf="pager$ | async as pager; else loader" class="fade-in">
     <div class="bg-white border rounded-lg overflow-hidden">
         <table z-table class="w-full">
             <thead z-table-header>
@@ -26,7 +46,7 @@
                 </tr>
             </thead>
             <tbody z-table-body>
-                <tr z-table-row *ngFor="let session of sessions">
+                <tr z-table-row *ngFor="let session of pager.items">
                     <td z-table-cell class="font-medium">{{ session.name }}</td>
                     <td z-table-cell class="text-gray-600">
                         {{ session.sessionDate | date:'mediumDate' }}
@@ -55,13 +75,44 @@
                         </div>
                     </td>
                 </tr>
-                <tr z-table-row *ngIf="sessions.length === 0">
+                <tr z-table-row *ngIf="!pager.items.length">
                     <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
                         No sessions found.
                     </td>
                 </tr>
             </tbody>
         </table>
+    </div>
+
+    <!-- ===== PAGINATION ===== -->
+    <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <p class="text-sm text-gray-500">
+            Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }}
+        </p>
+
+        <div class="flex items-center justify-end gap-2">
+            <button
+                type="button"
+                (click)="prevPage()"
+                [disabled]="pager.page <= 1"
+                class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+                Prev
+            </button>
+
+            <span class="text-sm text-gray-600">
+                Page {{ pager.page }} / {{ pager.totalPages }}
+            </span>
+
+            <button
+                type="button"
+                (click)="nextPage()"
+                [disabled]="pager.page >= pager.totalPages"
+                class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+                Next
+            </button>
+        </div>
     </div>
 </ng-container>
 
