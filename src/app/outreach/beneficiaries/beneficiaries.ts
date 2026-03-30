@@ -25,6 +25,8 @@ import {
 
 import { Beneficiary, CreateBeneficiaryPayload, OutreachService } from '../outreach.service';
 
+import { Router } from '@angular/router';
+
 @Component({
   selector: 'app-beneficiaries',
   standalone: true,
@@ -56,12 +58,17 @@ export class Beneficiaries {
   private fb = inject(FormBuilder);
   private dialog = inject(ZardDialogService);
   private authService = inject(AuthService);
+  private router = inject(Router);
 
   private refresh$ = new Subject<void>();
   private currentUserId = Number(this.authService.getCurrentUser()?.sub) || undefined;
 
   dialogRef!: ZardDialogRef<any>;
   selectedBeneficiary: Beneficiary | null = null;
+
+  viewDetails(beneficiary: Beneficiary) {
+    this.router.navigate(['/outreach/beneficiary', beneficiary.id], { state: { beneficiary } });
+  }
   options: AnimationOptions = { path: '/loading.json' };
   plusToXOptions: AnimationOptions = {
     path: '/PlustoX/plusToX.json',

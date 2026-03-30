@@ -43,7 +43,15 @@ export class Profile implements OnInit {
   loadProfile() {
     this.managerService.getProfile().subscribe({
       next: (profile) => {
-        this.profileForm.patchValue(profile);
+        const mobile = profile?.mobileNumber ?? profile?.mobile ?? '';
+        this.profileForm.patchValue(
+          {
+            name: profile?.name ?? '',
+            email: profile?.email ?? '',
+            mobile,
+          },
+          { emitEvent: false },
+        );
       },
       error: () => {
         toast.error('Failed to load profile');

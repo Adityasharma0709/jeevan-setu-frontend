@@ -64,7 +64,8 @@
                     </td>
                     <td z-table-cell class="text-right">
                         <div class="flex justify-end gap-2">
-                            <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(group)">
+                            <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(group)"
+                                [disabled]="(group?.status || '').toString().toUpperCase() !== 'ACTIVE'">
                                 Tag Activity
                             </button>
                             <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(group)">

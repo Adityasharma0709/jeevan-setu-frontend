@@ -172,9 +172,14 @@
               {{ beneficiary.location?.village || '-' }}
             </td>
             <td z-table-cell class="text-right">
-              <button z-button zType="secondary" zSize="sm" (click)="openUpdateDialog(beneficiary)">
-                Request Update
-              </button>
+              <div class="flex items-center justify-end gap-2">
+                <button z-button zType="outline" zSize="sm" (click)="viewDetails(beneficiary)">
+                  View Details
+                </button>
+                <button z-button zType="secondary" zSize="sm" (click)="openUpdateDialog(beneficiary)">
+                  Request Update
+                </button>
+              </div>
             </td>
           </tr>
 

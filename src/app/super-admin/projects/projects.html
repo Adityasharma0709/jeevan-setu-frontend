@@ -94,7 +94,7 @@
     <div class="rounded-lg border border-gray-200 p-4">
       <p class="text-sm text-gray-500">Assigned Locations</p>
       <p class="mt-1 font-medium text-gray-900">
-        {{ formatLocationCodes(selectedProjectDetails?.locations) }}
+        {{ selectedProjectLocations === null ? 'Loading...' : formatLocationCodes(selectedProjectLocations) }}
       </p>
     </div>
   </div>

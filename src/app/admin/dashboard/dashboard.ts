@@ -50,6 +50,7 @@ export class Dashboard implements OnInit {
 
   myReportStats$!: Observable<any[]>;
   currentUserId?: number;
+  private currentUserEmail: string | null = null;
   options: AnimationOptions = { path: '/loading.json' };
   subLoaderOptions: AnimationOptions = { path: '/loadingcircle.json' };
 
@@ -88,6 +89,7 @@ export class Dashboard implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     const currentUserId = Number(currentUser?.sub) || undefined;
     this.currentUserId = currentUserId;
+    this.currentUserEmail = currentUser?.email ? String(currentUser.email).toLowerCase() : null;
     this.stats$ = this.adminService.getAdminDashboard();
 
     const assignedProjects$ = this.adminService.getAssignedProjects(currentUserId).pipe(
@@ -154,17 +156,17 @@ export class Dashboard implements OnInit {
     );
 
     this.myGroups$ = this.adminService.getGroups().pipe(
-      map((rows) => (rows ?? []).filter((g) => g?.creator?.id === this.currentUserId)),
+      map((rows) => (rows ?? []).filter((g) => this.isOwnedByCurrentAdmin(g))),
       shareReplay(1)
     );
 
     this.myActivities$ = this.adminService.getActivities().pipe(
-      map((rows) => (rows ?? []).filter((a) => a?.creator?.id === this.currentUserId)),
+      map((rows) => (rows ?? []).filter((a) => this.isOwnedByCurrentAdmin(a))),
       shareReplay(1)
     );
 
     this.mySessions$ = this.adminService.getAllSessions().pipe(
-      map((rows) => (rows ?? []).filter((s) => s?.creator?.id === this.currentUserId)),
+      map((rows) => (rows ?? []).filter((s) => this.isOwnedByCurrentAdmin(s))),
       shareReplay(1)
     );
 
@@ -300,5 +302,23 @@ export class Dashboard implements OnInit {
 
   nextPage() {
     this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
+  }
+
+  private getCreatorId(entity: any): number | null {
+    const directId = entity?.creator?.id ?? entity?.createdBy?.id ?? entity?.createdById ?? entity?.created_by;
+    const creatorId = Number(directId);
+    return Number.isFinite(creatorId) ? creatorId : null;
+  }
+
+  private isOwnedByCurrentAdmin(entity: any): boolean {
+    const creatorId = this.getCreatorId(entity);
+    if (!!creatorId && !!this.currentUserId && creatorId === this.currentUserId) {
+      return true;
+    }
+    const creatorEmail = entity?.creator?.email || entity?.createdBy?.email;
+    if (!creatorEmail || !this.currentUserEmail) {
+      return false;
+    }
+    return String(creatorEmail).toLowerCase() === this.currentUserEmail;
   }
 }

@@ -40,7 +40,6 @@
             <thead z-table-header>
                 <tr z-table-row>
                     <th z-table-head>Session Name</th>
-                    <th z-table-head>Date</th>
                     <th z-table-head>Status</th>
                     <th z-table-head class="text-right">Actions</th>
                 </tr>
@@ -48,9 +47,6 @@
             <tbody z-table-body>
                 <tr z-table-row *ngFor="let session of pager.items">
                     <td z-table-cell class="font-medium">{{ session.name }}</td>
-                    <td z-table-cell class="text-gray-600">
-                        {{ session.sessionDate | date:'mediumDate' }}
-                    </td>
                     <td z-table-cell>
                         <span class="px-2 py-1 rounded text-xs font-medium"
                             [ngClass]="session.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
@@ -76,7 +72,7 @@
                     </td>
                 </tr>
                 <tr z-table-row *ngIf="!pager.items.length">
-                    <td z-table-cell colspan="4" class="text-center py-8 text-gray-500">
+                    <td z-table-cell colspan="3" class="text-center py-8 text-gray-500">
                         No sessions found.
                     </td>
                 </tr>
@@ -140,13 +136,6 @@
                         {{ activity.name }}
                     </option>
                 </select>
-            </z-form-control>
-        </z-form-field>
-
-        <z-form-field>
-            <label z-form-label zRequired>Session Date</label>
-            <z-form-control>
-                <input z-input type="date" formControlName="sessionDate" />
             </z-form-control>
         </z-form-field>
     </form>

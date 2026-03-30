@@ -1,4 +1,11 @@
-<div class="p-6 space-y-6" *ngIf="beneficiary">
+<div class="pt-3 px-6 pb-6 space-y-6" *ngIf="beneficiary">
+    <div class="mb-6">
+        <button (click)="goBack()" class="flex items-center gap-2 px-3 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors text-gray-600 font-medium text-sm shadow-sm" title="Go Back">
+            <z-icon zType="arrow-left" size="16" />
+            <span>Back</span>
+        </button>
+    </div>
+
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ beneficiary.name }}</h1>
@@ -91,7 +98,7 @@
                         <select [(ngModel)]="selectedSessionId" [disabled]="!selectedActivityId"
                             class="flex-1 px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
                             <option [ngValue]="null">Select Session</option>
-                            <option *ngFor="let s of sessions" [value]="s.id">{{ s.name }} ({{ s.sessionDate | date }})
+                            <option *ngFor="let s of sessions" [value]="s.id">{{ s.name }}
                             </option>
                         </select>
                         <button z-button zType="secondary" (click)="saveActivityTag()"

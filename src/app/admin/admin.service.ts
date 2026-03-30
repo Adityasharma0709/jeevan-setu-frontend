@@ -45,7 +45,6 @@ export interface Session {
     id: number;
     activityId: number;
     name: string;
-    sessionDate: string;
     description?: string;
     status: string;
     activity?: {

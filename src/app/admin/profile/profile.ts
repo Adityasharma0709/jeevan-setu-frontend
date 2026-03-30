@@ -43,6 +43,54 @@ export class Profile implements OnInit {
         this.loadProfile();
     }
 
+    private normalizeMobile(value: unknown): string {
+        if (value === null || value === undefined) return '';
+        const text = String(value).trim();
+        if (!text) return '';
+        const digits = text.replace(/\D/g, '');
+        if (!digits) return '';
+        // Common cases: "+91XXXXXXXXXX" or "91XXXXXXXXXX"
+        if (digits.length > 10) return digits.slice(-10);
+        return digits;
+    }
+
+    private findFirstByKeysDeep(source: unknown, keys: string[], maxDepth = 6): unknown {
+        if (!source || typeof source !== 'object') return undefined;
+
+        const visited = new WeakSet<object>();
+        const queue: Array<{ value: unknown; depth: number }> = [{ value: source, depth: 0 }];
+
+        while (queue.length) {
+            const { value, depth } = queue.shift()!;
+            if (!value || typeof value !== 'object') continue;
+
+            const obj = value as object;
+            if (visited.has(obj)) continue;
+            visited.add(obj);
+
+            // Check direct keys first (BFS keeps "closest" matches consistent)
+            for (const key of keys) {
+                const direct = (value as any)?.[key];
+                if (direct !== null && direct !== undefined && String(direct).trim()) {
+                    return direct;
+                }
+            }
+
+            if (depth >= maxDepth) continue;
+
+            if (Array.isArray(value)) {
+                for (const item of value) queue.push({ value: item, depth: depth + 1 });
+                continue;
+            }
+
+            for (const child of Object.values(value as Record<string, unknown>)) {
+                if (child && typeof child === 'object') queue.push({ value: child, depth: depth + 1 });
+            }
+        }
+
+        return undefined;
+    }
+
     loadProfile() {
         this.isLoading = true;
 
@@ -52,10 +100,35 @@ export class Profile implements OnInit {
             map((raw: any) => {
                 const candidate = raw?.data ?? raw?.user ?? raw?.profile ?? raw;
                 if (!candidate || typeof candidate !== 'object') return null;
+
+                const mobileKeys = [
+                    'mobile',
+                    'mobileNumber',
+                    'mobile_number',
+                    'mobileNo',
+                    'phone',
+                    'phoneNumber',
+                    'phone_number',
+                    'contactNumber',
+                    'contact_number',
+                ];
+
+                const mobileRaw = this.findFirstByKeysDeep(raw, mobileKeys);
+                const mobile = this.normalizeMobile(mobileRaw);
+
+                const nameRaw =
+                    this.findFirstByKeysDeep(raw, ['name', 'fullName', 'full_name']) ??
+                    (candidate as any).name ??
+                    '';
+                const emailRaw =
+                    this.findFirstByKeysDeep(raw, ['email', 'emailId', 'email_id']) ??
+                    (candidate as any).email ??
+                    '';
+
                 return {
-                    name: (candidate as any).name ?? '',
-                    email: (candidate as any).email ?? '',
-                    mobile: (candidate as any).mobile ?? (candidate as any).phone ?? '',
+                    name: String(nameRaw ?? '').trim(),
+                    email: String(emailRaw ?? '').trim(),
+                    mobile,
                 };
             }),
             map((profile) => {

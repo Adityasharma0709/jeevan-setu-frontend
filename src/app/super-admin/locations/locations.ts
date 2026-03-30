@@ -43,6 +43,7 @@ import { ZardFormFieldComponent, ZardFormControlComponent } from '@/shared/compo
 interface ProjectModel {
   id: number;
   name: string;
+  status?: string;
 }
 
 interface LocationModel {
@@ -149,6 +150,7 @@ export class LocationsComponent {
   );
 
   private locationsSnapshot: LocationModel[] = [];
+  private projectsSnapshot: ProjectModel[] = [];
 
   vm$!: Observable<LocationPagerVm>;
   private readonly pageSize = 10;
@@ -195,8 +197,19 @@ export class LocationsComponent {
     });
 
     this.projects$ = (this.api.get('projects') as Observable<ProjectModel[]>).pipe(
+      map((projects) =>
+        (projects || []).filter(
+          (p) => (p?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+        ),
+      ),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
+
+    this.projects$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((projects) => {
+        this.projectsSnapshot = Array.isArray(projects) ? projects : [];
+      });
 
     this.rawLocations$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -388,6 +401,12 @@ export class LocationsComponent {
     };
 
     if (typeof raw.projectId === 'number' && Number.isFinite(raw.projectId)) {
+      const exists = this.projectsSnapshot.some((p) => Number(p?.id) === Number(raw.projectId));
+      if (!exists) {
+        toast.error('Selected project is inactive or unavailable');
+        this.createLocationLoading.set(false);
+        return;
+      }
       payload.projectId = raw.projectId;
     }
 
@@ -508,6 +527,10 @@ export class LocationsComponent {
   ========================= */
 
   openAssignProjectDialog(location: LocationModel) {
+    if ((location?.status ?? '').toString().toUpperCase() !== 'ACTIVE') {
+      toast.error('Only active locations can be assigned');
+      return;
+    }
     this.targetLocation = location;
     this.assignProjectLoading.set(false);
     this.assignProjectForm.reset({
@@ -539,8 +562,21 @@ export class LocationsComponent {
       return;
     }
 
+    if ((this.targetLocation?.status ?? '').toString().toUpperCase() !== 'ACTIVE') {
+      toast.error('Only active locations can be assigned');
+      return;
+    }
+
     this.assignProjectLoading.set(true);
     const projectId = this.assignProjectForm.value.projectId;
+    if (typeof projectId === 'number' && Number.isFinite(projectId)) {
+      const exists = this.projectsSnapshot.some((p) => Number(p?.id) === Number(projectId));
+      if (!exists) {
+        toast.error('Selected project is inactive or unavailable');
+        this.assignProjectLoading.set(false);
+        return;
+      }
+    }
 
     const payload: any = {
       projectId: typeof projectId === 'number' && Number.isFinite(projectId) ? projectId : null,
@@ -621,8 +657,18 @@ export class LocationsComponent {
   }
 
   updateLocation(id: number) {
+    const raw = this.editForm.getRawValue() as any;
+    const projectId = raw?.projectId;
+    if (typeof projectId === 'number' && Number.isFinite(projectId)) {
+      const exists = this.projectsSnapshot.some((p) => Number(p?.id) === Number(projectId));
+      if (!exists) {
+        toast.error('Selected project is inactive or unavailable');
+        return;
+      }
+    }
+
     this.updateLocationLoading.set(true);
-    this.api.put(`locations/${id}`, this.editForm.value).subscribe({
+    this.api.put(`locations/${id}`, raw).subscribe({
       next: () => {
         toast.success('Location updated');
         this.updateLocationLoading.set(false);

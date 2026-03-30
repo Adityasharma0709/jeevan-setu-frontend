@@ -107,7 +107,11 @@ export class Sessions {
       this.adminService.getActivities(),
       assignedProjects$.pipe(startWith([] as any[]))
     ]).pipe(
-      map(([activities]) => (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity)))
+      map(([activities]) =>
+        (activities || []).filter(
+          (activity) => this.isActivityInAssignedProjects(activity) && (activity?.status ?? '').toString().toUpperCase() === 'ACTIVE'
+        )
+      )
     );
     this.activities$.subscribe({
       next: (activities) => {
@@ -221,7 +225,6 @@ export class Sessions {
   private initForm() {
     this.sessionForm = this.fb.group({
       name: ['', Validators.required],
-      sessionDate: ['', Validators.required],
       activityId: ['', Validators.required],
     });
   }
@@ -250,11 +253,9 @@ export class Sessions {
     this.isEditing = true;
     this.selectedSessionId = session.id;
 
-    // Format date for input[type="date"]
-    const date = new Date(session.sessionDate).toISOString().split('T')[0];
     this.sessionForm.patchValue({
-      ...session,
-      sessionDate: date
+      name: session.name,
+      activityId: (session as any)?.activityId ?? '',
     });
 
     this.dialogRef = this.dialog.create({

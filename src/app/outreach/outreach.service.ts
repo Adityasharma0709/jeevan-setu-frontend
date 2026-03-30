@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 
@@ -85,13 +85,13 @@ export interface OutreachActivity {
 export interface BeneficiaryGroup {
   id: number;
   name: string;
+  status?: string;
 }
 
 export interface OutreachSession {
   id: number;
   activityId: number;
   name: string;
-  sessionDate: string;
   status: string;
 }
 
@@ -138,7 +138,11 @@ export class OutreachService {
 
   getLocationsByProject(projectId: number): Observable<OutreachLocation[]> {
     return (this.api.get(`${this.endpoint}/assigned-locations/${projectId}`) as Observable<OutreachLocation[]>).pipe(
-      map((rows) => rows || []),
+      map((rows) =>
+        (rows || []).filter(
+          (l) => (l?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+        ),
+      ),
       catchError(() => of([]))
     );
   }
@@ -166,7 +170,7 @@ export class OutreachService {
   }
 
   requestBeneficiaryUpdate(id: number, changes: Record<string, unknown>): Observable<any> {
-    return this.api.post(`${this.endpoint}/beneficiary/${id}/request-update`, changes);
+    return this.api.post(`${this.endpoint}/beneficiary/${id}/request-update`, { changes });
   }
 
   getMyRequests(): Observable<any[]> {
@@ -236,18 +240,39 @@ export class OutreachService {
     return this.api.post(`${this.endpoint}/beneficiary/${id}/tag-activity`, { activityId, sessionId });
   }
 
-  getGroups(): Observable<any[]> {
-    return this.api.get(`${this.endpoint}/groups`) as Observable<any[]>;
+  getGroups(): Observable<BeneficiaryGroup[]> {
+    return (this.api.get(`${this.endpoint}/groups`) as Observable<BeneficiaryGroup[]>).pipe(
+      map((groups) =>
+        (groups || []).filter(
+          (g) => (g?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+        ),
+      ),
+      catchError(() => of([])),
+    );
   }
 
   // Reuse existing getActiveActivities if possible, or use the new endpoint
   // getActiveActivities calls 'admin/activities/active'.
   // The new endpoint is 'outreach/activities'.
-  getOutreachActivities(): Observable<any[]> {
-    return this.api.get(`${this.endpoint}/activities`) as Observable<any[]>;
+  getOutreachActivities(): Observable<OutreachActivity[]> {
+    return (this.api.get(`${this.endpoint}/activities`) as Observable<OutreachActivity[]>).pipe(
+      map((activities) =>
+        (activities || []).filter(
+          (a) => (a?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+        ),
+      ),
+      catchError(() => of([])),
+    );
   }
 
-  getSessions(activityId: number): Observable<any[]> {
-    return this.api.get(`${this.endpoint}/activity/${activityId}/sessions`) as Observable<any[]>;
+  getSessions(activityId: number): Observable<OutreachSession[]> {
+    return (this.api.get(`${this.endpoint}/activity/${activityId}/sessions`) as Observable<OutreachSession[]>).pipe(
+      map((sessions) =>
+        (sessions || []).filter(
+          (s) => (s?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+        ),
+      ),
+      catchError(() => of([])),
+    );
   }
 }

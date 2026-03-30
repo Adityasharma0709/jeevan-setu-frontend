@@ -18,7 +18,7 @@ import {
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
-import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
+import { ZardFormControlComponent, ZardFormFieldComponent, ZardFormLabelComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
 
 @Component({
@@ -38,6 +38,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
         ZardDialogModule,
         ZardFormControlComponent,
         ZardFormFieldComponent,
+        ZardFormLabelComponent,
         ZardIconComponent,
         LottieComponent,
     ],
@@ -46,15 +47,20 @@ import { ZardIconComponent } from '@/shared/components/icon';
 })
 export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('requestDialog') requestDialog!: TemplateRef<any>;
+    @ViewChild('tagDialog') tagDialog!: TemplateRef<any>;
 
     workers: OutreachWorker[] = [];
     isSubmitting = false;
     requestForm!: FormGroup;
     dialogRef!: ZardDialogRef<any>;
+    tagForm!: FormGroup;
+    tagDialogRef!: ZardDialogRef<any>;
     currentAction: 'CREATE' | 'MODIFY' | 'DEACTIVATE' | 'ACTIVATE' = 'CREATE';
     selectedWorker: OutreachWorker | null = null;
+    taggingWorker: OutreachWorker | null = null;
+    isTagging = false;
     projects: any[] = [];
-    locations: any[] = [];
+    tagLocations: any[] = [];
     isLoadingWorkers = false;
     options: AnimationOptions = { path: '/loading.json' };
     private refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -89,32 +95,83 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         }
     }
 
+    getWorkerProjectsLabel(worker: OutreachWorker): string {
+        const assignments = (worker as any)?.projectAssignments;
+        if (Array.isArray(assignments) && assignments.length) {
+            const seen = new Set<number>();
+            const labels = assignments
+                .map((a: any) => a?.project)
+                .filter(Boolean)
+                .filter((p: any) => {
+                    const id = Number(p?.id);
+                    if (!Number.isFinite(id) || seen.has(id)) return false;
+                    seen.add(id);
+                    return true;
+                })
+                .map((p: any) => (p?.name ?? p?.title ?? (p?.id ? `#${p.id}` : '')).toString().trim())
+                .filter(Boolean);
+            return labels.length ? labels.join(', ') : '-';
+        }
+
+        const projects = (worker as any)?.projects;
+        if (Array.isArray(projects) && projects.length) {
+            const labels = projects
+                .map((p: any) => (p?.name ?? p?.title ?? (p?.id ? `#${p.id}` : '')).toString().trim())
+                .filter(Boolean);
+            return labels.length ? labels.join(', ') : '-';
+        }
+
+        const projectIds = (worker as any)?.projectIds;
+        if (Array.isArray(projectIds) && projectIds.length) {
+            const labels = projectIds.map((id: any) => `#${id}`).join(', ');
+            return labels || '-';
+        }
+
+        if (worker.projectId) return `#${worker.projectId}`;
+        return '-';
+    }
+
+    getWorkerMobile(worker: OutreachWorker): string {
+        const raw = (worker as any)?.mobile ?? (worker as any)?.mobileNumber ?? (worker as any)?.phone ?? '';
+        const value = raw == null ? '' : raw.toString().trim();
+        return value || '-';
+    }
+
     private initForm() {
         this.requestForm = this.fb.group({
             name: ['', Validators.required],
             email: ['', [Validators.required, Validators.email]],
+            mobile: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
             password: [''],
-            projectId: [''],
-            locationId: [{ value: '', disabled: true }],
-            reason: ['', Validators.required]
+            reason: [''],
         });
 
-        this.requestForm.get('projectId')?.valueChanges.subscribe((projectId) => {
-            const locationControl = this.requestForm.get('locationId');
+        this.tagForm = this.fb.group({
+            projectId: ['', Validators.required],
+            locationId: [{ value: '', disabled: true }, Validators.required],
+        });
+
+        this.tagForm.get('projectId')?.valueChanges.subscribe((projectId) => {
+            const locationControl = this.tagForm.get('locationId');
             locationControl?.reset('', { emitEvent: false });
-            this.locations = [];
-            if (!projectId) {
+            this.tagLocations = [];
+
+            const numericProjectId = Number(projectId);
+            if (!numericProjectId) {
                 locationControl?.disable({ emitEvent: false });
                 return;
             }
+
             locationControl?.enable({ emitEvent: false });
-            this.managerService.getLocations(Number(projectId)).subscribe({
+            this.managerService.getAssignedLocations(numericProjectId).subscribe({
                 next: (locations) => {
-                    this.locations = locations;
+                    const nextLocations = Array.isArray(locations) ? locations : [];
+                    // Defer to next tick to avoid NG0100 during the same CD pass.
+                    setTimeout(() => {
+                        this.tagLocations = nextLocations;
+                    }, 0);
                 },
-                error: () => {
-                    toast.error('Failed to load locations');
-                }
+                error: () => toast.error('Failed to load assigned locations'),
             });
         });
     }
@@ -136,15 +193,59 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         });
     }
 
-    loadProjects() {
+    openTagDialog(worker: OutreachWorker) {
+        this.taggingWorker = worker;
+        this.tagForm.reset({ projectId: '', locationId: '' });
+        this.tagLocations = [];
+        this.tagForm.get('locationId')?.disable({ emitEvent: false });
+
+        this.tagDialogRef = this.dialog.create({
+            zTitle: 'Tag Project & Location',
+            zContent: this.tagDialog,
+            zOkText: 'Tag',
+            zOnOk: () => {
+                this.submitTag();
+                return false;
+            },
+        });
+    }
+
+    private loadProjects() {
         const currentUser = this.authService.getCurrentUser();
         this.managerService.getProjects(currentUser?.sub).subscribe({
-            next: (projects) => {
-                this.projects = projects;
+            next: (projects) => (this.projects = Array.isArray(projects) ? projects : []),
+            error: () => toast.error('Failed to load projects'),
+        });
+    }
+
+    submitTag() {
+        if (this.isTagging) return;
+        if (this.tagForm.invalid || !this.taggingWorker?.id) {
+            toast.error('Please select project and location');
+            return;
+        }
+
+        const raw = this.tagForm.getRawValue();
+        const projectId = Number(raw.projectId);
+        const locationId = Number(raw.locationId);
+        if (!Number.isFinite(projectId) || !Number.isFinite(locationId)) {
+            toast.error('Invalid project/location selection');
+            return;
+        }
+
+        this.isTagging = true;
+        this.managerService.tagOutreachWorkerProjectLocation(this.taggingWorker.id, projectId, locationId).subscribe({
+            next: (res) => {
+                const msg = res?.message || 'Tagged successfully';
+                toast.success(msg);
+                this.tagDialogRef.close();
+                this.isTagging = false;
+                setTimeout(() => this.loadWorkers(), 0);
             },
-            error: () => {
-                toast.error('Failed to load projects');
-            }
+            error: (err) => {
+                toast.error(err?.error?.message || 'Failed to tag project/location');
+                this.isTagging = false;
+            },
         });
     }
 
@@ -154,12 +255,10 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         this.requestForm.reset({
             name: '',
             email: '',
+            mobile: '',
             password: '',
-            projectId: '',
-            locationId: '',
             reason: ''
         });
-        this.locations = [];
 
         this.configureValidators(action);
 
@@ -167,30 +266,23 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             this.requestForm.patchValue({
                 name: worker.name,
                 email: worker.email,
-                projectId: worker.projectId ?? '',
-                locationId: worker.locationId ?? ''
+                mobile: worker.mobile ?? (worker as any).mobileNumber ?? (worker as any).phone ?? '',
             });
             if (action === 'DEACTIVATE' || action === 'ACTIVATE') {
                 this.requestForm.get('name')?.disable();
                 this.requestForm.get('email')?.disable();
-                this.requestForm.get('projectId')?.disable();
-                this.requestForm.get('locationId')?.disable();
+                this.requestForm.get('mobile')?.disable();
                 this.requestForm.get('password')?.disable();
             } else {
                 this.requestForm.get('name')?.enable();
                 this.requestForm.get('email')?.enable();
-                this.requestForm.get('projectId')?.enable();
-                this.requestForm.get('locationId')?.enable();
+                this.requestForm.get('mobile')?.enable();
                 this.requestForm.get('password')?.enable();
-                if (!this.requestForm.get('projectId')?.value) {
-                    this.requestForm.get('locationId')?.disable();
-                }
             }
         } else {
             this.requestForm.get('name')?.enable();
             this.requestForm.get('email')?.enable();
-            this.requestForm.get('projectId')?.enable();
-            this.requestForm.get('locationId')?.disable();
+            this.requestForm.get('mobile')?.enable();
             this.requestForm.get('password')?.enable();
         }
 
@@ -214,20 +306,24 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
 
     private configureValidators(action: 'CREATE' | 'MODIFY' | 'DEACTIVATE' | 'ACTIVATE') {
         const passwordControl = this.requestForm.get('password');
-        const projectControl = this.requestForm.get('projectId');
-        const locationControl = this.requestForm.get('locationId');
+        const mobileControl = this.requestForm.get('mobile');
+        const reasonControl = this.requestForm.get('reason');
         if (action === 'CREATE') {
             passwordControl?.setValidators([Validators.required, Validators.minLength(6)]);
-            projectControl?.setValidators([Validators.required]);
-            locationControl?.setValidators([Validators.required]);
+            mobileControl?.setValidators([Validators.required, Validators.pattern('^[0-9]{10}$')]);
+            reasonControl?.clearValidators();
         } else {
             passwordControl?.clearValidators();
-            projectControl?.clearValidators();
-            locationControl?.clearValidators();
+            mobileControl?.setValidators([Validators.required, Validators.pattern('^[0-9]{10}$')]);
+            if (action === 'DEACTIVATE' || action === 'ACTIVATE') {
+                reasonControl?.setValidators([Validators.required]);
+            } else {
+                reasonControl?.clearValidators();
+            }
         }
         passwordControl?.updateValueAndValidity();
-        projectControl?.updateValueAndValidity();
-        locationControl?.updateValueAndValidity();
+        mobileControl?.updateValueAndValidity();
+        reasonControl?.updateValueAndValidity();
     }
 
     submitRequest() {
@@ -244,21 +340,24 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         this.isSubmitting = true;
         const formValue = this.requestForm.getRawValue();
         const requestData: any = {
-            reason: formValue.reason,
             workerId: this.selectedWorker?.id
         };
 
         if (this.currentAction === 'CREATE') {
             requestData.name = formValue.name;
             requestData.email = formValue.email;
+            requestData.mobile = formValue.mobile;
             requestData.password = formValue.password;
-            requestData.projectId = Number(formValue.projectId);
-            requestData.locationId = Number(formValue.locationId);
         }
 
         if (this.currentAction === 'MODIFY') {
             requestData.name = formValue.name;
             requestData.email = formValue.email;
+            requestData.mobile = formValue.mobile;
+        }
+
+        if (this.currentAction === 'DEACTIVATE' || this.currentAction === 'ACTIVATE') {
+            requestData.reason = formValue.reason;
         }
 
         this.managerService.submitAccountRequest(this.currentAction, requestData).subscribe({

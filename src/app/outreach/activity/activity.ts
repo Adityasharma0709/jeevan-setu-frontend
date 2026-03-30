@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { of, startWith, switchMap } from 'rxjs';
@@ -38,7 +38,6 @@ export class Activity {
     sessionId: [''],
     beneficiaryId: ['', Validators.required],
     attendanceStatus: ['Present', Validators.required],
-    observation: ['', Validators.required],
   });
 
   activities$ = this.outreachService.getActiveActivities();
@@ -68,7 +67,6 @@ export class Activity {
         sessionId: raw.sessionId ? Number(raw.sessionId) : undefined,
         reportData: {
           attendanceStatus: raw.attendanceStatus,
-          observation: raw.observation,
         },
       })
       .subscribe({

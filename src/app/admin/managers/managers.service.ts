@@ -5,6 +5,7 @@ import { ApiService } from '../../core/services/api';
 
 export interface User {
     id: number;
+    usercode?: string;
     name: string;
     email: string;
     roles: string[];
@@ -94,6 +95,20 @@ export class ManagersService {
      * Get locations for a specific project (for assignment dropdown)
      */
     getLocations(projectId: number): Observable<any[]> {
-        return this.api.get(`locations?projectId=${projectId}`) as Observable<any[]>;
+        return (this.api.get(`locations?projectId=${projectId}`) as Observable<any[]>).pipe(
+            map((locations) =>
+                (locations || []).filter((l: any) => {
+                    const raw = l?.status;
+                    if (raw == null) return true;
+                    return raw.toString().toUpperCase() === 'ACTIVE';
+                }),
+            ),
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    return of([]);
+                }
+                return throwError(() => error);
+            }),
+        );
     }
 }

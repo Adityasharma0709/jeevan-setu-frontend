@@ -41,6 +41,10 @@ export class ProfileView implements OnInit {
         private outreachService: OutreachService
     ) { }
 
+    goBack() {
+        history.back();
+    }
+
     ngOnInit() {
         this.route.params.subscribe(params => {
             if (params['id']) {
@@ -210,7 +214,11 @@ export class ProfileView implements OnInit {
                 this.closeUpdateModal();
                 this.router.navigate(['/outreach/requests']);
             },
-            error: (err) => toast.error(err.error?.message || 'Failed to submit')
+            error: (err) => {
+                let msg = err.error?.message || 'Failed to submit';
+                if (Array.isArray(msg)) msg = msg.join('\n');
+                toast.error(msg);
+            }
         });
     }
 }

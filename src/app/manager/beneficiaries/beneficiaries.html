@@ -16,16 +16,27 @@
                     <th z-table-head>Mobile</th>
                     <th z-table-head>Location</th>
                     <th z-table-head>Project</th>
+                    <th z-table-head>Registered By</th>
                     <th z-table-head class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody z-table-body>
-                <tr z-table-row *ngFor="let beneficiary of beneficiaries">
+                <tr z-table-row *ngFor="let beneficiary of beneficiaries; trackBy: trackById">
                     <td z-table-cell class="font-medium">{{ beneficiary.name }}</td>
                     <td z-table-cell class="text-gray-500 text-sm">{{ beneficiary.uid }}</td>
                     <td z-table-cell>{{ beneficiary.mobileNumber || '-' }}</td>
-                    <td z-table-cell>{{ beneficiary.location?.name || '-' }}</td>
+                    <td z-table-cell>
+                        {{ beneficiary.location?.village || beneficiary.location?.name || '-' }}{{
+                        beneficiary.location?.block ? (', ' + beneficiary.location?.block) : '' }}
+                    </td>
                     <td z-table-cell>{{ beneficiary.project?.name || '-' }}</td>
+                    <td z-table-cell>
+                        <div *ngIf="beneficiary.createdBy" class="flex flex-col gap-0.5 max-w-[150px]">
+                            <span class="font-medium text-sm text-gray-900 truncate" [title]="beneficiary.createdBy.name">{{ beneficiary.createdBy.name }}</span>
+                            <span class="text-[10px] text-gray-500 truncate" [title]="beneficiary.createdBy.mobileNumber || beneficiary.createdBy.email">{{ beneficiary.createdBy.mobileNumber || beneficiary.createdBy.email }}</span>
+                        </div>
+                        <span *ngIf="!beneficiary.createdBy" class="text-gray-400">-</span>
+                    </td>
                     <td z-table-cell class="text-right">
                         <button z-button zType="outline" zSize="sm" (click)="openUpdateModal(beneficiary)">
                             <z-icon zType="edit" class="mr-1" size="14" /> Request Update
@@ -33,7 +44,7 @@
                     </td>
                 </tr>
                 <tr z-table-row *ngIf="beneficiaries.length === 0">
-                    <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
+                    <td z-table-cell colspan="7" class="text-center py-12 text-gray-500">
                         <div class="flex flex-col items-center">
                             <z-icon zType="users" size="32" class="text-gray-300 mb-2" />
                             <p>No beneficiaries found in your assigned area.</p>
@@ -47,7 +58,7 @@
 
 <ng-template #loader>
   <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
-    <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+    <ng-lottie [options]="loadingOptions" height="200px" width="200px"></ng-lottie>
   </div>
 </ng-template>
 

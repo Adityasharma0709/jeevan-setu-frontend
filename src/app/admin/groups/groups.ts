@@ -353,6 +353,10 @@ export class Groups {
   }
 
   openTagDialog(group: Group) {
+    if ((group?.status ?? '').toString().toUpperCase() !== 'ACTIVE') {
+      toast.error('Only active groups can be tagged');
+      return;
+    }
     this.targetGroup = group;
     this.tagForm.reset();
 
@@ -370,6 +374,11 @@ export class Groups {
   submitTag() {
     if (this.tagForm.invalid) {
       toast.error('Please select an activity');
+      return;
+    }
+
+    if (!this.targetGroup || (this.targetGroup?.status ?? '').toString().toUpperCase() !== 'ACTIVE') {
+      toast.error('Only active groups can be tagged');
       return;
     }
 

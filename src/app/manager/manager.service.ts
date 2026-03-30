@@ -7,6 +7,7 @@ export interface UserProfile {
     id: number;
     name: string;
     email: string;
+    mobileNumber?: string | null;
     mobile?: string;
     roles: string[];
 }
@@ -15,9 +16,60 @@ export interface OutreachWorker {
     id: number;
     name: string;
     email: string;
+    mobile?: string;
+    mobileNumber?: string;
     status: string;
     projectId?: number;
     locationId?: number;
+    projects?: Array<{ id: number; name?: string }>;
+    projectAssignments?: Array<{
+        projectId: number;
+        locationId: number;
+        project?: { id: number; name?: string };
+        location?: { id: number; village?: string; block?: string };
+    }>;
+}
+
+export interface ManagerBeneficiaryProject {
+    id: number;
+    name?: string | null;
+}
+
+export interface ManagerBeneficiaryLocation {
+    id: number;
+    village?: string | null;
+    block?: string | null;
+    name?: string | null;
+}
+
+export interface ManagerBeneficiary {
+    id: number;
+    uid?: string | null;
+    name: string;
+    mobileNumber?: string | null;
+    dateOfBirth?: string | null;
+    gender?: string | null;
+    guardianName?: string | null;
+    religion?: string | null;
+    caste?: string | null;
+    qualification?: string | null;
+    monthlyIncome?: number | null;
+    primaryIncomeSource?: string | null;
+    economicStatus?: string | null;
+    employmentStatus?: string | null;
+    maritalStatus?: string | null;
+    dateOfMarriage?: string | null;
+    womanAgeAtMarriage?: number | null;
+    husbandAgeAtMarriage?: number | null;
+    projectId?: number | null;
+    locationId?: number | null;
+    project?: ManagerBeneficiaryProject | null;
+    location?: ManagerBeneficiaryLocation | null;
+    createdBy?: {
+        name?: string;
+        email?: string;
+        mobileNumber?: string;
+    } | null;
 }
 
 export interface AccountRequest {
@@ -36,9 +88,13 @@ export class ManagerService {
 
     constructor(private api: ApiService) { }
 
+    getManagerDashboard(): Observable<any> {
+        return this.api.get(`${this.endpoint}/dashboard/manager`);
+    }
+
     getProfile(): Observable<UserProfile> {
         // Assuming /auth/me or similar exists, but following the pattern
-        return this.api.get('auth/me') as Observable<UserProfile>;
+        return this.api.get('auth/me', undefined, { cache: 'reload' }) as Observable<UserProfile>;
     }
 
     updateProfile(data: Partial<UserProfile>): Observable<UserProfile> {
@@ -67,7 +123,21 @@ export class ManagerService {
     }
 
     getLocations(projectId: number): Observable<any[]> {
-        return this.api.get(`locations?projectId=${projectId}`) as Observable<any[]>;
+        return (this.api.get(`locations?projectId=${projectId}`) as Observable<any[]>).pipe(
+            map((locations) =>
+                (locations || []).filter(
+                    (l) => (l?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+                ),
+            ),
+        );
+    }
+
+    getAssignedLocations(projectId: number): Observable<any[]> {
+        return this.api.get(`${this.endpoint}/projects/${projectId}/locations`) as Observable<any[]>;
+    }
+
+    tagOutreachWorkerProjectLocation(workerId: number, projectId: number, locationId: number): Observable<any> {
+        return this.api.post(`${this.endpoint}/outreach-workers/${workerId}/tag`, { projectId, locationId });
     }
 
     submitAccountRequest(type: string, data: any): Observable<any> {
@@ -104,6 +174,6 @@ export class ManagerService {
         return this.api.patch(`${this.endpoint}/profile-requests/${id}`, payload);
     }
     getBeneficiaries(): Observable<any[]> {
-        return this.api.get(`${this.endpoint}/beneficiaries`) as Observable<any[]>;
+        return this.api.get(`${this.endpoint}/beneficiaries`) as Observable<ManagerBeneficiary[]>;
     }
 }

@@ -49,28 +49,41 @@ export class Requests implements OnInit {
   }
 
   loadIncomingRequests() {
-    this.managerService.getBeneficiaryRequests().subscribe({
-      next: (requests) => {
-        console.log('[Manager Incoming Beneficiary Requests API]', requests);
-        const safeRequests = Array.isArray(requests) ? requests : [];
-        this.incomingRequests = safeRequests
-          .filter((request) => String(request?.status || 'PENDING').toUpperCase() === 'PENDING')
-          .map((request) => this.normalizeIncomingRequest(request));
-        console.log('[Manager Incoming Beneficiary Requests Normalized]', this.incomingRequests);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.incomingRequests = [];
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        toast.error('Failed to load incoming requests');
-      }
+    import('rxjs').then(({ forkJoin }) => {
+      forkJoin({
+        beneficiary: this.managerService.getBeneficiaryRequests(),
+        profile: this.managerService.getPendingRequests()
+      }).subscribe({
+        next: (res) => {
+          const ben = Array.isArray(res.beneficiary) ? res.beneficiary : [];
+          const prof = Array.isArray(res.profile) ? res.profile : [];
+          const requests = [...ben, ...prof];
+
+          console.log('[Manager Incoming Requests API]', requests);
+          this.incomingRequests = requests
+            .filter((request) => String(request?.status || 'PENDING').toUpperCase() === 'PENDING')
+            .map((request) => this.normalizeIncomingRequest(request))
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          console.log('[Manager Incoming Requests Normalized]', this.incomingRequests);
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.incomingRequests = [];
+          this.isLoading = false;
+          this.cdr.detectChanges();
+          toast.error('Failed to load incoming requests');
+        }
+      });
     });
   }
 
   approveIncoming(request: any) {
-    this.managerService.approveBeneficiaryRequest(request.id).subscribe({
+    const ob$ = request.type === 'BENEFICIARY_UPDATE'
+      ? this.managerService.approveBeneficiaryRequest(request.id)
+      : this.managerService.updateRequestStatus(request.id, 'APPROVED');
+
+    ob$.subscribe({
       next: () => {
         toast.success('Request approved successfully');
         this.loadIncomingRequests();
@@ -83,7 +96,11 @@ export class Requests implements OnInit {
 
   rejectIncoming(request: any) {
     const reason = prompt('Enter rejection reason (optional):') || undefined;
-    this.managerService.rejectBeneficiaryRequest(request.id, reason).subscribe({
+    const ob$ = request.type === 'BENEFICIARY_UPDATE'
+      ? this.managerService.rejectBeneficiaryRequest(request.id, reason)
+      : this.managerService.updateRequestStatus(request.id, 'REJECTED', reason);
+
+    ob$.subscribe({
       next: () => {
         toast.success('Request rejected successfully');
         this.loadIncomingRequests();
