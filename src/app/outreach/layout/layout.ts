@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
@@ -11,6 +11,7 @@ import {
   SidebarGroupLabelComponent,
 } from '@/shared/components/layout';
 import { ZardTooltipDirective } from '@/shared/components/tooltip';
+import { ApiService } from '../../core/services/api';
 
 @Component({
   selector: 'app-outreach-layout',
@@ -35,9 +36,13 @@ export class Layout {
   sidebarCollapsed = window.innerWidth < 768;
   isMobile = window.innerWidth < 768;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private api: ApiService,
+  ) {}
 
   logout() {
+    this.api.clearCache();
     localStorage.clear();
     this.router.navigate(['/login']);
   }

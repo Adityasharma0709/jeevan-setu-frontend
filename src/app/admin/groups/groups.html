@@ -1,12 +1,33 @@
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-    <h2 class="text-xl font-bold">Beneficiary Groups</h2>
-    <button z-button (click)="openCreateDialog()">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <h2 class="text-xl font-bold">Groups</h2>
+    <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">
         <z-icon zType="plus" class="mr-2" />
         Create Group
     </button>
 </div>
 
-<ng-container *ngIf="groups$ | async as groups; else loader" class="fade-in">
+<div class="flex flex-col md:flex-row gap-3 mb-4">
+    <div class="flex-1">
+        <input
+            z-input
+            type="text"
+            [formControl]="searchControl"
+            placeholder="Search group (name/activity)"
+            class="w-full"
+        />
+    </div>
+
+    <select
+        [formControl]="statusFilter"
+        class="w-full md:w-[200px] px-3 py-2 rounded-md border text-sm bg-white"
+    >
+        <option value="ALL">All</option>
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+    </select>
+</div>
+
+<ng-container *ngIf="pager$ | async as pager; else loader" class="fade-in">
     <div class="bg-white border rounded-lg overflow-hidden">
         <table z-table class="w-full">
             <thead z-table-header>
@@ -19,7 +40,7 @@
                 </tr>
             </thead>
             <tbody z-table-body>
-                <tr z-table-row *ngFor="let group of groups">
+                <tr z-table-row *ngFor="let group of pager.items">
                     <td z-table-cell class="font-medium">{{ group.name }}</td>
                     <td z-table-cell class="text-gray-600">
                         {{ group.minAge || 'Any' }} - {{ group.maxAge || 'Any' }}
@@ -43,26 +64,59 @@
                     </td>
                     <td z-table-cell class="text-right">
                         <div class="flex justify-end gap-2">
-                            <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(group)">
+                            <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(group)"
+                                [disabled]="(group?.status || '').toString().toUpperCase() !== 'ACTIVE'">
                                 Tag Activity
                             </button>
                             <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(group)">
                                 Edit
                             </button>
                             <button *ngIf="canToggleStatus(group)" z-button [zType]="group.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
+                                [zLoading]="isGroupStatusLoading(group.id)" [zDisabled]="isGroupStatusLoading(group.id)"
                                 (click)="toggleGroupStatus(group)">
                                 {{ group.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
                             </button>
                         </div>
                     </td>
                 </tr>
-                <tr z-table-row *ngIf="groups.length === 0">
+                <tr z-table-row *ngIf="!pager.items.length">
                     <td z-table-cell colspan="5" class="text-center py-8 text-gray-500">
                         No beneficiary groups found.
                     </td>
                 </tr>
             </tbody>
         </table>
+    </div>
+
+    <!-- ===== PAGINATION ===== -->
+    <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <p class="text-sm text-gray-500">
+            Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }}
+        </p>
+
+        <div class="flex items-center justify-end gap-2">
+            <button
+                type="button"
+                (click)="prevPage()"
+                [disabled]="pager.page <= 1"
+                class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+                Prev
+            </button>
+
+            <span class="text-sm text-gray-600">
+                Page {{ pager.page }} / {{ pager.totalPages }}
+            </span>
+
+            <button
+                type="button"
+                (click)="nextPage()"
+                [disabled]="pager.page >= pager.totalPages"
+                class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+                Next
+            </button>
+        </div>
     </div>
 </ng-container>
 

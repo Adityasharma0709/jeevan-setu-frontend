@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, catchError, of, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { ApiService } from '../core/services/api';
 
 export interface Activity {
@@ -11,6 +11,7 @@ export interface Activity {
     project?: {
         id: number;
         name: string;
+        projectCode?: string;
     };
     status: string;
     creator?: {
@@ -44,9 +45,12 @@ export interface Session {
     id: number;
     activityId: number;
     name: string;
-    sessionDate: string;
     description?: string;
     status: string;
+    activity?: {
+        id: number;
+        name: string;
+    };
     creator?: {
         id: number;
         name?: string;
@@ -76,6 +80,11 @@ export class AdminService {
     getAssignedProjects(userId?: number): Observable<any[]> {
         const url = userId ? `projects/user/${userId}` : 'projects';
         return (this.api.get(url) as Observable<any[]>).pipe(
+            map((projects) =>
+                (projects || []).filter(
+                    (p) => (p?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+                ),
+            ),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     return of([]);
@@ -87,7 +96,7 @@ export class AdminService {
 
     // Activities
     getActivities(): Observable<Activity[]> {
-        return this.api.get(`${this.endpoint}/activities/active`) as Observable<Activity[]>;
+        return this.api.get(`${this.endpoint}/activities`) as Observable<Activity[]>;
     }
 
     createActivity(data: any): Observable<Activity> {
@@ -180,3 +189,4 @@ export class AdminService {
         return this.api.patch(`${this.endpoint}/profile-requests/${id}/reject`, { reason });
     }
 }
+

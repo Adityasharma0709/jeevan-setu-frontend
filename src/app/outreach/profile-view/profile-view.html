@@ -1,236 +1,287 @@
-<div class="p-6 space-y-6" *ngIf="beneficiary">
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ beneficiary.name }}</h1>
-            <div class="flex items-center gap-3 text-gray-600">
-                <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-sm font-medium">{{ beneficiary.uid
-                    }}</span>
-                <span>{{ beneficiary.mobileNumber }}</span>
-                <span>{{ beneficiary.location?.village }}, {{ beneficiary.location?.block }}</span>
-            </div>
-        </div>
-        <button z-button (click)="openUpdateModal()">
-            <z-icon zType="edit" class="mr-2" /> Request Update
-        </button>
+<div class="p-6 space-y-6 max-w-7xl mx-auto">
+
+    <!-- Breadcrumb -->
+    <z-breadcrumb>
+        <z-breadcrumb-item [routerLink]="['/outreach/beneficiaries']">Beneficiaries</z-breadcrumb-item>
+        <z-breadcrumb-item>Beneficiary Detail</z-breadcrumb-item>
+    </z-breadcrumb>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex flex-col items-center justify-center w-full min-h-[60vh] gap-4">
+        <ng-lottie [options]="options" height="160px" width="160px"></ng-lottie>
+        <p class="text-gray-500 font-medium animate-pulse">Loading Profile...</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Personal Details -->
-        <div class="bg-white p-6 rounded-xl border shadow-sm">
-            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Personal Details</h3>
-            <div class="space-y-3">
-                <div class="grid grid-cols-2">
-                    <span class="text-gray-500">Date of Birth</span>
-                    <span class="font-medium">{{ beneficiary.dateOfBirth | date }}</span>
+    <!-- Data Loaded State -->
+    <ng-container *ngIf="!loading && beneficiary">
+        
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                    <z-icon zType="user" size="32" />
                 </div>
-                <div class="grid grid-cols-2">
-                    <span class="text-gray-500">Gender</span>
-                    <span class="font-medium">{{ beneficiary.gender }}</span>
-                </div>
-                <div class="grid grid-cols-2">
-                    <span class="text-gray-500">Guardian</span>
-                    <span class="font-medium">{{ beneficiary.guardianName }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Economic Details -->
-        <div class="bg-white p-6 rounded-xl border shadow-sm">
-            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Economic Details</h3>
-            <div class="space-y-3">
-                <div class="grid grid-cols-2">
-                    <span class="text-gray-500">Monthly Income</span>
-                    <span class="font-medium">{{ beneficiary.monthlyIncome | currency:'INR' }}</span>
-                </div>
-                <div class="grid grid-cols-2">
-                    <span class="text-gray-500">Source</span>
-                    <span class="font-medium">{{ beneficiary.primaryIncomeSource }}</span>
-                </div>
-                <div class="grid grid-cols-2">
-                    <span class="text-gray-500">Status</span>
-                    <span class="font-medium">{{ beneficiary.economicStatus }}</span>
-                </div>
-                <div class="grid grid-cols-2">
-                    <span class="text-gray-500">Employment</span>
-                    <span class="font-medium">{{ beneficiary.employmentStatus }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tagging Section -->
-    <div class="bg-white p-6 rounded-xl border shadow-sm">
-        <h3 class="text-lg font-semibold mb-4 border-b pb-2">Tagging</h3>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Group Tagging -->
-            <div>
-                <h4 class="font-medium mb-3 text-gray-700">Assign Group</h4>
-                <div class="flex gap-2">
-                    <select [(ngModel)]="selectedGroupId"
-                        class="flex-1 px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option [ngValue]="null">Select Group</option>
-                        <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
-                    </select>
-                    <button z-button zType="secondary" (click)="saveGroupTag()"
-                        [disabled]="!selectedGroupId">Tag</button>
-                </div>
-            </div>
-
-            <!-- Activity Tagging -->
-            <div>
-                <h4 class="font-medium mb-3 text-gray-700">Assign Activity & Session</h4>
-                <div class="space-y-3">
-                    <select [(ngModel)]="selectedActivityId" (change)="onActivityChange()"
-                        class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option [ngValue]="null">Select Activity</option>
-                        <option *ngFor="let a of activities" [value]="a.id">{{ a.name }}</option>
-                    </select>
-
-                    <div class="flex gap-2">
-                        <select [(ngModel)]="selectedSessionId" [disabled]="!selectedActivityId"
-                            class="flex-1 px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option [ngValue]="null">Select Session</option>
-                            <option *ngFor="let s of sessions" [value]="s.id">{{ s.name }} ({{ s.sessionDate | date }})
-                            </option>
-                        </select>
-                        <button z-button zType="secondary" (click)="saveActivityTag()"
-                            [disabled]="!selectedSessionId">Tag</button>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ beneficiary.name }}</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded border">{{ beneficiary.uid }}</span>
+                        <span class="text-gray-400">·</span>
+                        <span class="text-sm text-gray-500 flex items-center gap-1">
+                            <z-icon zType="calendar" size="14" />
+                            Registered on {{ beneficiary.createdAt | date:'mediumDate' }}
+                        </span>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Reused Update Modal (Copied structure from Beneficiaries) -->
-<div *ngIf="isUpdateModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-            <h3 class="text-lg font-semibold">Request Update</h3>
-            <button (click)="closeUpdateModal()" class="text-gray-400 hover:text-gray-600">
-                <z-icon zType="x" size="20" />
-            </button>
+            <div class="flex gap-2">
+                <button z-button zType="secondary" (click)="goBack()">
+                    <z-icon zType="arrow-left" class="mr-2" /> Back
+                </button>
+                <button z-button (click)="goToRequestUpdate()">
+                    <z-icon zType="edit" class="mr-2" /> Request Update
+                </button>
+            </div>
         </div>
 
-        <div class="p-6 space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input type="text" [(ngModel)]="updateForm.name" class="w-full px-3 py-2 border rounded-lg" />
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
-                    <input type="text" [(ngModel)]="updateForm.mobileNumber"
-                        class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">DOB</label>
-                    <input type="date" [(ngModel)]="updateForm.dateOfBirth"
-                        class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                    <select [(ngModel)]="updateForm.gender" class="w-full px-3 py-2 border rounded-lg">
-                        <option value="MALE">Male</option>
-                        <option value="FEMALE">Female</option>
-                        <option value="OTHER">Other</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Guardian</label>
-                    <input type="text" [(ngModel)]="updateForm.guardianName"
-                        class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Income</label>
-                    <input type="number" [(ngModel)]="updateForm.monthlyIncome"
-                        class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select [(ngModel)]="updateForm.economicStatus" class="w-full px-3 py-2 border rounded-lg">
-                        <option value="APL">APL</option>
-                        <option value="BPL">BPL</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- New Fields -->
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Religion</label>
-                    <input type="text" [(ngModel)]="updateForm.religion" class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Caste</label>
-                    <input type="text" [(ngModel)]="updateForm.caste" class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
-                <input type="text" [(ngModel)]="updateForm.qualification" class="w-full px-3 py-2 border rounded-lg" />
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Primary Income Source</label>
-                <input type="text" [(ngModel)]="updateForm.primaryIncomeSource"
-                    class="w-full px-3 py-2 border rounded-lg" />
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Employment Status</label>
-                <select [(ngModel)]="updateForm.employmentStatus" class="w-full px-3 py-2 border rounded-lg">
-                    <option value="EMPLOYED">Employed</option>
-                    <option value="UNEMPLOYED">Unemployed</option>
-                    <option value="SELF_EMPLOYED">Self Employed</option>
-                    <option value="STUDENT">Student</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
-                <select [(ngModel)]="updateForm.maritalStatus" class="w-full px-3 py-2 border rounded-lg">
-                    <option value="SINGLE">Single</option>
-                    <option value="MARRIED">Married</option>
-                    <option value="WIDOWED">Widowed</option>
-                    <option value="DIVORCED">Divorced</option>
-                </select>
-            </div>
-
-            <div *ngIf="updateForm.maritalStatus === 'MARRIED'" class="space-y-4 border-t pt-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Date of Marriage</label>
-                    <input type="date" [(ngModel)]="updateForm.dateOfMarriage"
-                        class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Woman Age at Marriage</label>
-                        <input type="number" [(ngModel)]="updateForm.womanAgeAtMarriage"
-                            class="w-full px-3 py-2 border rounded-lg" />
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Key Stats & Demographic -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Location Card -->
+                <div class="bg-white rounded-2xl border p-6 shadow-sm">
+                    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <z-icon zType="house" size="16" />
+                        Residential Address
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="flex flex-col">
+                            <span class="text-lg font-bold text-gray-900">{{ beneficiary.village || beneficiary.location?.village || '-' }}</span>
+                            <span class="text-sm text-gray-500">{{ beneficiary.block || beneficiary.location?.block || '-' }}</span>
+                        </div>
+                        <div class="pt-4 border-t grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-gray-400 uppercase">District</label>
+                                <p class="font-medium truncate">{{ beneficiary.district || '-' }}</p>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 uppercase">State</label>
+                                <p class="font-medium truncate">{{ beneficiary.state || '-' }}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Husband Age at Marriage</label>
-                        <input type="number" [(ngModel)]="updateForm.husbandAgeAtMarriage"
-                            class="w-full px-3 py-2 border rounded-lg" />
+                </div>
+
+                <!-- Demographic Profile -->
+                <div class="bg-white rounded-2xl border p-6 shadow-sm">
+                    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <z-icon zType="user" size="16" />
+                        Demographic Profile
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                            <span class="text-sm text-gray-500">Gender</span>
+                            <span class="font-medium px-2 py-0.5 rounded text-xs capitalize" 
+                                  [ngClass]="beneficiary.gender === 'female' ? 'bg-pink-50 text-pink-700' : 'bg-blue-50 text-blue-700'">
+                                {{ beneficiary.gender }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                            <span class="text-sm text-gray-500">Religion</span>
+                            <span class="font-medium">{{ beneficiary.religion || '-' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                            <span class="text-sm text-gray-500">Caste</span>
+                            <span class="font-medium">{{ beneficiary.caste || '-' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                            <span class="text-sm text-gray-500">Qualification</span>
+                            <span class="font-medium">{{ beneficiary.qualification || '-' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <span class="text-sm text-gray-500 font-bold text-indigo-600">Mobile Number</span>
+                            <span class="font-bold text-indigo-700 tracking-wider">{{ beneficiary.mobileNumber || '-' }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
-            <p class="text-xs text-gray-500">Update request sent to Manager.</p>
+
+            <!-- Right Column: Personal, Marital, Economic & Family -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Personal & Marital History -->
+                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                    <div class="bg-gray-50 px-6 py-3 border-b">
+                        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Personal & Marital History</h2>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-5">
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase">Guardian Name</label>
+                                <p class="text-lg font-semibold text-gray-900 border-b pb-1">{{ beneficiary.guardianName }}</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-gray-400 uppercase">Birth Date</label>
+                                    <p class="font-medium">{{ beneficiary.dateOfBirth | date:'longDate' }}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-400 uppercase">Marital Status</label>
+                                    <p class="font-medium capitalize">{{ beneficiary.maritalStatus || 'Single' }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Age Metrics -->
+                        <div class="bg-slate-50 p-4 rounded-xl space-y-4">
+                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest text-center">Calculated Metrics</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-white p-3 rounded-lg border text-center shadow-sm">
+                                    <span class="text-[10px] text-gray-400 block mb-1">Age at Marriage</span>
+                                    <span class="text-2xl font-black text-indigo-600">{{ beneficiary.womanAgeAtMarriage || '-' }}</span>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg border text-center shadow-sm">
+                                    <span class="text-[10px] text-gray-400 block mb-1">Husband Age</span>
+                                    <span class="text-2xl font-black text-emerald-600">{{ beneficiary.husbandAgeAtMarriage || '-' }}</span>
+                                </div>
+                            </div>
+                            <div class="text-center pt-2">
+                                <span class="text-xs text-slate-400 italic">Date of Marriage: {{ beneficiary.dateOfMarriage || '-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Economic Status -->
+                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                    <div class="bg-emerald-50 px-6 py-3 border-b border-emerald-100">
+                        <h2 class="text-sm font-bold text-emerald-800 uppercase tracking-wider">Economic & Employment Profile</h2>
+                    </div>
+                    <div class="p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div>
+                            <label class="text-xs text-gray-400 uppercase block mb-1">Monthly Income</label>
+                            <p class="text-xl font-bold text-emerald-600">{{ beneficiary.monthlyIncome | currency:'INR' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 uppercase block mb-1">Income Source</label>
+                            <p class="font-semibold text-gray-700 capitalize">{{ beneficiary.primaryIncomeSource || '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 uppercase block mb-1">Economic Status</label>
+                            <p class="font-semibold text-gray-700 uppercase">{{ beneficiary.economicStatus || '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 uppercase block mb-1">Employment</label>
+                            <p class="font-semibold text-gray-700 capitalize">{{ beneficiary.employmentStatus || '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Children Section -->
+                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                    <div class="bg-amber-50 px-6 py-3 border-b border-amber-100 flex justify-between items-center">
+                        <h2 class="text-sm font-bold text-amber-800 uppercase tracking-wider">Children Details</h2>
+                        <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" *ngIf="beneficiary.children?.length">
+                            {{ beneficiary.children?.length }} CHILD(REN)
+                        </span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-amber-50/50 text-amber-900 border-b border-amber-100">
+                                <tr>
+                                    <th class="px-6 py-3 font-semibold">Name</th>
+                                    <th class="px-6 py-3 font-semibold">Date of Birth</th>
+                                    <th class="px-6 py-3 font-semibold">Gender</th>
+                                    <th class="px-6 py-3 font-semibold">Schooling Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr *ngFor="let child of beneficiary.children" class="hover:bg-amber-50/20 transition-colors">
+                                    <td class="px-6 py-4 font-medium text-gray-900">{{ child.name }}</td>
+                                    <td class="px-6 py-4 text-gray-600">{{ child.dateOfBirth | date:'mediumDate' }}</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
+                                              [ngClass]="child.gender === 'female' ? 'bg-pink-50 text-pink-700' : 'bg-blue-50 text-blue-700'">
+                                            {{ child.gender }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-600">{{ child.schoolingStatus }}</td>
+                                </tr>
+                                <tr *ngIf="!beneficiary.children?.length">
+                                    <td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">No children registered for this beneficiary.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tagging & Engagement Section (Outreach Specific) -->
+                <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
+                    <h2 class="text-sm font-bold text-indigo-900 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <z-icon zType="tag" size="16" />
+                        Engagement & Tagging Actions
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Group Tagging -->
+                        <div class="space-y-4">
+                            <div class="flex flex-col">
+                                <label class="text-xs font-bold text-indigo-600 uppercase mb-1">Assign to Group</label>
+                                <div class="flex gap-2">
+                                    <select [(ngModel)]="selectedGroupId"
+                                        class="flex-1 px-4 py-2 bg-white border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition-all shadow-sm">
+                                        <option [ngValue]="null">Select Group</option>
+                                        <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
+                                    </select>
+                                    <button z-button zType="default" (click)="saveGroupTag()" [disabled]="!selectedGroupId">
+                                        Tag
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Existing Group Badges -->
+                            <div *ngIf="beneficiary.groups?.length" class="flex flex-wrap gap-2 pt-2">
+                                <span *ngFor="let g of beneficiary.groups" class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-1 rounded-lg border border-indigo-200 shadow-sm">
+                                    {{ g.group?.name }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Activity Tagging -->
+                        <div class="space-y-4">
+                            <div class="flex flex-col">
+                                <label class="text-xs font-bold text-indigo-600 uppercase mb-1">Log Participation</label>
+                                <div class="space-y-2">
+                                    <select [(ngModel)]="selectedActivityId" (change)="onActivityChange()"
+                                        class="w-full px-4 py-2 bg-white border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition-all shadow-sm">
+                                        <option [ngValue]="null">Select Activity</option>
+                                        <option *ngFor="let a of activities" [value]="a.id">{{ a.name }}</option>
+                                    </select>
+                                    <div class="flex gap-2">
+                                        <select [(ngModel)]="selectedSessionId" [disabled]="!selectedActivityId"
+                                            class="flex-1 px-4 py-2 bg-white border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition-all shadow-sm disabled:bg-gray-50 disabled:text-gray-300">
+                                            <option [ngValue]="null">Select Session</option>
+                                            <option *ngFor="let s of sessions" [value]="s.id">{{ s.name }}</option>
+                                        </select>
+                                        <button z-button zType="default" (click)="saveActivityTag()" [disabled]="!selectedSessionId">
+                                            Log
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
-        <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3">
-            <button z-button zType="ghost" (click)="closeUpdateModal()">Cancel</button>
-            <button z-button (click)="submitUpdate()" [disabled]="!hasChanges()">Submit</button>
-        </div>
+    </ng-container>
+
+    <!-- Error/No Data State -->
+    <div *ngIf="!loading && !beneficiary" class="bg-white rounded-2xl border p-12 flex flex-col items-center justify-center text-center">
+        <z-icon zType="circle-alert" size="48" class="text-red-300 mb-4" />
+        <h2 class="text-xl font-bold text-gray-900">Beneficiary Not Found</h2>
+        <p class="text-gray-500 mb-6">The profile you are looking for does not exist or has been moved.</p>
+        <button z-button zType="default" (click)="goBack()">Return to List</button>
     </div>
+
 </div>

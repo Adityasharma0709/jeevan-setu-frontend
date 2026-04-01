@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, catchError, of, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { ApiService } from '../../core/services/api';
 
 export interface User {
     id: number;
+    usercode?: string;
     name: string;
     email: string;
     roles: string[];
@@ -76,6 +77,11 @@ export class ManagersService {
     getProjects(userId?: number): Observable<any[]> {
         const url = userId ? `projects/user/${userId}` : 'projects';
         return (this.api.get(url) as Observable<any[]>).pipe(
+            map((projects) =>
+                (projects || []).filter(
+                    (p) => (p?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+                ),
+            ),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     return of([]);
@@ -89,6 +95,20 @@ export class ManagersService {
      * Get locations for a specific project (for assignment dropdown)
      */
     getLocations(projectId: number): Observable<any[]> {
-        return this.api.get(`locations?projectId=${projectId}`) as Observable<any[]>;
+        return (this.api.get(`locations?projectId=${projectId}`) as Observable<any[]>).pipe(
+            map((locations) =>
+                (locations || []).filter((l: any) => {
+                    const raw = l?.status;
+                    if (raw == null) return true;
+                    return raw.toString().toUpperCase() === 'ACTIVE';
+                }),
+            ),
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    return of([]);
+                }
+                return throwError(() => error);
+            }),
+        );
     }
 }

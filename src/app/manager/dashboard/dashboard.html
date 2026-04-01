@@ -1,1 +1,292 @@
-<p>dashboard works!</p>
+<ng-container *ngIf="stats$ | async as stats; else loader" class="fade-in">
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-2">Manager Dashboard</h2>
+        <p class="text-gray-600">Overview of your assigned projects, outreach workers, and pending approvals.</p>
+    </div>
+
+    <ng-template #sectionLoader>
+        <div class="flex items-center justify-center py-10 w-full min-h-[160px]">
+            <div class="bg-gray-100 rounded-full p-4 ring-1 ring-gray-200">
+                <ng-lottie [options]="subLoaderOptions" height="96px" width="96px"></ng-lottie>
+            </div>
+        </div>
+    </ng-template>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Total Workers -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <z-icon zType="users" />
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 font-medium whitespace-nowrap">Outreach Workers</p>
+                <h3 class="text-2xl font-bold">{{ stats.totalWorkers ?? 0 }}</h3>
+            </div>
+        </div>
+
+        <!-- Pending Items -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <z-icon zType="clock" />
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 font-medium whitespace-nowrap">Pending Requests</p>
+                <h3 class="text-2xl font-bold">{{ stats.pendingRequests ?? 0 }}</h3>
+            </div>
+        </div>
+
+        <!-- Reports Today -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+                <z-icon zType="activity" />
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 font-medium whitespace-nowrap">Reports Today</p>
+                <h3 class="text-2xl font-bold">{{ stats.reportsToday ?? 0 }}</h3>
+            </div>
+        </div>
+
+        <!-- Assigned Locations -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                <z-icon zType="popcorn" />
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 font-medium whitespace-nowrap">Assigned Locations</p>
+                <h3 class="text-2xl font-bold">{{ stats.assignedLocations ?? 0 }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Created -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Outreach Workers -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">Recent Workers</h3>
+                <div class="flex items-center gap-3">
+                    <select
+                        [formControl]="recentWorkersStatusFilter"
+                        class="w-[110px] px-3 py-2 rounded-md border text-xs bg-white"
+                    >
+                        <option value="ALL">All</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <ng-container *ngIf="recentWorkersVm$ | async as vm; else sectionLoader">
+                <div *ngIf="vm.total; else noWorkers" class="space-y-3">
+                    <div *ngFor="let w of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 truncate">{{ w.name || '-' }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5 truncate">{{ w.email || w.mobileNumber || '-' }}</p>
+                        </div>
+                        <span
+                            class="px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 uppercase"
+                            [ngClass]="w.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                        >
+                            {{ w.status || 'UNKNOWN' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-between gap-2" *ngIf="vm.totalPages > 1">
+                    <button type="button" (click)="prevRecentWorkersPage()" [disabled]="vm.page <= 1" class="px-3 py-1.5 rounded text-xs font-medium border disabled:opacity-50 hover:bg-gray-50">Prev</button>
+                    <span class="text-xs text-gray-600">{{ vm.page }} / {{ vm.totalPages }}</span>
+                    <button type="button" (click)="nextRecentWorkersPage()" [disabled]="vm.page >= vm.totalPages" class="px-3 py-1.5 rounded text-xs font-medium border disabled:opacity-50 hover:bg-gray-50">Next</button>
+                </div>
+
+                <ng-template #noWorkers>
+                    <div class="text-center py-6 text-gray-400 italic text-sm">No recent workers found.</div>
+                </ng-template>
+            </ng-container>
+        </div>
+
+        <!-- Beneficiaries -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">Recent Beneficiaries</h3>
+                <div class="flex items-center gap-3">
+                    <select
+                        [formControl]="recentBeneficiariesStatusFilter"
+                        class="w-[110px] px-3 py-2 rounded-md border text-xs bg-white"
+                    >
+                        <option value="ALL">All</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <ng-container *ngIf="recentBeneficiariesVm$ | async as vm; else sectionLoader">
+                <div *ngIf="vm.total; else noBen" class="space-y-3">
+                    <div *ngFor="let b of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 truncate">{{ b.name || '-' }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5 truncate">{{ b.uid || b.mobileNumber || '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-between gap-2" *ngIf="vm.totalPages > 1">
+                    <button type="button" (click)="prevRecentBeneficiariesPage()" [disabled]="vm.page <= 1" class="px-3 py-1.5 rounded text-xs font-medium border disabled:opacity-50 hover:bg-gray-50">Prev</button>
+                    <span class="text-xs text-gray-600">{{ vm.page }} / {{ vm.totalPages }}</span>
+                    <button type="button" (click)="nextRecentBeneficiariesPage()" [disabled]="vm.page >= vm.totalPages" class="px-3 py-1.5 rounded text-xs font-medium border disabled:opacity-50 hover:bg-gray-50">Next</button>
+                </div>
+
+                <ng-template #noBen>
+                    <div class="text-center py-6 text-gray-400 italic text-sm">No recent beneficiaries found.</div>
+                </ng-template>
+            </ng-container>
+        </div>
+
+        <!-- Pending Requests -->
+        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold truncate pr-2">Pending Requests</h3>
+                <span class="text-xs text-gray-500 font-medium px-2 py-1 bg-gray-100 rounded-md whitespace-nowrap">{{ (recentRequestsVm$ | async)?.total || 0 }} total</span>
+            </div>
+
+            <ng-container *ngIf="recentRequestsVm$ | async as vm; else sectionLoader">
+                <div *ngIf="vm.total; else noReq" class="space-y-3">
+                    <div *ngFor="let r of vm.items" class="border border-gray-100 rounded-lg p-3 flex flex-col gap-1.5">
+                        <div class="flex items-start justify-between">
+                            <p class="text-sm font-semibold text-gray-900 truncate">Request #{{ r.id }}</p>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 uppercase bg-amber-100 text-amber-700">
+                                {{ r.status || 'PENDING' }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-600 truncate">{{ r.requestType | lowercase }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-between gap-2" *ngIf="vm.totalPages > 1">
+                    <button type="button" (click)="prevRecentRequestsPage()" [disabled]="vm.page <= 1" class="px-3 py-1.5 rounded text-xs font-medium border disabled:opacity-50 hover:bg-gray-50">Prev</button>
+                    <span class="text-xs text-gray-600">{{ vm.page }} / {{ vm.totalPages }}</span>
+                    <button type="button" (click)="nextRecentRequestsPage()" [disabled]="vm.page >= vm.totalPages" class="px-3 py-1.5 rounded text-xs font-medium border disabled:opacity-50 hover:bg-gray-50">Next</button>
+                </div>
+
+                <ng-template #noReq>
+                    <div class="text-center py-6 text-gray-400 italic text-sm">No pending requests.</div>
+                </ng-template>
+            </ng-container>
+        </div>
+    </div>
+
+    <!-- Assigned Projects -->
+    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold">Assigned Projects & Locations</h3>
+            <div class="flex items-center gap-3">
+                <select
+                    [formControl]="projectStatusFilter"
+                    class="w-[140px] px-3 py-2 rounded-md border text-sm bg-white"
+                >
+                    <option value="ALL">All</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                </select>
+                <ng-container *ngIf="assignedProjectsVm$ | async as pager; else assignedProjectsCountLoader">
+                    <span class="text-sm text-gray-500">{{ pager.total }} shown</span>
+                </ng-container>
+                <ng-template #assignedProjectsCountLoader>
+                    <span class="text-sm text-gray-500">Loading...</span>
+                </ng-template>
+            </div>
+        </div>
+
+        <ng-container *ngIf="assignedProjectsVm$ | async as pager; else sectionLoader">
+            <div *ngIf="pager.totalAll; else noAssignedProjects">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="pager.total; else noFilteredProjects">
+                    <div *ngFor="let p of pager.items" class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm flex flex-col h-full">
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Project</p>
+                                <p class="text-base font-semibold text-gray-900">{{ p.name || '-' }}</p>
+                                <p class="text-sm text-gray-600">Code: <span class="font-medium text-gray-800">{{ p.projectCode || p.code || '-' }}</span></p>
+                            </div>
+                            <span
+                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                                [ngClass]="p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                            >
+                                {{ p.status || 'UNKNOWN' }}
+                            </span>
+                        </div>
+
+                        <div class="mt-auto space-y-2">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mt-4 border-t pt-3">Assigned Locations</p>
+                            <div *ngIf="p.locations?.length; else noLoc" class="space-y-2">
+                                <details
+                                    *ngFor="let loc of p.locations"
+                                    class="group border border-gray-100 rounded-lg bg-gray-50 overflow-hidden"
+                                >
+                                    <summary class="flex items-center justify-between cursor-pointer p-3 outline-none text-sm font-medium text-gray-800 hover:bg-gray-100 transition-colors list-none">
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">{{ loc.locationCode || '-' }}</span>
+                                        </div>
+                                        <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </summary>
+                                    <div class="p-3 border-t border-gray-100 bg-white text-sm text-gray-600 grid grid-cols-2 gap-2">
+                                        <div>
+                                            <p class="text-[10px] text-gray-400 uppercase tracking-wide">Village</p>
+                                            <p class="font-medium text-gray-800 truncate">{{ loc.village || '-' }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] text-gray-400 uppercase tracking-wide">Block</p>
+                                            <p class="font-medium text-gray-800 truncate">{{ loc.block || '-' }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] text-gray-400 uppercase tracking-wide">District</p>
+                                            <p class="font-medium text-gray-800 truncate">{{ loc.district || '-' }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] text-gray-400 uppercase tracking-wide">State</p>
+                                            <p class="font-medium text-gray-800 truncate">{{ loc.state || '-' }}</p>
+                                        </div>
+                                    </div>
+                                </details>
+                            </div>
+                            <ng-template #noLoc>
+                                <p class="text-sm text-gray-500 italic">No locations configured.</p>
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== PAGINATION ===== -->
+            <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <p class="text-sm text-gray-500">
+                    Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }}
+                </p>
+
+                <div class="flex items-center justify-end gap-2">
+                    <button type="button" (click)="prevPage()" [disabled]="pager.page <= 1" class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 hover:bg-gray-50">Prev</button>
+                    <span class="text-sm text-gray-600">Page {{ pager.page }} / {{ pager.totalPages }}</span>
+                    <button type="button" (click)="nextPage()" [disabled]="pager.page >= pager.totalPages" class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 hover:bg-gray-50">Next</button>
+                </div>
+            </div>
+
+            <ng-template #noFilteredProjects>
+                <div class="text-center py-6 text-gray-400 italic">No projects match this filter.</div>
+            </ng-template>
+
+            <ng-template #noAssignedProjects>
+                <div class="text-center py-6 text-gray-400 italic">No projects assigned to you yet.</div>
+            </ng-template>
+        </ng-container>
+    </div>
+
+</ng-container>
+
+<ng-template #loader>
+    <div class="flex flex-col items-center justify-center w-full min-h-[60vh] gap-4">
+        <ng-lottie [options]="options" height="160px" width="160px"></ng-lottie>
+        <p class="text-gray-500 font-medium animate-pulse">Loading Manager Dashboard...</p>
+    </div>
+</ng-template>

@@ -19,6 +19,7 @@ const routes: Routes = [
       { path: 'requests', component: Requests },
       { path: 'outreach-workers', component: OutreachWorkers },
       { path: 'beneficiaries', loadComponent: () => import('./beneficiaries/beneficiaries').then(m => m.Beneficiaries) },
+      { path: 'beneficiaries/:id', loadComponent: () => import('./beneficiaries/beneficiary-detail/beneficiary-detail').then(m => m.BeneficiaryDetail) },
     ],
   },
 ];

@@ -1,7 +1,7 @@
-import { Component, TemplateRef, ViewChild, OnInit, inject } from '@angular/core';
+import { Component, TemplateRef, ViewChild, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, Subject, catchError, combineLatest, map, of, shareReplay, startWith, switchMap, tap } from 'rxjs';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { BehaviorSubject, Observable, Subject, catchError, combineLatest, debounceTime, distinctUntilChanged, map, of, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
@@ -63,16 +63,35 @@ export class Activities implements OnInit {
   isSubmitting = false;
   isEditing = false;
   selectedActivityId: number | null = null;
+  readonly activityStatusLoadingIds = signal<Set<number>>(new Set());
+  searchControl = new FormControl('');
 
   activities$!: Observable<Activity[]>;
+  pager$!: Observable<{
+    items: Activity[];
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    from: number;
+    to: number;
+  }>;
   projects$!: Observable<any[]>;
-  vm$!: Observable<{ activities: Activity[]; projects: any[] }>;
   private currentUserId: number | null = null;
+  private currentUserEmail: string | null = null;
   private assignedProjectIds = new Set<number>();
+
+  statusFilter = new FormControl<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL', { nonNullable: true });
+
+  readonly pageSize = 10;
+  private readonly page$ = new BehaviorSubject<number>(1);
+  private lastPage = 1;
+  private lastTotalPages = 1;
 
   ngOnInit() {
     const currentUser = this.authService.getCurrentUser();
     this.currentUserId = Number(currentUser?.sub) || null;
+    this.currentUserEmail = currentUser?.email ? String(currentUser.email).toLowerCase() : null;
 
     this.projects$ = this.adminService.getAssignedProjects(this.currentUserId || undefined).pipe(
       map((projects) => projects || []),
@@ -86,21 +105,92 @@ export class Activities implements OnInit {
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
-    this.activities$ = combineLatest([this.refresh$.pipe(startWith(void 0)), this.projects$]).pipe(
+    const status$ = this.statusFilter.valueChanges.pipe(
+      startWith(this.statusFilter.value),
+      distinctUntilChanged(),
+      tap(() => this.goToPage(1)),
+    );
+
+    const search$ = this.searchControl.valueChanges.pipe(
+      startWith(''),
+      debounceTime(300),
+      distinctUntilChanged(),
+      tap(() => this.goToPage(1)),
+    );
+
+    const baseActivities$ = combineLatest([this.refresh$.pipe(startWith(void 0)), search$]).pipe(
       switchMap(() => this.adminService.getActivities()),
-      map((activities) =>
-        (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity))
-      ),
+      map((activities) => (activities || []).filter((activity) => this.isOwnedByCurrentAdmin(activity))),
+      map((activities) => {
+        const query = (this.searchControl.value || '').toString().trim().toLowerCase();
+        if (!query) return activities;
+
+        const includes = (value: unknown) => String(value ?? '').toLowerCase().includes(query);
+        return (activities || []).filter((a) =>
+          includes(a.name) ||
+          includes(a.description) ||
+          includes(a.project?.name) ||
+          includes(a.project?.projectCode)
+        );
+      }),
       catchError(() => of([] as Activity[])),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
-    this.vm$ = combineLatest([this.activities$, this.projects$]).pipe(
-      map(([activities, projects]) => ({ activities, projects })),
+    this.activities$ = combineLatest([baseActivities$, status$]).pipe(
+      map(([activities, status]) => {
+        const normalized = (status ?? 'ALL').toString().toUpperCase() as 'ALL' | 'ACTIVE' | 'INACTIVE';
+        if (normalized === 'ALL') return activities;
+        return (activities || []).filter((a) => (a?.status ?? '').toString().toUpperCase() === normalized);
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.pager$ = combineLatest([this.activities$, this.page$]).pipe(
+      map(([activities, page]) => {
+        const total = (activities || []).length;
+        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+
+        const startIndex = (safePage - 1) * this.pageSize;
+        const endIndexExclusive = Math.min(startIndex + this.pageSize, total);
+        const items = (activities || []).slice(startIndex, endIndexExclusive);
+
+        const from = total === 0 ? 0 : startIndex + 1;
+        const to = total === 0 ? 0 : endIndexExclusive;
+
+        return {
+          items,
+          page: safePage,
+          pageSize: this.pageSize,
+          total,
+          totalPages,
+          from,
+          to,
+        };
+      }),
+      tap((vm) => {
+        if (vm.page !== this.page$.getValue()) this.page$.next(vm.page);
+        this.lastPage = vm.page;
+        this.lastTotalPages = vm.totalPages;
+      }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
     this.initForm();
+  }
+
+  goToPage(page: number) {
+    const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+    this.page$.next(nextPage);
+  }
+
+  prevPage() {
+    this.page$.next(Math.max(1, this.lastPage - 1));
+  }
+
+  nextPage() {
+    this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
   }
 
   private initForm() {
@@ -186,54 +276,94 @@ export class Activities implements OnInit {
 
   deactivateActivity(activity: Activity) {
     if (!this.canToggleStatus(activity)) {
-      toast.error('You can only deactivate activities from your assigned projects');
+      toast.error('You can only deactivate activities created by you');
       return;
     }
     if (!confirm('Are you sure you want to deactivate this activity?')) return;
+
+    const activityId = Number(activity?.id);
+    if (!Number.isFinite(activityId)) return;
+    if (this.activityStatusLoadingIds().has(activityId)) return;
+
+    const nextSet = new Set(this.activityStatusLoadingIds());
+    nextSet.add(activityId);
+    this.activityStatusLoadingIds.set(nextSet);
 
     this.adminService.deactivateActivity(activity.id).subscribe({
       next: () => {
         toast.success('Activity deactivated');
         this.refresh$.next();
+
+        const done = new Set(this.activityStatusLoadingIds());
+        done.delete(activityId);
+        this.activityStatusLoadingIds.set(done);
       },
-      error: (err) => toast.error(err.error?.message || 'Failed to deactivate')
+      error: (err) => {
+        const done = new Set(this.activityStatusLoadingIds());
+        done.delete(activityId);
+        this.activityStatusLoadingIds.set(done);
+        toast.error(err.error?.message || 'Failed to deactivate');
+      }
     });
   }
 
   activateActivity(activity: Activity) {
     if (!this.canToggleStatus(activity)) {
-      toast.error('You can only activate activities from your assigned projects');
+      toast.error('You can only activate activities created by you');
       return;
     }
     if (!confirm('Are you sure you want to activate this activity?')) return;
+
+    const activityId = Number(activity?.id);
+    if (!Number.isFinite(activityId)) return;
+    if (this.activityStatusLoadingIds().has(activityId)) return;
+
+    const nextSet = new Set(this.activityStatusLoadingIds());
+    nextSet.add(activityId);
+    this.activityStatusLoadingIds.set(nextSet);
 
     this.adminService.activateActivity(activity.id).subscribe({
       next: () => {
         toast.success('Activity activated');
         this.refresh$.next();
+
+        const done = new Set(this.activityStatusLoadingIds());
+        done.delete(activityId);
+        this.activityStatusLoadingIds.set(done);
       },
       error: (err) => {
+        const done = new Set(this.activityStatusLoadingIds());
+        done.delete(activityId);
+        this.activityStatusLoadingIds.set(done);
         const msg = err.error?.message;
         toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to activate'));
       }
     });
   }
 
-  canToggleStatus(activity: Activity): boolean {
-    const creatorId = this.getCreatorId(activity);
-    const isOwnedByCurrentAdmin = !!creatorId && !!this.currentUserId && creatorId === this.currentUserId;
-    const isInAssignedProjects = this.isActivityInAssignedProjects(activity);
-    return isInAssignedProjects || isOwnedByCurrentAdmin;
+  isActivityStatusLoading(activityId: number): boolean {
+    return this.activityStatusLoadingIds().has(activityId);
   }
 
-  private isActivityInAssignedProjects(activity: Activity): boolean {
-    if (!activity?.projectId) return false;
-    return this.assignedProjectIds.has(Number(activity.projectId));
+  canToggleStatus(activity: Activity): boolean {
+    return this.isOwnedByCurrentAdmin(activity);
   }
 
   private getCreatorId(entity: any): number | null {
     const directId = entity?.creator?.id ?? entity?.createdBy?.id ?? entity?.createdById ?? entity?.created_by;
     const creatorId = Number(directId);
     return Number.isFinite(creatorId) ? creatorId : null;
+  }
+
+  private isOwnedByCurrentAdmin(entity: any): boolean {
+    const creatorId = this.getCreatorId(entity);
+    if (!!creatorId && !!this.currentUserId && creatorId === this.currentUserId) {
+      return true;
+    }
+    const creatorEmail = entity?.creator?.email || entity?.createdBy?.email;
+    if (!creatorEmail || !this.currentUserEmail) {
+      return false;
+    }
+    return String(creatorEmail).toLowerCase() === this.currentUserEmail;
   }
 }

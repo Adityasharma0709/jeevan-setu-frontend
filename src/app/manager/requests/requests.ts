@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BehaviorSubject, Observable, combineLatest, map, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ManagerService } from '../manager.service';
@@ -38,44 +39,167 @@ export class Requests implements OnInit {
   isLoading = true;
   options: AnimationOptions = { path: '/loading.json' };
 
+  readonly pageSize = 10;
+  private readonly incomingPage$ = new BehaviorSubject<number>(1);
+  private lastIncomingPage = 1;
+  private lastIncomingTotalPages = 1;
+
+  private readonly myPage$ = new BehaviorSubject<number>(1);
+  private lastMyPage = 1;
+  private lastMyTotalPages = 1;
+
+  private readonly refreshIncoming$ = new BehaviorSubject<void>(undefined);
+  private readonly refreshMy$ = new BehaviorSubject<void>(undefined);
+
+  incomingPager$!: Observable<{
+    items: any[];
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    from: number;
+    to: number;
+  }>;
+
+  myPager$!: Observable<{
+    items: any[];
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    from: number;
+    to: number;
+  }>;
+
   constructor(
     private managerService: ManagerService,
     private cdr: ChangeDetectorRef
-  ) { }
+  ) {
+    this.initPagers();
+  }
+
+  private initPagers() {
+    const baseIncoming$ = this.refreshIncoming$.pipe(
+      tap(() => this.isLoading = true),
+      switchMap(() => import('rxjs').then(({ forkJoin }) => 
+        forkJoin({
+          beneficiary: this.managerService.getBeneficiaryRequests(),
+          profile: this.managerService.getPendingRequests()
+        })
+      )),
+      map((res: any) => {
+        const ben = Array.isArray(res.beneficiary) ? res.beneficiary : [];
+        const prof = Array.isArray(res.profile) ? res.profile : [];
+        const requests = [...ben, ...prof];
+        return requests
+          .filter((request) => String(request?.status || 'PENDING').toUpperCase() === 'PENDING')
+          .map((request) => this.normalizeIncomingRequest(request))
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }),
+      tap(() => this.isLoading = false),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    this.incomingPager$ = combineLatest([baseIncoming$, this.incomingPage$]).pipe(
+      map(([requests, page]) => {
+        const total = requests.length;
+        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+        const startIndex = (safePage - 1) * this.pageSize;
+        const items = requests.slice(startIndex, startIndex + this.pageSize);
+        const from = total === 0 ? 0 : startIndex + 1;
+        const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
+        return { items, page: safePage, pageSize: this.pageSize, total, totalPages, from, to };
+      }),
+      tap((vm) => {
+        this.lastIncomingPage = vm.page;
+        this.lastIncomingTotalPages = vm.totalPages;
+        this.cdr.detectChanges();
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    const baseMy$ = this.refreshMy$.pipe(
+      switchMap(() => this.managerService.getMyRequests()),
+      map((requests: any) => {
+        const safeRequests = Array.isArray(requests) ? requests : [];
+        return safeRequests.map((request: any) => ({
+          ...request,
+          type: this.getRequestType(request),
+          sentTo: request?.targetAdmin?.name || request?.targetAdmin?.email || 'Admin',
+          createdAt: request?.createdAt || new Date().toISOString(),
+        }));
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    this.myPager$ = combineLatest([baseMy$, this.myPage$]).pipe(
+      map(([requests, page]) => {
+        const total = requests.length;
+        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+        const startIndex = (safePage - 1) * this.pageSize;
+        const items = requests.slice(startIndex, startIndex + this.pageSize);
+        const from = total === 0 ? 0 : startIndex + 1;
+        const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
+        return { items, page: safePage, pageSize: this.pageSize, total, totalPages, from, to };
+      }),
+      tap((vm) => {
+        this.lastMyPage = vm.page;
+        this.lastMyTotalPages = vm.totalPages;
+        this.cdr.detectChanges();
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+  }
 
   ngOnInit() {
-    this.loadIncomingRequests();
-    this.loadMyRequests();
+    // Pagers initialization handles logic
   }
 
   loadIncomingRequests() {
-    this.managerService.getBeneficiaryRequests().subscribe({
-      next: (requests) => {
-        console.log('[Manager Incoming Beneficiary Requests API]', requests);
-        const safeRequests = Array.isArray(requests) ? requests : [];
-        this.incomingRequests = safeRequests
-          .filter((request) => String(request?.status || 'PENDING').toUpperCase() === 'PENDING')
-          .map((request) => this.normalizeIncomingRequest(request));
-        console.log('[Manager Incoming Beneficiary Requests Normalized]', this.incomingRequests);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.incomingRequests = [];
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        toast.error('Failed to load incoming requests');
-      }
-    });
+    this.refreshIncoming$.next();
+  }
+
+  loadMyRequests() {
+    this.refreshMy$.next();
+  }
+
+  goToIncomingPage(page: number) {
+    this.incomingPage$.next(Math.max(1, Math.floor(Number(page) || 1)));
+  }
+
+  prevIncomingPage() {
+    this.incomingPage$.next(Math.max(1, this.lastIncomingPage - 1));
+  }
+
+  nextIncomingPage() {
+    this.incomingPage$.next(Math.min(this.lastIncomingTotalPages, this.lastIncomingPage + 1));
+  }
+
+  goToMyPage(page: number) {
+    this.myPage$.next(Math.max(1, Math.floor(Number(page) || 1)));
+  }
+
+  prevMyPage() {
+    this.myPage$.next(Math.max(1, this.lastMyPage - 1));
+  }
+
+  nextMyPage() {
+    this.myPage$.next(Math.min(this.lastMyTotalPages, this.lastMyPage + 1));
   }
 
   approveIncoming(request: any) {
-    this.managerService.approveBeneficiaryRequest(request.id).subscribe({
+    const ob$ = request.type === 'BENEFICIARY_UPDATE'
+      ? this.managerService.approveBeneficiaryRequest(request.id)
+      : this.managerService.updateRequestStatus(request.id, 'APPROVED');
+
+    ob$.subscribe({
       next: () => {
         toast.success('Request approved successfully');
         this.loadIncomingRequests();
       },
-      error: (err) => {
+      error: (err: any) => {
         toast.error(err?.error?.message || 'Failed to approve request');
       }
     });
@@ -83,35 +207,17 @@ export class Requests implements OnInit {
 
   rejectIncoming(request: any) {
     const reason = prompt('Enter rejection reason (optional):') || undefined;
-    this.managerService.rejectBeneficiaryRequest(request.id, reason).subscribe({
+    const ob$ = request.type === 'BENEFICIARY_UPDATE'
+      ? this.managerService.rejectBeneficiaryRequest(request.id, reason)
+      : this.managerService.updateRequestStatus(request.id, 'REJECTED', reason);
+
+    ob$.subscribe({
       next: () => {
         toast.success('Request rejected successfully');
         this.loadIncomingRequests();
       },
-      error: (err) => {
+      error: (err: any) => {
         toast.error(err?.error?.message || 'Failed to reject request');
-      }
-    });
-  }
-
-  loadMyRequests() {
-    this.managerService.getMyRequests().subscribe({
-      next: (requests) => {
-        console.log('[Manager My Requests API]', requests);
-        const safeRequests = Array.isArray(requests) ? requests : [];
-        this.myRequests = safeRequests.map((request) => ({
-          ...request,
-          type: this.getRequestType(request),
-          sentTo: request?.targetAdmin?.name || request?.targetAdmin?.email || 'Admin',
-          createdAt: request?.createdAt || new Date().toISOString(),
-        }));
-        console.log('[Manager My Requests Normalized]', this.myRequests);
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.myRequests = [];
-        this.cdr.detectChanges();
-        toast.error('Failed to load your request history');
       }
     });
   }
@@ -131,6 +237,7 @@ export class Requests implements OnInit {
       type,
       beneficiaryId,
       changesPreview,
+      changes: payload?.changes || payload?.data || payload || {},
       createdAt: request?.createdAt || request?.requestedAt || new Date().toISOString(),
     };
   }
@@ -162,33 +269,6 @@ export class Requests implements OnInit {
     return reason ? `Reason: ${reason}` : '';
   }
 
-  private updateStatus(id: number, status: 'APPROVED' | 'REJECTED', reason?: string) {
-    const request = this.incomingRequests.find(r => r.id === id);
-
-    this.managerService.updateRequestStatus(id, status, reason).subscribe({
-      next: () => {
-        toast.success(`Request ${status.toLowerCase()} successfully`);
-
-        if (request) {
-          const processedRequest = {
-            ...request,
-            status: status,
-            remarks: reason,
-            sentTo: 'Me',
-            createdAt: new Date().toISOString()
-          };
-          this.myRequests = [processedRequest, ...this.myRequests];
-        }
-
-        this.loadIncomingRequests(); // Refetch pending
-        // this.loadMyRequests(); // Removed to prevent overwrite
-      },
-      error: (err) => {
-        toast.error(err.error?.message || 'Action failed');
-      }
-    });
-  }
-
   getBeneficiaryLabel(request: any): string {
     const id = request?.beneficiaryId || request?.payload?.beneficiaryId || '-';
     return `Beneficiary #${id}`;
@@ -196,6 +276,11 @@ export class Requests implements OnInit {
 
   getChangesPreview(request: any): string {
     return request?.changesPreview || '-';
+  }
+
+  getChangedKeys(changes: any): string[] {
+    if (!changes || typeof changes !== 'object') return [];
+    return Object.keys(changes).filter(key => key !== 'reason' && key !== 'id' && key !== 'beneficiaryId');
   }
 
   private buildChangesPreview(changes: Record<string, any>): string {
@@ -216,14 +301,14 @@ export class Requests implements OnInit {
     return remaining > 0 ? `${formatted.join(', ')} +${remaining} more` : formatted.join(', ');
   }
 
-  private formatFieldLabel(key: string): string {
+  public formatFieldLabel(key: string): string {
     return key
       .replace(/_/g, ' ')
       .replace(/([a-z])([A-Z])/g, '$1 $2')
       .replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
-  private formatValue(value: any): string {
+  public formatValue(value: any): string {
     if (value === null || value === undefined) return '-';
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);

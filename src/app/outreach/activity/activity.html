@@ -1,71 +1,194 @@
-﻿<div class="max-w-4xl mx-auto space-y-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Activity Report</h1>
-    <p class="text-gray-600">Submit beneficiary reports to the backend `outreach/activity-report` API.</p>
-  </div>
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Header -->
+  <header class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Activity Reports</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        List of all health screening reports and activity participations.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button z-button (click)="addReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white">
+        <z-icon zType="plus" class="mr-2" />
+        Submit Report
+      </button>
+    </div>
+  </header>
 
-  <section class="bg-white border rounded-xl p-6">
-    <form [formGroup]="reportForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <z-form-field>
-        <label z-form-label zRequired>Activity</label>
-        <z-form-control>
-          <select z-input formControlName="activityId">
-            <option value="">Select activity</option>
-            <option *ngFor="let activity of activities$ | async" [value]="activity.id">{{ activity.name }}</option>
-          </select>
-        </z-form-control>
-      </z-form-field>
+  <!-- Reports Container -->
+  <ng-container *ngIf="vm$ | async as vm; else loadingTpl">
+    <!-- Reports Table -->
+    <section class="bg-white border rounded-xl overflow-hidden shadow-sm">
+      <table z-table>
+        <thead z-table-header>
+          <tr z-table-row>
+            <th z-table-head>Beneficiary</th>
+            <th z-table-head>Activity & Session</th>
+            <th z-table-head>Screening</th>
+            <th z-table-head>Date</th>
+            <th z-table-head class="text-right">Actions</th>
+          </tr>
+        </thead>
 
-      <z-form-field>
-        <label z-form-label>Session (optional)</label>
-        <z-form-control>
-          <select z-input formControlName="sessionId">
-            <option value="">Select session</option>
-            <option *ngFor="let session of sessions$ | async" [value]="session.id">
-              {{ session.name }} ({{ session.sessionDate | date:'mediumDate' }})
-            </option>
-          </select>
-        </z-form-control>
-      </z-form-field>
+        <tbody z-table-body>
+          <ng-container *ngFor="let report of vm.items">
+            <!-- Main Row -->
+            <tr z-table-row class="group hover:bg-gray-50 transition-colors border-b last:border-0"
+              [class.bg-indigo-50]="expandedReportId === report.id" [class.hover:bg-indigo-50]="expandedReportId === report.id">
+              <td z-table-cell>
+                <div class="flex flex-col">
+                  <span class="font-medium text-gray-900">{{ report.beneficiary?.name || 'Unknown' }}</span>
+                  <span class="text-[10px] text-gray-500">{{ report.beneficiary?.uid || '-' }}</span>
+                </div>
+              </td>
+              <td z-table-cell>
+                <div class="flex flex-col">
+                  <span class="text-sm text-gray-700 font-medium">{{ report.activity?.name || '-' }}</span>
+                  <span class="text-[11px] text-gray-400 italic">{{ report.session?.name || '-' }}</span>
+                </div>
+              </td>
+              <td z-table-cell>
+                <div class="flex items-center gap-2">
+                  <div [class]="report.reportData?.screening === 'Yes' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    {{ report.reportData?.screening || 'No' }}
+                  </div>
+                  <span class="text-[10px] text-gray-500 italic max-w-[150px] truncate">
+                    {{ getScreeningSummary(report) }}
+                  </span>
+                </div>
+              </td>
+              <td z-table-cell>
+                <span class="text-sm text-gray-600">{{ report.createdAt | date:'mediumDate' }}</span>
+              </td>
+              <td z-table-cell class="text-right">
+                <button z-button variant="ghost" size="sm" (click)="toggleExpand(report.id)" 
+                  class="text-indigo-600 hover:text-indigo-700 font-semibold group/btn">
+                  <span>{{ expandedReportId === report.id ? 'Hide Details' : 'View Details' }}</span>
+                  <z-icon [zType]="expandedReportId === report.id ? 'chevron-up' : 'chevron-down'" class="ml-1.5 w-3.5 h-3.5 transition-transform" />
+                </button>
+              </td>
+            </tr>
 
-      <z-form-field class="md:col-span-2">
-        <label z-form-label zRequired>Beneficiary</label>
-        <z-form-control>
-          <select z-input formControlName="beneficiaryId">
-            <option value="">Select beneficiary</option>
-            <option *ngFor="let beneficiary of beneficiaries$ | async" [value]="beneficiary.id">
-              {{ beneficiary.name }} ({{ beneficiary.uid }})
-            </option>
-          </select>
-        </z-form-control>
-      </z-form-field>
+            <!-- Expanded Row (Screening Details) -->
+            <tr *ngIf="expandedReportId === report.id" class="bg-indigo-50/30">
+              <td colspan="5" class="p-0 border-b">
+                <div class="px-6 py-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div class="bg-white border rounded-lg shadow-sm overflow-hidden">
+                    <div class="bg-gray-50/50 px-4 py-2 border-b flex items-center justify-between">
+                      <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Health Screening Data</span>
+                      <span class="text-[10px] text-gray-400">{{ report.createdAt | date:'medium' }}</span>
+                    </div>
 
-      <z-form-field>
-        <label z-form-label zRequired>Attendance</label>
-        <z-form-control>
-          <select z-input formControlName="attendanceStatus">
-            <option value="Present">Present</option>
-            <option value="Absent">Absent</option>
-          </select>
-        </z-form-control>
-      </z-form-field>
+                    <div class="p-6">
+                      <div *ngIf="report.reportData?.screening === 'Yes' && report.reportData?.screeningDetails; else noScreening" 
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                        
+                        <div *ngIf="report.reportData.screeningDetails.height" class="space-y-1">
+                          <p class="text-[10px] text-gray-400 uppercase font-bold">Height</p>
+                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.height }}<span class="text-xs ml-0.5 text-gray-400">cm</span></p>
+                        </div>
 
-      <z-form-field class="md:col-span-2">
-        <label z-form-label zRequired>Observation</label>
-        <z-form-control>
-          <textarea z-input rows="4" formControlName="observation" placeholder="Write key field observations"></textarea>
-        </z-form-control>
-      </z-form-field>
+                        <div *ngIf="report.reportData.screeningDetails.weight" class="space-y-1">
+                          <p class="text-[10px] text-gray-400 uppercase font-bold">Weight</p>
+                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.weight }}<span class="text-xs ml-0.5 text-gray-400">kg</span></p>
+                        </div>
 
-      <div class="md:col-span-2 flex items-center justify-between gap-2 pt-2 border-t">
-        <p class="text-xs text-gray-500">
-          If activity/session dropdowns are empty, ask backend to allow outreach role for activity/session read endpoints.
-        </p>
-        <button z-button type="button" [disabled]="isSubmitting" (click)="submit()">
-          <z-icon zType="check" class="mr-2" />
-          {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
+                        <div *ngIf="report.reportData.screeningDetails.hb" class="space-y-1">
+                          <p class="text-[10px] text-gray-400 uppercase font-bold">Hb</p>
+                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.hb }}<span class="text-xs ml-0.5 text-gray-400">g/dL</span></p>
+                        </div>
+
+                        <div *ngIf="report.reportData.screeningDetails.bp" class="space-y-1">
+                          <p class="text-[10px] text-gray-400 uppercase font-bold">BP (S/D)</p>
+                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.bp }}</p>
+                        </div>
+
+                        <div *ngIf="report.reportData.screeningDetails.sugar" class="space-y-1">
+                          <p class="text-[10px] text-gray-400 uppercase font-bold">Sugar</p>
+                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.sugar }}<span class="text-xs ml-0.5 text-gray-400">mg/dL</span></p>
+                        </div>
+
+                        <div *ngIf="report.reportData.screeningDetails.cervicalCancer" class="space-y-1">
+                          <p class="text-[10px] text-gray-400 uppercase font-bold leading-tight">Cervical Cancer</p>
+                          <p class="text-sm font-bold truncate" [class]="report.reportData.screeningDetails.cervicalCancer === 'Positive' ? 'text-red-600' : 'text-green-600'">
+                            {{ report.reportData.screeningDetails.cervicalCancer }}
+                          </p>
+                        </div>
+
+                        <div *ngIf="report.reportData.screeningDetails.breastCancer" class="space-y-1">
+                          <p class="text-[10px] text-gray-400 uppercase font-bold leading-tight">Breast Cancer</p>
+                          <p class="text-sm font-bold truncate" [class]="report.reportData.screeningDetails.breastCancer === 'Positive' ? 'text-red-600' : 'text-green-600'">
+                            {{ report.reportData.screeningDetails.breastCancer }}
+                          </p>
+                        </div>
+                      </div>
+
+                      <ng-template #noScreening>
+                        <div class="py-4 flex flex-col items-center justify-center text-gray-400 border border-dashed rounded-lg">
+                          <z-icon zType="info" class="w-5 h-5 mb-1 opacity-50" />
+                          <p class="text-xs italic">No health screening measurements were recorded.</p>
+                        </div>
+                      </ng-template>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+
+          <!-- Empty State -->
+          <tr z-table-row *ngIf="vm.items.length === 0">
+            <td z-table-cell colspan="5" class="py-20 text-center">
+              <div class="max-w-xs mx-auto">
+                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <z-icon zType="file-text" class="w-8 h-8 text-gray-300" />
+                </div>
+                <h3 class="text-gray-900 font-medium mb-1">No reports found</h3>
+                <p class="text-gray-500 text-sm mb-6">You haven't submitted any activity reports yet.</p>
+                <button z-button (click)="addReport()" class="bg-indigo-600 text-white">
+                  Submit Your First Report
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Pagination -->
+    <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-1 pb-4" *ngIf="vm.total > 0">
+      <p class="text-sm text-gray-500">
+        Showing
+        {{ vm.total ? ((vm.page - 1) * vm.pageSize + 1) : 0 }}
+        -
+        {{ (vm.page * vm.pageSize < vm.total) ? (vm.page * vm.pageSize) : vm.total }}
+        of {{ vm.total }}
+      </p>
+
+      <div class="flex items-center justify-end gap-2">
+        <button type="button" (click)="prevPage()" [disabled]="vm.page <= 1"
+          class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 bg-white transition-colors">
+          Prev
+        </button>
+
+        <span class="text-sm text-gray-600">
+          Page {{ vm.page }} / {{ vm.pageCount }}
+        </span>
+
+        <button type="button" (click)="nextPage()" [disabled]="vm.page >= vm.pageCount"
+          class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 bg-white transition-colors">
+          Next
         </button>
       </div>
-    </form>
-  </section>
+    </div>
+  </ng-container>
+
+  <!-- Loading Template -->
+  <ng-template #loadingTpl>
+    <div class="flex flex-col items-center justify-center w-full min-h-[60vh] gap-4">
+      <ng-lottie [options]="options" height="160px" width="160px"></ng-lottie>
+      <p class="text-gray-500 font-medium animate-pulse">Loading Activity Reports...</p>
+    </div>
+  </ng-template>
 </div>

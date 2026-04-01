@@ -1,0 +1,138 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <div class="px-6 py-4 flex flex-col gap-2 bg-transparent">
+    <z-breadcrumb>
+      <z-breadcrumb-item [routerLink]="['/outreach/beneficiaries']">Beneficiaries</z-breadcrumb-item>
+      <z-breadcrumb-item *ngIf="beneficiary" [routerLink]="['/outreach/beneficiary', beneficiary.id.toString()]" [state]="{ beneficiary: beneficiary }">View Detail</z-breadcrumb-item>
+      <z-breadcrumb-item *ngIf="!beneficiary">View Detail</z-breadcrumb-item>
+      <z-breadcrumb-item>Request Update</z-breadcrumb-item>
+    </z-breadcrumb>
+    <div>
+      <h1 class="text-xl font-semibold text-gray-900">Request Update</h1>
+      <p class="text-sm text-gray-500" *ngIf="beneficiary">{{ beneficiary.name }} · {{ beneficiary.uid }}</p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="flex items-center justify-center py-20">
+    <div class="text-gray-400 text-sm animate-pulse">Loading beneficiary details...</div>
+  </div>
+
+  <!-- Form -->
+  <div *ngIf="!loading && beneficiary" class="max-w-3xl mx-auto px-6 py-8">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
+      <p class="text-sm text-gray-500 mb-6">
+        Make changes below. Only modified fields will be sent for manager approval.
+      </p>
+
+      <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <z-form-field>
+          <label z-form-label>Name</label>
+          <z-form-control><input z-input formControlName="name" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Mobile Number</label>
+          <z-form-control><input z-input formControlName="mobileNumber" maxlength="10" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Gender</label>
+          <z-form-control>
+            <select z-input formControlName="gender">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Date of Birth</label>
+          <z-form-control><input z-input type="date" formControlName="dateOfBirth" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field class="md:col-span-2">
+          <label z-form-label>Guardian Name</label>
+          <z-form-control><input z-input formControlName="guardianName" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Qualification</label>
+          <z-form-control><input z-input formControlName="qualification" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Religion</label>
+          <z-form-control><input z-input formControlName="religion" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Caste</label>
+          <z-form-control><input z-input formControlName="caste" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Monthly Income</label>
+          <z-form-control><input z-input type="number" formControlName="monthlyIncome" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Economic Status</label>
+          <z-form-control><input z-input formControlName="economicStatus" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Primary Income Source</label>
+          <z-form-control><input z-input formControlName="primaryIncomeSource" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Employment Status</label>
+          <z-form-control><input z-input formControlName="employmentStatus" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field>
+          <label z-form-label>Marital Status</label>
+          <z-form-control>
+            <select z-input formControlName="maritalStatus">
+              <option value="">Select</option>
+              <option>Single</option>
+              <option>Married</option>
+              <option>Widowed</option>
+              <option>Divorced</option>
+            </select>
+          </z-form-control>
+        </z-form-field>
+
+        <ng-container *ngIf="isMarried()">
+          <z-form-field>
+            <label z-form-label>Date of Marriage</label>
+            <z-form-control><input z-input type="date" formControlName="dateOfMarriage" /></z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <label z-form-label>Woman Age at Marriage</label>
+            <z-form-control><input z-input type="number" formControlName="womanAgeAtMarriage" /></z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <label z-form-label>Husband Age at Marriage</label>
+            <z-form-control><input z-input type="number" formControlName="husbandAgeAtMarriage" /></z-form-control>
+          </z-form-field>
+        </ng-container>
+
+      </form>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+        <button type="button" z-button zType="outline" (click)="goBack()">Cancel</button>
+        <button type="button" z-button (click)="submit()" [disabled]="isSubmitting || form.invalid">
+          {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

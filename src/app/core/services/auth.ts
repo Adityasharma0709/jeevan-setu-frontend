@@ -1,4 +1,5 @@
 import { Injectable } from "@angular/core";
+import { decodeJwtPayload } from "../utils/jwt";
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -10,11 +11,6 @@ export class AuthService {
   getCurrentUser() {
     const token = this.getToken();
     if (!token) return null;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload;
-    } catch (e) {
-      return null;
-    }
+    return decodeJwtPayload(token);
   }
 }

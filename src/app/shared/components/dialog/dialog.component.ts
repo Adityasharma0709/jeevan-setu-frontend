@@ -15,8 +15,10 @@ import {
   type EmbeddedViewRef,
   type EventEmitter,
   inject,
+  isSignal,
   NgModule,
   output,
+  type Signal,
   type TemplateRef,
   type Type,
   viewChild,
@@ -30,6 +32,7 @@ import { dialogVariants } from './dialog.variants';
 import { ZardButtonComponent } from '@/shared/components/button/button.component';
 import { ZardIconComponent } from '@/shared/components/icon/icon.component';
 import type { ZardIcon } from '@/shared/components/icon/icons';
+import { AnimationOptions, LottieComponent } from 'ngx-lottie';
 
 // Used by the NgModule provider definition
 
@@ -47,6 +50,7 @@ export class ZardDialogOptions<T, U> {
   zOkDestructive?: boolean;
   zOkDisabled?: boolean;
   zOkIcon?: ZardIcon;
+  zOkLoading?: boolean | Signal<boolean>;
   zOkText?: string | null;
   zOnCancel?: EventEmitter<T> | OnClickCallback<T> = noopFn;
   zOnOk?: EventEmitter<T> | OnClickCallback<T> = noopFn;
@@ -57,7 +61,7 @@ export class ZardDialogOptions<T, U> {
 
 @Component({
   selector: 'z-dialog',
-  imports: [OverlayModule, PortalModule, ZardButtonComponent, ZardIconComponent],
+  imports: [OverlayModule, PortalModule, ZardButtonComponent, ZardIconComponent, LottieComponent],
   template: `
     @if (config.zClosable || config.zClosable === undefined) {
       <button
@@ -111,14 +115,19 @@ export class ZardDialogOptions<T, U> {
             data-testid="z-ok-button"
             z-button
             [zType]="config.zOkDestructive ? 'destructive' : 'default'"
-            [disabled]="config.zOkDisabled"
+            class="gap-2"
+            [disabled]="config.zOkDisabled || okLoading()"
             (click)="onOkClick()"
           >
-            @if (config.zOkIcon) {
-              <z-icon [zType]="config.zOkIcon" />
-            }
+            @if (okLoading()) {
+              <ng-lottie [options]="loadingCircleOptions" height="18px" width="18px"></ng-lottie>
+            } @else {
+              @if (config.zOkIcon) {
+                <z-icon [zType]="config.zOkIcon" />
+              }
 
-            {{ config.zOkText ?? 'OK' }}
+              {{ config.zOkText ?? 'OK' }}
+            }
           </button>
         }
       </footer>
@@ -162,6 +171,11 @@ export class ZardDialogComponent<T, U> extends BasePortalOutlet {
   protected readonly config = inject(ZardDialogOptions<T, U>);
 
   protected readonly classes = computed(() => mergeClasses(dialogVariants(), this.config.zCustomClasses));
+  protected readonly loadingCircleOptions: AnimationOptions = { path: '/loadingcircle.json' };
+  protected readonly okLoading = computed(() => {
+    const v = this.config.zOkLoading;
+    return isSignal(v) ? v() : !!v;
+  });
   dialogRef?: ZardDialogRef<T>;
 
   protected readonly isStringContent = typeof this.config.zContent === 'string';

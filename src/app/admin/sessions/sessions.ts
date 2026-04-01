@@ -1,7 +1,7 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, TemplateRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
-import { Observable, Subject, combineLatest, map, startWith, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, combineLatest, debounceTime, distinctUntilChanged, map, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
@@ -52,19 +52,36 @@ export class Sessions {
   dialogRef!: ZardDialogRef<any>;
   sessionForm!: FormGroup;
   activityControl = new FormControl('');
+  statusFilter = new FormControl<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL', { nonNullable: true });
+  searchControl = new FormControl('');
 
   private refresh$ = new Subject<void>();
   isSubmitting = false;
   isEditing = false;
   options: AnimationOptions = { path: '/loading.json' };
   selectedSessionId: number | null = null;
+  readonly sessionStatusLoadingIds = signal<Set<number>>(new Set());
 
   activities$: Observable<Activity[]>;
   sessions$: Observable<Session[]>;
+  pager$!: Observable<{
+    items: Session[];
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    from: number;
+    to: number;
+  }>;
   private currentUserId: number | null = null;
   private currentUserEmail: string | null = null;
   private assignedProjectIds = new Set<number>();
   private allowedActivityIds = new Set<number>();
+
+  readonly pageSize = 10;
+  private readonly page$ = new BehaviorSubject<number>(1);
+  private lastPage = 1;
+  private lastTotalPages = 1;
 
   constructor(
     private fb: FormBuilder,
@@ -90,7 +107,11 @@ export class Sessions {
       this.adminService.getActivities(),
       assignedProjects$.pipe(startWith([] as any[]))
     ]).pipe(
-      map(([activities]) => (activities || []).filter((activity) => this.isActivityInAssignedProjects(activity)))
+      map(([activities]) =>
+        (activities || []).filter(
+          (activity) => this.isActivityInAssignedProjects(activity) && (activity?.status ?? '').toString().toUpperCase() === 'ACTIVE'
+        )
+      )
     );
     this.activities$.subscribe({
       next: (activities) => {
@@ -103,10 +124,27 @@ export class Sessions {
       }
     });
 
-    this.sessions$ = this.activityControl.valueChanges.pipe(
+    const status$ = this.statusFilter.valueChanges.pipe(
+      startWith(this.statusFilter.value),
+      distinctUntilChanged(),
+      tap(() => this.goToPage(1)),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    const search$ = this.searchControl.valueChanges.pipe(
       startWith(''),
+      debounceTime(300),
+      distinctUntilChanged(),
+      tap(() => this.goToPage(1)),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    const baseSessions$ = this.activityControl.valueChanges.pipe(
+      startWith(''),
+      tap(() => this.goToPage(1)),
       switchMap((activityId) => this.refresh$.pipe(
         startWith(void 0),
+        tap(() => this.goToPage(1)),
         switchMap(() => this.adminService.getAllSessions()),
         map((sessions) => {
           const selectedActivityId = activityId ? Number(activityId) : null;
@@ -114,16 +152,79 @@ export class Sessions {
           return (sessions || []).filter((session) => Number(session.activityId) === selectedActivityId);
         })
       )),
-      map((sessions) => (sessions || []).filter((session) => this.isSessionAllowed(session)))
+      map((sessions) => (sessions || []).filter((session) => this.isOwnedByCurrentAdmin(session))),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    const searchedSessions$ = combineLatest([baseSessions$, search$]).pipe(
+      map(([sessions]) => {
+        const query = (this.searchControl.value || '').toString().trim().toLowerCase();
+        if (!query) return sessions;
+        const includes = (value: unknown) => String(value ?? '').toLowerCase().includes(query);
+        return (sessions || []).filter((s) => includes(s.name));
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.sessions$ = combineLatest([searchedSessions$, status$]).pipe(
+      map(([sessions, status]) => {
+        const normalized = (status ?? 'ALL').toString().toUpperCase() as 'ALL' | 'ACTIVE' | 'INACTIVE';
+        if (normalized === 'ALL') return sessions;
+        return (sessions || []).filter((s) => (s?.status ?? '').toString().toUpperCase() === normalized);
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.pager$ = combineLatest([this.sessions$, this.page$]).pipe(
+      map(([sessions, page]) => {
+        const total = (sessions || []).length;
+        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+
+        const startIndex = (safePage - 1) * this.pageSize;
+        const endIndexExclusive = Math.min(startIndex + this.pageSize, total);
+        const items = (sessions || []).slice(startIndex, endIndexExclusive);
+
+        const from = total === 0 ? 0 : startIndex + 1;
+        const to = total === 0 ? 0 : endIndexExclusive;
+
+        return {
+          items,
+          page: safePage,
+          pageSize: this.pageSize,
+          total,
+          totalPages,
+          from,
+          to,
+        };
+      }),
+      tap((vm) => {
+        if (vm.page !== this.page$.getValue()) this.page$.next(vm.page);
+        this.lastPage = vm.page;
+        this.lastTotalPages = vm.totalPages;
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
     );
 
     this.initForm();
   }
 
+  goToPage(page: number) {
+    const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+    this.page$.next(nextPage);
+  }
+
+  prevPage() {
+    this.page$.next(Math.max(1, this.lastPage - 1));
+  }
+
+  nextPage() {
+    this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
+  }
+
   private initForm() {
     this.sessionForm = this.fb.group({
       name: ['', Validators.required],
-      sessionDate: ['', Validators.required],
       activityId: ['', Validators.required],
     });
   }
@@ -152,11 +253,9 @@ export class Sessions {
     this.isEditing = true;
     this.selectedSessionId = session.id;
 
-    // Format date for input[type="date"]
-    const date = new Date(session.sessionDate).toISOString().split('T')[0];
     this.sessionForm.patchValue({
-      ...session,
-      sessionDate: date
+      name: session.name,
+      activityId: (session as any)?.activityId ?? '',
     });
 
     this.dialogRef = this.dialog.create({
@@ -203,51 +302,81 @@ export class Sessions {
 
   deactivateSession(session: Session) {
     if (!this.canToggleStatus(session)) {
-      toast.error('You can only deactivate sessions from your assigned activities');
+      toast.error('You can only deactivate sessions created by you');
       return;
     }
     if (!confirm('Are you sure you want to deactivate this session?')) return;
+
+    const sessionId = Number(session?.id);
+    if (!Number.isFinite(sessionId)) return;
+    if (this.sessionStatusLoadingIds().has(sessionId)) return;
+
+    const nextSet = new Set(this.sessionStatusLoadingIds());
+    nextSet.add(sessionId);
+    this.sessionStatusLoadingIds.set(nextSet);
 
     this.adminService.deactivateSession(session.id).subscribe({
       next: () => {
         toast.success('Session deactivated');
         this.refresh$.next();
+
+        const done = new Set(this.sessionStatusLoadingIds());
+        done.delete(sessionId);
+        this.sessionStatusLoadingIds.set(done);
       },
-      error: (err) => toast.error(err.error?.message || 'Failed to deactivate')
+      error: (err) => {
+        const done = new Set(this.sessionStatusLoadingIds());
+        done.delete(sessionId);
+        this.sessionStatusLoadingIds.set(done);
+        toast.error(err.error?.message || 'Failed to deactivate');
+      }
     });
   }
 
   activateSession(session: Session) {
     if (!this.canToggleStatus(session)) {
-      toast.error('You can only activate sessions from your assigned activities');
+      toast.error('You can only activate sessions created by you');
       return;
     }
     if (!confirm('Are you sure you want to activate this session?')) return;
+
+    const sessionId = Number(session?.id);
+    if (!Number.isFinite(sessionId)) return;
+    if (this.sessionStatusLoadingIds().has(sessionId)) return;
+
+    const nextSet = new Set(this.sessionStatusLoadingIds());
+    nextSet.add(sessionId);
+    this.sessionStatusLoadingIds.set(nextSet);
 
     this.adminService.activateSession(session.id).subscribe({
       next: () => {
         setTimeout(() => toast.success('Session activated'), 0);
         this.refresh$.next();
+
+        const done = new Set(this.sessionStatusLoadingIds());
+        done.delete(sessionId);
+        this.sessionStatusLoadingIds.set(done);
       },
-      error: (err) => setTimeout(() => toast.error(err.error?.message || 'Failed to activate'), 0)
+      error: (err) => {
+        const done = new Set(this.sessionStatusLoadingIds());
+        done.delete(sessionId);
+        this.sessionStatusLoadingIds.set(done);
+        setTimeout(() => toast.error(err.error?.message || 'Failed to activate'), 0);
+      }
     });
   }
 
+  isSessionStatusLoading(sessionId: number): boolean {
+    return this.sessionStatusLoadingIds().has(sessionId);
+  }
+
   canToggleStatus(session: Session): boolean {
-    const activityAllowed = this.allowedActivityIds.has(Number(session?.activityId));
-    const isOwnSession = this.isOwnedByCurrentAdmin(session);
-    return activityAllowed || isOwnSession;
+    return this.isOwnedByCurrentAdmin(session);
   }
 
   private isActivityInAssignedProjects(activity: Activity): boolean {
     if (!activity?.projectId) return false;
     return this.assignedProjectIds.has(Number(activity.projectId));
-  }
-
-  private isSessionAllowed(session: Session): boolean {
-    const activityAllowed = this.allowedActivityIds.has(Number(session?.activityId));
-    const isOwnSession = this.isOwnedByCurrentAdmin(session);
-    return activityAllowed || isOwnSession;
   }
 
   private getCreatorId(entity: any): number | null {

@@ -1,0 +1,178 @@
+<div class="p-6 max-w-5xl mx-auto space-y-6">
+  <!-- Header -->
+  <header class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Activity Report Submission</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Redirection from Activity list to submit a new report.
+      </p>
+    </div>
+    <button z-button variant="outline" (click)="cancel()">
+      <z-icon zType="x" class="mr-2" />
+      Cancel
+    </button>
+  </header>
+
+  <section class="bg-white border rounded-xl p-6 shadow-sm">
+    <form [formGroup]="reportForm" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Activity -->
+        <z-form-field>
+          <label z-form-label zRequired>Activity</label>
+          <z-form-control>
+            <select z-input formControlName="activityId">
+              <option value="">Select activity</option>
+              <option *ngFor="let activity of activities$ | async" [value]="activity.id">{{ activity.name }}</option>
+            </select>
+          </z-form-control>
+        </z-form-field>
+
+        <!-- Session -->
+        <z-form-field>
+          <label z-form-label zRequired>Session</label>
+          <z-form-control>
+            <select z-input formControlName="sessionId">
+              <option value="">Select session</option>
+              <option *ngFor="let session of sessions$ | async" [value]="session.id">
+                {{ session.nameOnly }}
+              </option>
+            </select>
+          </z-form-control>
+        </z-form-field>
+
+        <!-- Session Date -->
+        <z-form-field>
+          <label z-form-label zRequired>Session Date</label>
+          <z-form-control>
+            <input z-input type="date" formControlName="sessionDate" />
+          </z-form-control>
+        </z-form-field>
+
+        <!-- Beneficiary (Searchable) -->
+        <z-form-field class="relative">
+          <label z-form-label zRequired>Beneficiary</label>
+          <z-form-control>
+            <input z-input type="text" placeholder="Search by name, UID or mobile..." (input)="onSearchBeneficiary($event)" [value]="beneficiarySearch$.value" />
+            <div *ngIf="beneficiarySearch$.value && !reportForm.get('beneficiaryId')?.value" class="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              <div *ngFor="let ben of beneficiaries$ | async" (click)="onSelectBeneficiary(ben)" class="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-sm">
+                <div class="font-medium">{{ ben.name }}</div>
+                <div class="text-[10px] text-gray-500">{{ ben.uid }} · {{ ben.mobileNumber }}</div>
+              </div>
+            </div>
+          </z-form-control>
+        </z-form-field>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+        <!-- Screening -->
+        <z-form-field>
+          <label z-form-label zRequired>Screening</label>
+          <z-form-control>
+            <select z-input formControlName="screening">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </z-form-control>
+        </z-form-field>
+      </div>
+
+      <!-- Tests Selection (Conditional) -->
+      <div *ngIf="reportForm.get('screening')?.value === 'Yes'" class="space-y-4 animate-in fade-in slide-in-from-top-2">
+        <div>
+          <label class="text-sm font-medium text-gray-700 mb-2 block">Select Tests Conducted</label>
+          <div class="flex flex-wrap gap-2">
+            <button *ngFor="let test of availableTests" type="button" (click)="toggleTest(test.id)"
+              [class]="isTestSelected(test.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-200'"
+              class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors hover:border-indigo-400">
+              {{ test.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Test Results Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4" [formGroup]="$any(reportForm.get('testValues'))">
+          <!-- Height -->
+          <z-form-field *ngIf="isTestSelected('height')">
+            <label z-form-label>Height (cm)</label>
+            <z-form-control>
+              <input z-input type="number" formControlName="height" placeholder="0" />
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Weight -->
+          <z-form-field *ngIf="isTestSelected('weight')">
+            <label z-form-label>Weight (kg)</label>
+            <z-form-control>
+              <input z-input type="number" formControlName="weight" placeholder="0" />
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Hb -->
+          <z-form-field *ngIf="isTestSelected('hb')">
+            <label z-form-label>Hb (g/dL)</label>
+            <z-form-control>
+              <input z-input type="number" formControlName="hb" placeholder="0" />
+            </z-form-control>
+          </z-form-field>
+
+          <!-- BP -->
+          <z-form-field *ngIf="isTestSelected('bp')" class="md:col-span-1">
+            <label z-form-label>BP (Systolic/Diastolic)</label>
+            <div class="flex items-center gap-2">
+              <z-form-control class="flex-1">
+                <input z-input type="number" formControlName="bpSystolic" placeholder="Sys" />
+              </z-form-control>
+              <span class="text-gray-400">/</span>
+              <z-form-control class="flex-1">
+                <input z-input type="number" formControlName="bpDiastolic" placeholder="Dia" />
+              </z-form-control>
+            </div>
+          </z-form-field>
+
+          <!-- Sugar -->
+          <z-form-field *ngIf="isTestSelected('sugar')">
+            <label z-form-label>Sugar (mg/dL)</label>
+            <z-form-control>
+              <input z-input type="number" formControlName="sugar" placeholder="0" />
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Cervical Cancer -->
+          <z-form-field *ngIf="isTestSelected('cervicalCancer')">
+            <label z-form-label>Cervical Cancer</label>
+            <z-form-control>
+              <select z-input formControlName="cervicalCancer">
+                <option value="Negative">Negative</option>
+                <option value="Positive">Positive</option>
+              </select>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Breast Cancer -->
+          <z-form-field *ngIf="isTestSelected('breastCancer')">
+            <label z-form-label>Breast Cancer</label>
+            <z-form-control>
+              <select z-input formControlName="breastCancer">
+                <option value="Negative">Negative</option>
+                <option value="Positive">Positive</option>
+              </select>
+            </z-form-control>
+          </z-form-field>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 pt-6 border-t mt-4">
+        <p class="text-xs text-gray-500">
+          Ensure all test results are recorded correctly before submission.
+        </p>
+        <div class="flex items-center gap-3">
+          <button z-button type="button" variant="ghost" (click)="cancel()">Cancel</button>
+          <button z-button type="button" [disabled]="isSubmitting" (click)="submit()" class="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]">
+            <z-icon zType="check" class="mr-2" *ngIf="!isSubmitting" />
+            {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+</div>

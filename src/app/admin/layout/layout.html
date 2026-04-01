@@ -24,13 +24,6 @@
           @if (!sidebarCollapsed) { <span>Dashboard</span> }
         </a>
 
-        <!-- Profile -->
-        <a routerLink="/admin/profile" routerLinkActive="active-link" class="menu-link"
-          [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''" zPosition="right">
-          <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-          @if (!sidebarCollapsed) { <span>Profile</span> }
-        </a>
-
         <!-- Managers -->
         <a routerLink="/admin/managers" routerLinkActive="active-link" class="menu-link"
           [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Managers' : ''" zPosition="right">
@@ -68,10 +61,16 @@
 
       </z-sidebar-group>
 
-      <!-- LOGOUT -->
-      <div class="mt-auto p-2 border-t">
+      <!-- LOGOUT & PROFILE -->
+      <div class="mt-auto p-2 border-t space-y-1">
 
-        <button type="button" z-button zType="ghost" class="menu-link text-red-600 hover:bg-red-50"
+        <a routerLink="/admin/profile" routerLinkActive="active-link" class="menu-link"
+          [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''" zPosition="right">
+          <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-2'" />
+          @if (!sidebarCollapsed) { <span>Profile</span> }
+        </a>
+
+        <button type="button" z-button zType="ghost" class="menu-link text-red-600 hover:bg-red-50 w-full"
           [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Logout' : ''" zPosition="right"
           (click)="logout()">
           <z-icon zType="log-out" [class]="sidebarCollapsed ? '' : 'mr-2'" />

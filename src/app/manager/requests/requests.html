@@ -1,109 +1,158 @@
-<ng-container *ngIf="!isLoading; else managerReqLoader" class="fade-in">
 <div class="p-6 space-y-10">
+    <!-- ================= INCOMING REQUESTS ================= -->
     <div>
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Incoming Outreach Requests</h1>
         <p class="text-gray-600">Review beneficiary update requests submitted by outreach workers.</p>
     </div>
 
-    <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
-        <table z-table class="w-full">
-            <thead z-table-header>
-                <tr z-table-row>
-                    <th z-table-head>Outreach Worker</th>
-                    <th z-table-head>Request Type</th>
-                    <th z-table-head>Beneficiary</th>
-                    <th z-table-head>Changes</th>
-                    <th z-table-head>Requested At</th>
-                    <th z-table-head class="text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody z-table-body>
-                <tr z-table-row *ngFor="let request of incomingRequests">
-                    <td z-table-cell>
-                        <div class="font-medium">{{ request.workerName }}</div>
-                        <div class="text-xs text-gray-500">{{ request.workerEmail }}</div>
-                    </td>
-                    <td z-table-cell>
-                        <span class="px-2 py-1 rounded-full text-xs font-semibold"
-                            [ngClass]="getTypeBadgeClass(request.type)">
-                            {{ request.type }}
-                        </span>
-                    </td>
-                    <td z-table-cell class="font-medium">{{ getBeneficiaryLabel(request) }}</td>
-                    <td z-table-cell class="text-gray-600">{{ getChangesPreview(request) }}</td>
-                    <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
-                    <td z-table-cell class="text-right">
-                        <div class="flex justify-end gap-2">
-                            <button z-button zType="secondary" zSize="sm" (click)="approveIncoming(request)"
-                                class="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
-                                <z-icon zType="check" class="mr-1" /> Approve
-                            </button>
-                            <button z-button zType="default" zSize="sm" (click)="rejectIncoming(request)"
-                                class="bg-red-50 text-red-700 border-red-200 hover:bg-red-100">
-                                <z-icon zType="x" class="mr-1" /> Reject
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                <tr z-table-row *ngIf="incomingRequests.length === 0">
-                    <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
-                        <div class="flex flex-col items-center">
-                            <z-icon zType="circle-check" size="32" class="text-green-300 mb-2" />
-                            <p>No incoming outreach requests.</p>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <ng-container *ngIf="incomingPager$ | async as pager; else managerReqLoader">
+        <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
+            <table z-table class="w-full">
+                <thead z-table-header>
+                    <tr z-table-row>
+                        <th z-table-head>Outreach Worker</th>
+                        <th z-table-head>Request Type</th>
+                        <th z-table-head>Beneficiary</th>
+                        <th z-table-head>Changes</th>
+                        <th z-table-head>Requested At</th>
+                        <th z-table-head class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody z-table-body>
+                    <tr z-table-row *ngFor="let request of pager.items">
+                        <td z-table-cell>
+                            <div class="font-medium">{{ request.workerName }}</div>
+                            <div class="text-xs text-gray-500">{{ request.workerEmail }}</div>
+                        </td>
+                        <td z-table-cell>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                                [ngClass]="getTypeBadgeClass(request.type)">
+                                {{ request.type }}
+                            </span>
+                        </td>
+                        <td z-table-cell class="font-medium">{{ getBeneficiaryLabel(request) }}</td>
+                        <td z-table-cell class="max-w-xs">
+                            <ng-container *ngIf="request.changes && getChangedKeys(request.changes).length">
+                                <div *ngFor="let key of getChangedKeys(request.changes)" class="text-xs text-gray-500 whitespace-normal">
+                                    <span class="font-medium text-gray-700">{{ formatFieldLabel(key) }}:</span> 
+                                    {{ formatValue(request.changes[key]) }}
+                                </div>
+                            </ng-container>
+                            <span *ngIf="!request.changes || !getChangedKeys(request.changes).length" class="text-gray-400">-</span>
+                        </td>
+                        <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
+                        <td z-table-cell class="text-right">
+                            <div class="flex justify-end gap-2">
+                                <button z-button zType="secondary" zSize="sm" (click)="approveIncoming(request)"
+                                    class="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
+                                    <z-icon zType="check" class="mr-1" /> Approve
+                                </button>
+                                <button z-button zType="default" zSize="sm" (click)="rejectIncoming(request)"
+                                    class="bg-red-50 text-red-700 border-red-200 hover:bg-red-100">
+                                    <z-icon zType="x" class="mr-1" /> Reject
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr z-table-row *ngIf="pager.items.length === 0">
+                        <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <z-icon zType="circle-check" size="32" class="text-green-300 mb-2" />
+                                <p>No incoming outreach requests.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-    <div>
+        <!-- Pagination for Incoming -->
+        <div class="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-gray-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">
+                Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }} incoming requests
+            </p>
+            <div class="flex items-center justify-end gap-2">
+                <button type="button" (click)="prevIncomingPage()" [disabled]="pager.page <= 1"
+                    class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white bg-white">
+                    Prev
+                </button>
+                <span class="text-sm text-gray-600">Page {{ pager.page }} / {{ pager.totalPages }}</span>
+                <button type="button" (click)="nextIncomingPage()" [disabled]="pager.page >= pager.totalPages"
+                    class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white bg-white">
+                    Next
+                </button>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ================= MY SENT REQUESTS ================= -->
+    <div class="pt-6">
         <h2 class="text-2xl font-bold text-gray-900 mb-2">My Sent Requests</h2>
         <p class="text-gray-600">Track requests created by you, along with status and target approver.</p>
     </div>
 
-    <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
-        <table z-table class="w-full">
-            <thead z-table-header>
-                <tr z-table-row>
-                    <th z-table-head>Request Type</th>
-                    <th z-table-head>Sent To</th>
-                    <th z-table-head>Status</th>
-                    <th z-table-head>Requested At</th>
-                    <th z-table-head>Remarks</th>
-                </tr>
-            </thead>
-            <tbody z-table-body>
-                <tr z-table-row *ngFor="let request of myRequests">
-                    <td z-table-cell>
-                        <span class="px-2 py-1 rounded-full text-xs font-semibold"
-                            [ngClass]="getTypeBadgeClass(request.type)">
-                            {{ request.type }}
-                        </span>
-                    </td>
-                    <td z-table-cell class="font-medium">{{ request.sentTo }}</td>
-                    <td z-table-cell>
-                        <span class="px-2 py-1 rounded-full text-xs font-semibold"
-                            [ngClass]="getStatusBadgeClass(request.status)">
-                            {{ request.status }}
-                        </span>
-                    </td>
-                    <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
-                    <td z-table-cell class="text-sm text-gray-600">{{ request.remarks || '-' }}</td>
-                </tr>
-                <tr z-table-row *ngIf="myRequests.length === 0">
-                    <td z-table-cell colspan="5" class="text-center py-12 text-gray-500">
-                        <div class="flex flex-col items-center">
-                            <z-icon zType="circle-check" size="32" class="text-green-300 mb-2" />
-                            <p>No requests created by you yet.</p>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <ng-container *ngIf="myPager$ | async as pager; else managerReqLoader">
+        <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
+            <table z-table class="w-full">
+                <thead z-table-header>
+                    <tr z-table-row>
+                        <th z-table-head>Request Type</th>
+                        <th z-table-head>Sent To</th>
+                        <th z-table-head>Status</th>
+                        <th z-table-head>Requested At</th>
+                        <th z-table-head>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody z-table-body>
+                    <tr z-table-row *ngFor="let request of pager.items">
+                        <td z-table-cell>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                                [ngClass]="getTypeBadgeClass(request.type)">
+                                {{ request.type }}
+                            </span>
+                        </td>
+                        <td z-table-cell class="font-medium">{{ request.sentTo }}</td>
+                        <td z-table-cell>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                                [ngClass]="getStatusBadgeClass(request.status)">
+                                {{ request.status }}
+                            </span>
+                        </td>
+                        <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
+                        <td z-table-cell class="text-sm text-gray-600">{{ request.remarks || '-' }}</td>
+                    </tr>
+                    <tr z-table-row *ngIf="pager.items.length === 0">
+                        <td z-table-cell colspan="5" class="text-center py-12 text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <z-icon zType="circle-check" size="32" class="text-green-300 mb-2" />
+                                <p>No requests created by you yet.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination for My Requests -->
+        <div class="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-gray-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">
+                Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }} sent requests
+            </p>
+            <div class="flex items-center justify-end gap-2">
+                <button type="button" (click)="prevMyPage()" [disabled]="pager.page <= 1"
+                    class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white bg-white">
+                    Prev
+                </button>
+                <span class="text-sm text-gray-600">Page {{ pager.page }} / {{ pager.totalPages }}</span>
+                <button type="button" (click)="nextMyPage()" [disabled]="pager.page >= pager.totalPages"
+                    class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white bg-white">
+                    Next
+                </button>
+            </div>
+        </div>
+    </ng-container>
 </div>
-</ng-container>
+>
 
 <ng-template #managerReqLoader>
   <div class="flex items-center justify-center p-12 w-full min-h-[400px]">

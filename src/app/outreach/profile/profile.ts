@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toast } from 'ngx-sonner';
@@ -40,7 +40,6 @@ export class Profile implements OnInit {
     name: ['', Validators.required],
     email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
     mobile: ['', [Validators.pattern('^[0-9]{10}$')]],
-    reason: ['', Validators.required],
   });
 
   readonly state$ = defer(() => {
@@ -119,14 +118,14 @@ export class Profile implements OnInit {
 
     this.outreachService
       .raiseRequest('MODIFY_PROFILE', {
-        name: raw.name,
-        mobile: raw.mobile,
-        reason: raw.reason,
+        changes: {
+          name: raw.name,
+          mobile: raw.mobile,
+        },
       })
       .subscribe({
         next: () => {
           toast.success('Profile change request submitted');
-          this.form.patchValue({ reason: '' });
           this.isSubmitting = false;
         },
         error: (err) => {

@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ManagerService, UserProfile } from '../manager.service';
+import { ManagerBeneficiary, ManagerService } from '../manager.service';
+import { BehaviorSubject, Observable, combineLatest, map, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
-import { ZardButtonComponent } from '@/shared/components/button';
+
 import {
     ZardTableComponent,
     ZardTableHeaderComponent,
@@ -20,8 +21,6 @@ import { ZardIconComponent } from '@/shared/components/icon';
     standalone: true,
     imports: [
         CommonModule,
-        FormsModule,
-        ZardButtonComponent,
         ZardTableComponent,
         ZardTableHeaderComponent,
         ZardTableBodyComponent,
@@ -34,136 +33,103 @@ import { ZardIconComponent } from '@/shared/components/icon';
     templateUrl: './beneficiaries.html'
 })
 export class Beneficiaries implements OnInit {
-    beneficiaries: any[] = [];
+    beneficiaries: ManagerBeneficiary[] = [];
     isLoading = true;
-    options: AnimationOptions = { path: '/loading.json' };
-    isModalOpen = false;
-    selectedBeneficiary: any = null;
-    updateForm: any = { name: '', mobileNumber: '' };
+    readonly loadingOptions: AnimationOptions = { path: '/loading.json' };
 
-    constructor(private managerService: ManagerService) { }
+    readonly pageSize = 10;
+    private readonly page$ = new BehaviorSubject<number>(1);
+    private lastPage = 1;
+    private lastTotalPages = 1;
+
+    private readonly refresh$ = new BehaviorSubject<void>(undefined);
+    pager$!: Observable<{
+        items: ManagerBeneficiary[];
+        page: number;
+        pageSize: number;
+        total: number;
+        totalPages: number;
+        from: number;
+        to: number;
+    }>;
+
+    private router = inject(Router);
+
+    constructor(
+        private managerService: ManagerService,
+        private cdr: ChangeDetectorRef
+    ) {
+        this.initPager();
+    }
+
+    private initPager() {
+        const baseBeneficiaries$ = this.refresh$.pipe(
+            tap(() => this.isLoading = true),
+            switchMap(() => this.managerService.getBeneficiaries()),
+            map((data: any) => Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : [])),
+            tap(() => this.isLoading = false),
+            shareReplay({ bufferSize: 1, refCount: true })
+        );
+
+        this.pager$ = combineLatest([baseBeneficiaries$, this.page$]).pipe(
+            map(([beneficiaries, page]) => {
+                const total = (beneficiaries || []).length;
+                const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+                const safePage = Math.min(Math.max(1, page), totalPages);
+
+                const startIndex = (safePage - 1) * this.pageSize;
+                const endIndexExclusive = Math.min(startIndex + this.pageSize, total);
+                const items = (beneficiaries || []).slice(startIndex, endIndexExclusive);
+
+                const from = total === 0 ? 0 : startIndex + 1;
+                const to = total === 0 ? 0 : endIndexExclusive;
+
+                return {
+                    items,
+                    page: safePage,
+                    pageSize: this.pageSize,
+                    total,
+                    totalPages,
+                    from,
+                    to,
+                };
+            }),
+            tap((vm) => {
+                if (vm.page !== this.page$.getValue()) this.page$.next(vm.page);
+                this.lastPage = vm.page;
+                this.lastTotalPages = vm.totalPages;
+                this.cdr.detectChanges();
+            }),
+            shareReplay({ bufferSize: 1, refCount: true })
+        );
+    }
 
     ngOnInit() {
-        this.loadBeneficiaries();
+        // No manual trigger needed, pager$ is an observable
     }
 
     loadBeneficiaries() {
-        this.isLoading = true;
-        this.managerService.getBeneficiaries().subscribe({
-            next: (data) => {
-                this.beneficiaries = data;
-                this.isLoading = false;
-            },
-            error: (err) => {
-                toast.error('Failed to load beneficiaries');
-                this.isLoading = false;
-                console.error(err);
-            }
-        });
+        this.refresh$.next();
     }
 
-    openUpdateModal(beneficiary: any) {
-        this.selectedBeneficiary = beneficiary;
-        this.updateForm = {
-            name: beneficiary.name,
-            mobileNumber: beneficiary.mobileNumber,
-            dateOfBirth: beneficiary.dateOfBirth ? new Date(beneficiary.dateOfBirth).toISOString().split('T')[0] : '',
-            gender: beneficiary.gender,
-            guardianName: beneficiary.guardianName,
-            religion: beneficiary.religion,
-            caste: beneficiary.caste,
-            qualification: beneficiary.qualification,
-            monthlyIncome: beneficiary.monthlyIncome,
-            primaryIncomeSource: beneficiary.primaryIncomeSource,
-            economicStatus: beneficiary.economicStatus,
-            employmentStatus: beneficiary.employmentStatus,
-            maritalStatus: beneficiary.maritalStatus,
-            dateOfMarriage: beneficiary.dateOfMarriage ? new Date(beneficiary.dateOfMarriage).toISOString().split('T')[0] : '',
-            womanAgeAtMarriage: beneficiary.womanAgeAtMarriage,
-            husbandAgeAtMarriage: beneficiary.husbandAgeAtMarriage
-        };
-        this.isModalOpen = true;
+    goToPage(page: number) {
+        const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+        this.page$.next(nextPage);
     }
 
-    closeModal() {
-        this.isModalOpen = false;
-        this.selectedBeneficiary = null;
+    prevPage() {
+        this.page$.next(Math.max(1, this.lastPage - 1));
     }
 
-    hasChanges(): boolean {
-        if (!this.selectedBeneficiary) return false;
-        const b = this.selectedBeneficiary;
-        const f = this.updateForm;
-
-        const dob = b.dateOfBirth ? new Date(b.dateOfBirth).toISOString().split('T')[0] : '';
-        const dom = b.dateOfMarriage ? new Date(b.dateOfMarriage).toISOString().split('T')[0] : '';
-
-        return f.name !== b.name ||
-            f.mobileNumber !== b.mobileNumber ||
-            f.dateOfBirth !== dob ||
-            f.gender !== b.gender ||
-            f.guardianName !== b.guardianName ||
-            f.religion !== b.religion ||
-            f.caste !== b.caste ||
-            f.qualification !== b.qualification ||
-            Number(f.monthlyIncome) !== Number(b.monthlyIncome) ||
-            f.primaryIncomeSource !== b.primaryIncomeSource ||
-            f.economicStatus !== b.economicStatus ||
-            f.employmentStatus !== b.employmentStatus ||
-            f.maritalStatus !== b.maritalStatus ||
-            f.dateOfMarriage !== dom ||
-            Number(f.womanAgeAtMarriage) !== Number(b.womanAgeAtMarriage) ||
-            Number(f.husbandAgeAtMarriage) !== Number(b.husbandAgeAtMarriage);
+    nextPage() {
+        this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
     }
 
-    submitUpdate() {
-        const changes: any = {};
-        const f = this.updateForm;
-        const b = this.selectedBeneficiary;
+    viewDetails(beneficiary: ManagerBeneficiary): void {
+        this.router.navigate(['/manager/beneficiaries', beneficiary.id], { state: { beneficiary } });
+    }
 
-        if (f.name !== b.name) changes.name = f.name;
-        if (f.mobileNumber !== b.mobileNumber) changes.mobileNumber = f.mobileNumber;
-
-        const dob = b.dateOfBirth ? new Date(b.dateOfBirth).toISOString().split('T')[0] : '';
-        if (f.dateOfBirth !== dob) changes.dateOfBirth = new Date(f.dateOfBirth).toISOString();
-
-        if (f.gender !== b.gender) changes.gender = f.gender;
-        if (f.guardianName !== b.guardianName) changes.guardianName = f.guardianName;
-        if (f.religion !== b.religion) changes.religion = f.religion;
-        if (f.caste !== b.caste) changes.caste = f.caste;
-        if (f.qualification !== b.qualification) changes.qualification = f.qualification;
-
-        if (Number(f.monthlyIncome) !== Number(b.monthlyIncome)) changes.monthlyIncome = Number(f.monthlyIncome);
-        if (f.primaryIncomeSource !== b.primaryIncomeSource) changes.primaryIncomeSource = f.primaryIncomeSource;
-        if (f.economicStatus !== b.economicStatus) changes.economicStatus = f.economicStatus;
-        if (f.employmentStatus !== b.employmentStatus) changes.employmentStatus = f.employmentStatus;
-
-        if (f.maritalStatus !== b.maritalStatus) changes.maritalStatus = f.maritalStatus;
-
-        const dom = b.dateOfMarriage ? new Date(b.dateOfMarriage).toISOString().split('T')[0] : '';
-        if (f.dateOfMarriage !== dom && f.maritalStatus === 'MARRIED') changes.dateOfMarriage = new Date(f.dateOfMarriage).toISOString();
-        if (Number(f.womanAgeAtMarriage) !== Number(b.womanAgeAtMarriage) && f.maritalStatus === 'MARRIED') changes.womanAgeAtMarriage = Number(f.womanAgeAtMarriage);
-        if (Number(f.husbandAgeAtMarriage) !== Number(b.husbandAgeAtMarriage) && f.maritalStatus === 'MARRIED') changes.husbandAgeAtMarriage = Number(f.husbandAgeAtMarriage);
-
-        if (Object.keys(changes).length === 0) return;
-
-        // Include current values for context in the request (optional but helpful for display)
-        const payload = {
-            ...changes,
-            current: {
-                name: this.selectedBeneficiary.name,
-                mobileNumber: this.selectedBeneficiary.mobileNumber
-            }
-        };
-
-        this.managerService.requestBeneficiaryUpdate(this.selectedBeneficiary.id, payload).subscribe({
-            next: () => {
-                toast.success('Update request submitted successfully');
-                this.closeModal();
-            },
-            error: (err) => {
-                toast.error(err.error?.message || 'Failed to submit request');
-            }
-        });
+    trackById(_: number, item: ManagerBeneficiary) {
+        return item.id;
     }
 }
