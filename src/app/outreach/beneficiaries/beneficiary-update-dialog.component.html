@@ -1,0 +1,106 @@
+<div class="p-6 space-y-4">
+  <form [formGroup]="updateForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 py-2 update-form-scroll">
+    <z-form-field>
+      <label z-form-label>Name</label>
+      <z-form-control><input z-input formControlName="name" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Mobile Number</label>
+      <z-form-control><input z-input formControlName="mobileNumber" maxlength="10" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Gender</label>
+      <z-form-control>
+        <select z-input formControlName="gender">
+          <option value="">Select</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Other</option>
+        </select>
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Date of Birth</label>
+      <z-form-control><input z-input type="date" formControlName="dateOfBirth" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field class="md:col-span-2">
+      <label z-form-label>Guardian Name</label>
+      <z-form-control><input z-input formControlName="guardianName" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Qualification</label>
+      <z-form-control><input z-input formControlName="qualification" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Religion</label>
+      <z-form-control><input z-input formControlName="religion" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Caste</label>
+      <z-form-control><input z-input formControlName="caste" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Monthly Income</label>
+      <z-form-control><input z-input type="number" formControlName="monthlyIncome" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Economic Status</label>
+      <z-form-control><input z-input formControlName="economicStatus" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Primary Income Source</label>
+      <z-form-control><input z-input formControlName="primaryIncomeSource" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Employment Status</label>
+      <z-form-control><input z-input formControlName="employmentStatus" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>Marital Status</label>
+      <z-form-control>
+        <select z-input formControlName="maritalStatus">
+          <option value="">Select</option>
+          <option>Single</option>
+          <option>Married</option>
+          <option>Widowed</option>
+          <option>Divorced</option>
+        </select>
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field *ngIf="isMarried()">
+      <label z-form-label>Date of Marriage</label>
+      <z-form-control><input z-input type="date" formControlName="dateOfMarriage" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field *ngIf="isMarried()">
+      <label z-form-label>Woman Age At Marriage</label>
+      <z-form-control><input z-input type="number" formControlName="womanAgeAtMarriage" /></z-form-control>
+    </z-form-field>
+
+    <z-form-field *ngIf="isMarried()">
+      <label z-form-label>Husband Age At Marriage</label>
+      <z-form-control><input z-input type="number" formControlName="husbandAgeAtMarriage" /></z-form-control>
+    </z-form-field>
+
+  </form>
+
+  <div class="flex justify-end gap-3 mt-6">
+    <button z-button zType="ghost" (click)="cancel()">Cancel</button>
+    <button z-button (click)="submit()" [disabled]="isSubmitting || updateForm.invalid">
+      {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+    </button>
+  </div>
+</div>

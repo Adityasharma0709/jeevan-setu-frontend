@@ -18,6 +18,7 @@ export interface OutreachWorker {
     email: string;
     mobile?: string;
     mobileNumber?: string;
+    usercode?: string;
     status: string;
     projectId?: number;
     locationId?: number;
@@ -61,6 +62,10 @@ export interface ManagerBeneficiary {
     dateOfMarriage?: string | null;
     womanAgeAtMarriage?: number | null;
     husbandAgeAtMarriage?: number | null;
+    state?: string | null;
+    district?: string | null;
+    block?: string | null;
+    village?: string | null;
     projectId?: number | null;
     locationId?: number | null;
     project?: ManagerBeneficiaryProject | null;
@@ -70,6 +75,11 @@ export interface ManagerBeneficiary {
         email?: string;
         mobileNumber?: string;
     } | null;
+    children?: any[];
+    activities?: any[];
+    groups?: any[];
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface AccountRequest {
@@ -175,5 +185,9 @@ export class ManagerService {
     }
     getBeneficiaries(): Observable<any[]> {
         return this.api.get(`${this.endpoint}/beneficiaries`) as Observable<ManagerBeneficiary[]>;
+    }
+
+    getBeneficiary(id: number): Observable<ManagerBeneficiary> {
+        return this.api.get(`outreach/beneficiary/${id}`) as Observable<ManagerBeneficiary>;
     }
 }

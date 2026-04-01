@@ -14,12 +14,6 @@
           @if (!sidebarCollapsed) { <span>Dashboard</span> }
         </a>
 
-        <a routerLink="/outreach/search" routerLinkActive="active-link" class="menu-link"
-          [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Search' : ''" zPosition="right">
-          <z-icon zType="search" [class]="sidebarCollapsed ? '' : 'mr-2'" />
-          @if (!sidebarCollapsed) { <span>Search</span> }
-        </a>
-
         <a routerLink="/outreach/requests" routerLinkActive="active-link" class="menu-link"
           [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'My Requests' : ''"
           zPosition="right">
@@ -40,15 +34,17 @@
           @if (!sidebarCollapsed) { <span>Activity</span> }
         </a>
 
+
+      </z-sidebar-group>
+
+      <div class="mt-auto p-2 border-t space-y-1">
         <a routerLink="/outreach/profile" routerLinkActive="active-link" class="menu-link"
           [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''" zPosition="right">
           <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-2'" />
           @if (!sidebarCollapsed) { <span>Profile</span> }
         </a>
-      </z-sidebar-group>
 
-      <div class="mt-auto p-2 border-t">
-        <button type="button" z-button zType="ghost" class="menu-link text-red-600 hover:bg-red-50"
+        <button type="button" z-button zType="ghost" class="menu-link text-red-600 hover:bg-red-50 w-full"
           [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Logout' : ''" zPosition="right"
           (click)="logout()">
           <z-icon zType="log-out" [class]="sidebarCollapsed ? '' : 'mr-2'" />

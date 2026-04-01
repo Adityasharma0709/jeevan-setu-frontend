@@ -12,7 +12,6 @@ import {
   ZardFormFieldComponent,
   ZardFormControlComponent,
   ZardFormLabelComponent,
-  ZardFormMessageComponent,
 } from '@/shared/components/form';
 
 import { ZardButtonComponent } from '@/shared/components/button';
@@ -25,7 +24,6 @@ import {
   ZardTableRowComponent,
   ZardTableHeadComponent,
   ZardTableCellComponent,
-  ZardTableCaptionComponent,
 } from '@/shared/components/table';
 
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
@@ -43,7 +41,6 @@ type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
     ZardFormFieldComponent,
     ZardFormControlComponent,
     ZardFormLabelComponent,
-    ZardFormMessageComponent,
     ZardButtonComponent,
     ZardInputDirective,
     ZardTableComponent,
@@ -52,7 +49,6 @@ type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
     ZardTableRowComponent,
     ZardTableHeadComponent,
     ZardTableCellComponent,
-    ZardTableCaptionComponent,
     ZardDialogModule,
     LottieComponent,
   ],

@@ -1,40 +1,45 @@
 <main class="login-page">
-  <section class="login-card">
-    <!-- <div class="brand-mark" aria-hidden="true">JS</div> -->
-    <div class="brand flex items-center justify-center gap-2">
-      <h1 class="brand-title">JEEVAN SETU <z-icon zType="sparkles" class="sparkle-icon" aria-hidden="true"></z-icon></h1>
+  <div class="login-card-split">
+    <!-- Left Side: Form -->
+    <div class="login-form-side">
+
+      <div class="form-header">
+        <h1>JEEVAN SETU</h1>
+        <p>Hey, welcome back to your special place</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="login-form" novalidate>
+        <div class="input-wrap">
+          <input id="email" type="email" placeholder="stanley@gmail.com" formControlName="email" />
+        </div>
+
+        <div class="input-wrap">
+          <input id="password" [type]="showPassword ? 'text' : 'password'" placeholder="••••••••••••"
+            formControlName="password" />
+        </div>
+
+        <div class="form-actions-row">
+          <label class="remember-me">
+            <input type="checkbox" />
+            <span class="checkmark"></span>
+            Remember me
+          </label>
+          <a href="#" class="forgot-pwd">Forgot Password?</a>
+        </div>
+
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <button class="login-btn" type="submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Signing In...' : 'Sign In' }}
+        </button>
+      </form>
     </div>
 
-    <p class="subtitle">Welcome back. Please sign in to continue.</p>
-
-    <form [formGroup]="form" (ngSubmit)="submit()" class="login-form" novalidate>
-      <label class="field" for="email">Email</label>
-      <div class="input-wrap">
-        <z-icon zType="mail" zSize="lg" class="field-icon" />
-        <input id="email" type="email" placeholder="Email" formControlName="email" />
+    <!-- Right Side: Lottie -->
+    <div class="login-image-side">
+      <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <ng-lottie [options]="lottieOptions" width="450px" height="450px"></ng-lottie>
       </div>
-
-      <label class="field" for="password">Password</label>
-      <div class="password-wrap input-wrap">
-        <z-icon zType="shield" zSize="lg" class="field-icon" />
-        <input
-          id="password"
-          [type]="showPassword ? 'text' : 'password'"
-          placeholder="password"
-          formControlName="password"
-        />
-        <button type="button" class="toggle-btn" (click)="togglePasswordVisibility()">
-          <z-icon zType="eye" zSize="default" class="toggle-icon" />
-          {{ showPassword ? 'Hide' : 'Show' }}
-        </button>
-      </div>
-
-      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
-
-      <button class="login-btn" type="submit" [disabled]="isSubmitting">
-        <z-icon zType="arrow-right" zSize="lg" class="btn-icon" />
-        {{ isSubmitting ? 'Logging in...' : 'Login' }}
-      </button>
-    </form>
-  </section>
+    </div>
+  </div>
 </main>

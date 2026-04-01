@@ -1,8 +1,9 @@
+<div class="mb-8">
+    <h2 class="text-2xl font-bold mb-2">Outreach Dashboard</h2>
+    <p class="text-gray-600">Overview of your assigned projects, beneficiaries, and sent requests.</p>
+</div>
+
 <ng-container *ngIf="stats$ | async as stats; else loader" class="fade-in">
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold mb-2">Outreach Dashboard</h2>
-        <p class="text-gray-600">Overview of your assigned projects, beneficiaries, and sent requests.</p>
-    </div>
 
     <ng-template #sectionLoader>
         <div class="flex items-center justify-center py-10 w-full min-h-[160px]">
@@ -66,9 +67,14 @@
                             <p class="text-sm font-semibold text-gray-900 truncate">{{ b.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5 truncate">{{ b.uid || b.mobileNumber || '-' }}</p>
                         </div>
-                        <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 shrink-0 whitespace-nowrap">
-                            {{ b.location?.village || '-' }}
-                        </span>
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 uppercase tracking-tight">
+                                {{ b.project?.name || '-' }}
+                            </span>
+                            <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 whitespace-nowrap">
+                                {{ b.location?.village || '-' }}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -231,8 +237,8 @@
 </ng-container>
 
 <ng-template #loader>
-    <div class="flex flex-col items-center justify-center w-full min-h-[60vh] gap-4">
+    <div class="flex flex-col items-center justify-center w-full min-h-[50vh] gap-4">
         <ng-lottie [options]="options" height="160px" width="160px"></ng-lottie>
-        <p class="text-gray-500 font-medium animate-pulse">Loading Outreach Dashboard...</p>
+        <p class="text-gray-500 font-medium animate-pulse">Loading dashboard data...</p>
     </div>
 </ng-template>

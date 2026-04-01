@@ -118,8 +118,10 @@ export class Profile implements OnInit {
 
     this.outreachService
       .raiseRequest('MODIFY_PROFILE', {
-        name: raw.name,
-        mobile: raw.mobile,
+        changes: {
+          name: raw.name,
+          mobile: raw.mobile,
+        },
       })
       .subscribe({
         next: () => {

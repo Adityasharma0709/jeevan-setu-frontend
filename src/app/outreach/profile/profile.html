@@ -4,12 +4,8 @@
     <p class="text-gray-600">Submit profile updates via outreach request workflow.</p>
   </div>
 
-  <ng-container *ngIf="state$ | async as state">
-    <div *ngIf="state.status === 'loading'" class="flex items-center justify-center py-6">
-      <ng-lottie [options]="options" height="140px" width="140px"></ng-lottie>
-    </div>
-
-    <section class="bg-white border rounded-xl p-6" *ngIf="state.status !== 'loading'">
+  <ng-container *ngIf="state$ | async as state; else profileLoader">
+    <section class="bg-white border rounded-xl p-6">
       <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <z-form-field>
         <label z-form-label zRequired>Name</label>
@@ -26,8 +22,6 @@
         <z-form-control><input z-input formControlName="mobile" maxlength="10" /></z-form-control>
       </z-form-field>
 
-
-
       <div class="md:col-span-2 flex justify-end pt-2 border-t">
         <button z-button type="button" [disabled]="isSubmitting" (click)="submit()">
           <z-icon zType="check" class="mr-2" />
@@ -37,4 +31,11 @@
       </form>
     </section>
   </ng-container>
+
+  <ng-template #profileLoader>
+    <div class="flex flex-col items-center justify-center w-full min-h-[60vh] gap-4">
+      <ng-lottie [options]="options" height="160px" width="160px"></ng-lottie>
+      <p class="text-gray-500 font-medium animate-pulse">Loading Profile...</p>
+    </div>
+  </ng-template>
 </div>

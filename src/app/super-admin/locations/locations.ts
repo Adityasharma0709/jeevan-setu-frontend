@@ -12,7 +12,7 @@ import { ApiService } from '../../core/services/api';
    ZARD UI IMPORTS
 ========================= */
 
-import { ZardDividerComponent } from '@/shared/components/divider';
+
 import { ZardDropdownImports } from '@/shared/components/dropdown/dropdown.imports';
 import { ZardMenuImports } from '@/shared/components/menu';
 import { ZardIconComponent } from '@/shared/components/icon';
@@ -32,7 +32,7 @@ import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 
-import { ZardDropdownDirective, ZardDropdownMenuComponent } from '@/shared/components/dropdown';
+import { ZardDropdownDirective } from '@/shared/components/dropdown';
 
 import { ZardFormFieldComponent, ZardFormControlComponent } from '@/shared/components/form';
 
@@ -98,12 +98,10 @@ interface LocationPagerVm {
     ZardDropdownImports,
     ZardMenuImports,
     ZardDropdownDirective,
-    ZardDropdownMenuComponent,
 
     ZardFormFieldComponent,
     ZardFormControlComponent,
 
-    ZardDividerComponent,
     LottieComponent,
   ],
   templateUrl: './locations.html',

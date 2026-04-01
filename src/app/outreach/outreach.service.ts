@@ -43,6 +43,14 @@ export interface Beneficiary {
   economicStatus: string;
   primaryIncomeSource: string;
   employmentStatus: string;
+  children?: any[];
+  activities?: any[];
+  groups?: any[];
+  /** Beneficiary's actual address — may differ from the project location */
+  state?: string | null;
+  district?: string | null;
+  block?: string | null;
+  village?: string | null;
   createdAt: string;
   updatedAt: string;
   project?: OutreachProject;
@@ -72,6 +80,11 @@ export interface CreateBeneficiaryPayload {
   economicStatus: string;
   primaryIncomeSource: string;
   employmentStatus: string;
+  /** Beneficiary's actual address — may differ from the project location */
+  state?: string;
+  district?: string;
+  block?: string;
+  village?: string;
 }
 
 export interface OutreachActivity {
@@ -99,6 +112,7 @@ export interface CreateReportPayload {
   beneficiaryId: number;
   activityId: number;
   sessionId?: number;
+  sessionDate: string;
   reportData: Record<string, unknown>;
 }
 
@@ -273,6 +287,13 @@ export class OutreachService {
         ),
       ),
       catchError(() => of([])),
+    );
+  }
+
+  getMyReports(): Observable<any[]> {
+    return (this.api.get(`${this.endpoint}/my-reports`) as Observable<any[]>).pipe(
+      map(reports => reports || []),
+      catchError(() => of([]))
     );
   }
 }

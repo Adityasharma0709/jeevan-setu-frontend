@@ -1,6 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { BehaviorSubject, Observable, combineLatest, map, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ManagerService, OutreachWorker } from '../manager.service';
@@ -65,6 +66,22 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     options: AnimationOptions = { path: '/loading.json' };
     private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
+    readonly pageSize = 10;
+    private readonly page$ = new BehaviorSubject<number>(1);
+    private lastPage = 1;
+    private lastTotalPages = 1;
+
+    private readonly refresh$ = new BehaviorSubject<void>(undefined);
+    pager$!: Observable<{
+        items: OutreachWorker[];
+        page: number;
+        pageSize: number;
+        total: number;
+        totalPages: number;
+        from: number;
+        to: number;
+    }>;
+
     constructor(
         private fb: FormBuilder,
         private managerService: ManagerService,
@@ -73,19 +90,46 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         private cdr: ChangeDetectorRef
     ) {
         this.initForm();
+        this.initPager();
+    }
+
+    private initPager() {
+        const baseWorkers$ = this.refresh$.pipe(
+            tap(() => this.isLoadingWorkers = true),
+            switchMap(() => this.managerService.getOutreachWorkers()),
+            map((workers) => Array.isArray(workers) ? workers.filter(w => ['ACTIVE', 'INACTIVE'].includes(w.status)) : []),
+            tap(() => this.isLoadingWorkers = false),
+            shareReplay({ bufferSize: 1, refCount: true })
+        );
+
+        this.pager$ = combineLatest([baseWorkers$, this.page$]).pipe(
+            map(([workers, page]) => {
+                const total = workers.length;
+                const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+                const safePage = Math.min(Math.max(1, page), totalPages);
+                const startIndex = (safePage - 1) * this.pageSize;
+                const items = workers.slice(startIndex, startIndex + this.pageSize);
+                const from = total === 0 ? 0 : startIndex + 1;
+                const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
+                return { items, page: safePage, pageSize: this.pageSize, total, totalPages, from, to };
+            }),
+            tap((vm) => {
+                this.lastPage = vm.page;
+                this.lastTotalPages = vm.totalPages;
+                this.cdr.detectChanges();
+            }),
+            shareReplay({ bufferSize: 1, refCount: true })
+        );
     }
 
     ngOnInit() {
         this.loadProjects();
-        this.loadWorkers();
-        this.refreshTimer = setInterval(() => this.loadWorkers(), 15000);
+        // this.loadWorkers(); // Logic moved to pager
+        this.refreshTimer = setInterval(() => this.loadWorkers(), 30000); // Slower refresh for pager safety
     }
 
     ngAfterViewInit() {
-        // One post-view safety fetch so list does not depend on any button interaction.
-        if (!this.workers.length && !this.isLoadingWorkers) {
-            queueMicrotask(() => this.loadWorkers());
-        }
+        // Pager handles initial load via BehaviorSubject(undefined)
     }
 
     ngOnDestroy() {
@@ -139,6 +183,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
 
     private initForm() {
         this.requestForm = this.fb.group({
+            usercode: [{ value: '', disabled: true }],
             name: ['', Validators.required],
             email: ['', [Validators.required, Validators.email]],
             mobile: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
@@ -177,20 +222,19 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     }
 
     loadWorkers() {
-        this.isLoadingWorkers = true;
-        this.managerService.getOutreachWorkers().subscribe({
-            next: (workers) => {
-                this.workers = Array.isArray(workers) ? workers.filter(w => ['ACTIVE', 'INACTIVE'].includes(w.status)) : [];
-                this.isLoadingWorkers = false;
-                this.cdr.detectChanges();
-            },
-            error: () => {
-                toast.error('Failed to load outreach workers');
-                this.isLoadingWorkers = false;
-                this.workers = [];
-                this.cdr.detectChanges();
-            }
-        });
+        this.refresh$.next();
+    }
+
+    goToPage(page: number) {
+        this.page$.next(Math.max(1, Math.floor(Number(page) || 1)));
+    }
+
+    prevPage() {
+        this.page$.next(Math.max(1, this.lastPage - 1));
+    }
+
+    nextPage() {
+        this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
     }
 
     openTagDialog(worker: OutreachWorker) {
@@ -253,6 +297,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         this.currentAction = action;
         this.selectedWorker = worker || null;
         this.requestForm.reset({
+            usercode: { value: '', disabled: true },
             name: '',
             email: '',
             mobile: '',
@@ -264,6 +309,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
 
         if (worker) {
             this.requestForm.patchValue({
+                usercode: worker.usercode || '',
                 name: worker.name,
                 email: worker.email,
                 mobile: worker.mobile ?? (worker as any).mobileNumber ?? (worker as any).phone ?? '',
@@ -284,6 +330,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             this.requestForm.get('email')?.enable();
             this.requestForm.get('mobile')?.enable();
             this.requestForm.get('password')?.enable();
+            this.populateNextWorkerCode();
         }
 
         const titleMap = {
@@ -344,6 +391,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         };
 
         if (this.currentAction === 'CREATE') {
+            requestData.usercode = formValue.usercode;
             requestData.name = formValue.name;
             requestData.email = formValue.email;
             requestData.mobile = formValue.mobile;
@@ -375,5 +423,51 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
                 this.isSubmitting = false;
             }
         });
+    }
+
+    private populateNextWorkerCode(): void {
+        this.managerService
+            .getOutreachWorkers()
+            .subscribe({
+                next: (workers) => {
+                    const codes = (workers || []).map((w) => w?.usercode);
+                    const nextCode = this.nextSerialCode('OW', codes, 2);
+                    this.requestForm.get('usercode')?.setValue(nextCode, { emitEvent: false });
+                },
+                error: () => {
+                    // Fallback
+                    this.requestForm.get('usercode')?.setValue('OW01', { emitEvent: false });
+                },
+            });
+    }
+
+    private nextSerialCode(prefix: string, codes: Array<string | null | undefined>, minDigits: number): string {
+        const safePrefix = (prefix || '')
+            .toString()
+            .toUpperCase()
+            .replace(/[^A-Z]/g, '')
+            .padEnd(2, 'O')
+            .slice(0, 2);
+
+        const safeMinDigits = Math.max(2, Math.floor(Number(minDigits) || 2));
+        let maxValue = 0;
+        let digitsWidth = safeMinDigits;
+
+        for (const raw of (codes || [])) {
+            const code = (raw || '').toString().trim().toUpperCase();
+            const match = code.match(/^([A-Z]{2})(\d+)$/);
+            if (!match) continue;
+            if (match[1] !== safePrefix) continue;
+
+            digitsWidth = Math.max(digitsWidth, match[2].length);
+
+            const value = Number(match[2]);
+            if (!Number.isFinite(value)) continue;
+            if (value > maxValue) maxValue = value;
+        }
+
+        const nextValue = maxValue + 1;
+        const digits = nextValue.toString().padStart(digitsWidth, '0');
+        return `${safePrefix}${digits}`;
     }
 }

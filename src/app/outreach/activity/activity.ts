@@ -1,13 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { of, startWith, switchMap } from 'rxjs';
-import { toast } from 'ngx-sonner';
+import { Router } from '@angular/router';
+import { BehaviorSubject, startWith, switchMap, map, shareReplay, combineLatest } from 'rxjs';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { ZardButtonComponent } from '@/shared/components/button';
-import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
-import { ZardInputDirective, ZardSelectDirective } from '@/shared/components/input';
+import { ZardTableComponent, ZardTableHeaderComponent, ZardTableBodyComponent, ZardTableRowComponent, ZardTableHeadComponent, ZardTableCellComponent } from '@/shared/components/table';
 
 import { OutreachService } from '../outreach.service';
 
@@ -16,69 +15,114 @@ import { OutreachService } from '../outreach.service';
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     ZardButtonComponent,
-    ZardFormControlComponent,
-    ZardFormFieldComponent,
     ZardIconComponent,
-    ZardInputDirective,
-    ZardSelectDirective,
+    ZardTableComponent,
+    ZardTableHeaderComponent,
+    ZardTableBodyComponent,
+    ZardTableRowComponent,
+    ZardTableHeadComponent,
+    ZardTableCellComponent,
+    LottieComponent,
   ],
   templateUrl: './activity.html',
-  styleUrl: './activity.css',
 })
 export class Activity {
   private outreachService = inject(OutreachService);
-  private fb = inject(FormBuilder);
+  private router = inject(Router);
 
-  isSubmitting = false;
+  options: AnimationOptions = { path: '/loading.json' };
 
-  reportForm = this.fb.group({
-    activityId: ['', Validators.required],
-    sessionId: [''],
-    beneficiaryId: ['', Validators.required],
-    attendanceStatus: ['Present', Validators.required],
-  });
+  private readonly refresh$ = new BehaviorSubject<void>(undefined);
+  readonly pageSize = 10;
+  private readonly page$ = new BehaviorSubject<number>(1);
+  private lastPage = 1;
+  private lastPageCount = 1;
 
-  activities$ = this.outreachService.getActiveActivities();
-  beneficiaries$ = this.outreachService.getBeneficiaries();
+  isLoading = true;
+  expandedReportId: number | null = null;
 
-  sessions$ = this.reportForm.get('activityId')!.valueChanges.pipe(
-    startWith(this.reportForm.get('activityId')!.value),
-    switchMap((activityId) =>
-      activityId ? this.outreachService.getSessionsByActivity(Number(activityId)) : of([])
-    )
+  reports$ = this.refresh$.pipe(
+    startWith(undefined),
+    switchMap(() => {
+      this.isLoading = true;
+      this.page$.next(1); // Reset page on refresh
+      return this.outreachService.getMyReports();
+    }),
+    map(reports => {
+      this.isLoading = false;
+      return reports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }),
+    shareReplay(1)
   );
 
-  submit() {
-    if (this.reportForm.invalid) {
-      this.reportForm.markAllAsTouched();
-      toast.error('Please complete all required fields');
-      return;
+  vm$ = combineLatest([
+    this.reports$,
+    this.page$.asObservable(),
+  ]).pipe(
+    map(([reports, page]) => {
+      const total = reports.length;
+      const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
+      const safePage = Math.min(Math.max(1, page), pageCount);
+      const startIndex = (safePage - 1) * this.pageSize;
+
+      this.lastPage = safePage;
+      this.lastPageCount = pageCount;
+
+      return {
+        items: reports.slice(startIndex, startIndex + this.pageSize),
+        total,
+        page: safePage,
+        pageCount,
+        pageSize: this.pageSize,
+        startIndex,
+        endIndex: Math.min(startIndex + this.pageSize, total)
+      };
+    })
+  );
+
+  addReport() {
+    this.router.navigate(['/outreach/report-activity']);
+  }
+
+  reload() {
+    this.refresh$.next();
+  }
+
+  nextPage(): void {
+    if (this.lastPage < this.lastPageCount) {
+      this.page$.next(this.lastPage + 1);
     }
+  }
 
-    const raw = this.reportForm.getRawValue();
-    this.isSubmitting = true;
+  prevPage(): void {
+    if (this.lastPage > 1) {
+      this.page$.next(this.lastPage - 1);
+    }
+  }
 
-    this.outreachService
-      .submitReport({
-        beneficiaryId: Number(raw.beneficiaryId),
-        activityId: Number(raw.activityId),
-        sessionId: raw.sessionId ? Number(raw.sessionId) : undefined,
-        reportData: {
-          attendanceStatus: raw.attendanceStatus,
-        },
-      })
-      .subscribe({
-        next: () => {
-          toast.success('Report submitted successfully');
-          this.isSubmitting = false;
-          this.reportForm.reset({ attendanceStatus: 'Present' });
-        },
-        error: (err) => {
-          toast.error(err?.error?.message || 'Failed to submit report');
-          this.isSubmitting = false;
-        },
-      });
+  toggleExpand(reportId: number) {
+    if (this.expandedReportId === reportId) {
+      this.expandedReportId = null;
+    } else {
+      this.expandedReportId = reportId;
+    }
+  }
+
+  getScreeningSummary(report: any): string {
+    const data = report?.reportData;
+    if (!data || data.screening === 'No') return 'No';
+    
+    const details = data.screeningDetails;
+    if (!details) return 'Yes (No details)';
+
+    const parts: string[] = [];
+    if (details.height) parts.push(`H: ${details.height}cm`);
+    if (details.weight) parts.push(`W: ${details.weight}kg`);
+    if (details.bp) parts.push(`BP: ${details.bp}`);
+    if (details.hb) parts.push(`Hb: ${details.hb}`);
+    if (details.sugar) parts.push(`Sugar: ${details.sugar}`);
+    
+    return `Yes (${parts.join(', ')})`;
   }
 }

@@ -1,4 +1,4 @@
-﻿import { NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { roleGuard } from '../core/guards/role-guard';
@@ -8,6 +8,7 @@ import { Beneficiaries } from './beneficiaries/beneficiaries';
 import { Dashboard } from './dashboard/dashboard';
 import { Layout } from './layout/layout';
 import { Profile } from './profile/profile';
+import { ReportActivity } from './report-activity/report-activity';
 
 const routes: Routes = [
   {
@@ -18,10 +19,12 @@ const routes: Routes = [
     children: [
       { path: '', component: Dashboard },
       { path: 'beneficiaries', component: Beneficiaries },
-      { path: 'search', loadComponent: () => import('./search/search').then(m => m.Search) },
+      { path: 'beneficiaries/create', loadComponent: () => import('./create-beneficiary/create-beneficiary').then(m => m.CreateBeneficiary) },
       { path: 'beneficiary/:id', loadComponent: () => import('./profile-view/profile-view').then(m => m.ProfileView) },
+      { path: 'beneficiary/:id/request-update', loadComponent: () => import('./request-update/request-update').then(m => m.RequestUpdate) },
       { path: 'requests', loadComponent: () => import('./requests/requests').then(m => m.Requests) },
       { path: 'activity', component: Activity },
+      { path: 'report-activity', component: ReportActivity },
       { path: 'profile', component: Profile },
     ],
   },

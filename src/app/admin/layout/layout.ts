@@ -8,7 +8,6 @@ import {
   LayoutComponent,
   SidebarComponent,
   ContentComponent,
-  FooterComponent,
   SidebarGroupComponent,
   SidebarGroupLabelComponent,
 } from '@/shared/components/layout';
@@ -22,7 +21,6 @@ import { CommonModule } from '@angular/common';
     LayoutComponent,
     SidebarComponent,
     ContentComponent,
-    FooterComponent,
     ZardIconComponent,
     SidebarGroupComponent,
     SidebarGroupLabelComponent,

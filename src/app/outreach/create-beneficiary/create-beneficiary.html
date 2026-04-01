@@ -1,0 +1,317 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <div class="px-6 py-4 flex flex-col gap-2 bg-transparent">
+    <z-breadcrumb>
+      <z-breadcrumb-item [routerLink]="['/outreach/beneficiaries']">Beneficiaries</z-breadcrumb-item>
+      <z-breadcrumb-item>Create Beneficiary</z-breadcrumb-item>
+    </z-breadcrumb>
+    <div>
+      <h1 class="text-xl font-semibold text-gray-900">Create Beneficiary</h1>
+      <p class="text-sm text-gray-500">Register a new beneficiary to a project location.</p>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="max-w-4xl mx-auto px-6 py-8">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
+      <form [formGroup]="form" class="space-y-8">
+
+        <!-- ┌─ Assignment ──────────────────────────────────────────────────── -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Assignment</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <z-form-field>
+              <label z-form-label zRequired>Project</label>
+              <z-form-control>
+                <select z-input formControlName="projectId">
+                  <option value="">Select project</option>
+                  <option *ngFor="let project of projects$ | async" [value]="project.id">{{ project.name }}</option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Location</label>
+              <z-form-control>
+                <select z-input formControlName="locationId">
+                  <option value="">Select location</option>
+                  <option *ngFor="let location of locations$ | async" [value]="location.id">
+                    {{ location.village }} ({{ location.locationCode }})
+                  </option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+          </div>
+        </div>
+
+        <!-- ┌─ Beneficiary Address ──────────────────────────────────────────── -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-0">Beneficiary Address</p>
+            <span class="text-[10px] text-indigo-500 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 font-medium">
+              Pre-filled from location · editable
+            </span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <z-form-field>
+              <label z-form-label zRequired>State</label>
+              <z-form-control>
+                <input z-input formControlName="state" placeholder="e.g. Uttar Pradesh" />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>District</label>
+              <z-form-control>
+                <input z-input formControlName="district" placeholder="e.g. Varanasi" />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Block</label>
+              <z-form-control>
+                <input z-input formControlName="block" placeholder="e.g. Cholapur" />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Village / City</label>
+              <z-form-control>
+                <input z-input formControlName="village" placeholder="e.g. Barhauna" />
+              </z-form-control>
+            </z-form-field>
+          </div>
+        </div>
+
+        <!-- ┌─ Personal Information ─────────────────────────────────────────── -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Personal Information</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <z-form-field>
+              <label z-form-label zRequired>Name</label>
+              <z-form-control>
+                <input z-input formControlName="name" placeholder="Full name" />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Mobile Number</label>
+              <z-form-control>
+                <input z-input formControlName="mobileNumber" maxlength="10" placeholder="10-digit mobile" />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Gender</label>
+              <z-form-control>
+                <select z-input formControlName="gender">
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Date of Birth</label>
+              <z-form-control>
+                <input z-input type="date" formControlName="dateOfBirth" />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field class="md:col-span-2">
+              <label z-form-label zRequired>Guardian Name</label>
+              <z-form-control>
+                <input z-input formControlName="guardianName" placeholder="Father / Husband name" />
+              </z-form-control>
+            </z-form-field>
+          </div>
+        </div>
+
+        <!-- ┌─ Marital Information ──────────────────────────────────────────── -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Marital Information</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <z-form-field>
+              <label z-form-label>Marital Status</label>
+              <z-form-control>
+                <select z-input formControlName="maritalStatus">
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Widowed">Widowed</option>
+                  <option value="Divorced">Divorced</option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field *ngIf="isMarried()">
+              <label z-form-label>Date of Marriage</label>
+              <z-form-control>
+                <input z-input type="date" formControlName="dateOfMarriage" />
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Woman age at marriage -->
+            <z-form-field *ngIf="isMarried()">
+              <label z-form-label class="flex items-center gap-1.5">
+                Woman Age at Marriage
+                <span *ngIf="isAgeAutoCalc('woman')"
+                      class="text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">
+                  Auto&#8209;calculated
+                </span>
+              </label>
+              <z-form-control>
+                <input z-input type="number" min="0" formControlName="womanAgeAtMarriage"
+                  [attr.readonly]="isAgeAutoCalc('woman') ? '' : null"
+                  [style.background]="isAgeAutoCalc('woman') ? '#f9fafb' : null"
+                  [style.cursor]="isAgeAutoCalc('woman') ? 'default' : null"
+                  [placeholder]="isAgeAutoCalc('woman') ? 'Auto' : 'Enter age'"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Husband age at marriage -->
+            <z-form-field *ngIf="isMarried()">
+              <label z-form-label class="flex items-center gap-1.5">
+                Husband Age at Marriage
+                <span *ngIf="isAgeAutoCalc('husband')"
+                      class="text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">
+                  Auto&#8209;calculated
+                </span>
+              </label>
+              <z-form-control>
+                <input z-input type="number" min="0" formControlName="husbandAgeAtMarriage"
+                  [attr.readonly]="isAgeAutoCalc('husband') ? '' : null"
+                  [style.background]="isAgeAutoCalc('husband') ? '#f9fafb' : null"
+                  [style.cursor]="isAgeAutoCalc('husband') ? 'default' : null"
+                  [placeholder]="isAgeAutoCalc('husband') ? 'Auto' : 'Enter age'"
+                />
+              </z-form-control>
+            </z-form-field>
+          </div>
+        </div>
+
+        <!-- ┌─ Education & Background ───────────────────────────────────────── -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Education &amp; Background</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Qualification -->
+            <z-form-field>
+              <label z-form-label zRequired>Qualification</label>
+              <z-form-control>
+                <select z-input formControlName="qualification">
+                  <option value="">Select qualification</option>
+                  <option *ngFor="let opt of qualificationOptions" [value]="opt">{{ opt }}</option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field *ngIf="isOther('qualification')">
+              <label z-form-label zRequired>Specify Qualification</label>
+              <z-form-control>
+                <input z-input formControlName="qualificationOther" placeholder="Enter qualification" />
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Religion -->
+            <z-form-field>
+              <label z-form-label zRequired>Religion</label>
+              <z-form-control>
+                <select z-input formControlName="religion">
+                  <option value="">Select religion</option>
+                  <option *ngFor="let opt of religionOptions" [value]="opt">{{ opt }}</option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field *ngIf="isOther('religion')">
+              <label z-form-label zRequired>Specify Religion</label>
+              <z-form-control>
+                <input z-input formControlName="religionOther" placeholder="Enter religion" />
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Caste -->
+            <z-form-field>
+              <label z-form-label zRequired>Caste / Category</label>
+              <z-form-control>
+                <select z-input formControlName="caste">
+                  <option value="">Select category</option>
+                  <option *ngFor="let opt of casteOptions" [value]="opt">{{ opt }}</option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field *ngIf="isOther('caste')">
+              <label z-form-label zRequired>Specify Caste / Category</label>
+              <z-form-control>
+                <input z-input formControlName="casteOther" placeholder="Enter caste / category" />
+              </z-form-control>
+            </z-form-field>
+          </div>
+        </div>
+
+        <!-- ┌─ Economic Information ─────────────────────────────────────────── -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Economic Information</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <z-form-field>
+              <label z-form-label zRequired>Monthly Income (₹)</label>
+              <z-form-control>
+                <input z-input type="number" formControlName="monthlyIncome" min="0" placeholder="0" />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Economic Status</label>
+              <z-form-control>
+                <select z-input formControlName="economicStatus">
+                  <option value="">Select status</option>
+                  <option *ngFor="let opt of economicStatusOptions" [value]="opt">{{ opt }}</option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Primary Income Source -->
+            <z-form-field>
+              <label z-form-label zRequired>Primary Income Source</label>
+              <z-form-control>
+                <select z-input formControlName="primaryIncomeSource">
+                  <option value="">Select source</option>
+                  <option *ngFor="let opt of primaryIncomeSourceOptions" [value]="opt">{{ opt }}</option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field *ngIf="isOther('primaryIncomeSource')">
+              <label z-form-label zRequired>Specify Income Source</label>
+              <z-form-control>
+                <input z-input formControlName="primaryIncomeSourceOther" placeholder="Enter income source" />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Employment Status</label>
+              <z-form-control>
+                <select z-input formControlName="employmentStatus">
+                  <option value="">Select status</option>
+                  <option *ngFor="let opt of employmentStatusOptions" [value]="opt">{{ opt }}</option>
+                </select>
+              </z-form-control>
+            </z-form-field>
+          </div>
+        </div>
+
+        <!-- ── Actions ───────────────────────────────────────────────────────── -->
+        <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+          <button type="button" z-button zType="outline" (click)="cancel()">Cancel</button>
+          <button type="button" z-button (click)="submit()" [disabled]="isSubmitting || form.invalid">
+            {{ isSubmitting ? 'Submitting...' : 'Create Beneficiary' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>

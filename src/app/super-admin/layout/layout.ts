@@ -10,7 +10,6 @@ import {
   LayoutComponent,
   SidebarComponent,
   ContentComponent,
-  FooterComponent,
   SidebarGroupComponent,
   SidebarGroupLabelComponent,
 } from '@/shared/components/layout';
@@ -27,7 +26,6 @@ import {
     LayoutComponent,
     SidebarComponent,
     ContentComponent,
-    FooterComponent,
     SidebarGroupComponent,
     SidebarGroupLabelComponent,
     ZardIconComponent,

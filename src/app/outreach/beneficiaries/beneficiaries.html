@@ -1,4 +1,6 @@
 <div class="space-y-6">
+
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
   <div class="flex items-end justify-between gap-3 flex-wrap">
     <div class="flex-1 min-w-[280px] max-w-xl">
       <h1 class="text-2xl font-bold text-gray-900">Beneficiaries</h1>
@@ -9,298 +11,87 @@
       </div>
     </div>
 
-    <button z-button (click)="toggleCreateForm()" class="flex items-center gap-2">
-      <ng-lottie
-        [options]="plusToXOptions"
-        (animationCreated)="onPlusToXCreated($event)"
-        height="20px"
-        width="20px"
-        class="plus-to-x"
-      ></ng-lottie>
-      {{ showCreateForm ? 'Close Form' : 'Add Beneficiary' }}
+    <button z-button (click)="navigateToCreate()" class="flex items-center gap-2">
+      <z-icon zType="plus" class="w-4 h-4"></z-icon>
+      Add Beneficiary
     </button>
   </div>
 
-  <section *ngIf="showCreateForm" class="bg-white border rounded-xl p-5">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">Create Beneficiary</h2>
-
-    <form [formGroup]="createForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <z-form-field>
-        <label z-form-label zRequired>Project</label>
-        <z-form-control>
-          <select z-input formControlName="projectId">
-            <option value="">Select project</option>
-            <option *ngFor="let project of projects$ | async" [value]="project.id">{{ project.name }}</option>
-          </select>
-        </z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Location</label>
-        <z-form-control>
-          <select z-input formControlName="locationId">
-            <option value="">Select location</option>
-            <option *ngFor="let location of locations$ | async" [value]="location.id">
-              {{ location.village }} ({{ location.locationCode }})
-            </option>
-          </select>
-        </z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Name</label>
-        <z-form-control><input z-input formControlName="name" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Mobile Number</label>
-        <z-form-control><input z-input formControlName="mobileNumber" maxlength="10" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Gender</label>
-        <z-form-control>
-          <select z-input formControlName="gender">
-            <option value="">Select</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
-        </z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Date of Birth</label>
-        <z-form-control><input z-input type="date" formControlName="dateOfBirth" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field class="md:col-span-2">
-        <label z-form-label zRequired>Guardian Name</label>
-        <z-form-control><input z-input formControlName="guardianName" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label>Marital Status</label>
-        <z-form-control>
-          <select z-input formControlName="maritalStatus">
-            <option>Single</option>
-            <option>Married</option>
-            <option>Widowed</option>
-            <option>Divorced</option>
-          </select>
-        </z-form-control>
-      </z-form-field>
-
-      <z-form-field *ngIf="isMarried()">
-        <label z-form-label>Date of Marriage</label>
-        <z-form-control><input z-input type="date" formControlName="dateOfMarriage" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field *ngIf="isMarried()">
-        <label z-form-label>Woman Age At Marriage</label>
-        <z-form-control><input z-input type="number" formControlName="womanAgeAtMarriage" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field *ngIf="isMarried()">
-        <label z-form-label>Husband Age At Marriage</label>
-        <z-form-control><input z-input type="number" formControlName="husbandAgeAtMarriage" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Qualification</label>
-        <z-form-control><input z-input formControlName="qualification" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Religion</label>
-        <z-form-control><input z-input formControlName="religion" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Caste</label>
-        <z-form-control><input z-input formControlName="caste" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Monthly Income</label>
-        <z-form-control><input z-input type="number" formControlName="monthlyIncome" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Economic Status</label>
-        <z-form-control><input z-input formControlName="economicStatus" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Primary Income Source</label>
-        <z-form-control><input z-input formControlName="primaryIncomeSource" /></z-form-control>
-      </z-form-field>
-
-      <z-form-field>
-        <label z-form-label zRequired>Employment Status</label>
-        <z-form-control><input z-input formControlName="employmentStatus" /></z-form-control>
-      </z-form-field>
-
-      <div class="md:col-span-2 flex justify-end gap-2 pt-2">
-        <button z-button zType="secondary" type="button" (click)="toggleCreateForm()">Cancel</button>
-        <button z-button type="button" [disabled]="isSubmitting" (click)="submitCreate()">
-          {{ isSubmitting ? 'Saving...' : 'Create Beneficiary' }}
-        </button>
-      </div>
-    </form>
-  </section>
-
-  <ng-container *ngIf="beneficiaries$ | async as beneficiaries; else bLoader" class="fade-in">
-    <section class="bg-white border rounded-xl overflow-hidden">
+  <!-- ── Beneficiaries table ───────────────────────────────────────────────── -->
+  <ng-container *ngIf="vm$ | async as vm; else bLoader" class="fade-in">
+    <section class="bg-white border rounded-xl overflow-hidden shadow-sm">
       <table z-table class="w-full">
         <thead z-table-header>
           <tr z-table-row>
             <th z-table-head>UID</th>
             <th z-table-head>Name</th>
             <th z-table-head>Mobile</th>
+            <th z-table-head>Project</th>
             <th z-table-head>Location</th>
             <th z-table-head class="text-right">Actions</th>
           </tr>
         </thead>
 
         <tbody z-table-body>
-          <tr z-table-row *ngFor="let beneficiary of beneficiaries">
+          <tr z-table-row *ngFor="let beneficiary of vm.items; trackBy: trackById">
             <td z-table-cell class="font-medium text-indigo-700">{{ beneficiary.uid }}</td>
             <td z-table-cell>{{ beneficiary.name }}</td>
             <td z-table-cell>{{ beneficiary.mobileNumber }}</td>
             <td z-table-cell>
-              {{ beneficiary.location?.village || '-' }}
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-gray-50 text-gray-600 border">
+                {{ beneficiary.project?.name || '-' }}
+              </span>
             </td>
+            <td z-table-cell>{{ beneficiary.location?.village || '-' }}</td>
             <td z-table-cell class="text-right">
               <div class="flex items-center justify-end gap-2">
                 <button z-button zType="outline" zSize="sm" (click)="viewDetails(beneficiary)">
                   View Details
                 </button>
-                <button z-button zType="secondary" zSize="sm" (click)="openUpdateDialog(beneficiary)">
-                  Request Update
-                </button>
               </div>
             </td>
           </tr>
 
-          <tr z-table-row *ngIf="beneficiaries.length === 0">
-            <td z-table-cell colspan="5" class="text-center text-gray-500 py-10">No beneficiaries found.</td>
+          <tr z-table-row *ngIf="vm.items.length === 0">
+            <td z-table-cell colspan="6" class="text-center text-gray-500 py-10">No beneficiaries found.</td>
           </tr>
         </tbody>
       </table>
     </section>
+
+    <!-- Pagination -->
+      <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-1 pb-4">
+        <p class="text-sm text-gray-500">
+          Showing
+          {{ vm.total ? ((vm.page - 1) * vm.pageSize + 1) : 0 }}
+          -
+          {{ (vm.page * vm.pageSize < vm.total) ? (vm.page * vm.pageSize) : vm.total }}
+          of {{ vm.total }}
+        </p>
+
+        <div class="flex items-center justify-end gap-2">
+          <button type="button" (click)="prevPage()" [disabled]="vm.page <= 1"
+            class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 bg-white transition-colors">
+            Prev
+          </button>
+
+          <span class="text-sm text-gray-600">
+            Page {{ vm.page }} / {{ vm.pageCount }}
+          </span>
+
+          <button type="button" (click)="nextPage()" [disabled]="vm.page >= vm.pageCount"
+            class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 bg-white transition-colors">
+            Next
+          </button>
+      </div>
+    </div>
   </ng-container>
 
   <ng-template #bLoader>
-    <div class="flex items-center justify-center p-12 w-full min-h-[300px]">
-      <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+    <div class="flex flex-col items-center justify-center w-full min-h-[60vh] gap-4">
+      <ng-lottie [options]="options" height="160px" width="160px"></ng-lottie>
+      <p class="text-gray-500 font-medium animate-pulse">Loading Beneficiaries...</p>
     </div>
   </ng-template>
 
-<ng-template #updateDialog>
-  <form [formGroup]="updateForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 py-2 update-form-scroll">
-    <z-form-field>
-      <label z-form-label>Name</label>
-      <z-form-control><input z-input formControlName="name" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Mobile Number</label>
-      <z-form-control><input z-input formControlName="mobileNumber" maxlength="10" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Gender</label>
-      <z-form-control>
-        <select z-input formControlName="gender">
-          <option value="">Select</option>
-          <option>Male</option>
-          <option>Female</option>
-          <option>Other</option>
-        </select>
-      </z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Date of Birth</label>
-      <z-form-control><input z-input type="date" formControlName="dateOfBirth" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field class="md:col-span-2">
-      <label z-form-label>Guardian Name</label>
-      <z-form-control><input z-input formControlName="guardianName" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Qualification</label>
-      <z-form-control><input z-input formControlName="qualification" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Religion</label>
-      <z-form-control><input z-input formControlName="religion" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Caste</label>
-      <z-form-control><input z-input formControlName="caste" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Monthly Income</label>
-      <z-form-control><input z-input type="number" formControlName="monthlyIncome" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Economic Status</label>
-      <z-form-control><input z-input formControlName="economicStatus" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Primary Income Source</label>
-      <z-form-control><input z-input formControlName="primaryIncomeSource" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Employment Status</label>
-      <z-form-control><input z-input formControlName="employmentStatus" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label>Marital Status</label>
-      <z-form-control>
-        <select z-input formControlName="maritalStatus">
-          <option value="">Select</option>
-          <option>Single</option>
-          <option>Married</option>
-          <option>Widowed</option>
-          <option>Divorced</option>
-        </select>
-      </z-form-control>
-    </z-form-field>
-
-    <z-form-field *ngIf="isUpdateMarried(updateForm.get('maritalStatus')?.value)">
-      <label z-form-label>Date of Marriage</label>
-      <z-form-control><input z-input type="date" formControlName="dateOfMarriage" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field *ngIf="isUpdateMarried(updateForm.get('maritalStatus')?.value)">
-      <label z-form-label>Woman Age At Marriage</label>
-      <z-form-control><input z-input type="number" formControlName="womanAgeAtMarriage" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field *ngIf="isUpdateMarried(updateForm.get('maritalStatus')?.value)">
-      <label z-form-label>Husband Age At Marriage</label>
-      <z-form-control><input z-input type="number" formControlName="husbandAgeAtMarriage" /></z-form-control>
-    </z-form-field>
-
-    <z-form-field class="md:col-span-2">
-      <label z-form-label zRequired>Reason</label>
-      <z-form-control>
-        <textarea z-input formControlName="reason" rows="3" placeholder="Explain why change is needed"></textarea>
-      </z-form-control>
-    </z-form-field>
-
-    <p class="md:col-span-2 text-xs text-gray-500">This request will be sent for manager approval.</p>
-  </form>
-</ng-template>
+</div>
