@@ -1,85 +1,121 @@
 <ng-container *ngIf="vm$ | async as vm; else loader" class="fade-in">
-<div class="p-4 md:p-6">
+<div class="max-w-7xl mx-auto space-y-6">
 
-  <!-- PAGE TITLE -->
-  <h1 class="text-2xl font-bold mb-6">
-    Super Admin Dashboard
-  </h1>
+  <!-- ================= TOP SECTION ================= -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-  <!-- ================= STATS CARDS ================= -->
+    <!-- ===== PROFILE CARD (MOCK) ===== -->
+    <div class="lg:col-span-4 bg-white rounded-xl shadow-sm border border-gray-100 p-0 overflow-hidden">
+      <!-- Card Header -->
+      <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-center">
+        <div class="relative mt-2">
+          <div class="w-24 h-24 rounded-full bg-blue-100 border-4 border-white shadow-md flex items-center justify-center overflow-hidden">
+            <z-icon zType="user" class="text-blue-500 w-12 h-12"></z-icon>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card Body -->
+      <div class="p-6 text-center">
+        <h2 class="text-xl font-bold text-gray-900 tracking-wide uppercase">Super Admin</h2>
+        
+        <div class="mt-6 space-y-4 text-sm text-left">
+          
+          <div class="grid grid-cols-2 gap-4 border-b border-gray-50 pb-4">
+            <div>
+              <p class="text-xs text-blue-600 font-semibold mb-1 flex items-center gap-1"><z-icon zType="badge-check" class="w-3 h-3"></z-icon> ADMIN ID</p>
+              <p class="text-gray-800 font-medium">SA-001</p>
+            </div>
+            <div>
+              <p class="text-xs text-blue-600 font-semibold mb-1 flex items-center gap-1"><z-icon zType="shield" class="w-3 h-3"></z-icon> ROLE</p>
+              <p class="text-gray-800 font-medium">System Admin</p>
+            </div>
+          </div>
+          
+          <div class="border-b border-gray-50 pb-4">
+            <p class="text-xs text-purple-600 font-semibold mb-1 flex items-center gap-1"><z-icon zType="mail" class="w-3 h-3"></z-icon> CONTACT EMAIL</p>
+            <p class="text-gray-800 font-medium font-mono text-sm">admin@jeevansetu.com</p>
+          </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-8">
-
-    <!-- Projects -->
-    <div class="bg-white shadow rounded-xl p-6">
-
-      <p class="text-gray-500">Total Projects</p>
-
-      <h2 class="text-3xl font-bold text-indigo-600 mt-2">
-        {{ vm.stats?.totalProjects ?? '-' }}
-      </h2>
-
+        </div>
+      </div>
     </div>
 
-    <!-- Locations -->
-    <div class="bg-white shadow rounded-xl p-6">
+    <!-- ===== STATS CARDS (LIKE SERVICE DETAILS) ===== -->
+    <div class="lg:col-span-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+        <z-icon zType="layout-dashboard" class="text-red-500"></z-icon>
+        <h3 class="text-lg font-semibold text-teal-700">Platform Statistics</h3>
+      </div>
 
-      <p class="text-gray-500">Total Locations</p>
+      <!-- Stats Grid -->
+      <div class="p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
-      <h2 class="text-3xl font-bold text-green-600 mt-2">
-        {{ vm.stats?.totalLocations ?? '-' }}
-      </h2>
+          <!-- Projects -->
+          <div class="bg-indigo-50/50 rounded-lg p-4 border border-indigo-100 hover:shadow-md transition">
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Projects</p>
+            <h2 class="text-3xl font-bold text-indigo-700">
+              {{ vm.stats?.totalProjects ?? '-' }}
+            </h2>
+          </div>
 
+          <!-- Locations -->
+          <div class="bg-teal-50/50 rounded-lg p-4 border border-teal-100 hover:shadow-md transition">
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Locations</p>
+            <h2 class="text-3xl font-bold text-teal-700">
+              {{ vm.stats?.totalLocations ?? '-' }}
+            </h2>
+          </div>
+
+          <!-- Admins -->
+          <div class="bg-blue-50/50 rounded-lg p-4 border border-blue-100 hover:shadow-md transition">
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Admins</p>
+            <h2 class="text-3xl font-bold text-blue-700">
+              {{ vm.stats?.totalAdmins ?? '-' }}
+            </h2>
+          </div>
+
+          <!-- Managers -->
+          <div class="bg-amber-50/50 rounded-lg p-4 border border-amber-100 hover:shadow-md transition">
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Managers</p>
+            <h2 class="text-3xl font-bold text-amber-700">
+              {{ vm.stats?.totalManagers ?? '-' }}
+            </h2>
+          </div>
+
+          <!-- Outreach -->
+          <div class="bg-rose-50/50 rounded-lg p-4 border border-rose-100 hover:shadow-md transition">
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Outreach</p>
+            <h2 class="text-3xl font-bold text-rose-700">
+              {{ vm.stats?.totalOutreach ?? '-' }}
+            </h2>
+          </div>
+
+        </div>
+      </div>
     </div>
 
-    <!-- Admins -->
-    <div class="bg-white shadow rounded-xl p-6">
+  </div> <!-- End Grid -->
 
-      <p class="text-gray-500">Total Admins</p>
+  <!-- ================= RECENT PROJECTS (LIKE "Office Orders Marked to Me") ================= -->
 
-      <h2 class="text-3xl font-bold text-blue-600 mt-2">
-        {{ vm.stats?.totalAdmins ?? '-' }}
-      </h2>
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
 
-    </div>
-
-    <!-- Managers -->
-    <div class="bg-white shadow rounded-xl p-6">
-
-      <p class="text-gray-500">Total Managers</p>
-
-      <h2 class="text-3xl font-bold text-amber-600 mt-2">
-        {{ vm.stats?.totalManagers ?? '-' }}
-      </h2>
-
-    </div>
-
-    <!-- Outreach -->
-    <div class="bg-white shadow rounded-xl p-6">
-
-      <p class="text-gray-500">Total Outreach</p>
-
-      <h2 class="text-3xl font-bold text-rose-600 mt-2">
-        {{ vm.stats?.totalOutreach ?? '-' }}
-      </h2>
-
-    </div>
-
-  </div>
-
-  <!-- ================= RECENT PROJECTS ================= -->
-
-  <div class="bg-white shadow rounded-xl p-4 md:p-6 mb-8">
-
-    <div class="flex items-start justify-between gap-3 mb-4">
-      <h2 class="text-xl font-semibold">
-        Recently Created Projects
-      </h2>
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+      
+      <div class="flex items-center gap-2">
+         <z-icon zType="file-text" class="text-blue-500"></z-icon>
+         <h3 class="text-lg font-semibold text-blue-800">Recent Projects</h3>
+      </div>
 
       <div class="flex items-center gap-2">
-        <span class="text-sm text-gray-500 whitespace-nowrap">Filter:</span>
+        <span class="text-sm font-semibold text-gray-500 whitespace-nowrap hidden sm:block">Filter:</span>
         <select
-          class="px-3 py-2 rounded-md border text-sm bg-white"
+          class="px-3 py-1.5 rounded bg-white border border-gray-200 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
           [value]="vm.statusFilter"
           (change)="setStatusFilter($any($event.target).value)"
         >
@@ -91,169 +127,156 @@
     </div>
 
     <!-- ===== DESKTOP TABLE ===== -->
-
-    <div class="hidden md:block overflow-x-auto">
-
+    <div class="hidden md:block overflow-x-auto p-4">
       <table z-table class="w-full">
-
-        <thead z-table-header>
+        <thead z-table-header class="bg-gray-50/80">
           <tr z-table-row>
-            <th z-table-head>Code</th>
-            <th z-table-head>Project</th>
-            <th z-table-head>Status</th>
-            <th z-table-head>Created</th>
+            <th z-table-head class="text-xs font-bold text-gray-500 uppercase tracking-wider">Project Name</th>
+            <th z-table-head class="text-xs font-bold text-gray-500 uppercase tracking-wider">Code</th>
+            <th z-table-head class="text-xs font-bold text-gray-500 uppercase tracking-wider">Created</th>
+            <th z-table-head class="text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
           </tr>
         </thead>
 
         <tbody z-table-body>
-
-          <tr z-table-row *ngFor="let p of vm.recentProjects">
-
-            <td z-table-cell>
-              {{ p.projectCode }}
-            </td>
-
-            <td z-table-cell>
+          <tr z-table-row *ngFor="let p of vm.recentProjects" class="hover:bg-slate-50 transition-colors">
+            
+            <td z-table-cell class="font-medium text-gray-800">
               {{ p.name }}
             </td>
 
             <td z-table-cell>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-mono font-medium border border-gray-200">
+                {{ p.projectCode }}
+              </span>
+            </td>
+
+            <td z-table-cell class="text-sm text-gray-500 font-medium">
+               <div class="flex items-center gap-1.5">
+                  <z-icon zType="calendar" class="w-3.5 h-3.5 text-gray-400"></z-icon>
+                  {{
+                    ($any(p).createdAt || $any(p).created_at)
+                      ? (($any(p).createdAt || $any(p).created_at) | date:'MMM d, y, h:mm a')
+                      : '-'
+                  }}
+               </div>
+            </td>
+
+            <td z-table-cell>
               <span
-                class="font-semibold"
+                class="px-2.5 py-1 rounded-full text-xs font-bold"
                 [ngClass]="{
-                  'text-green-600': p.status === 'ACTIVE',
-                  'text-gray-500': p.status !== 'ACTIVE'
+                  'bg-green-100 text-green-700': p.status === 'ACTIVE',
+                  'bg-gray-100 text-gray-600': p.status !== 'ACTIVE'
                 }"
               >
                 {{ p.status || '-' }}
               </span>
             </td>
 
-            <td z-table-cell class="text-sm text-gray-500">
-              {{
-                ($any(p).createdAt || $any(p).created_at)
-                  ? (($any(p).createdAt || $any(p).created_at) | date:'short')
-                  : '-'
-              }}
-            </td>
-
           </tr>
 
           <tr z-table-row *ngIf="!vm.recentProjects.length">
-            <td z-table-cell colspan="4" class="text-gray-500 text-sm py-6 text-center">
+            <td z-table-cell colspan="4" class="text-gray-500 text-sm py-8 text-center bg-gray-50/50">
+              <z-icon zType="inbox" class="w-8 h-8 text-gray-300 mx-auto mb-2"></z-icon>
               No projects found
             </td>
           </tr>
-
         </tbody>
-
       </table>
-
     </div>
 
     <!-- ===== MOBILE CARDS ===== -->
-
-    <div class="md:hidden space-y-3">
-
+    <div class="md:hidden p-4 space-y-3 bg-gray-50">
       <div
         *ngFor="let p of vm.recentProjects"
-        class="border rounded-lg p-4 bg-gray-50 shadow-sm"
+        class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm relative overflow-hidden"
       >
-
-        <div class="flex justify-between items-start gap-3">
-
-          <div class="min-w-0">
-            <h3 class="font-semibold truncate">
-              {{ p.name }}
-            </h3>
-
-            <p class="text-sm text-gray-500">
-              Code: {{ p.projectCode }}
-            </p>
-
-            <p class="text-sm text-gray-500">
-              Created:
-              {{
-                ($any(p).createdAt || $any(p).created_at)
-                  ? (($any(p).createdAt || $any(p).created_at) | date:'short')
-                  : '-'
-              }}
-            </p>
+        <div class="absolute top-0 left-0 w-1 h-full" [ngClass]="p.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'"></div>
+        
+        <div class="flex flex-col gap-2 pl-2">
+          <div class="flex justify-between items-start gap-2">
+            <h3 class="font-bold text-gray-800 text-sm">{{ p.name }}</h3>
+            <span
+              class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+              [ngClass]="{
+                'bg-green-100 text-green-700': p.status === 'ACTIVE',
+                'bg-gray-100 text-gray-600': p.status !== 'ACTIVE'
+              }"
+            >
+              {{ p.status || '-' }}
+            </span>
           </div>
 
-          <span
-            class="text-sm font-semibold shrink-0"
-            [ngClass]="{
-              'text-green-600': p.status === 'ACTIVE',
-              'text-gray-500': p.status !== 'ACTIVE'
-            }"
-          >
-            {{ p.status || '-' }}
-          </span>
-
+          <div class="flex items-center gap-4 mt-2">
+             <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono border border-gray-200">
+               {{ p.projectCode }}
+             </span>
+             <span class="text-xs text-gray-500 flex items-center gap-1">
+               <z-icon zType="clock" class="w-3 h-3 text-gray-400"></z-icon>
+               {{
+                 ($any(p).createdAt || $any(p).created_at)
+                   ? (($any(p).createdAt || $any(p).created_at) | date:'shortDate')
+                   : '-'
+               }}
+             </span>
+          </div>
         </div>
-
       </div>
 
-      <div *ngIf="!vm.recentProjects.length" class="text-gray-500 text-sm py-4 text-center">
+      <div *ngIf="!vm.recentProjects.length" class="text-gray-500 text-sm py-6 text-center">
         No projects found
       </div>
-
     </div>
 
     <!-- ===== PAGINATION ===== -->
-
-    <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-
-      <p class="text-sm text-gray-500">
+    <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+      
+      <p class="text-sm font-medium text-gray-500">
         Showing
-        {{
-          vm.totalRecentProjects
-            ? ((vm.page - 1) * vm.pageSize + 1)
-            : 0
-        }}
+        <span class="font-bold text-gray-700">
+          {{ vm.totalRecentProjects ? ((vm.page - 1) * vm.pageSize + 1) : 0 }}
+        </span>
         -
-        {{
-          vm.totalRecentProjects
-            ? ((vm.page * vm.pageSize < vm.totalRecentProjects) ? (vm.page * vm.pageSize) : vm.totalRecentProjects)
-            : 0
-        }}
-        of {{ vm.totalRecentProjects }}
+        <span class="font-bold text-gray-700">
+          {{ vm.totalRecentProjects ? ((vm.page * vm.pageSize < vm.totalRecentProjects) ? (vm.page * vm.pageSize) : vm.totalRecentProjects) : 0 }}
+        </span>
+        of <span class="font-bold text-gray-700">{{ vm.totalRecentProjects }}</span>
       </p>
 
-      <div class="flex items-center justify-end gap-2">
+      <div class="flex items-center gap-2">
         <button
           type="button"
           (click)="prevPage()"
           [disabled]="vm.page <= 1"
-          class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
-          Prev
+          <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
         </button>
 
-        <span class="text-sm text-gray-600">
-          Page {{ vm.page }} / {{ vm.pageCount }}
+        <span class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100">
+          {{ vm.page }} / {{ vm.pageCount }}
         </span>
 
         <button
           type="button"
           (click)="nextPage()"
           [disabled]="vm.page >= vm.pageCount"
-          class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
-          Next
+          Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
         </button>
       </div>
 
     </div>
 
-  </div>
+  </div> <!-- End Projects Card -->
 
 </div>
 </ng-container>
 
 <ng-template #loader>
   <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
-    <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+    <ng-lottie [options]="options" height="150px" width="150px"></ng-lottie>
   </div>
 </ng-template>

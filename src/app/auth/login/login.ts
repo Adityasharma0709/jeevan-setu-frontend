@@ -3,12 +3,11 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api';
 import { Router } from '@angular/router';
-import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LottieComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -17,11 +16,6 @@ export class LoginComponent {
   showPassword = false;
   errorMessage = '';
   isSubmitting = false;
-
-  lottieOptions: AnimationOptions = {
-    path: '/Success.json',
-    loop: false,
-  };
 
   constructor(
     private fb: FormBuilder,

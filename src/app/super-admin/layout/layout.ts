@@ -11,7 +11,6 @@ import {
   SidebarComponent,
   ContentComponent,
   SidebarGroupComponent,
-  SidebarGroupLabelComponent,
 } from '@/shared/components/layout';
 
 @Component({
@@ -27,7 +26,6 @@ import {
     SidebarComponent,
     ContentComponent,
     SidebarGroupComponent,
-    SidebarGroupLabelComponent,
     ZardIconComponent,
     ZardTooltipDirective,
   ],
