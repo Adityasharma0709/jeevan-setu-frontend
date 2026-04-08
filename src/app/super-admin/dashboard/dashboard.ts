@@ -11,6 +11,7 @@ import {  ZardTableComponent,
   ZardTableHeadComponent,
   ZardTableCellComponent} from '@/shared/components/table/table.component'
 import { Project } from '../projects/projects.service';
+import { ZardIconComponent } from '@/shared/components/icon';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 @Component({
@@ -24,6 +25,7 @@ type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
   ZardTableHeadComponent,
   ZardTableCellComponent,
   LottieComponent,
+  ZardIconComponent,
   ],
   templateUrl: './dashboard.html'
 })
