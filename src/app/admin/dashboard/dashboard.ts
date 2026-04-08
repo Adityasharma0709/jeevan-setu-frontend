@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { BehaviorSubject, combineLatest, distinctUntilChanged, map, Observable, shareReplay, startWith, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, catchError, distinctUntilChanged, map, Observable, of, shareReplay, startWith, tap } from 'rxjs';
 import { AdminService } from '../admin.service';
 import { AuthService } from '../../core/services/auth';
+import { ApiService } from '../../core/services/api';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
+import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
 
 type ProjectStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
@@ -49,6 +51,7 @@ export class Dashboard implements OnInit {
   mySessionsCount$!: Observable<number>;
 
   myReportStats$!: Observable<any[]>;
+  profile$!: Observable<ProfileVm>;
   currentUserId?: number;
   private currentUserEmail: string | null = null;
   options: AnimationOptions = { path: '/loading.json' };
@@ -82,7 +85,8 @@ export class Dashboard implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private authService: AuthService
+    private authService: AuthService,
+    private api: ApiService
   ) { }
 
   ngOnInit() {
@@ -91,6 +95,11 @@ export class Dashboard implements OnInit {
     this.currentUserId = currentUserId;
     this.currentUserEmail = currentUser?.email ? String(currentUser.email).toLowerCase() : null;
     this.stats$ = this.adminService.getAdminDashboard();
+    this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
+      map((raw) => normalizeProfile(raw, 'Admin')),
+      catchError(() => of(emptyProfile('Admin'))),
+      shareReplay(1),
+    );
 
     const assignedProjects$ = this.adminService.getAssignedProjects(currentUserId).pipe(
       map((rows) => (Array.isArray(rows) ? rows : [])),

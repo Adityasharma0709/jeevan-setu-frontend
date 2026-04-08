@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
+import { Observable, catchError, map, of, shareReplay } from 'rxjs';
 
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardTooltipDirective } from '@/shared/components/tooltip';
 import { ApiService } from '../../core/services/api';
+import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
 
 import {
   LayoutComponent,
@@ -33,11 +35,18 @@ import {
 export class Layout {
   sidebarCollapsed = false;
   isMobile = window.innerWidth < 768;
+  profile$!: Observable<ProfileVm>;
 
   constructor(
     private router: Router,
     private api: ApiService,
-  ) {}
+  ) {
+    this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
+      map((raw) => normalizeProfile(raw, 'System Admin')),
+      catchError(() => of(emptyProfile('System Admin'))),
+      shareReplay(1),
+    );
+  }
 
   // =========================
   // SIDEBAR CONTROLS

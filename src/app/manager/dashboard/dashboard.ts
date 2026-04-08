@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { BehaviorSubject, combineLatest, distinctUntilChanged, map, Observable, shareReplay, startWith, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, catchError, distinctUntilChanged, map, Observable, of, shareReplay, startWith, tap } from 'rxjs';
 import { ManagerService } from '../manager.service';
 import { AuthService } from '../../core/services/auth';
+import { ApiService } from '../../core/services/api';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
+import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
 
 type ProjectStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
@@ -44,6 +46,7 @@ export class Dashboard implements OnInit {
   myWorkers$!: Observable<any[]>;
   myBeneficiaries$!: Observable<any[]>;
   myRequests$!: Observable<any[]>;
+  profile$!: Observable<ProfileVm>;
 
   options: AnimationOptions = { path: '/loading.json' };
   subLoaderOptions: AnimationOptions = { path: '/loadingcircle.json' };
@@ -77,7 +80,8 @@ export class Dashboard implements OnInit {
 
   constructor(
     private managerService: ManagerService,
-    private authService: AuthService
+    private authService: AuthService,
+    private api: ApiService
   ) { }
 
   ngOnInit() {
@@ -86,6 +90,11 @@ export class Dashboard implements OnInit {
     
     // Core stats
     this.stats$ = this.managerService.getManagerDashboard().pipe(shareReplay(1));
+    this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
+      map((raw) => normalizeProfile(raw, 'Manager')),
+      catchError(() => of(emptyProfile('Manager'))),
+      shareReplay(1),
+    );
 
     // Projects Mapping
     const assignedProjects$ = this.managerService.getProjects(currentUserId).pipe(

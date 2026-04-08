@@ -20,6 +20,8 @@ import {
 import { AuthService } from '@/core/services/auth';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
+import { ApiService } from '@/core/services/api';
+import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
 
 import { OutreachService } from '../outreach.service';
 
@@ -56,6 +58,7 @@ interface AssignedProjectsPagerVm {
 export class Dashboard implements OnInit {
   private outreachService = inject(OutreachService);
   private authService = inject(AuthService);
+  private api = inject(ApiService);
 
   private currentUserId = Number(this.authService.getCurrentUser()?.sub) || undefined;
 
@@ -63,6 +66,7 @@ export class Dashboard implements OnInit {
   subLoaderOptions: AnimationOptions = { path: '/loadingcircle.json' };
 
   stats$!: Observable<any>;
+  profile$!: Observable<ProfileVm>;
   assignedProjectsVm$!: Observable<AssignedProjectsPagerVm>;
   recentBeneficiariesVm$!: Observable<RecentCardPagerVm<any>>;
   recentRequestsVm$!: Observable<RecentCardPagerVm<any>>;
@@ -89,6 +93,11 @@ export class Dashboard implements OnInit {
     this.stats$ = this.outreachService.getDashboardStats(this.currentUserId).pipe(
       catchError(() => of({ totalBeneficiaries: 0, assignedProjects: 0, assignedLocations: 0 })),
       shareReplay(1)
+    );
+    this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
+      map((raw) => normalizeProfile(raw, 'Outreach Worker')),
+      catchError(() => of(emptyProfile('Outreach Worker'))),
+      shareReplay(1),
     );
 
     // ─── ASSIGNED PROJECTS (enriched with locations) ──────────────────────────

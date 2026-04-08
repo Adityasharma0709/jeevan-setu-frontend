@@ -1,8 +1,10 @@
 import { Component, HostListener } from '@angular/core';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
+import { Observable, catchError, map, of, shareReplay } from 'rxjs';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardTooltipDirective } from '@/shared/components/tooltip';
 import { ApiService } from '../../core/services/api';
+import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
 
 import {
   LayoutComponent,
@@ -34,11 +36,18 @@ export class Layout {
 
   sidebarCollapsed = false;
   isMobile = false;
+  profile$!: Observable<ProfileVm>;
 
   constructor(
     private router: Router,
     private api: ApiService,
-  ) {}
+  ) {
+    this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
+      map((raw) => normalizeProfile(raw, 'Admin')),
+      catchError(() => of(emptyProfile('Admin'))),
+      shareReplay(1),
+    );
+  }
 
   ngOnInit() {
     this.isMobile = window.innerWidth < 768;
