@@ -12,6 +12,8 @@ import {  ZardTableComponent,
   ZardTableCellComponent} from '@/shared/components/table/table.component'
 import { Project } from '../projects/projects.service';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ApiService } from '@/core/services/api';
+import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 @Component({
@@ -40,13 +42,19 @@ export class DashboardComponent {
     pageCount: number;
     statusFilter: StatusFilter;
   }>;
+  profile$!: Observable<ProfileVm>;
   options: AnimationOptions = { path: '/loading.json' };
 
   private readonly pageSize = 10;
   private readonly page$ = new BehaviorSubject<number>(1);
   private readonly statusFilter$ = new BehaviorSubject<StatusFilter>('ALL');
 
-  constructor(private api: DashboardService) {
+  constructor(private api: DashboardService, private coreApi: ApiService) {
+    this.profile$ = this.coreApi.get('auth/me', undefined, { cache: 'reload' }).pipe(
+      map((raw) => normalizeProfile(raw, 'System Admin')),
+      catchError(() => of(emptyProfile('System Admin'))),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
     const stats$ = this.api.getSuperAdminStats().pipe(
       catchError(() => of(null)),
       shareReplay({ bufferSize: 1, refCount: true }),

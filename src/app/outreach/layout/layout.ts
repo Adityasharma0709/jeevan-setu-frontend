@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Observable, catchError, map, of, shareReplay } from 'rxjs';
 
 import { ZardIconComponent } from '@/shared/components/icon';
 import {
@@ -12,6 +13,7 @@ import {
 } from '@/shared/components/layout';
 import { ZardTooltipDirective } from '@/shared/components/tooltip';
 import { ApiService } from '../../core/services/api';
+import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
 
 @Component({
   selector: 'app-outreach-layout',
@@ -35,11 +37,22 @@ import { ApiService } from '../../core/services/api';
 export class Layout {
   sidebarCollapsed = window.innerWidth < 768;
   isMobile = window.innerWidth < 768;
+  profile$!: Observable<ProfileVm>;
 
   constructor(
     private router: Router,
     private api: ApiService,
-  ) {}
+  ) {
+    this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
+      map((raw) => normalizeProfile(raw, 'Outreach Worker')),
+      catchError(() => of(emptyProfile('Outreach Worker'))),
+      shareReplay(1),
+    );
+  }
+
+  toggleSidebar() {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
 
   logout() {
     this.api.clearCache();

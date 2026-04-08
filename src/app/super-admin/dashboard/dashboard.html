@@ -17,24 +17,32 @@
       
       <!-- Card Body -->
       <div class="p-6 text-center">
-        <h2 class="text-xl font-bold text-gray-900 tracking-wide uppercase">Super Admin</h2>
+        <h2 class="text-xl font-bold text-gray-900 tracking-wide uppercase">
+          {{ (profile$ | async)?.roleLabel || 'Super Admin' }}
+        </h2>
         
         <div class="mt-6 space-y-4 text-sm text-left">
           
           <div class="grid grid-cols-2 gap-4 border-b border-gray-50 pb-4">
             <div>
               <p class="text-xs text-blue-600 font-semibold mb-1 flex items-center gap-1"><z-icon zType="badge-check" class="w-3 h-3"></z-icon> ADMIN ID</p>
-              <p class="text-gray-800 font-medium">SA-001</p>
+              <p class="text-gray-800 font-medium">
+                {{ (profile$ | async)?.usercode || '-' }}
+              </p>
             </div>
             <div>
               <p class="text-xs text-blue-600 font-semibold mb-1 flex items-center gap-1"><z-icon zType="shield" class="w-3 h-3"></z-icon> ROLE</p>
-              <p class="text-gray-800 font-medium">System Admin</p>
+              <p class="text-gray-800 font-medium">
+                {{ (profile$ | async)?.roleLabel || 'System Admin' }}
+              </p>
             </div>
           </div>
           
           <div class="border-b border-gray-50 pb-4">
             <p class="text-xs text-purple-600 font-semibold mb-1 flex items-center gap-1"><z-icon zType="mail" class="w-3 h-3"></z-icon> CONTACT EMAIL</p>
-            <p class="text-gray-800 font-medium font-mono text-sm">admin@jeevansetu.com</p>
+            <p class="text-gray-800 font-medium font-mono text-sm">
+              {{ (profile$ | async)?.email || '-' }}
+            </p>
           </div>
 
         </div>
