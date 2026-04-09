@@ -13,9 +13,22 @@
           <input id="email" type="email" placeholder="stanley@gmail.com" formControlName="email" />
         </div>
 
-        <div class="input-wrap">
-          <input id="password" [type]="showPassword ? 'text' : 'password'" placeholder="••••••••••••"
-            formControlName="password" />
+        <div class="input-wrap password-wrap">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="••••••••••••"
+            formControlName="password"
+          />
+          <button
+            class="toggle-password"
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-pressed]="showPassword"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            {{ showPassword ? 'Hide' : 'Show' }}
+          </button>
         </div>
 
         <div class="form-actions-row">

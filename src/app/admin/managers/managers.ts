@@ -105,10 +105,13 @@ export class Managers {
   }
 
   get selectedLocationsLabel(): string {
-    const raw = this.assignForm?.get('locationIds')?.value as any;
-    const count = Array.isArray(raw) ? raw.length : 0;
-    if (!count) return 'Select locations';
-    return `${count} location${count > 1 ? 's' : ''} selected`;
+    const rawLocationId = this.assignForm?.get('locationId')?.value;
+    const locationId = Number(rawLocationId);
+    if (!Number.isFinite(locationId) || locationId <= 0) return 'Select location';
+    const location = this.assignLocationsCache.find((l: any) => Number(l?.id) === locationId);
+    if (!location) return 'Select location';
+    const label = `${location.locationCode ?? ''}${location.locationCode ? ' - ' : ''}${location.village ?? ''}${location.block ? `, ${location.block}` : ''}`.trim();
+    return label || 'Select location';
   }
 
   selectAssignProject(project: any) {
@@ -240,12 +243,12 @@ export class Managers {
 
     this.assignForm = this.fb.group({
       projectId: [null, Validators.required],
-      locationIds: [[], Validators.required],
+      locationId: [null, Validators.required],
     });
 
     this.locations$ = this.assignForm.get('projectId')!.valueChanges.pipe(
       startWith(this.assignForm.get('projectId')!.value),
-      tap(() => this.assignForm.patchValue({ locationIds: [] }, { emitEvent: false })),
+      tap(() => this.assignForm.patchValue({ locationId: null }, { emitEvent: false })),
       switchMap((id) => {
         const projectId = Number(id);
         if (!Number.isFinite(projectId) || projectId <= 0) {
@@ -275,17 +278,7 @@ export class Managers {
   }
 
   openCreateDialog() {
-    this.isEditing = false;
-    this.managerForm.reset({
-      usercode: { value: 'MC01', disabled: true },
-      name: '',
-      email: '',
-      password: '',
-      projectId: '',
-      locationId: '',
-    });
-    this.managerForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-    this.managerForm.get('password')?.updateValueAndValidity();
+    this.prepareCreateForm();
 
     this.dialogRef = this.dialog.create({
       zTitle: 'Create Manager',
@@ -296,27 +289,10 @@ export class Managers {
         return false;
       },
     });
-
-    this.populateNextManagerCode();
   }
 
   openEditDialog(manager: User) {
-    this.isEditing = true;
-    this.selectedManagerId = manager.id;
-    this.managerForm.reset({
-      usercode: { value: manager?.usercode ?? '', disabled: true },
-      name: manager.name,
-      email: manager.email,
-      password: '',
-      projectId: '',
-      locationId: '',
-    });
-    this.managerForm.get('password')?.clearValidators();
-    this.managerForm.get('projectId')?.clearValidators();
-    this.managerForm.get('locationId')?.clearValidators();
-    this.managerForm.get('password')?.updateValueAndValidity();
-    this.managerForm.get('projectId')?.updateValueAndValidity();
-    this.managerForm.get('locationId')?.updateValueAndValidity();
+    this.prepareEditForm(manager);
 
     this.dialogRef = this.dialog.create({
       zTitle: 'Edit Manager',
@@ -336,33 +312,17 @@ export class Managers {
     }
 
     const formValue = this.managerForm.getRawValue();
-    const selectedProjectId = formValue.projectId ? Number(formValue.projectId) : null;
-    const selectedLocationId = formValue.locationId ? Number(formValue.locationId) : null;
-    if (selectedProjectId) {
-      const selectedProject = this.projectsCache.find((p) => Number(p?.id) === selectedProjectId);
-      if (!selectedProject) {
-        toast.error('Selected project is inactive or unavailable');
-        return;
-      }
-    }
-    const createPayload: any = {
-      name: formValue.name,
-      email: formValue.email,
-      password: formValue.password,
-    };
-    if (selectedProjectId) createPayload.projectId = selectedProjectId;
-    if (selectedLocationId) createPayload.locationId = selectedLocationId;
-    const updatePayload = {
-      name: formValue.name,
-      email: formValue.email,
-      ...(formValue.password ? { password: formValue.password } : {}),
-    };
-    const shouldAssignInEdit = this.isEditing && !!selectedProjectId && !!selectedLocationId;
-    const shouldRejectPartialAssignment = this.isEditing && (!!selectedProjectId !== !!selectedLocationId);
-    if (shouldRejectPartialAssignment) {
-      toast.error('For edit reassignment, select both project and location');
+    const selectedProjectId = this.parseOptionalId(formValue.projectId);
+    const selectedLocationId = this.parseOptionalId(formValue.locationId);
+    const assignmentError = this.validateAssignmentSelection(selectedProjectId, selectedLocationId);
+    if (assignmentError) {
+      toast.error(assignmentError);
       return;
     }
+
+    const createPayload = this.buildCreatePayload(formValue, selectedProjectId, selectedLocationId);
+    const updatePayload = this.buildUpdatePayload(formValue);
+    const shouldAssignInEdit = this.isEditing && !!selectedProjectId && !!selectedLocationId;
 
     const obs = this.isEditing
       ? this.managersService.update(this.selectedManagerId!, updatePayload).pipe(
@@ -392,6 +352,90 @@ export class Managers {
         toast.error(this.getErrorMessage(err, 'Something went wrong'));
       }
     });
+  }
+
+  private prepareCreateForm(): void {
+    this.isEditing = false;
+    this.selectedManagerId = null;
+    this.managerForm.reset({
+      usercode: { value: 'MC01', disabled: true },
+      name: '',
+      email: '',
+      password: '',
+      projectId: '',
+      locationId: '',
+    });
+    this.setPasswordValidators(true);
+    this.populateNextManagerCode();
+  }
+
+  private prepareEditForm(manager: User): void {
+    this.isEditing = true;
+    this.selectedManagerId = manager.id;
+    this.managerForm.reset({
+      usercode: { value: manager?.usercode ?? '', disabled: true },
+      name: manager.name,
+      email: manager.email,
+      password: '',
+      projectId: '',
+      locationId: '',
+    });
+    this.setPasswordValidators(false);
+  }
+
+  private setPasswordValidators(required: boolean): void {
+    const control = this.managerForm.get('password');
+    if (!control) return;
+    if (required) {
+      control.setValidators([Validators.required, Validators.minLength(6)]);
+    } else {
+      control.clearValidators();
+    }
+    control.updateValueAndValidity();
+  }
+
+  private parseOptionalId(value: any): number | null {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  private validateAssignmentSelection(projectId: number | null, locationId: number | null): string | null {
+    if (this.isEditing && (!!projectId !== !!locationId)) {
+      return 'For edit reassignment, select both project and location';
+    }
+
+    if (projectId) {
+      const selectedProject = this.projectsCache.find((p) => Number(p?.id) === projectId);
+      if (!selectedProject) {
+        return 'Selected project is inactive or unavailable';
+      }
+    }
+
+    return null;
+  }
+
+  private buildCreatePayload(
+    formValue: any,
+    projectId: number | null,
+    locationId: number | null,
+  ): any {
+    const payload: any = {
+      usercode: formValue.usercode,
+      name: formValue.name,
+      email: formValue.email,
+      password: formValue.password,
+    };
+    if (projectId) payload.projectId = projectId;
+    if (locationId) payload.locationId = locationId;
+    return payload;
+  }
+
+  private buildUpdatePayload(formValue: any): any {
+    return {
+      name: formValue.name,
+      email: formValue.email,
+      ...(formValue.password ? { password: formValue.password } : {}),
+    };
   }
 
   private populateNextManagerCode(): void {
@@ -488,7 +532,7 @@ export class Managers {
 
   openAssignDialog(manager: User) {
     this.targetManager = manager;
-    this.assignForm.reset({ projectId: null, locationIds: [] });
+    this.assignForm.reset({ projectId: null, locationId: null });
     this.pendingAssignments = [];
     this.assignLocationsCache = [];
     this.assignLoading.set(false);
@@ -534,12 +578,12 @@ export class Managers {
         this.detailsLoading.set(false);
         this.detailsLoadingManagerId.set(null);
       },
-      error: () => {
+      error: (err) => {
         if (token !== this.detailsFetchToken) return;
         this.detailsProjects = [];
         this.detailsLoading.set(false);
         this.detailsLoadingManagerId.set(null);
-        toast.error('Failed to load assigned projects');
+        toast.error(this.getErrorMessage(err, 'Failed to load assigned projects'));
       },
     });
 
@@ -624,12 +668,10 @@ export class Managers {
 
   addToPendingAssignments() {
     const projectIdNum = Number(this.assignForm.get('projectId')?.value);
-    const rawLocationIds = this.assignForm.get('locationIds')?.value as any;
-    const locationIds = Array.isArray(rawLocationIds) ? rawLocationIds : [];
-    const locationIdNums = locationIds.map((id: any) => Number(id)).filter((n: number) => Number.isFinite(n));
+    const locationIdNum = Number(this.assignForm.get('locationId')?.value);
 
-    if (!Number.isFinite(projectIdNum) || projectIdNum <= 0 || !locationIdNums.length) {
-      toast.error('Select a project and at least one location');
+    if (!Number.isFinite(projectIdNum) || projectIdNum <= 0 || !Number.isFinite(locationIdNum) || locationIdNum <= 0) {
+      toast.error('Select a project and a location');
       return;
     }
 
@@ -639,32 +681,28 @@ export class Managers {
       return;
     }
 
+    const key = `${projectIdNum}:${locationIdNum}`;
     const seen = new Set(this.pendingAssignments.map((a) => `${a.projectId}:${a.locationId}`));
-    const additions: Array<{ projectId: number; locationId: number; projectName: string; locationLabel: string }> = [];
-
-    for (const locationIdNum of locationIdNums) {
-      const key = `${projectIdNum}:${locationIdNum}`;
-      if (seen.has(key)) continue;
-      const location = this.assignLocationsCache.find((l: any) => Number(l?.id) === locationIdNum);
-      const locationLabel = location
-        ? `${location.locationCode ?? ''}${location.locationCode ? ' - ' : ''}${location.village ?? ''}${location.block ? `, ${location.block}` : ''}`.trim() || `#${locationIdNum}`
-        : `#${locationIdNum}`;
-      additions.push({
-        projectId: projectIdNum,
-        locationId: locationIdNum,
-        projectName: `${selectedProject.name ?? ''}`.trim() || `#${projectIdNum}`,
-        locationLabel,
-      });
-      seen.add(key);
-    }
-
-    if (!additions.length) {
+    if (seen.has(key)) {
       toast.info('Already added');
       return;
     }
 
-    this.pendingAssignments = [...this.pendingAssignments, ...additions];
-    this.assignForm.patchValue({ locationIds: [] }, { emitEvent: false });
+    const location = this.assignLocationsCache.find((l: any) => Number(l?.id) === locationIdNum);
+    const locationLabel = location
+      ? `${location.locationCode ?? ''}${location.locationCode ? ' - ' : ''}${location.village ?? ''}${location.block ? `, ${location.block}` : ''}`.trim() || `#${locationIdNum}`
+      : `#${locationIdNum}`;
+
+    this.pendingAssignments = [
+      ...this.pendingAssignments,
+      {
+        projectId: projectIdNum,
+        locationId: locationIdNum,
+        projectName: `${selectedProject.name ?? ''}`.trim() || `#${projectIdNum}`,
+        locationLabel,
+      }
+    ];
+    this.assignForm.patchValue({ locationId: null }, { emitEvent: false });
   }
 
   clearPendingAssignments() {
@@ -675,36 +713,13 @@ export class Managers {
     const ids = (this.assignLocationsCache || [])
       .map((l: any) => Number(l?.id))
       .filter((n: number) => Number.isFinite(n));
-    this.assignForm.get('locationIds')?.setValue(ids);
-    this.assignForm.get('locationIds')?.markAsDirty();
+    this.assignForm.get('locationId')?.setValue(ids[0] ?? null);
+    this.assignForm.get('locationId')?.markAsDirty();
   }
 
   clearLocationSelection() {
-    this.assignForm.get('locationIds')?.setValue([]);
-    this.assignForm.get('locationIds')?.markAsDirty();
-  }
-
-  isLocationSelected(locationId: number): boolean {
-    const raw = this.assignForm.get('locationIds')?.value as any;
-    const ids = Array.isArray(raw) ? raw.map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n)) : [];
-    return ids.includes(Number(locationId));
-  }
-
-  toggleLocationSelection(locationId: number, checked: boolean) {
-    const control = this.assignForm.get('locationIds');
-    const raw = control?.value as any;
-    const ids = Array.isArray(raw) ? raw.map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n)) : [];
-
-    const next = new Set<number>(ids);
-    const numericId = Number(locationId);
-    if (!Number.isFinite(numericId)) return;
-
-    if (checked) next.add(numericId);
-    else next.delete(numericId);
-
-    control?.setValue([...next.values()]);
-    control?.markAsDirty();
-    control?.updateValueAndValidity({ emitEvent: false });
+    this.assignForm.get('locationId')?.setValue(null);
+    this.assignForm.get('locationId')?.markAsDirty();
   }
 
   removePendingAssignment(projectId: number, locationId: number) {
@@ -719,18 +734,28 @@ export class Managers {
     }
 
     const projectIdNum = Number(this.assignForm.get('projectId')?.value);
-    const rawLocationIds = this.assignForm.get('locationIds')?.value as any;
-    const locationIds = Array.isArray(rawLocationIds) ? rawLocationIds : [];
-    const locationIdNums = locationIds.map((id: any) => Number(id)).filter((n: number) => Number.isFinite(n));
+    const locationIdNum = Number(this.assignForm.get('locationId')?.value);
 
-    if (!Number.isFinite(projectIdNum) || projectIdNum <= 0 || !locationIdNums.length) {
+    if (!Number.isFinite(projectIdNum) || projectIdNum <= 0 || !Number.isFinite(locationIdNum) || locationIdNum <= 0) {
       return of([]);
     }
 
-    return of(locationIdNums.map((locationId) => ({ projectId: projectIdNum, locationId })));
+    return of([{ projectId: projectIdNum, locationId: locationIdNum }]);
   }
 
   private getErrorMessage(err: any, fallback: string): string {
+    const status = Number(err?.status);
+    const rawMessage = err?.message ?? err?.error?.message;
+    const textMessage = typeof rawMessage === 'string' ? rawMessage : '';
+
+    if (status === 0 || /ECONNREFUSED|ERR_CONNECTION_REFUSED|Failed to fetch/i.test(textMessage)) {
+      return 'Unable to reach server. Please check your connection.';
+    }
+    if (status === 401) return 'Unauthorized. Please sign in again.';
+    if (status === 403) return 'Access denied.';
+    if (status === 404) return 'Requested resource not found.';
+    if (status >= 500) return 'Server error. Please try again later.';
+
     const message = err?.error?.message;
     if (Array.isArray(message)) return message.join(', ');
     if (typeof message === 'string') return message;
