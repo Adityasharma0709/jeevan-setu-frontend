@@ -16,14 +16,14 @@
 
                 <div class="p-6 text-center">
                     <h2 class="text-xl font-bold text-gray-900 tracking-wide uppercase">
-                        {{ (profile$ | async)?.roleLabel || 'Admin' }}
+                        {{ (profile$ | async)?.roleLabel || 'n n ' }}
                     </h2>
 
                     <div class="mt-6 space-y-4 text-sm text-left">
                         <div class="grid grid-cols-2 gap-4 border-b border-gray-50 pb-4">
                             <div>
                                 <p class="text-xs text-red-600 font-semibold mb-1 flex items-center gap-1">
-                                    <z-icon zType="badge-check" class="w-3 h-3"></z-icon> ADMIN ID
+                                    <z-icon zType="badge-check" class="w-3 h-3"></z-icon> ACCOUNT CODE
                                 </p>
                                 <p class="text-gray-800 font-medium">
                                     {{ (profile$ | async)?.usercode || '-' }}

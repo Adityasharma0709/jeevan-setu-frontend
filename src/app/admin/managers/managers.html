@@ -57,9 +57,6 @@
                             >
                                 View Details
                             </button>
-                            <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(manager)">
-                                Edit/Tag
-                            </button>
                             <button *ngIf="canToggleStatus(manager)" z-button
                                 [zType]="manager.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
                                 [zLoading]="isManagerStatusLoading(manager.id)" [zDisabled]="isManagerStatusLoading(manager.id)"

@@ -115,6 +115,38 @@
   box-shadow: 0 0 0 3px rgba(32, 160, 80, 0.14);
 }
 
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  padding-right: 76px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.toggle-password:hover {
+  color: var(--primary-dark);
+}
+
+.toggle-password:focus-visible {
+  outline: 2px solid rgba(32, 160, 80, 0.3);
+  outline-offset: 2px;
+}
+
 .form-actions-row {
   display: flex;
   justify-content: space-between;

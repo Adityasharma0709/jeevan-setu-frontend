@@ -12,7 +12,7 @@
           {{ (profile$ | async)?.name || 'JS-MANAGER' }}
         </span>
         <span class="text-xs font-medium text-emerald-700">
-          {{ (profile$ | async)?.roleLabel || 'Manager' }} · ADMIN ID:
+          {{ (profile$ | async)?.roleLabel || 'Manager' }} · ACC CODE:
           {{ (profile$ | async)?.usercode || (profile$ | async)?.id || '-' }}
         </span>
       </div>
