@@ -38,6 +38,11 @@
 
         <!-- ===== MENU GROUP ===== -->
         <z-sidebar-group>
+          @if (!sidebarCollapsed) {
+            <z-sidebar-group-label class="px-3 pt-2 text-[11px] uppercase tracking-wide text-gray-400">
+              Main
+            </z-sidebar-group-label>
+          }
 
           <!-- Dashboard -->
           <a routerLink="/outreach" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }"
