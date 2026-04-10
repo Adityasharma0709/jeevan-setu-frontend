@@ -13,6 +13,7 @@
                     <tr z-table-row>
                         <th z-table-head>Type</th>
                         <th z-table-head>Details</th>
+                        <th z-table-head>Payload</th>
                         <th z-table-head>Status</th>
                         <th z-table-head>Sent To</th>
                         <th z-table-head>Requested At</th>
@@ -36,6 +37,23 @@
                                 </div>
                             </ng-container>
                             <span *ngIf="!req.changes || !getChangedKeys(req.changes).length" class="text-gray-400">-</span>
+                        </td>
+                        <td z-table-cell>
+                            <ng-container *ngIf="getPayloadEntries(req) as entries">
+                                <div *ngIf="entries.length; else emptyPayload" class="flex flex-wrap gap-1 max-w-lg">
+                                    <span *ngFor="let kv of entries"
+                                        class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700"
+                                        [title]="kv.label + ': ' + kv.value"
+                                    >
+                                        <span class="font-semibold">{{ kv.label }}</span>
+                                        <span class="text-gray-400">:</span>
+                                        <span class="font-mono truncate max-w-[220px]">{{ kv.value }}</span>
+                                    </span>
+                                </div>
+                                <ng-template #emptyPayload>
+                                    <span class="text-gray-400">-</span>
+                                </ng-template>
+                            </ng-container>
                         </td>
                         <td z-table-cell>
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
@@ -70,7 +88,7 @@
                         </td>
                     </tr>
                     <tr z-table-row *ngIf="vm.items.length === 0">
-                        <td z-table-cell colspan="5" class="text-center py-12 text-gray-500">
+                        <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
                             <div class="flex flex-col items-center">
                                 <z-icon zType="inbox" size="32" class="text-gray-300 mb-2" />
                                 <p>You haven't sent any requests yet.</p>

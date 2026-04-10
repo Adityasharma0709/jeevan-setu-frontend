@@ -132,18 +132,18 @@
         </td>
 
         <td z-table-cell class="flex gap-2">
-          <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(a)">Edit</button>
-
-          <button
-            z-button
-            zSize="sm"
-            [zType]="a.status === 'ACTIVE' ? 'destructive' : 'default'"
-            [zLoading]="isAdminStatusLoading(a.id)"
-            [zDisabled]="isAdminStatusLoading(a.id)"
-            (click)="toggleAdminStatus(a)"
-          >
-            {{ a.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+          <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(a)">
+            <z-icon zType="edit" />
+            <span class="sr-only">Edit</span>
           </button>
+
+          <z-switch
+            [zChecked]="a.status === 'ACTIVE'"
+            [zDisabled]="isAdminStatusLoading(a.id)"
+            (zCheckedChange)="toggleAdminStatus(a)"
+          >
+            <span class="sr-only">Toggle admin status</span>
+          </z-switch>
         </td>
       </tr>
 
@@ -179,16 +179,16 @@
       </span>
     </div>
 
-    <button
-      z-button
-      class="w-full mt-3"
-      [zType]="a.status === 'ACTIVE' ? 'destructive' : 'default'"
-      [zLoading]="isAdminStatusLoading(a.id)"
-      [zDisabled]="isAdminStatusLoading(a.id)"
-      (click)="toggleAdminStatus(a)"
-    >
-      {{ a.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-    </button>
+    <div class="mt-3 flex items-center justify-between">
+      <span class="text-xs text-gray-500">Status</span>
+      <z-switch
+        [zChecked]="a.status === 'ACTIVE'"
+        [zDisabled]="isAdminStatusLoading(a.id)"
+        (zCheckedChange)="toggleAdminStatus(a)"
+      >
+        <span class="sr-only">Toggle admin status</span>
+      </z-switch>
+    </div>
   </div>
 
   <div *ngIf="!vm.admins.length" class="text-gray-500 text-sm py-4 text-center">

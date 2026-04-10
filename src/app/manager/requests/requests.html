@@ -14,6 +14,7 @@
                         <th z-table-head>Request Type</th>
                         <th z-table-head>Beneficiary</th>
                         <th z-table-head>Changes</th>
+                        <th z-table-head>Payload</th>
                         <th z-table-head>Requested At</th>
                         <th z-table-head class="text-right">Actions</th>
                     </tr>
@@ -40,6 +41,23 @@
                             </ng-container>
                             <span *ngIf="!request.changes || !getChangedKeys(request.changes).length" class="text-gray-400">-</span>
                         </td>
+                        <td z-table-cell>
+                            <ng-container *ngIf="getPayloadEntries(request) as entries">
+                                <div *ngIf="entries.length; else emptyPayload" class="flex flex-wrap gap-1 max-w-lg">
+                                    <span *ngFor="let kv of entries"
+                                        class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700"
+                                        [title]="kv.label + ': ' + kv.value"
+                                    >
+                                        <span class="font-semibold">{{ kv.label }}</span>
+                                        <span class="text-gray-400">:</span>
+                                        <span class="font-mono truncate max-w-[220px]">{{ kv.value }}</span>
+                                    </span>
+                                </div>
+                                <ng-template #emptyPayload>
+                                    <span class="text-gray-400">-</span>
+                                </ng-template>
+                            </ng-container>
+                        </td>
                         <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
                         <td z-table-cell class="text-right">
                             <div class="flex justify-end gap-2">
@@ -55,7 +73,7 @@
                         </td>
                     </tr>
                     <tr z-table-row *ngIf="pager.items.length === 0">
-                        <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
+                        <td z-table-cell colspan="7" class="text-center py-12 text-gray-500">
                             <div class="flex flex-col items-center">
                                 <z-icon zType="circle-check" size="32" class="text-green-300 mb-2" />
                                 <p>No incoming outreach requests.</p>
@@ -101,6 +119,7 @@
                         <th z-table-head>Status</th>
                         <th z-table-head>Requested At</th>
                         <th z-table-head>Remarks</th>
+                        <th z-table-head>Payload</th>
                     </tr>
                 </thead>
                 <tbody z-table-body>
@@ -120,9 +139,26 @@
                         </td>
                         <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
                         <td z-table-cell class="text-sm text-gray-600">{{ request.remarks || '-' }}</td>
+                        <td z-table-cell>
+                            <ng-container *ngIf="getPayloadEntries(request) as entries">
+                                <div *ngIf="entries.length; else emptyMyPayload" class="flex flex-wrap gap-1 max-w-lg">
+                                    <span *ngFor="let kv of entries"
+                                        class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700"
+                                        [title]="kv.label + ': ' + kv.value"
+                                    >
+                                        <span class="font-semibold">{{ kv.label }}</span>
+                                        <span class="text-gray-400">:</span>
+                                        <span class="font-mono truncate max-w-[220px]">{{ kv.value }}</span>
+                                    </span>
+                                </div>
+                                <ng-template #emptyMyPayload>
+                                    <span class="text-gray-400">-</span>
+                                </ng-template>
+                            </ng-container>
+                        </td>
                     </tr>
                     <tr z-table-row *ngIf="pager.items.length === 0">
-                        <td z-table-cell colspan="5" class="text-center py-12 text-gray-500">
+                        <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
                             <div class="flex flex-col items-center">
                                 <z-icon zType="circle-check" size="32" class="text-green-300 mb-2" />
                                 <p>No requests created by you yet.</p>
@@ -152,7 +188,6 @@
         </div>
     </ng-container>
 </div>
->
 
 <ng-template #managerReqLoader>
   <div class="flex items-center justify-center p-12 w-full min-h-[400px]">

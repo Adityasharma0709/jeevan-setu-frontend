@@ -22,6 +22,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardSwitchComponent } from '@/shared/components/switch';
 
 @Component({
   selector: 'app-activities',
@@ -41,6 +42,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardIconComponent,
+    ZardSwitchComponent,
     LottieComponent,
   ],
   templateUrl: './activities.html',
@@ -272,6 +274,18 @@ export class Activities implements OnInit {
         this.isSubmitting = false;
       }
     });
+  }
+
+  toggleActivityStatus(activity: Activity, checked: boolean) {
+    const isActive = (activity?.status ?? '').toString().toUpperCase() === 'ACTIVE';
+    const targetActive = !!checked;
+    if (targetActive === isActive) return;
+
+    if (targetActive) {
+      this.activateActivity(activity);
+    } else {
+      this.deactivateActivity(activity);
+    }
   }
 
   deactivateActivity(activity: Activity) {

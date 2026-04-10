@@ -64,39 +64,124 @@
 
 <ng-template #projectDetailsDialog>
   <div class="space-y-4">
-    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <div class="flex items-center justify-between">
-        <p class="text-sm text-gray-500">Project</p>
-        <span
-          class="rounded-full px-2 py-1 text-xs font-medium"
-          [ngClass]="
-            selectedProjectDetails?.status === 'ACTIVE'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-red-100 text-red-700'
-          "
-        >
-          {{ selectedProjectDetails?.status || '-' }}
-        </span>
+    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Project</p>
+          <p class="mt-1 truncate text-lg font-semibold text-gray-900">{{ selectedProjectDetails?.name || '-' }}</p>
+          <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 text-gray-700">
+              <span class="text-gray-500">Code</span>
+              <span class="font-mono font-semibold">{{ selectedProjectDetails?.projectCode || '-' }}</span>
+            </span>
+            <span
+              class="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold"
+              [ngClass]="
+                (selectedProjectDetails?.status || '').toString().toUpperCase() === 'ACTIVE'
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+              "
+            >
+              {{ selectedProjectDetails?.status || '-' }}
+            </span>
+          </div>
+        </div>
+        <div class="shrink-0">
+          <z-icon zType="layers" class="h-6 w-6 text-gray-300" />
+        </div>
       </div>
-      <p class="mt-1 text-lg font-semibold text-gray-900">{{ selectedProjectDetails?.name || '-' }}</p>
-      <p class="text-sm text-gray-600">Code: {{ selectedProjectDetails?.projectCode || '-' }}</p>
     </div>
-    <div class="rounded-lg border border-gray-200 p-4">
-      <p class="text-sm text-gray-500">Description</p>
-      <p class="mt-1 font-medium text-gray-900">{{ selectedProjectDetails?.description || '-' }}</p>
-    </div>
-    <div class="rounded-lg border border-gray-200 p-4">
-      <p class="text-sm text-gray-500">Assigned Admins</p>
-      <p class="mt-1 font-medium text-gray-900">
-        {{ selectedProjectAdmins === null ? 'Loading...' : formatAdminNames(selectedProjectAdmins) }}
+
+    <div class="rounded-xl border border-gray-200 p-4">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Description</p>
+      </div>
+      <p class="mt-2 text-sm font-medium text-gray-900">
+        {{ (selectedProjectDetails?.description || '').toString().trim() || '-' }}
       </p>
     </div>
-    <div class="rounded-lg border border-gray-200 p-4">
-      <p class="text-sm text-gray-500">Assigned Locations</p>
-      <p class="mt-1 font-medium text-gray-900">
-        {{ selectedProjectLocations === null ? 'Loading...' : formatLocationCodes(selectedProjectLocations) }}
-      </p>
-    </div>
+
+    <ng-container *ngIf="selectedProjectAdminsState$ | async as adminsState">
+      <div class="rounded-xl border border-gray-200 p-4">
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Assigned Admins</p>
+          <span class="text-xs text-gray-500">
+            {{ adminsState.loading ? 'Loading' : ((adminsState.items.length || 0) + ' total') }}
+          </span>
+        </div>
+
+        <div class="mt-3">
+          <ng-container *ngIf="adminsState.loading; else adminsReady">
+            <div class="flex flex-wrap gap-2">
+              <span class="h-6 w-24 animate-pulse rounded-full bg-gray-100"></span>
+              <span class="h-6 w-28 animate-pulse rounded-full bg-gray-100"></span>
+              <span class="h-6 w-20 animate-pulse rounded-full bg-gray-100"></span>
+            </div>
+          </ng-container>
+
+          <ng-template #adminsReady>
+            <ng-container *ngIf="adminsState.items.length; else noAdmins">
+              <div class="flex max-h-24 flex-wrap gap-2 overflow-auto pr-1">
+                <span
+                  *ngFor="let a of adminsState.items"
+                  class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700"
+                  [title]="(a?.email || a?.name || '').toString()"
+                >
+                  <z-icon zType="user" class="h-3.5 w-3.5 text-gray-400" />
+                  <span class="truncate max-w-[220px]">{{ (a?.name || a?.email || '-').toString() }}</span>
+                </span>
+              </div>
+            </ng-container>
+
+            <ng-template #noAdmins>
+              <p class="text-sm text-gray-500">-</p>
+            </ng-template>
+          </ng-template>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="selectedProjectLocationsState$ | async as locationsState">
+      <div class="rounded-xl border border-gray-200 p-4">
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Assigned Locations</p>
+          <span class="text-xs text-gray-500">
+            {{ locationsState.loading ? 'Loading' : ((locationsState.items.length || 0) + ' total') }}
+          </span>
+        </div>
+
+        <div class="mt-3">
+          <ng-container *ngIf="locationsState.loading; else locationsReady">
+            <div class="flex flex-wrap gap-2">
+              <span class="h-6 w-20 animate-pulse rounded-full bg-gray-100"></span>
+              <span class="h-6 w-24 animate-pulse rounded-full bg-gray-100"></span>
+              <span class="h-6 w-28 animate-pulse rounded-full bg-gray-100"></span>
+            </div>
+          </ng-container>
+
+          <ng-template #locationsReady>
+            <ng-container *ngIf="locationsState.items.length; else noLocations">
+              <div class="flex max-h-24 flex-wrap gap-2 overflow-auto pr-1">
+                <span
+                  *ngFor="let l of locationsState.items"
+                  class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700"
+                  [title]="((l?.locationCode || '-') + ' - ' + (l?.village || '-') + (l?.block ? (', ' + l.block) : '')).toString()"
+                >
+                  <z-icon zType="map-pin" class="h-3.5 w-3.5 text-gray-400" />
+                  <span class="font-mono font-semibold">{{ (l?.locationCode || '-').toString() }}</span>
+                  <span class="text-gray-400">·</span>
+                  <span class="truncate max-w-[180px]">{{ (l?.village || '-').toString() }}</span>
+                </span>
+              </div>
+            </ng-container>
+
+            <ng-template #noLocations>
+              <p class="text-sm text-gray-500">-</p>
+            </ng-template>
+          </ng-template>
+        </div>
+      </div>
+    </ng-container>
   </div>
 </ng-template>
 
@@ -285,24 +370,24 @@
             </button>
 
             <!-- EDIT BUTTON -->
-            <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(p)">Edit</button>
+            <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(p)">
+              <z-icon zType="edit" />
+              <span class="sr-only">Edit</span>
+            </button>
 
             <!-- ASSIGN ADMIN BUTTON -->
             <button *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'" z-button zSize="sm" zType="default" (click)="openAssignAdminDialog(p)">
               Assign Admin
             </button>
 
-            <!-- STATUS BUTTON -->
-            <button
-              z-button
-              zSize="sm"
-              [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
-              [zLoading]="isProjectStatusLoading(p.id)"
+            <!-- STATUS SWITCH -->
+            <z-switch
+              [zChecked]="p.status === 'ACTIVE'"
               [zDisabled]="isProjectStatusLoading(p.id)"
-              (click)="toggleProjectStatus(p)"
+              (zCheckedChange)="toggleProjectStatus(p)"
             >
-              {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-            </button>
+              <span class="sr-only">Toggle project status</span>
+            </z-switch>
 
             <!-- DISABLE BUTTON -->
           </td>
@@ -342,24 +427,27 @@
         </button>
 
         <!-- EDIT BUTTON -->
-        <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(p)">Edit</button>
+        <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(p)">
+          <z-icon zType="edit" />
+          <span class="sr-only">Edit</span>
+        </button>
 
         <!-- ASSIGN ADMIN BUTTON -->
         <button *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'" z-button zType="default" class="flex-1" (click)="openAssignAdminDialog(p)">
           Assign Admin
         </button>
 
-        <!-- STATUS BUTTON -->
-        <button
-          z-button
-          class="flex-1"
-          [zType]="p.status === 'ACTIVE' ? 'destructive' : 'default'"
-          [zLoading]="isProjectStatusLoading(p.id)"
-          [zDisabled]="isProjectStatusLoading(p.id)"
-          (click)="toggleProjectStatus(p)"
-        >
-          {{ p.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-        </button>
+        <!-- STATUS SWITCH -->
+        <div class="flex-1 flex items-center justify-between rounded-md border px-3 py-2">
+          <span class="text-xs text-gray-500">Status</span>
+          <z-switch
+            [zChecked]="p.status === 'ACTIVE'"
+            [zDisabled]="isProjectStatusLoading(p.id)"
+            (zCheckedChange)="toggleProjectStatus(p)"
+          >
+            <span class="sr-only">Toggle project status</span>
+          </z-switch>
+        </div>
 
         <!-- DISABLE BUTTON -->
         <button z-button zType="destructive" class="flex-1" (click)="disableProject(p.id)">

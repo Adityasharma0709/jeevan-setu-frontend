@@ -1,9 +1,10 @@
 ﻿import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@angular/core';
 import { afterNextRender } from '@angular/core';
+import { Injector, runInInjectionContext } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, startWith, switchMap, map, combineLatest, BehaviorSubject, forkJoin, shareReplay, tap, take } from 'rxjs';
+import { Observable, Subject, startWith, switchMap, map, combineLatest, BehaviorSubject, forkJoin, shareReplay, tap, take, of, catchError } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
@@ -26,6 +27,8 @@ import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
+import { ZardSwitchComponent } from '@/shared/components/switch';
+import { ZardIconComponent } from '@/shared/components/icon';
 
 import { ProjectsService, Project } from './projects.service';
 
@@ -76,6 +79,8 @@ type ProjectStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
     ZardDialogModule,
     ZardFormControlComponent,
     ZardFormFieldComponent,
+    ZardSwitchComponent,
+    ZardIconComponent,
     LottieComponent,
   ],
   templateUrl: './projects.html',
@@ -106,8 +111,14 @@ export class ProjectsComponent {
   isLoadingLocations$ = new BehaviorSubject<boolean>(false);
   targetProject: ProjectWithLocations | null = null;
   selectedProjectDetails: ProjectWithLocations | null = null;
-  selectedProjectAdmins: any[] | null = null;
-  selectedProjectLocations: LocationModel[] | null = null;
+  readonly selectedProjectAdminsState$ = new BehaviorSubject<{ loading: boolean; items: any[] }>({
+    loading: false,
+    items: [],
+  });
+  readonly selectedProjectLocationsState$ = new BehaviorSubject<{ loading: boolean; items: LocationModel[] }>({
+    loading: false,
+    items: [],
+  });
   availableLocations: LocationModel[] = [];
 
   readonly pageSize = 10;
@@ -191,6 +202,7 @@ export class ProjectsComponent {
     private api: ApiService,
     private projectService: ProjectsService,
     private dialog: ZardDialogService,
+    private injector: Injector,
   ) {
     this.form = this.fb.group({
       projectCode: [{ value: '', disabled: true }],
@@ -416,31 +428,37 @@ export class ProjectsComponent {
   openProjectDetails(project: ProjectWithLocations) {
     const projectId = Number(project?.id);
     this.selectedProjectDetails = project;
-    this.selectedProjectAdmins = null;
-    this.selectedProjectLocations = null;
+    this.selectedProjectAdminsState$.next({ loading: true, items: [] });
+    this.selectedProjectLocationsState$.next({ loading: true, items: [] });
 
     this.dialogRef = this.dialog.create({
       zTitle: `Project Details: ${project.name}`,
       zContent: this.projectDetailsDialog,
       zOkText: 'Close',
+      zCancelText: null,
       zWidth: '500px',
       zOnOk: () => {
         this.selectedProjectDetails = null;
-        this.selectedProjectAdmins = null;
-        this.selectedProjectLocations = null;
+        this.resetProjectDetailsState();
       },
       zOnCancel: () => {
         this.selectedProjectDetails = null;
-        this.selectedProjectAdmins = null;
-        this.selectedProjectLocations = null;
+        this.resetProjectDetailsState();
       },
     });
 
-    afterNextRender(() => {
-      if (!Number.isFinite(projectId) || Number(this.selectedProjectDetails?.id) !== projectId) return;
-      this.loadSelectedProjectAdmins(projectId);
-      this.loadSelectedProjectLocations(projectId);
+    runInInjectionContext(this.injector, () => {
+      afterNextRender(() => {
+        if (!Number.isFinite(projectId) || Number(this.selectedProjectDetails?.id) !== projectId) return;
+        this.loadSelectedProjectAdmins(projectId);
+        this.loadSelectedProjectLocations(projectId);
+      });
     });
+  }
+
+  private resetProjectDetailsState() {
+    this.selectedProjectAdminsState$.next({ loading: false, items: [] });
+    this.selectedProjectLocationsState$.next({ loading: false, items: [] });
   }
 
   private loadSelectedProjectAdmins(projectId: number) {
@@ -448,19 +466,20 @@ export class ProjectsComponent {
       next: (admins) => {
         if (Number(this.selectedProjectDetails?.id) !== projectId) return;
         const list = Array.isArray(admins) ? admins : [];
-
-        const assigned = list.filter((a) => this.isUserAssignedToProject(a, projectId));
-        const uniqueById = new Map<number, any>();
-        for (const a of assigned) {
-          const id = Number(a?.id);
-          if (Number.isFinite(id) && !uniqueById.has(id)) uniqueById.set(id, a);
-        }
-
-        this.selectedProjectAdmins = [...uniqueById.values()];
+        this.resolveAssignedAdmins(projectId, list).subscribe({
+          next: (assignedAdmins) => {
+            if (Number(this.selectedProjectDetails?.id) !== projectId) return;
+            this.selectedProjectAdminsState$.next({ loading: false, items: assignedAdmins });
+          },
+          error: () => {
+            if (Number(this.selectedProjectDetails?.id) !== projectId) return;
+            this.selectedProjectAdminsState$.next({ loading: false, items: [] });
+          },
+        });
       },
       error: () => {
         if (Number(this.selectedProjectDetails?.id) !== projectId) return;
-        this.selectedProjectAdmins = [];
+        this.selectedProjectAdminsState$.next({ loading: false, items: [] });
       },
     });
   }
@@ -470,15 +489,16 @@ export class ProjectsComponent {
       next: (locations) => {
         if (Number(this.selectedProjectDetails?.id) !== projectId) return;
         const list = Array.isArray(locations) ? locations : [];
-        this.selectedProjectLocations = list.filter((l: any) => {
+        const items = list.filter((l: any) => {
           const raw = (l as any)?.status;
           if (raw == null) return true;
           return raw.toString().toUpperCase() === 'ACTIVE';
         });
+        this.selectedProjectLocationsState$.next({ loading: false, items });
       },
       error: () => {
         if (Number(this.selectedProjectDetails?.id) !== projectId) return;
-        this.selectedProjectLocations = [];
+        this.selectedProjectLocationsState$.next({ loading: false, items: [] });
       },
     });
   }
@@ -509,6 +529,48 @@ export class ProjectsComponent {
     }
 
     return false;
+  }
+
+  private resolveAssignedAdmins(projectId: number, admins: any[]): Observable<any[]> {
+    const directlyAssigned = this.getUniqueAdmins(admins.filter((a) => this.isUserAssignedToProject(a, projectId)));
+    if (directlyAssigned.length) {
+      return of(directlyAssigned);
+    }
+
+    const requests = admins
+      .map((admin) => {
+        const adminId = Number(admin?.id);
+        if (!Number.isFinite(adminId)) return null;
+
+        return this.projectService.findAssignedToUser(adminId).pipe(
+          map((projects) => {
+            const assigned = Array.isArray(projects) && projects.some((p) => Number(p?.id) === projectId);
+            return assigned ? admin : null;
+          }),
+          catchError(() => of(null)),
+        );
+      })
+      .filter(Boolean) as Observable<any | null>[];
+
+    if (!requests.length) {
+      return of([]);
+    }
+
+    return forkJoin(requests).pipe(
+      map((results) => this.getUniqueAdmins(results.filter(Boolean))),
+      catchError(() => of([])),
+    );
+  }
+
+  private getUniqueAdmins(admins: any[]): any[] {
+    const uniqueById = new Map<number, any>();
+    for (const admin of admins) {
+      const adminId = Number(admin?.id);
+      if (Number.isFinite(adminId) && !uniqueById.has(adminId)) {
+        uniqueById.set(adminId, admin);
+      }
+    }
+    return [...uniqueById.values()];
   }
 
   formatAdminNames(admins: any[] | null | undefined) {

@@ -29,6 +29,8 @@ import {
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
+import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardSwitchComponent } from '@/shared/components/switch';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 
@@ -61,6 +63,8 @@ interface AdminRecord {
     ZardTableHeadComponent,
     ZardTableCellComponent,
     ZardDialogModule,
+    ZardIconComponent,
+    ZardSwitchComponent,
     LottieComponent,
   ],
   templateUrl: './create-admin.html',

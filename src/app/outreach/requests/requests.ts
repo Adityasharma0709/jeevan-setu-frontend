@@ -116,6 +116,7 @@ export class Requests {
         return {
             ...request,
             changes: changes || {},
+            payloadText: this.getPayloadText(request),
             createdAt: request?.createdAt || request?.requestedAt || new Date().toISOString(),
         };
     }
@@ -131,5 +132,62 @@ export class Requests {
         if (value === null || value === undefined) return '-';
         if (typeof value === 'object') return JSON.stringify(value);
         return String(value);
+    }
+
+    getPayloadText(request: any): string {
+        const payload = request?.payload || request?.data || {};
+        if (payload == null) return '-';
+
+        if (typeof payload === 'string') {
+            return payload.trim() || '-';
+        }
+
+        if (typeof payload !== 'object') {
+            return String(payload);
+        }
+
+        try {
+            return JSON.stringify(payload, null, 2);
+        } catch {
+            return '-';
+        }
+    }
+
+    getPayloadEntries(request: any): Array<{ key: string; label: string; value: string }> {
+        const rawPayload = request?.payload || request?.data || {};
+        const payload = this.extractDisplayPayload(rawPayload);
+
+        if (!payload || typeof payload !== 'object') return [];
+        if (Array.isArray(payload)) {
+            return payload.map((v, idx) => ({
+                key: String(idx),
+                label: `#${idx + 1}`,
+                value: this.formatPayloadValue(String(idx), v),
+            }));
+        }
+
+        return Object.entries(payload as Record<string, unknown>).map(([key, value]) => ({
+            key,
+            label: this.formatFieldLabel(key),
+            value: this.formatPayloadValue(key, value),
+        }));
+    }
+
+    private extractDisplayPayload(payload: any): any {
+        if (!payload || typeof payload !== 'object') return payload;
+
+        const maybeChanges = (payload as any)?.changes;
+        if (maybeChanges && typeof maybeChanges === 'object') return maybeChanges;
+
+        const maybeData = (payload as any)?.data;
+        if (maybeData && typeof maybeData === 'object') return maybeData;
+
+        return payload;
+    }
+
+    private formatPayloadValue(key: string, value: unknown): string {
+        const k = (key ?? '').toString().toLowerCase();
+        if (k.includes('password')) return '********';
+        return this.formatValue(value);
     }
 }

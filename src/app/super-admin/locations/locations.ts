@@ -35,6 +35,7 @@ import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardDropdownDirective } from '@/shared/components/dropdown';
 
 import { ZardFormFieldComponent, ZardFormControlComponent } from '@/shared/components/form';
+import { ZardSwitchComponent } from '@/shared/components/switch';
 
 /* =========================
    INTERFACES
@@ -101,6 +102,7 @@ interface LocationPagerVm {
 
     ZardFormFieldComponent,
     ZardFormControlComponent,
+    ZardSwitchComponent,
 
     LottieComponent,
   ],

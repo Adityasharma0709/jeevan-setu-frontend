@@ -21,6 +21,7 @@ export interface User {
         email?: string;
     };
     createdById?: number;
+    createdByAdminId?: number;
 }
 
 @Injectable({

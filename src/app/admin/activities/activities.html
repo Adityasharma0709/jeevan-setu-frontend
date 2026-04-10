@@ -58,18 +58,17 @@
                     <td z-table-cell class="text-right">
                         <div class="flex justify-end gap-2">
                             <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(activity)">
-                                Edit
+                                <z-icon zType="edit" />
+                                <span class="sr-only">Edit</span>
                             </button>
-                            <button *ngIf="activity.status === 'ACTIVE' && canToggleStatus(activity)" z-button zType="destructive" zSize="sm"
-                                [zLoading]="isActivityStatusLoading(activity.id)" [zDisabled]="isActivityStatusLoading(activity.id)"
-                                (click)="deactivateActivity(activity)">
-                                Deactivate
-                            </button>
-                            <button *ngIf="activity.status === 'INACTIVE' && canToggleStatus(activity)" z-button zType="default" zSize="sm"
-                                [zLoading]="isActivityStatusLoading(activity.id)" [zDisabled]="isActivityStatusLoading(activity.id)"
-                                (click)="activateActivity(activity)">
-                                Activate
-                            </button>
+                            <z-switch
+                                *ngIf="canToggleStatus(activity)"
+                                [zChecked]="activity.status === 'ACTIVE'"
+                                [zDisabled]="isActivityStatusLoading(activity.id)"
+                                (zCheckedChange)="toggleActivityStatus(activity, $event)"
+                            >
+                                <span class="sr-only">Toggle activity status</span>
+                            </z-switch>
                         </div>
                     </td>
                 </tr>

@@ -57,12 +57,14 @@
                             >
                                 View Details
                             </button>
-                            <button *ngIf="canToggleStatus(manager)" z-button
-                                [zType]="manager.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
-                                [zLoading]="isManagerStatusLoading(manager.id)" [zDisabled]="isManagerStatusLoading(manager.id)"
-                                (click)="toggleManagerStatus(manager)">
-                                {{ manager.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-                            </button>
+                            <z-switch
+                                *ngIf="canToggleStatus(manager)"
+                                [zChecked]="manager.status === 'ACTIVE'"
+                                [zDisabled]="isManagerStatusLoading(manager.id)"
+                                (zCheckedChange)="toggleManagerStatus(manager)"
+                            >
+                                <span class="sr-only">Toggle manager status</span>
+                            </z-switch>
                             <button z-button zType="default" zSize="sm" (click)="openAssignDialog(manager)">
                                 Assign Project
                             </button>

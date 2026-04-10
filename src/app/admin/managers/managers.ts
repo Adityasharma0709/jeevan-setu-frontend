@@ -22,6 +22,7 @@ import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardDropdownImports } from '@/shared/components/dropdown/dropdown.imports';
+import { ZardSwitchComponent } from '@/shared/components/switch';
 import { AuthService } from '../../core/services/auth';
 
 @Component({
@@ -42,6 +43,7 @@ import { AuthService } from '../../core/services/auth';
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardIconComponent,
+    ZardSwitchComponent,
     ...ZardDropdownImports,
     LottieComponent,
   ],
@@ -90,6 +92,7 @@ export class Managers {
   private projectsCache: any[] = [];
   private assignLocationsCache: any[] = [];
   private currentUserId: number | null = null;
+  private currentUserRoles: string[] = [];
   readonly managerStatusLoadingIds = signal<Set<number>>(new Set());
   pendingAssignments: Array<{ projectId: number; locationId: number; projectName: string; locationLabel: string }> = [];
 
@@ -200,6 +203,7 @@ export class Managers {
 
     const currentUser = this.authService.getCurrentUser();
     this.currentUserId = Number(currentUser?.sub) || null;
+    this.currentUserRoles = Array.isArray(currentUser?.roles) ? currentUser.roles : [];
     this.projects$ = of(null).pipe(
       tap(() => this.projectsLoading.set(true)),
       switchMap(() => this.managersService.getProjects(currentUser?.sub)),
@@ -495,7 +499,14 @@ export class Managers {
 
   canToggleStatus(manager: User): boolean {
     const creatorId = this.getCreatorId(manager);
-    return !!creatorId && !!this.currentUserId && creatorId === this.currentUserId;
+    const roles = this.currentUserRoles.map((r) => (r ?? '').toString().toUpperCase());
+    if (roles.includes('SUPER_ADMIN')) return true;
+    if (roles.includes('ADMIN')) {
+      // If we don't know the creator, be conservative to avoid 403 from backend.
+      if (!creatorId) return false;
+      return !!this.currentUserId && creatorId === this.currentUserId;
+    }
+    return false;
   }
 
   openAssignDialog(manager: User) {
@@ -732,7 +743,13 @@ export class Managers {
   }
 
   private getCreatorId(entity: any): number | null {
-    const directId = entity?.creator?.id ?? entity?.createdBy?.id ?? entity?.createdById ?? entity?.created_by;
+    const directId =
+      entity?.creator?.id ??
+      entity?.createdBy?.id ??
+      entity?.createdByAdmin?.id ??
+      entity?.createdByAdminId ??
+      entity?.createdById ??
+      entity?.created_by;
     const creatorId = Number(directId);
     return Number.isFinite(creatorId) ? creatorId : null;
   }

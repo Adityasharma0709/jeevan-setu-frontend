@@ -209,19 +209,17 @@
             zType="secondary"
             (click)="openEditDialog(l)"
           >
-            Edit
+            <z-icon zType="edit" />
+            <span class="sr-only">Edit</span>
           </button>
 
-          <button
-            z-button
-            zSize="sm"
-            [zType]="l.status === 'ACTIVE' ? 'destructive' : 'default'"
-            [zLoading]="isLocationStatusLoading(l.id)"
+          <z-switch
+            [zChecked]="l.status === 'ACTIVE'"
             [zDisabled]="isLocationStatusLoading(l.id)"
-            (click)="toggleLocationStatus(l)"
+            (zCheckedChange)="toggleLocationStatus(l)"
           >
-            {{ l.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-          </button>
+            <span class="sr-only">Toggle location status</span>
+          </z-switch>
 
         </td>
 
@@ -304,19 +302,20 @@
         class="flex-1"
         (click)="openEditDialog(l)"
       >
-        Edit
+        <z-icon zType="edit" />
+        <span class="sr-only">Edit</span>
       </button>
 
-      <button
-        z-button
-        class="flex-1"
-        [zType]="l.status === 'ACTIVE' ? 'destructive' : 'default'"
-        [zLoading]="isLocationStatusLoading(l.id)"
-        [zDisabled]="isLocationStatusLoading(l.id)"
-        (click)="toggleLocationStatus(l)"
-      >
-        {{ l.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-      </button>
+      <div class="flex-1 flex items-center justify-between rounded-md border px-3 py-2">
+        <span class="text-xs text-gray-500">Status</span>
+        <z-switch
+          [zChecked]="l.status === 'ACTIVE'"
+          [zDisabled]="isLocationStatusLoading(l.id)"
+          (zCheckedChange)="toggleLocationStatus(l)"
+        >
+          <span class="sr-only">Toggle location status</span>
+        </z-switch>
+      </div>
 
     </div>
 

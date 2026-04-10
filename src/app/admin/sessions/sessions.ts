@@ -22,6 +22,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardSwitchComponent } from '@/shared/components/switch';
 
 @Component({
   selector: 'app-sessions',
@@ -41,6 +42,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardIconComponent,
+    ZardSwitchComponent,
     LottieComponent,
   ],
   templateUrl: './sessions.html',
@@ -298,6 +300,18 @@ export class Sessions {
         this.isSubmitting = false;
       }
     });
+  }
+
+  toggleSessionStatus(session: Session, checked: boolean) {
+    const isActive = (session?.status ?? '').toString().toUpperCase() === 'ACTIVE';
+    const targetActive = !!checked;
+    if (targetActive === isActive) return;
+
+    if (targetActive) {
+      this.activateSession(session);
+    } else {
+      this.deactivateSession(session);
+    }
   }
 
   deactivateSession(session: Session) {

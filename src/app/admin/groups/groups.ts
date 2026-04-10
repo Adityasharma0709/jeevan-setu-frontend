@@ -22,6 +22,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardSwitchComponent } from '@/shared/components/switch';
 
 @Component({
   selector: 'app-groups',
@@ -41,6 +42,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardIconComponent,
+    ZardSwitchComponent,
     LottieComponent,
   ],
   templateUrl: './groups.html',

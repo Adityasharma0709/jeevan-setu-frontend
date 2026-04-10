@@ -69,13 +69,17 @@
                                 Tag Activity
                             </button>
                             <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(group)">
-                                Edit
+                                <z-icon zType="edit" />
+                                <span class="sr-only">Edit</span>
                             </button>
-                            <button *ngIf="canToggleStatus(group)" z-button [zType]="group.status === 'ACTIVE' ? 'destructive' : 'default'" zSize="sm"
-                                [zLoading]="isGroupStatusLoading(group.id)" [zDisabled]="isGroupStatusLoading(group.id)"
-                                (click)="toggleGroupStatus(group)">
-                                {{ group.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-                            </button>
+                            <z-switch
+                                *ngIf="canToggleStatus(group)"
+                                [zChecked]="group.status === 'ACTIVE'"
+                                [zDisabled]="isGroupStatusLoading(group.id)"
+                                (zCheckedChange)="toggleGroupStatus(group)"
+                            >
+                                <span class="sr-only">Toggle group status</span>
+                            </z-switch>
                         </div>
                     </td>
                 </tr>

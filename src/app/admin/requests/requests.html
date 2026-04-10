@@ -12,8 +12,7 @@
                         <tr z-table-row>
                             <th z-table-head>Manager</th>
                             <th z-table-head>Request Type</th>
-                            <th z-table-head>Target</th>
-                            <th z-table-head>Changed Fields</th>
+                            <th z-table-head>Payload</th>
                             <th z-table-head>Requested At</th>
                             <th z-table-head class="text-right">Actions</th>
                         </tr>
@@ -26,16 +25,31 @@
                             </td>
                             <td z-table-cell>
                                 <span class="px-2 py-1 rounded-full text-xs font-semibold" [ngClass]="{
-                                    'bg-blue-100 text-blue-700': request.requestType === 'CREATE',
-                                    'bg-yellow-100 text-yellow-700': request.requestType === 'MODIFY',
-                                    'bg-red-100 text-red-700': request.requestType === 'DEACTIVATE',
-                                    'bg-green-100 text-green-700': request.requestType === 'ACTIVATE'
+                                    'bg-blue-100 text-blue-700': (request.requestType || '').toString().toUpperCase().includes('CREATE'),
+                                    'bg-yellow-100 text-yellow-700': (request.requestType || '').toString().toUpperCase().includes('MODIFY') || (request.requestType || '').toString().toUpperCase().includes('UPDATE'),
+                                    'bg-red-100 text-red-700': (request.requestType || '').toString().toUpperCase().includes('DEACTIVATE'),
+                                    'bg-green-100 text-green-700': (request.requestType || '').toString().toUpperCase().includes('ACTIVATE') && !(request.requestType || '').toString().toUpperCase().includes('DEACTIVATE')
                                 }">
                                     {{ request.requestType }}
                                 </span>
                             </td>
-                            <td z-table-cell class="font-medium">{{ getTargetLabel(request) }}</td>
-                            <td z-table-cell class="text-gray-600">{{ getChangesPreview(request) }}</td>
+                            <td z-table-cell>
+                                <ng-container *ngIf="getPayloadEntries(request) as entries">
+                                    <div *ngIf="entries.length; else emptyPayload" class="flex flex-wrap gap-1 max-w-lg">
+                                        <span *ngFor="let kv of entries"
+                                            class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700"
+                                            [title]="kv.label + ': ' + kv.value"
+                                        >
+                                            <span class="font-semibold">{{ kv.label }}</span>
+                                            <span class="text-gray-400">:</span>
+                                            <span class="font-mono truncate max-w-[220px]">{{ kv.value }}</span>
+                                        </span>
+                                    </div>
+                                    <ng-template #emptyPayload>
+                                        <span class="text-gray-400">-</span>
+                                    </ng-template>
+                                </ng-container>
+                            </td>
                             <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
                             <td z-table-cell class="text-right">
                                 <div class="flex justify-end gap-2">
@@ -53,7 +67,7 @@
                             </td>
                         </tr>
                         <tr z-table-row *ngIf="!pager.items.length">
-                            <td z-table-cell colspan="6" class="text-center py-12 text-gray-500">
+                            <td z-table-cell colspan="5" class="text-center py-12 text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <z-icon zType="circle-check" size="32" class="text-green-300 mb-2" />
                                     <p>No pending manager requests.</p>

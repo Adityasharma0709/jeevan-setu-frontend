@@ -148,36 +148,61 @@ export class Requests implements OnInit {
     });
   }
 
-  getBeneficiaryId(request: any): number | string {
-    if (request?.payload?.beneficiaryId) return request.payload.beneficiaryId;
-    if (request?.payload?.workerId) return request.payload.workerId;
-    return '-';
-  }
+  getPayloadEntries(request: any): Array<{ key: string; label: string; value: string }> {
+    const rawPayload = request?.payload ?? request?.data ?? {};
+    const payload = this.extractDisplayPayload(rawPayload);
 
-  getChangesPreview(request: any): string {
-    const payload = request?.payload || {};
-
-    if (request.requestType === 'ACTIVATE' || request.requestType === 'DEACTIVATE') {
-      return payload.reason ? `Reason: ${payload.reason}` : 'No reason provided';
+    if (!payload || typeof payload !== 'object') return [];
+    if (Array.isArray(payload)) {
+      return payload.map((v, idx) => ({
+        key: String(idx),
+        label: `#${idx + 1}`,
+        value: this.formatPayloadValue(String(idx), v),
+      }));
     }
 
-    const changes = payload?.changes && typeof payload.changes === 'object' ? payload.changes : payload;
-    if (!changes || typeof changes !== 'object') return '-';
-
-    const keys = Object.keys(changes).filter(
-      (key) => !['password', 'reason', 'beneficiaryId', 'workerId'].includes(key),
-    );
-    if (keys.length === 0) return '-';
-    if (keys.length <= 3) return keys.join(', ');
-    return `${keys.slice(0, 3).join(', ')} +${keys.length - 3} more`;
+    return Object.entries(payload as Record<string, unknown>).map(([key, value]) => ({
+      key,
+      label: this.formatFieldLabel(key),
+      value: this.formatPayloadValue(key, value),
+    }));
   }
 
-  getTargetLabel(request: any): string {
-    if (request?.payload?.beneficiaryId) return `Beneficiary #${request.payload.beneficiaryId}`;
-    if (request?.payload?.workerId) return `Worker #${request.payload.workerId}`;
-    // Fallback for new structure where workerId might be top-level in data
-    if (request?.payload?.data?.workerId) return `Worker #${request.payload.data.workerId}`;
-    return '-';
+  private extractDisplayPayload(payload: any): any {
+    if (!payload || typeof payload !== 'object') return payload;
+
+    // Prefer nested shapes when backend wraps the payload.
+    const maybeChanges = (payload as any)?.changes;
+    if (maybeChanges && typeof maybeChanges === 'object') return maybeChanges;
+
+    const maybeData = (payload as any)?.data;
+    if (maybeData && typeof maybeData === 'object') return maybeData;
+
+    return payload;
+  }
+
+  private formatFieldLabel(key: string): string {
+    return (key ?? '')
+      .toString()
+      .trim()
+      .replace(/_/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  private formatPayloadValue(key: string, value: unknown): string {
+    const k = (key ?? '').toString().toLowerCase();
+    if (k.includes('password')) return '********';
+
+    if (value === null || value === undefined) return '-';
+    if (typeof value === 'string') return value.trim() || '-';
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
   }
 
   goToPage(page: number) {
