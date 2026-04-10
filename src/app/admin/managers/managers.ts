@@ -440,52 +440,20 @@ export class Managers {
 
   private populateNextManagerCode(): void {
     this.managersService
-      .findAll()
+      .getNextManagerCode()
       .pipe(take(1))
       .subscribe({
-        next: (managers) => {
-          const nextCode = this.getNextManagerCode(managers);
-          this.managerForm.get('usercode')?.setValue(nextCode, { emitEvent: false });
+        next: (res: any) => {
+          const raw = res?.code ?? res?.nextCode ?? res?.usercode ?? res?.data?.code ?? res?.data?.nextCode;
+          const code = raw == null ? '' : String(raw).trim();
+          if (code) {
+            this.managerForm.get('usercode')?.setValue(code, { emitEvent: false });
+          }
         },
         error: () => {
           // keep fallback code if fetch fails
         },
       });
-  }
-
-  private getNextManagerCode(managers: User[]): string {
-    const codes = (managers ?? []).map((m) => m?.usercode);
-    return this.nextSerialCode('MC', codes, 2);
-  }
-
-  private nextSerialCode(prefix: string, codes: Array<string | null | undefined>, minDigits: number): string {
-    const safePrefix = (prefix ?? '')
-      .toString()
-      .toUpperCase()
-      .replace(/[^A-Z]/g, '')
-      .padEnd(2, 'M')
-      .slice(0, 2);
-
-    const safeMinDigits = Math.max(2, Math.floor(Number(minDigits) || 2));
-    let maxValue = 0;
-    let digitsWidth = safeMinDigits;
-
-    for (const raw of codes) {
-      const code = (raw ?? '').toString().trim().toUpperCase();
-      const match = code.match(/^([A-Z]{2})(\d+)$/);
-      if (!match) continue;
-      if (match[1] !== safePrefix) continue;
-
-      digitsWidth = Math.max(digitsWidth, match[2].length);
-
-      const value = Number(match[2]);
-      if (!Number.isFinite(value)) continue;
-      if (value > maxValue) maxValue = value;
-    }
-
-    const nextValue = maxValue + 1;
-    const digits = nextValue.toString().padStart(digitsWidth, '0');
-    return `${safePrefix}${digits}`;
   }
 
   toggleManagerStatus(manager: User) {

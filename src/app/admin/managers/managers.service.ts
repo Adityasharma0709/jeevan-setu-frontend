@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
-import { ApiService } from '../../core/services/api';
+import { ApiGetOptions, ApiService } from '../../core/services/api';
 
 export interface User {
     id: number;
@@ -34,9 +34,90 @@ export class ManagersService {
     /**
      * Get all managers with optional search
      */
-    findAll(search?: string): Observable<User[]> {
+    findAll(search?: string, options?: ApiGetOptions): Observable<User[]> {
         const query = search ? `?search=${encodeURIComponent(search)}&role=MANAGER` : '?role=MANAGER';
-        return this.api.get(`${this.endpoint}${query}`) as Observable<User[]>;
+        return (this.api.get(`${this.endpoint}${query}`, undefined, options) as Observable<any>).pipe(
+            map((response) => this.normalizeUsersResponse(response)),
+        );
+    }
+
+    getNextManagerCode(): Observable<{ code: string }> {
+        return this.api.get('users/next-code?role=MANAGER', undefined, { cache: 'reload' }) as Observable<{ code: string }>;
+    }
+
+    private normalizeUsersResponse(response: any): User[] {
+        if (Array.isArray(response)) return response as User[];
+
+        const candidates = [
+            response?.data,
+            response?.items,
+            response?.results,
+            response?.users,
+            response?.rows,
+            response?.data?.data,
+            response?.data?.items,
+            response?.data?.results,
+            response?.data?.users,
+            response?.data?.rows,
+            response?.payload,
+            response?.payload?.data,
+            response?.payload?.items,
+            response?.payload?.results,
+        ];
+
+        for (const value of candidates) {
+            if (Array.isArray(value)) return value as User[];
+        }
+
+        const deepMatch = this.findFirstArrayByKeysDeep(response, [
+            'usercode',
+            'userCode',
+            'user_code',
+            'accountCode',
+            'account_code',
+            'email',
+            'name',
+        ]);
+        return deepMatch;
+    }
+
+    private findFirstArrayByKeysDeep(source: unknown, keys: string[], maxDepth = 5): User[] {
+        if (!source || typeof source !== 'object') return [];
+
+        const visited = new WeakSet<object>();
+        const queue: Array<{ value: unknown; depth: number }> = [{ value: source, depth: 0 }];
+
+        const hasAnyKey = (value: any) =>
+            keys.some((key) => value?.[key] !== null && value?.[key] !== undefined);
+
+        while (queue.length) {
+            const { value, depth } = queue.shift()!;
+            if (!value || typeof value !== 'object') continue;
+
+            const obj = value as object;
+            if (visited.has(obj)) continue;
+            visited.add(obj);
+
+            if (Array.isArray(value)) {
+                if (value.some((item) => item && typeof item === 'object' && hasAnyKey(item))) {
+                    return value as User[];
+                }
+                if (depth < maxDepth) {
+                    for (const item of value) queue.push({ value: item, depth: depth + 1 });
+                }
+                continue;
+            }
+
+            if (depth >= maxDepth) continue;
+
+            for (const child of Object.values(value as Record<string, unknown>)) {
+                if (child && typeof child === 'object') {
+                    queue.push({ value: child, depth: depth + 1 });
+                }
+            }
+        }
+
+        return [];
     }
 
     /**

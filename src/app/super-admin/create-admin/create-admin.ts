@@ -2,7 +2,7 @@ import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, BehaviorSubject, combineLatest, map, shareReplay, startWith, switchMap } from 'rxjs';
+import { Observable, Subject, BehaviorSubject, combineLatest, map, shareReplay, startWith, switchMap, take } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api';
 import { toast } from 'ngx-sonner';
@@ -32,6 +32,17 @@ import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 
+interface AdminRecord {
+  id?: number;
+  name?: string;
+  email?: string;
+  status?: string;
+  usercode?: string;
+  createdAt?: string;
+  created_at?: string;
+  createdOn?: string;
+}
+
 @Component({
   selector: 'app-create-admin',
   standalone: true,
@@ -59,11 +70,11 @@ export class CreateAdminComponent {
   readonly createAdminLoading = signal(false);
   readonly updateAdminLoading = signal(false);
   readonly adminStatusLoadingIds = signal<Set<number>>(new Set());
-  adminSearch = new FormControl('');
-  statusFilter = new FormControl<StatusFilter>('ALL');
+  adminSearch = new FormControl('', { nonNullable: true });
+  statusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
 
   vm$!: Observable<{
-    admins: any[];
+    admins: AdminRecord[];
     totalAdmins: number;
     page: number;
     pageSize: number;
@@ -71,6 +82,8 @@ export class CreateAdminComponent {
   }>;
 
   private readonly pageSize = 10;
+  private readonly codePrefix = 'AC';
+  private readonly codeMinDigits = 2;
   private readonly page$ = new BehaviorSubject<number>(1);
   private lastPage = 1;
   private lastPageCount = 1;
@@ -101,15 +114,15 @@ export class CreateAdminComponent {
   private refresh$ = new Subject<void>();
   options: AnimationOptions = { path: '/loading.json' };
 
-  private readonly rawAdmins$: Observable<any[]> = this.refresh$.pipe(
+  private readonly rawAdmins$: Observable<AdminRecord[]> = this.refresh$.pipe(
     startWith(void 0),
-    switchMap(() => this.api.get('users/admins') as Observable<any[]>),
+    switchMap(() => this.api.get('users/admins') as Observable<AdminRecord[]>),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  private adminsSnapshot: any[] = [];
+  private adminsSnapshot: AdminRecord[] = [];
 
-  private readonly filteredAdmins$: Observable<any[]> = combineLatest([
+  private readonly filteredAdmins$: Observable<AdminRecord[]> = combineLatest([
     this.rawAdmins$,
     this.adminSearch.valueChanges.pipe(
       startWith(''),
@@ -118,25 +131,7 @@ export class CreateAdminComponent {
     ),
     this.statusFilter.valueChanges.pipe(startWith('ALL' as StatusFilter)),
   ]).pipe(
-    map(([admins, query, status]) => {
-      const q = (query || '').toLowerCase().trim();
-      const s = (status || 'ALL').toUpperCase();
-
-      const sorted = [...(admins || [])].sort(
-        (a: any, b: any) => this.getAdminSortTime(b) - this.getAdminSortTime(a)
-      );
-
-      return sorted.filter((a: any) => {
-        const name = (a?.name || '').toLowerCase();
-        const email = (a?.email || '').toLowerCase();
-        const adminStatus = (a?.status || '').toUpperCase();
-
-        const matchesSearch = !q || name.includes(q) || email.includes(q);
-        const matchesStatus = s === 'ALL' || adminStatus === s;
-
-        return matchesSearch && matchesStatus;
-      });
-    }),
+    map(([admins, query, status]) => this.filterAdmins(admins, query, status)),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
@@ -168,21 +163,7 @@ export class CreateAdminComponent {
       this.page$.asObservable(),
     ]).pipe(
       map(([admins, page]) => {
-        const totalAdmins = admins.length;
-        const pageCount = Math.max(1, Math.ceil(totalAdmins / this.pageSize));
-        const safePage = Math.min(Math.max(1, page), pageCount);
-        const startIndex = (safePage - 1) * this.pageSize;
-
-        this.lastPage = safePage;
-        this.lastPageCount = pageCount;
-
-        return {
-          admins: admins.slice(startIndex, startIndex + this.pageSize),
-          totalAdmins,
-          page: safePage,
-          pageSize: this.pageSize,
-          pageCount,
-        };
+        return this.buildPageVm(admins, page);
       }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
@@ -222,18 +203,36 @@ export class CreateAdminComponent {
   }
 
   private resetCreateForm(): void {
-    const nextCode = this.getNextAdminCode();
     this.form.reset({
-      usercode: { value: nextCode, disabled: true },
+      usercode: { value: this.getNextAdminCode(), disabled: true },
       name: '',
       email: '',
       password: '',
     });
+    this.populateNextAdminCode();
+  }
+
+  private populateNextAdminCode(): void {
+    this.api.get('users/next-code?role=ADMIN', undefined, { cache: 'reload' })
+      .pipe(take(1))
+      .subscribe({
+        next: (res: any) => {
+          const raw = res?.code ?? res?.nextCode ?? res?.usercode ?? res?.data?.code ?? res?.data?.nextCode;
+          const code = raw == null ? '' : String(raw).trim();
+          if (code) {
+            this.form.get('usercode')?.setValue(code, { emitEvent: false });
+          }
+        },
+        error: () => {
+          const fallback = this.getNextAdminCode();
+          this.form.get('usercode')?.setValue(fallback, { emitEvent: false });
+        },
+      });
   }
 
   private getNextAdminCode(): string {
     const codes = this.adminsSnapshot.map((a) => a?.usercode);
-    return this.nextSerialCode('AC', codes, 2);
+    return this.nextSerialCode(this.codePrefix, codes, this.codeMinDigits);
   }
 
   private nextSerialCode(prefix: string, codes: Array<string | null | undefined>, minDigits: number): string {
@@ -321,7 +320,7 @@ export class CreateAdminComponent {
   }
 
   updateAdmin(id: number) {
-    // ✅ clean payload (prevents 400 error)
+    // Clean payload (prevents 400 error)
     const payload = {
       name: this.editForm.value.name,
       email: this.editForm.value.email,
@@ -346,14 +345,17 @@ export class CreateAdminComponent {
      TOGGLE STATUS
   ====================== */
 
-  isAdminStatusLoading(adminId: number): boolean {
-    return this.adminStatusLoadingIds().has(adminId);
+  isAdminStatusLoading(adminId: number | null | undefined): boolean {
+    if (!Number.isFinite(adminId)) return false;
+    return this.adminStatusLoadingIds().has(Number(adminId));
   }
 
-  private setAdminStatusLoading(adminId: number, loading: boolean): void {
+  private setAdminStatusLoading(adminId: number | null | undefined, loading: boolean): void {
+    if (!Number.isFinite(adminId)) return;
     const next = new Set(this.adminStatusLoadingIds());
-    if (loading) next.add(adminId);
-    else next.delete(adminId);
+    const id = Number(adminId);
+    if (loading) next.add(id);
+    else next.delete(id);
     this.adminStatusLoadingIds.set(next);
   }
 
@@ -391,7 +393,62 @@ export class CreateAdminComponent {
     this.page$.next(Math.min(this.lastPageCount, this.lastPage + 1));
   }
 
-  private getAdminSortTime(admin: any): number {
+  private filterAdmins(admins: AdminRecord[], query: string, status: StatusFilter): AdminRecord[] {
+    const term = this.normalizeText(query);
+    const statusFilter = this.normalizeStatus(status);
+
+    const sorted = [...(admins || [])].sort(
+      (a, b) => this.getAdminSortTime(b) - this.getAdminSortTime(a)
+    );
+
+    return sorted.filter((admin) =>
+      this.matchesSearch(admin, term) && this.matchesStatus(admin, statusFilter)
+    );
+  }
+
+  private buildPageVm(admins: AdminRecord[], page: number) {
+    const totalAdmins = admins.length;
+    const pageCount = Math.max(1, Math.ceil(totalAdmins / this.pageSize));
+    const safePage = Math.min(Math.max(1, page), pageCount);
+    const startIndex = (safePage - 1) * this.pageSize;
+
+    this.lastPage = safePage;
+    this.lastPageCount = pageCount;
+
+    return {
+      admins: admins.slice(startIndex, startIndex + this.pageSize),
+      totalAdmins,
+      page: safePage,
+      pageSize: this.pageSize,
+      pageCount,
+    };
+  }
+
+  private matchesSearch(admin: AdminRecord, term: string): boolean {
+    if (!term) return true;
+    const name = this.normalizeText(admin?.name);
+    const email = this.normalizeText(admin?.email);
+    return name.includes(term) || email.includes(term);
+  }
+
+  private matchesStatus(admin: AdminRecord, status: StatusFilter): boolean {
+    if (status === 'ALL') return true;
+    return this.normalizeStatus(admin?.status) === status;
+  }
+
+  private normalizeText(value: unknown): string {
+    return (value ?? '').toString().toLowerCase().trim();
+  }
+
+  private normalizeStatus(value: unknown): StatusFilter {
+    const normalized = (value ?? 'ALL').toString().toUpperCase();
+    if (normalized === 'ACTIVE' || normalized === 'INACTIVE' || normalized === 'ALL') {
+      return normalized;
+    }
+    return 'ALL';
+  }
+
+  private getAdminSortTime(admin: AdminRecord): number {
     const createdAt = admin?.createdAt ?? admin?.created_at ?? admin?.createdOn;
     if (createdAt) {
       const t = new Date(createdAt).getTime();

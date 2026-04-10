@@ -427,47 +427,19 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
 
     private populateNextWorkerCode(): void {
         this.managerService
-            .getOutreachWorkers()
+            .getNextOutreachCode()
             .subscribe({
-                next: (workers) => {
-                    const codes = (workers || []).map((w) => w?.usercode);
-                    const nextCode = this.nextSerialCode('OW', codes, 2);
-                    this.requestForm.get('usercode')?.setValue(nextCode, { emitEvent: false });
+                next: (res: any) => {
+                    const raw = res?.code ?? res?.nextCode ?? res?.usercode ?? res?.data?.code ?? res?.data?.nextCode;
+                    const code = raw == null ? '' : String(raw).trim();
+                    if (code) {
+                        this.requestForm.get('usercode')?.setValue(code, { emitEvent: false });
+                    }
                 },
                 error: () => {
                     // Fallback
                     this.requestForm.get('usercode')?.setValue('OW01', { emitEvent: false });
                 },
             });
-    }
-
-    private nextSerialCode(prefix: string, codes: Array<string | null | undefined>, minDigits: number): string {
-        const safePrefix = (prefix || '')
-            .toString()
-            .toUpperCase()
-            .replace(/[^A-Z]/g, '')
-            .padEnd(2, 'O')
-            .slice(0, 2);
-
-        const safeMinDigits = Math.max(2, Math.floor(Number(minDigits) || 2));
-        let maxValue = 0;
-        let digitsWidth = safeMinDigits;
-
-        for (const raw of (codes || [])) {
-            const code = (raw || '').toString().trim().toUpperCase();
-            const match = code.match(/^([A-Z]{2})(\d+)$/);
-            if (!match) continue;
-            if (match[1] !== safePrefix) continue;
-
-            digitsWidth = Math.max(digitsWidth, match[2].length);
-
-            const value = Number(match[2]);
-            if (!Number.isFinite(value)) continue;
-            if (value > maxValue) maxValue = value;
-        }
-
-        const nextValue = maxValue + 1;
-        const digits = nextValue.toString().padStart(digitsWidth, '0');
-        return `${safePrefix}${digits}`;
     }
 }
