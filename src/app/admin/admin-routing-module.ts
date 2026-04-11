@@ -24,43 +24,50 @@ const routes: Routes = [
       // Dashboard
       {
         path: '',
-        component: Dashboard
+        component: Dashboard,
+        data: { pageTitle: 'Dashboard' },
       },
 
       // Managers CRUD
       {
         path: 'managers',
-        component: Managers
+        component: Managers,
+        data: { pageTitle: 'Managers' },
       },
 
       // Beneficiary Groups
       {
         path: 'groups',
-        component: Groups
+        component: Groups,
+        data: { pageTitle: 'Groups' },
       },
 
       // Activities
       {
         path: 'activities',
-        component: Activities
+        component: Activities,
+        data: { pageTitle: 'Activities' },
       },
 
       // Sessions
       {
         path: 'sessions',
-        component: Sessions
+        component: Sessions,
+        data: { pageTitle: 'Sessions' },
       },
 
       // Manager Beneficiary Requests
       {
         path: 'requests',
-        component: Requests
+        component: Requests,
+        data: { pageTitle: 'Requests' },
       },
 
       // Profile
       {
         path: 'profile',
-        component: Profile
+        component: Profile,
+        data: { pageTitle: 'Profile' },
       }
 
     ]

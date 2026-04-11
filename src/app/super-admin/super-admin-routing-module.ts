@@ -20,22 +20,26 @@ const routes: Routes = [
 
       {
         path: '',
-        component: DashboardComponent
+        component: DashboardComponent,
+        data: { pageTitle: 'Dashboard' },
       },
 
       {
         path: 'create-admin',
-        component: CreateAdminComponent
+        component: CreateAdminComponent,
+        data: { pageTitle: 'Create Admin' },
       },
 
       {
         path: 'projects',
-        component: ProjectsComponent
+        component: ProjectsComponent,
+        data: { pageTitle: 'Projects' },
       },
 
       {
         path: 'locations',
-        component: LocationsComponent
+        component: LocationsComponent,
+        data: { pageTitle: 'Locations' },
       }
 
     ]

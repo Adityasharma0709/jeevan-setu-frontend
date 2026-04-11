@@ -14,12 +14,12 @@ const routes: Routes = [
     canActivate: [roleGuard],
     data: { roles: ['MANAGER'] },
     children: [
-      { path: '', component: Dashboard },
-      { path: 'profile', component: Profile },
-      { path: 'requests', component: Requests },
-      { path: 'outreach-workers', component: OutreachWorkers },
-      { path: 'beneficiaries', loadComponent: () => import('./beneficiaries/beneficiaries').then(m => m.Beneficiaries) },
-      { path: 'beneficiaries/:id', loadComponent: () => import('./beneficiaries/beneficiary-detail/beneficiary-detail').then(m => m.BeneficiaryDetail) },
+      { path: '', component: Dashboard, data: { pageTitle: 'Dashboard' } },
+      { path: 'profile', component: Profile, data: { pageTitle: 'Profile' } },
+      { path: 'requests', component: Requests, data: { pageTitle: 'Requests' } },
+      { path: 'outreach-workers', component: OutreachWorkers, data: { pageTitle: 'Outreach Workers' } },
+      { path: 'beneficiaries', data: { pageTitle: 'Beneficiaries' }, loadComponent: () => import('./beneficiaries/beneficiaries').then(m => m.Beneficiaries) },
+      { path: 'beneficiaries/:id', data: { pageTitle: 'Beneficiary Details' }, loadComponent: () => import('./beneficiaries/beneficiary-detail/beneficiary-detail').then(m => m.BeneficiaryDetail) },
     ],
   },
 ];

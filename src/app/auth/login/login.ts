@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { ApiService } from '../../core/services/api';
 import { Router } from '@angular/router';
+import { UserProfileService } from '../../core/services/user-profile.service';
 
 @Component({
   selector: 'app-login',
@@ -24,6 +25,7 @@ export class LoginComponent {
     private api: ApiService,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private userProfile: UserProfileService,
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -51,6 +53,7 @@ export class LoginComponent {
     ).subscribe({
       next: (res: any) => {
         localStorage.setItem('token', res.accessToken);
+        this.userProfile.refreshProfile();
 
         const roles: string[] = res.user.roles;
 

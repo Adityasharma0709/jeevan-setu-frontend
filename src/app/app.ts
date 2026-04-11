@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ZardToastComponent } from '@/shared/components/toast/toast.component';
+import { TabTitleService } from './core/services/tab-title.service';
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet,ZardToastComponent],
@@ -8,5 +10,7 @@ import { ZardToastComponent } from '@/shared/components/toast/toast.component';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('jeevan-setu-frontend');
+  constructor(private readonly tabTitleService: TabTitleService) {
+    this.tabTitleService.init();
+  }
 }

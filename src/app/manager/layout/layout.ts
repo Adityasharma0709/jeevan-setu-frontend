@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { Observable, catchError, map, of, shareReplay } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardTooltipDirective } from '@/shared/components/tooltip';
 import { ApiService } from '../../core/services/api';
-import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
+import { ProfileVm } from '@/shared/utils/profile';
+import { UserProfileService } from '../../core/services/user-profile.service';
 
 import {
 LayoutComponent,
@@ -38,16 +39,17 @@ ZardTooltipDirective,
 export class Layout {
 sidebarCollapsed = false;
 isMobile = window.innerWidth < 768;
-profile$!: Observable<ProfileVm>;
+profile$: Observable<ProfileVm>;
 
-constructor(private router: Router, private api: ApiService) {}
+constructor(
+private router: Router,
+private api: ApiService,
+private userProfile: UserProfileService,
+) {
+this.profile$ = this.userProfile.profile$;
+}
 
 ngOnInit() {
-this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
-map((raw) => normalizeProfile(raw, 'Manager')),
-catchError(() => of(emptyProfile('Manager'))),
-shareReplay(1),
-);
 }
 
 toggleSidebar() {
@@ -57,6 +59,7 @@ this.sidebarCollapsed = !this.sidebarCollapsed;
 logout() {
 this.api.clearCache();
 localStorage.clear();
+this.userProfile.clearProfile();
 this.router.navigate(['/login']);
 }
 
