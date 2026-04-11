@@ -1,4 +1,4 @@
-﻿import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@angular/core';
 import { afterNextRender } from '@angular/core';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -432,7 +432,7 @@ export class ProjectsComponent {
     this.selectedProjectLocationsState$.next({ loading: true, items: [] });
 
     this.dialogRef = this.dialog.create({
-      zTitle: `Project Details: ${project.name}`,
+      zTitle: `Project Details`,
       zContent: this.projectDetailsDialog,
       zOkText: 'Close',
       zCancelText: null,
