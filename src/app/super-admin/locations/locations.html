@@ -1,4 +1,4 @@
-﻿<!-- ================= PAGE HEADER ================= -->
+<!-- ================= PAGE HEADER ================= -->
 
 <ng-container *ngIf="vm$ | async as vm; else pageLoader">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -53,9 +53,24 @@
       <p class="mt-1 text-lg font-semibold text-gray-900">
         {{ selectedLocationDetails?.locationCode || '-' }}
       </p>
-      <p class="text-sm text-gray-600">
-        Project: {{ selectedLocationDetails?.project?.name || 'No Project' }}
-      </p>
+    </div>
+
+    <div class="rounded-lg border border-gray-200 p-4">
+      <p class="text-sm text-gray-500 mb-2">Assigned Projects</p>
+      <ng-container *ngIf="selectedLocationDetails">
+        <ng-container *ngIf="getLocationProjects(selectedLocationDetails).length > 0; else noProject">
+          <div class="flex flex-wrap gap-2">
+            <span
+              *ngFor="let p of getLocationProjects(selectedLocationDetails)"
+              class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 border border-blue-200">
+              {{ p.name }}
+            </span>
+          </div>
+        </ng-container>
+        <ng-template #noProject>
+          <p class="text-sm text-gray-400 italic">No project assigned</p>
+        </ng-template>
+      </ng-container>
     </div>
 
     <div class="rounded-lg border border-gray-200 p-4">
@@ -83,13 +98,30 @@
 
     <z-form-field>
       <label z-form-label zRequired>Project</label>
-      <z-form-control>
-        <select z-input formControlName="projectId">
-          <option [ngValue]="null">No Project</option>
-          <option *ngFor="let p of projects$ | async" [ngValue]="p.id">
-            {{ p.name }}
-          </option>
-        </select>
+      <z-form-control class="flex flex-col gap-2">
+        <input z-input type="text" [formControl]="projectSearchInput" placeholder="Search project name..." class="w-full text-sm" />
+        <div class="max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white">
+          <ng-container *ngIf="filteredProjects$ | async as projects">
+            <button type="button"
+                    (click)="assignProjectForm.get('projectId')?.setValue(null)"
+                    [class.bg-gray-100]="assignProjectForm.get('projectId')?.value === null"
+                    [class.font-medium]="assignProjectForm.get('projectId')?.value === null"
+                    class="w-full text-left px-3 py-2 text-sm border-b border-gray-100 hover:bg-gray-50 focus:bg-gray-100 focus:outline-none transition-colors">
+              No Project
+            </button>
+            <div *ngIf="!projects.length" class="p-4 text-sm text-gray-500 text-center">
+              No projects found
+            </div>
+            <button *ngFor="let p of projects" 
+                    type="button" 
+                    (click)="assignProjectForm.get('projectId')?.setValue(p.id)"
+                    [class.bg-gray-100]="assignProjectForm.get('projectId')?.value === p.id"
+                    [class.font-medium]="assignProjectForm.get('projectId')?.value === p.id"
+                    class="w-full text-left px-3 py-2 text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50 focus:bg-gray-100 focus:outline-none transition-colors">
+              {{ p.name }}
+            </button>
+          </ng-container>
+        </div>
       </z-form-control>
     </z-form-field>
   </form>
@@ -142,12 +174,11 @@
 
 <div class="hidden md:block overflow-x-auto border rounded-lg">
 
-  <table z-table class="w-full min-w-[1000px]">
+  <table z-table class="w-full min-w-[800px]">
 
     <thead z-table-header>
       <tr z-table-row>
         <th z-table-head>Code</th>
-        <th z-table-head>Project</th>
         <th z-table-head>State</th>
         <th z-table-head>District</th>
         <th z-table-head>Block</th>
@@ -162,7 +193,6 @@
       <tr z-table-row *ngFor="let l of vm.locations">
 
         <td z-table-cell>{{ l.locationCode }}</td>
-        <td z-table-cell>{{ l.project?.name }}</td>
         <td z-table-cell>{{ l.state }}</td>
         <td z-table-cell>{{ l.district }}</td>
         <td z-table-cell>{{ l.block }}</td>
@@ -250,9 +280,7 @@
 
       <div class="space-y-1 text-sm">
 
-        <h3 class="font-semibold">
-          {{ l.locationCode }} â€” {{ l.project?.name }}
-        </h3>
+        <h3 class="font-semibold">{{ l.locationCode }}</h3>
 
         <p><strong>State:</strong> {{ l.state }}</p>
         <p><strong>District:</strong> {{ l.district }}</p>
@@ -405,9 +433,9 @@
       class="bg-gray-100 cursor-not-allowed"
     />
     <input z-input placeholder="State" formControlName="state" />
-    <input z-input placeholder="District" formControlName="district" />
-    <input z-input placeholder="Block" formControlName="block" />
-    <input z-input placeholder="Village" formControlName="village" />
+    <input z-input placeholder="District (optional)" formControlName="district" />
+    <input z-input placeholder="Block (optional)" formControlName="block" />
+    <input z-input placeholder="Village (optional)" formControlName="village" />
 
   </form>
 

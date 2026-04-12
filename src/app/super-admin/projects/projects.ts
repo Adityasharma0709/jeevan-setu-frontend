@@ -2,7 +2,7 @@ import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@
 import { afterNextRender } from '@angular/core';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormGroup, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Observable, Subject, startWith, switchMap, map, combineLatest, BehaviorSubject, forkJoin, shareReplay, tap, take, of, catchError } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -142,6 +142,23 @@ export class ProjectsComponent {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
+  adminSearchInput = new FormControl('');
+
+  filteredAdmins$: Observable<any[]> = combineLatest([
+    this.admins$,
+    this.adminSearchInput.valueChanges.pipe(startWith('')),
+  ]).pipe(
+    map(([admins, search]) => {
+      if (!search) return admins;
+      const lower = search.toLowerCase();
+      return admins.filter((a) => {
+        const name = (a?.name || '').toString().toLowerCase();
+        const email = (a?.email || '').toString().toLowerCase();
+        return name.includes(lower) || email.includes(lower);
+      });
+    })
+  );
+
   // âœ… server-side search stream
 	  projects$: Observable<ProjectWithLocations[]> = combineLatest([
 	    this.refresh$.pipe(startWith(void 0)),
@@ -206,12 +223,12 @@ export class ProjectsComponent {
   ) {
     this.form = this.fb.group({
       projectCode: [{ value: '', disabled: true }],
-      name: [''],
+      name: ['', [Validators.required, Validators.maxLength(50)]],
       description: [''],
     });
     this.editForm = this.fb.group({
       projectCode: [''],
-      name: [''],
+      name: ['', [Validators.required, Validators.maxLength(50)]],
       description: [''],
     });
 
@@ -647,10 +664,11 @@ export class ProjectsComponent {
     }
     this.targetProject = project;
     this.assignAdminForm.reset();
+    this.adminSearchInput.reset();
     this.assignAdminLoading.set(false);
 
     this.dialogRef = this.dialog.create({
-      zTitle: `Assign Admin to ${project.name}`,
+      zTitle: `Assign Admin`,
       zContent: this.assignAdminDialog,
       zOkText: 'Assign',
       zCancelText: 'Cancel',
@@ -666,6 +684,7 @@ export class ProjectsComponent {
         this.targetProject = null;
         this.assignAdminLoading.set(false);
         this.assignAdminForm.reset();
+        this.adminSearchInput.reset();
       },
     });
   }
@@ -732,6 +751,7 @@ export class ProjectsComponent {
             toast.success('Admin assigned successfully');
             this.assignAdminLoading.set(false);
             this.assignAdminForm.reset();
+            this.adminSearchInput.reset();
             this.targetProject = null;
             this.refresh$.next();
             this.dialogRef?.close();
@@ -792,7 +812,7 @@ export class ProjectsComponent {
     });
 
     this.dialogRef = this.dialog.create({
-      zTitle: `Assign Location to ${project.name}`,
+      zTitle: `Assign Location`,
       zContent: this.assignLocationDialog,
       zOkText: 'Assign',
       zCancelText: 'Cancel',

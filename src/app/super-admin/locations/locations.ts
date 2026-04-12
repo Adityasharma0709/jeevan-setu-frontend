@@ -57,6 +57,7 @@ interface LocationModel {
   village: string;
   status: string;
   project?: ProjectModel;
+  projects?: ProjectModel[];
   createdAt?: string;
 }
 
@@ -142,6 +143,9 @@ export class LocationsComponent {
 
   locationSearch = new FormControl('');
   statusFilter = new FormControl<LocationStatusFilter>('ALL');
+  projectSearchInput = new FormControl('');
+
+  filteredProjects$!: Observable<ProjectModel[]>;
 
   private readonly rawLocations$: Observable<LocationModel[]> = this.refresh$.pipe(
     startWith(void 0),
@@ -178,9 +182,9 @@ export class LocationsComponent {
       // Auto-generated: must be like LC01 (min length 4)
       locationCode: ['', [Validators.required, Validators.pattern(/^LC\d{2,}$/i)]],
       state: ['', [Validators.required]],
-      district: ['', [Validators.required]],
-      block: ['', [Validators.required]],
-      village: ['', [Validators.required]],
+      district: [''],
+      block: [''],
+      village: [''],
     });
 
     this.editForm = this.fb.group({
@@ -203,6 +207,20 @@ export class LocationsComponent {
         ),
       ),
       shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.filteredProjects$ = combineLatest([
+      this.projects$,
+      this.projectSearchInput.valueChanges.pipe(startWith('')),
+    ]).pipe(
+      map(([projects, search]) => {
+        if (!search) return projects;
+        const lower = search.toLowerCase();
+        return projects.filter((p) => {
+          const name = (p?.name || '').toString().toLowerCase();
+          return name.includes(lower);
+        });
+      })
     );
 
     this.projects$
@@ -536,9 +554,10 @@ export class LocationsComponent {
     this.assignProjectForm.reset({
       projectId: location.projectId ?? null,
     });
+    this.projectSearchInput.reset();
 
     this.dialogRef = this.dialog.create({
-      zTitle: `Assign Project: ${location.locationCode}`,
+      zTitle: `Assign Project`,
       zContent: this.assignProjectDialog,
       zOkText: 'Assign',
       zCancelText: 'Cancel',
@@ -552,6 +571,7 @@ export class LocationsComponent {
         this.targetLocation = null;
         this.assignProjectLoading.set(false);
         this.assignProjectForm.reset();
+        this.projectSearchInput.reset();
       },
     });
   }
@@ -593,6 +613,7 @@ export class LocationsComponent {
         this.assignProjectLoading.set(false);
         this.targetLocation = null;
         this.assignProjectForm.reset();
+        this.projectSearchInput.reset();
         this.refresh$.next();
         this.dialogRef?.close();
       },
@@ -614,6 +635,34 @@ export class LocationsComponent {
 
   nextPage() {
     this.page$.next(Math.min(this.lastPageCount, this.lastPage + 1));
+  }
+
+  /** Normalises the API response which may return either `project` (single) or `projects` (array) */
+  getLocationProjects(location: LocationModel): ProjectModel[] {
+    const fromArray = Array.isArray((location as any).projects)
+      ? ((location as any).projects as ProjectModel[])
+      : [];
+    const fromSingle = location.project ? [location.project] : [];
+
+    // Merge and deduplicate by id
+    const merged = [...fromArray];
+    for (const p of fromSingle) {
+      if (!merged.some((m) => m.id === p.id)) {
+        merged.push(p);
+      }
+    }
+
+    // FALLBACK: If we have a projectId but no project details with names, look up in snapshot
+    if (merged.length === 0 || merged.every((p) => !p.name)) {
+      if (location.projectId) {
+        const found = this.projectsSnapshot.find((p) => p.id === location.projectId);
+        if (found && !merged.some((m) => m.id === found.id)) {
+          merged.push(found);
+        }
+      }
+    }
+
+    return merged.filter((p) => p?.name);
   }
 
   private getLocationSortTime(location: LocationModel): number {
