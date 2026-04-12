@@ -160,6 +160,7 @@ export class CreateAdminComponent {
     this.editForm = this.fb.group({
       name: [''],
       email: [''],
+      password: [''],
     });
 
     this.vm$ = combineLatest([
@@ -307,6 +308,7 @@ export class CreateAdminComponent {
     this.editForm.patchValue({
       name: admin.name,
       email: admin.email,
+      password: '',
     });
     this.updateAdminLoading.set(false);
 
@@ -325,10 +327,14 @@ export class CreateAdminComponent {
 
   updateAdmin(id: number) {
     // Clean payload (prevents 400 error)
-    const payload = {
+    const payload: any = {
       name: this.editForm.value.name,
       email: this.editForm.value.email,
     };
+
+    if (this.editForm.value.password) {
+      payload.password = this.editForm.value.password.trim();
+    }
 
     this.updateAdminLoading.set(true);
     this.api.put(`users/admin/${id}`, payload).subscribe({

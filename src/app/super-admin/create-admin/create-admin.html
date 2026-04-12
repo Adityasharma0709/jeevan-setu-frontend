@@ -45,8 +45,9 @@
     </z-form-field>
   </form>
 </ng-template>
-<!--EDIT DIALOG
--->
+
+<!-- EDIT ADMIN DIALOG TEMPLATE -->
+
 <ng-template #editAdminDialog>
   <form [formGroup]="editForm" class="space-y-4">
     <z-form-field>
@@ -60,6 +61,19 @@
       <label z-form-label>Email</label>
       <z-form-control>
         <input z-input formControlName="email" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label>New Password (optional)</label>
+      <z-form-control>
+        <input
+          z-input
+          type="password"
+          formControlName="password"
+          placeholder="Enter new password to reset"
+          autocomplete="new-password"
+        />
       </z-form-control>
     </z-form-field>
   </form>
@@ -246,4 +260,3 @@
     <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
   </div>
 </ng-template>
-
