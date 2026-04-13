@@ -1,7 +1,7 @@
 <!-- ================= CREATE PROJECT DIALOG ================= -->
 
 <ng-template #createProjectDialog>
-  <form [formGroup]="form" class="space-y-5">
+  <form [formGroup]="form" class="space-y-4">
     <z-form-field>
       <label z-form-label>Project Code</label>
       <z-form-control>
@@ -19,7 +19,7 @@
 
     <z-form-field>
       <label z-form-label zRequired>Name</label>
-      <z-form-control>
+      <z-form-control [errorMessage]="getProjectErrorMessage(form)">
         <div class="space-y-1">
           <input z-input type="text" formControlName="name" placeholder="Enter name" maxlength="50" />
           <div class="flex justify-end">
@@ -53,7 +53,7 @@
 
     <z-form-field>
       <label z-form-label>Name</label>
-      <z-form-control>
+      <z-form-control [errorMessage]="getProjectErrorMessage(editForm)">
         <div class="space-y-1">
           <input z-input formControlName="name" maxlength="50" />
           <div class="flex justify-end">
@@ -179,12 +179,12 @@
                 <span
                   *ngFor="let l of locationsState.items"
                   class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700"
-                  [title]="((l?.locationCode || '-') + ' - ' + (l?.village || '-') + (l?.block ? (', ' + l.block) : '')).toString()"
+                  [title]="((l?.locationCode || '-') + ' · ' + formatFullAddress(l)).toString()"
                 >
                   <z-icon zType="map-pin" class="h-3.5 w-3.5 text-gray-400" />
                   <span class="font-mono font-semibold">{{ (l?.locationCode || '-').toString() }}</span>
                   <span class="text-gray-400">·</span>
-                  <span class="truncate max-w-[180px]">{{ (l?.village || '-').toString() }}</span>
+                  <span class="truncate max-w-[180px]">{{ (l?.village || l?.block || l?.district || l?.state || '-').toString() }}</span>
                 </span>
               </div>
             </ng-container>
@@ -258,7 +258,7 @@
               Select a location
             </option>
             <option *ngFor="let l of availableLocations" [value]="l.id">
-              {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
+              {{ l.locationCode }} - {{ formatFullAddress(l) }}
               {{ l.project?.name ? (' (' + l.project?.name + ')') : '' }}
             </option>
           </select>
@@ -268,7 +268,7 @@
             <option *ngIf="!availableLocations.length" value="" disabled>No locations available</option>
             <option *ngIf="availableLocations.length" value="" disabled>Select a location</option>
             <option *ngFor="let l of availableLocations" [value]="l.id">
-              {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
+              {{ l.locationCode }} - {{ formatFullAddress(l) }}
               {{ l.project?.name ? (' (' + l.project?.name + ')') : '' }}
             </option>
           </select>
@@ -291,36 +291,36 @@
 
     <z-form-field>
       <label z-form-label zRequired>Location Code</label>
-      <z-form-control>
+      <z-form-control [errorMessage]="getLocationErrorMessage('locationCode')">
         <input z-input type="text" formControlName="locationCode" placeholder="Location Code (auto: LC01)" />
       </z-form-control>
     </z-form-field>
 
     <z-form-field>
       <label z-form-label zRequired>State</label>
-      <z-form-control>
+      <z-form-control [errorMessage]="getLocationErrorMessage('state')">
         <input z-input type="text" formControlName="state" placeholder="Enter state" />
       </z-form-control>
     </z-form-field>
 
     <z-form-field>
-      <label z-form-label zRequired>District</label>
-      <z-form-control>
-        <input z-input type="text" formControlName="district" placeholder="Enter district" />
+      <label z-form-label>District</label>
+      <z-form-control [errorMessage]="getLocationErrorMessage('district')">
+        <input z-input formControlName="district" placeholder="Enter district (optional)" />
       </z-form-control>
     </z-form-field>
 
     <z-form-field>
-      <label z-form-label zRequired>Block</label>
-      <z-form-control>
-        <input z-input type="text" formControlName="block" placeholder="Enter block" />
+      <label z-form-label>Block</label>
+      <z-form-control [errorMessage]="getLocationErrorMessage('block')">
+        <input z-input formControlName="block" placeholder="Enter block (optional)" />
       </z-form-control>
     </z-form-field>
 
     <z-form-field>
-      <label z-form-label zRequired>Village</label>
-      <z-form-control>
-        <input z-input type="text" formControlName="village" placeholder="Enter village" />
+      <label z-form-label>Village</label>
+      <z-form-control [errorMessage]="getLocationErrorMessage('village')">
+        <input z-input formControlName="village" placeholder="Enter village (optional)" />
       </z-form-control>
     </z-form-field>
   </form>

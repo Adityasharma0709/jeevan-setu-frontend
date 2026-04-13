@@ -21,6 +21,7 @@ export interface ZardStringTemplateOutletContext {
 
 @Directive({
   selector: '[zStringTemplateOutlet]',
+  standalone: true,
   exportAs: 'zStringTemplateOutlet',
 })
 export class ZardStringTemplateOutletDirective<T = unknown> implements OnDestroy {

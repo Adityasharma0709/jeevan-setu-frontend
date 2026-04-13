@@ -10,6 +10,7 @@ import { ZARD_ICONS, type ZardIcon } from './icons';
 
 @Component({
   selector: 'z-icon, [z-icon]',
+  standalone: true,
   imports: [LucideAngularModule],
   template: `
     <lucide-angular

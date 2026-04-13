@@ -30,6 +30,8 @@
     "@angular/forms": "^21.1.0",
     "@angular/platform-browser": "^21.1.0",
     "@angular/router": "^21.1.0",
+    "@ng-icons/core": "^33.2.1",
+    "@ng-icons/lucide": "^33.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lottie-web": "^5.13.0",

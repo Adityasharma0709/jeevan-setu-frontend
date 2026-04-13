@@ -1,6 +1,6 @@
 import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Observable, Subject, BehaviorSubject, combineLatest, map, shareReplay, startWith, switchMap, take } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -148,18 +148,19 @@ export class CreateAdminComponent {
     private api: ApiService,
     private dialog: ZardDialogService,
   ) {
+    const namePattern = /^[a-zA-Z\s]*$/;
     // Create form
     this.form = this.fb.group({
       usercode: [{ value: '', disabled: true }],
-      name: [''],
-      email: [''],
-      password: [''],
+      name: ['', [Validators.required, Validators.pattern(namePattern), Validators.maxLength(50)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
 
     // Edit form
     this.editForm = this.fb.group({
-      name: [''],
-      email: [''],
+      name: ['', [Validators.required, Validators.pattern(namePattern), Validators.maxLength(50)]],
+      email: ['', [Validators.required, Validators.email]],
       password: [''],
     });
 
@@ -275,6 +276,10 @@ export class CreateAdminComponent {
   ====================== */
 
   submit() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.createAdminLoading.set(true);
     this.api.post('users/create-admin', this.form.value).subscribe({
       next: (res: any) => {
@@ -326,6 +331,11 @@ export class CreateAdminComponent {
   }
 
   updateAdmin(id: number) {
+    if (this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      return;
+    }
+
     // Clean payload (prevents 400 error)
     const payload: any = {
       name: this.editForm.value.name,
@@ -467,5 +477,19 @@ export class CreateAdminComponent {
 
     const id = admin?.id;
     return typeof id === 'number' ? id : 0;
+  }
+  getErrorMessage(f: FormGroup, controlName: string): string {
+    const control = f.get(controlName);
+    if (!control || !(control.dirty || control.touched) || control.valid) return '';
+    if (control.hasError('required')) return `${this.capitalize(controlName)} is required`;
+    if (control.hasError('pattern')) return 'Must contain only letters';
+    if (control.hasError('maxlength')) return 'Maximum 50 characters allowed';
+    if (control.hasError('email')) return 'Invalid email address';
+    if (control.hasError('minlength')) return 'Minimum 6 characters required';
+    return '';
+  }
+
+  private capitalize(s: string): string {
+    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 }

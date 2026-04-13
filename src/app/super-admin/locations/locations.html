@@ -74,12 +74,9 @@
     </div>
 
     <div class="rounded-lg border border-gray-200 p-4">
-      <p class="text-sm text-gray-500">Address</p>
-      <p class="mt-1 font-medium text-gray-900">
-        {{ selectedLocationDetails?.village || '-' }}, {{ selectedLocationDetails?.block || '-' }}
-      </p>
-      <p class="text-sm text-gray-600">
-        {{ selectedLocationDetails?.district || '-' }}, {{ selectedLocationDetails?.state || '-' }}
+      <p class="text-sm text-gray-500 mb-1">Address</p>
+      <p class="font-medium text-gray-900">
+        {{ formatFullAddress(selectedLocationDetails) }}
       </p>
     </div>
   </div>
@@ -134,36 +131,36 @@
 
     <z-form-field>
       <label z-form-label>Location Code</label>
-      <z-form-control>
-        <input z-input formControlName="locationCode" />
+      <z-form-control [errorMessage]="getEditErrorMessage('locationCode')">
+        <input z-input formControlName="locationCode" readonly class="bg-gray-100 cursor-not-allowed" />
       </z-form-control>
     </z-form-field>
-
+ 
     <z-form-field>
-      <label z-form-label>State</label>
-      <z-form-control>
+      <label z-form-label zRequired>State</label>
+      <z-form-control [errorMessage]="getEditErrorMessage('state')">
         <input z-input formControlName="state" />
       </z-form-control>
     </z-form-field>
-
+ 
     <z-form-field>
       <label z-form-label>District</label>
-      <z-form-control>
-        <input z-input formControlName="district" />
+      <z-form-control [errorMessage]="getEditErrorMessage('district')">
+        <input z-input formControlName="district" placeholder="Enter district (optional)" />
       </z-form-control>
     </z-form-field>
-
+ 
     <z-form-field>
       <label z-form-label>Block</label>
-      <z-form-control>
-        <input z-input formControlName="block" />
+      <z-form-control [errorMessage]="getEditErrorMessage('block')">
+        <input z-input formControlName="block" placeholder="Enter block (optional)" />
       </z-form-control>
     </z-form-field>
-
+ 
     <z-form-field>
       <label z-form-label>Village</label>
-      <z-form-control>
-        <input z-input formControlName="village" />
+      <z-form-control [errorMessage]="getEditErrorMessage('village')">
+        <input z-input formControlName="village" placeholder="Enter village (optional)" />
       </z-form-control>
     </z-form-field>
 
@@ -220,8 +217,10 @@
             zSize="sm"
             zType="secondary"
             (click)="openLocationDetails(l)"
+            title="View Details"
           >
-            View Details
+            <z-icon zType="eye" />
+            <span class="sr-only">View Details</span>
           </button>
 
           <button *ngIf="(l.status || '').toUpperCase() === 'ACTIVE'"
@@ -311,8 +310,10 @@
         zType="secondary"
         class="flex-1"
         (click)="openLocationDetails(l)"
+        title="View Details"
       >
-        View
+        <z-icon zType="eye" />
+        <span class="sr-only">View</span>
       </button>
 
       <button *ngIf="(l.status || '').toUpperCase() === 'ACTIVE'"
@@ -391,7 +392,7 @@
 
 <ng-template #createLocationDialog>
 
-  <form [formGroup]="form" class="space-y-4">
+  <form [formGroup]="form" class="space-y-3 px-1 py-2">
 
     <!-- PROJECT DROPDOWN -->
 
@@ -422,20 +423,48 @@
     </z-dropdown-menu-content>
 
     <!-- INPUTS -->
+    <z-form-field>
+      <label z-form-label>Location Code</label>
+      <z-form-control [errorMessage]="getErrorMessage('locationCode')">
+        <input
+          z-input
+          placeholder="e.g., LC01"
+          formControlName="locationCode"
+          readonly
+          aria-readonly="true"
+          autocomplete="off"
+          class="bg-gray-100 cursor-not-allowed"
+        />
+      </z-form-control>
+    </z-form-field>
 
-    <input
-      z-input
-      placeholder="Location Code (auto-generated, e.g., LC01)"
-      formControlName="locationCode"
-      readonly
-      aria-readonly="true"
-      autocomplete="off"
-      class="bg-gray-100 cursor-not-allowed"
-    />
-    <input z-input placeholder="State" formControlName="state" />
-    <input z-input placeholder="District (optional)" formControlName="district" />
-    <input z-input placeholder="Block (optional)" formControlName="block" />
-    <input z-input placeholder="Village (optional)" formControlName="village" />
+    <z-form-field>
+      <label z-form-label zRequired>State</label>
+      <z-form-control [errorMessage]="getErrorMessage('state')">
+        <input z-input placeholder="Enter state" formControlName="state" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>District</label>
+      <z-form-control [errorMessage]="getErrorMessage('district')">
+        <input z-input placeholder="Enter district" formControlName="district" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>Block</label>
+      <z-form-control [errorMessage]="getErrorMessage('block')">
+        <input z-input placeholder="Enter block" formControlName="block" />
+      </z-form-control>
+    </z-form-field>
+
+    <z-form-field>
+      <label z-form-label zRequired>Village</label>
+      <z-form-control [errorMessage]="getErrorMessage('village')">
+        <input z-input placeholder="Enter village" formControlName="village" />
+      </z-form-control>
+    </z-form-field>
 
   </form>
 

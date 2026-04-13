@@ -28,6 +28,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardSwitchComponent } from '@/shared/components/switch';
+
 import { ZardIconComponent } from '@/shared/components/icon';
 
 import { ProjectsService, Project } from './projects.service';
@@ -160,27 +161,27 @@ export class ProjectsComponent {
   );
 
   // âœ… server-side search stream
-	  projects$: Observable<ProjectWithLocations[]> = combineLatest([
-	    this.refresh$.pipe(startWith(void 0)),
-	    this.projectSearch.valueChanges.pipe(
-	      startWith(''),
-	      debounceTime(300),
-	      distinctUntilChanged()
-	    ),
-	    this.statusFilter.valueChanges.pipe(startWith('ALL' as ProjectStatusFilter), distinctUntilChanged()),
-	  ]).pipe(
-	    tap(() => this.goToPage(1)),
-	    switchMap(([_, query, status]) =>
-	      this.projectService.findAll(query || '', status ?? 'ALL').pipe(
-	        map((projects) => {
-	          const s = (status ?? 'ALL').toString().toUpperCase();
-	          if (s === 'ALL') return projects ?? [];
-	          return (projects ?? []).filter((p) => (p?.status ?? '').toString().toUpperCase() === s);
-	        }),
-	      ),
-	    ),
-	    shareReplay({ bufferSize: 1, refCount: true }),
-	  );
+  projects$: Observable<ProjectWithLocations[]> = combineLatest([
+    this.refresh$.pipe(startWith(void 0)),
+    this.projectSearch.valueChanges.pipe(
+      startWith(''),
+      debounceTime(300),
+      distinctUntilChanged()
+    ),
+    this.statusFilter.valueChanges.pipe(startWith('ALL' as ProjectStatusFilter), distinctUntilChanged()),
+  ]).pipe(
+    tap(() => this.goToPage(1)),
+    switchMap(([_, query, status]) =>
+      this.projectService.findAll(query || '', status ?? 'ALL').pipe(
+        map((projects) => {
+          const s = (status ?? 'ALL').toString().toUpperCase();
+          if (s === 'ALL') return projects ?? [];
+          return (projects ?? []).filter((p) => (p?.status ?? '').toString().toUpperCase() === s);
+        }),
+      ),
+    ),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
 
   pager$: Observable<ProjectPagerVm> = combineLatest([this.projects$, this.page$]).pipe(
     map(([projects, page]) => {
@@ -221,23 +222,26 @@ export class ProjectsComponent {
     private dialog: ZardDialogService,
     private injector: Injector,
   ) {
+    const projectNamePattern = /^[a-zA-Z][a-zA-Z0-9\s]*$/;
+
     this.form = this.fb.group({
       projectCode: [{ value: '', disabled: true }],
-      name: ['', [Validators.required, Validators.maxLength(50)]],
+      name: ['', [Validators.required, Validators.maxLength(50), Validators.pattern(projectNamePattern)]],
       description: [''],
     });
     this.editForm = this.fb.group({
       projectCode: [''],
-      name: ['', [Validators.required, Validators.maxLength(50)]],
+      name: ['', [Validators.required, Validators.maxLength(50), Validators.pattern(projectNamePattern)]],
       description: [''],
     });
 
+    const lettersOnlyPattern = /^[a-zA-Z\s]*$/;
     this.locationForm = this.fb.group({
-      locationCode: [''],
-      state: [''],
-      district: [''],
-      block: [''],
-      village: [''],
+      locationCode: ['', [Validators.required]],
+      state: ['', [Validators.required, Validators.pattern(lettersOnlyPattern)]],
+      district: ['', [Validators.pattern(lettersOnlyPattern)]],
+      block: ['', [Validators.pattern(lettersOnlyPattern)]],
+      village: ['', [Validators.pattern(lettersOnlyPattern)]],
     });
 
     this.assignLocationForm = this.fb.group({
@@ -367,6 +371,11 @@ export class ProjectsComponent {
   }
 
   submit() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
     this.createProjectLoading.set(true);
     this.projectService.create(this.form.value).subscribe({
       next: (res: any) => {
@@ -420,6 +429,11 @@ export class ProjectsComponent {
   }
 
   updateProject(id: number) {
+    if (this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      return;
+    }
+
     this.updateProjectLoading.set(true);
     this.projectService.update(id, this.editForm.value).subscribe({
       next: () => {
@@ -945,15 +959,15 @@ export class ProjectsComponent {
       return;
     }
 
-    const { locationCode, state, district, block, village } = this.locationForm.value;
-    const trimmedCode = (locationCode ?? '').toString().trim();
-
-    if (!state || !district || !block || !village) {
-      toast.error('Please fill all location fields');
+    if (this.locationForm.invalid) {
+      this.locationForm.markAllAsTouched();
       return;
     }
 
     this.createLocationLoading.set(true);
+    const { locationCode, state, district, block, village } = this.locationForm.value;
+    const trimmedCode = (locationCode ?? '').toString().trim();
+
     const payload: any = {
       projectId: this.targetProject.id,
       state,
@@ -989,6 +1003,30 @@ export class ProjectsComponent {
     });
   }
 
+  getProjectErrorMessage(f: FormGroup): string {
+    const control = f.get('name');
+    if (!control || !(control.dirty || control.touched) || control.valid) return '';
+    if (control.hasError('required')) return 'Name is required';
+    if (control.hasError('pattern')) return 'Must start with a letter and contain no special characters';
+    if (control.hasError('maxlength')) return 'Maximum 50 characters allowed';
+    return '';
+  }
+
+  getLocationErrorMessage(controlName: string): string {
+    const control = this.locationForm.get(controlName);
+    if (!control || !(control.dirty || control.touched) || control.valid) return '';
+    if (control.hasError('required')) return `${this.formatControlName(controlName)} is required`;
+    if (control.hasError('pattern')) return 'Must contain only letters';
+    return '';
+  }
+
+  private formatControlName(name: string): string {
+    return name
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim();
+  }
+
   formatLocationCodes(locations?: LocationModel[]) {
     const list = Array.isArray(locations) ? locations : [];
     if (!list.length) return '-';
@@ -996,14 +1034,29 @@ export class ProjectsComponent {
       .map((l) => {
         const code = (l as any)?.locationCode;
         if (code != null && code.toString().trim()) return code.toString().trim();
+        
         const village = (l as any)?.village;
         const block = (l as any)?.block;
-        if (village != null && block != null) return `${village} (${block})`.toString().trim();
-        if (village != null) return village.toString().trim();
+        
+        const villageStr = (village || '').toString().trim();
+        const blockStr = (block || '').toString().trim();
+
+        if (villageStr && blockStr) return `${villageStr} (${blockStr})`;
+        if (villageStr) return villageStr;
+        if (blockStr) return blockStr;
+        
         return '';
       })
       .filter(Boolean);
     return labels.join(', ') || '-';
+  }
+
+  formatFullAddress(l?: LocationModel | any): string {
+    if (!l) return '-';
+    const parts = [l.village, l.block, l.district, l.state]
+      .map((p) => (p || '').toString().trim())
+      .filter(Boolean);
+    return parts.join(', ') || '-';
   }
 
   getLocationCount(locations?: LocationModel[]) {

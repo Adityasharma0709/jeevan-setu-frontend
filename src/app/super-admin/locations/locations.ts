@@ -177,23 +177,24 @@ export class LocationsComponent {
     private api: ApiService,
     private dialog: ZardDialogService
   ) {
+    const lettersOnlyPattern = /^[a-zA-Z\s]*$/;
     this.form = this.fb.group({
       projectId: [null],
       // Auto-generated: must be like LC01 (min length 4)
       locationCode: ['', [Validators.required, Validators.pattern(/^LC\d{2,}$/i)]],
-      state: ['', [Validators.required]],
-      district: [''],
-      block: [''],
-      village: [''],
+      state: ['', [Validators.required, Validators.pattern(lettersOnlyPattern)]],
+      district: ['', [Validators.pattern(lettersOnlyPattern)]],
+      block: ['', [Validators.pattern(lettersOnlyPattern)]],
+      village: ['', [Validators.pattern(lettersOnlyPattern)]],
     });
 
     this.editForm = this.fb.group({
       projectId: [null],
-      locationCode: [''],
-      state: [''],
-      district: [''],
-      block: [''],
-      village: [''],
+      locationCode: ['', [Validators.required]],
+      state: ['', [Validators.required, Validators.pattern(lettersOnlyPattern)]],
+      district: ['', [Validators.pattern(lettersOnlyPattern)]],
+      block: ['', [Validators.pattern(lettersOnlyPattern)]],
+      village: ['', [Validators.pattern(lettersOnlyPattern)]],
     });
 
     this.assignProjectForm = this.fb.group({
@@ -766,5 +767,35 @@ export class LocationsComponent {
         toast.error('Failed to update status');
       },
     });
+  }
+  getErrorMessage(controlName: string): string {
+    const control = this.form.get(controlName);
+    if (!control || !(control.dirty || control.touched) || control.valid) return '';
+    if (control.hasError('required')) return `${this.formatControlName(controlName)} is required`;
+    if (control.hasError('pattern')) return 'Must contain only letters';
+    return '';
+  }
+
+  getEditErrorMessage(controlName: string): string {
+    const control = this.editForm.get(controlName);
+    if (!control || !(control.dirty || control.touched) || control.valid) return '';
+    if (control.hasError('required')) return `${this.formatControlName(controlName)} is required`;
+    if (control.hasError('pattern')) return 'Must contain only letters';
+    return '';
+  }
+
+  private formatControlName(name: string): string {
+    return name
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim();
+  }
+
+  formatFullAddress(l?: LocationModel | any): string {
+    if (!l) return '-';
+    const parts = [l.village, l.block, l.district, l.state]
+      .map((p) => (p || '').toString().trim())
+      .filter(Boolean);
+    return parts.join(', ') || '-';
   }
 }

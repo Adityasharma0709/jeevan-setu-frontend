@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, ViewEncapsulation } from '@angular/core';
+import { ZardAlertComponent } from '../alert/alert.component';
 
 import type { ClassValue } from 'clsx';
 
@@ -13,6 +14,7 @@ import { mergeClasses, transform } from '@/shared/utils/merge-classes';
 
 @Component({
   selector: 'z-form-field, [z-form-field]',
+  standalone: true,
   template: '<ng-content />',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
@@ -29,7 +31,8 @@ export class ZardFormFieldComponent {
 
 @Component({
   selector: 'z-form-control, [z-form-control]',
-  imports: [],
+  standalone: true,
+  imports: [ZardAlertComponent],
   template: `
     <div class="relative">
       <ng-content />
@@ -37,7 +40,7 @@ export class ZardFormFieldComponent {
     @if (errorMessage() || helpText()) {
       <div class="mt-1.5 min-h-5">
         @if (errorMessage()) {
-          <p class="text-sm text-red-500">{{ errorMessage() }}</p>
+          <z-alert zType="destructive" [zDescription]="errorMessage()"></z-alert>
         } @else if (helpText()) {
           <p class="text-muted-foreground text-sm">{{ helpText() }}</p>
         }
@@ -61,6 +64,7 @@ export class ZardFormControlComponent {
 
 @Component({
   selector: 'z-form-label, label[z-form-label]',
+  standalone: true,
   template: '<ng-content />',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
@@ -80,6 +84,7 @@ export class ZardFormLabelComponent {
 
 @Component({
   selector: 'z-form-message, [z-form-message]',
+  standalone: true,
   template: '<ng-content />',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
