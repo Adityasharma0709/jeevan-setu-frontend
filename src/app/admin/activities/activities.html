@@ -1,148 +1,215 @@
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-    <h2 class="text-xl font-bold">Activities</h2>
-    <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">
-        <z-icon zType="plus" class="mr-2" />
-        Create Activity
-    </button>
+  <h2 class="text-xl font-bold">Activities</h2>
+  <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">
+    <z-icon zType="plus" class="mr-2" />
+    Create Activity
+  </button>
 </div>
 
 <div class="flex flex-col md:flex-row gap-3 mb-4">
-    <div class="flex-1">
-        <input
-            z-input
-            type="text"
-            [formControl]="searchControl"
-            placeholder="Search activity (name/description/project)"
-            class="w-full"
-        />
-    </div>
+  <div class="flex-1">
+    <input
+      z-input
+      type="text"
+      [formControl]="searchControl"
+      placeholder="Search activity (name/desc/project)"
+      class="w-full"
+    />
+  </div>
 
-    <select
-        [formControl]="statusFilter"
-        class="w-full md:w-[200px] px-3 py-2 rounded-md border text-sm bg-white"
-    >
-        <option value="ALL">All</option>
-        <option value="ACTIVE">Active</option>
-        <option value="INACTIVE">Inactive</option>
-    </select>
+  <z-combobox
+    [formControl]="statusFilter"
+    [options]="statusOptions"
+    [searchable]="false"
+    placeholder="Filter by status"
+    class="w-full md:w-[200px]"
+  />
 </div>
 
 <ng-container *ngIf="pager$ | async as pager; else loader" class="fade-in">
-    <div class="bg-white border rounded-lg overflow-hidden">
-        <table z-table class="w-full">
-            <thead z-table-header>
-                <tr z-table-row>
-                    <th z-table-head>Name</th>
-                    <th z-table-head>Project</th>
-                    <th z-table-head>Description</th>
-                    <th z-table-head>Status</th>
-                    <th z-table-head class="text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody z-table-body>
-                <tr z-table-row *ngFor="let activity of pager.items">
-                    <td z-table-cell class="font-medium">{{ activity.name }}</td>
-                    <td z-table-cell>
-                        <span *ngIf="activity.project" class="text-xs bg-gray-100 px-2 py-1 rounded">
-                            {{ activity.project.name }}
-                        </span>
-                        <span *ngIf="!activity.project" class="text-xs text-gray-400">Global</span>
-                    </td>
-                    <td z-table-cell class="text-gray-500">{{ activity.description }}</td>
-                    <td z-table-cell>
-                        <span class="px-2 py-1 rounded text-xs font-medium"
-                            [ngClass]="activity.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
-                            {{ activity.status }}
-                        </span>
-                    </td>
-                    <td z-table-cell class="text-right">
-                        <div class="flex justify-end gap-2">
-                            <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(activity)">
-                                <z-icon zType="edit" />
-                                <span class="sr-only">Edit</span>
-                            </button>
-                            <z-switch
-                                *ngIf="canToggleStatus(activity)"
-                                [zChecked]="activity.status === 'ACTIVE'"
-                                [zDisabled]="isActivityStatusLoading(activity.id)"
-                                (zCheckedChange)="toggleActivityStatus(activity, $event)"
-                            >
-                                <span class="sr-only">Toggle activity status</span>
-                            </z-switch>
-                        </div>
-                    </td>
-                </tr>
-                <tr z-table-row *ngIf="!pager.items.length">
-                    <td z-table-cell colspan="5" class="text-center py-8 text-gray-500">
-                        No active activities found.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- ===== PAGINATION ===== -->
-    <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <p class="text-sm text-gray-500">
-            Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }}
-        </p>
-
-        <div class="flex items-center justify-end gap-2">
-            <button
-                type="button"
-                (click)="prevPage()"
-                [disabled]="pager.page <= 1"
-                class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+  <!-- ================= DESKTOP TABLE VIEW ================= -->
+  <div class="hidden md:block bg-white border rounded-lg overflow-hidden overflow-x-auto">
+    <table z-table zType="grid" class="w-full min-w-[700px]">
+      <thead z-table-header>
+        <tr z-table-row>
+          <th z-table-head class="text-center">Name</th>
+          <th z-table-head class="text-center">Project</th>
+          <th z-table-head class="text-center">Description</th>
+          <th z-table-head class="text-center">Status</th>
+          <th z-table-head class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody z-table-body>
+        <tr z-table-row *ngFor="let activity of pager.items">
+          <td z-table-cell class="font-medium max-w-[150px] truncate text-center" [title]="activity.name">
+            {{ activity.name }}
+          </td>
+          <td z-table-cell class="max-w-[180px] text-center">
+            <div class="flex flex-col min-w-0 items-center">
+              <span class="text-sm border-gray-900 truncate" [title]="activity.project?.name || ''">{{ activity.project?.name || '-' }}</span>
+              <span class="text-[10px] text-gray-500 font-mono">{{ activity.project?.projectCode || '-' }}</span>
+            </div>
+          </td>
+          <td z-table-cell class="text-gray-600 max-w-xs truncate text-center" [title]="activity.description || ''">
+            {{ activity.description || '-' }}
+          </td>
+          <td z-table-cell class="text-center">
+            <span
+              class="px-2 py-1 rounded text-xs font-medium inline-block min-w-[70px]"
+              [ngClass]="
+                activity.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              "
             >
-                Prev
-            </button>
-
-            <span class="text-sm text-gray-600">
-                Page {{ pager.page }} / {{ pager.totalPages }}
+              {{ activity.status }}
             </span>
+          </td>
+          <td z-table-cell class="text-center">
+            <div class="flex justify-center items-center gap-3">
+              <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(activity)">
+                <z-icon zType="edit" />
+                <span class="sr-only">Edit</span>
+              </button>
 
-            <button
-                type="button"
-                (click)="nextPage()"
-                [disabled]="pager.page >= pager.totalPages"
-                class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-                Next
-            </button>
+              <z-switch
+                *ngIf="canToggleStatus(activity)"
+                [zChecked]="activity.status === 'ACTIVE'"
+                [zDisabled]="isActivityStatusLoading(activity.id)"
+                (zCheckedChange)="toggleActivityStatus(activity, $event)"
+              >
+                <span class="sr-only">Toggle activity status</span>
+              </z-switch>
+            </div>
+          </td>
+        </tr>
+        <tr z-table-row *ngIf="!pager.items.length">
+          <td z-table-cell colspan="5" class="text-center py-8 text-gray-500">
+            No activities found.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ================= MOBILE CARD VIEW ================= -->
+  <div class="grid grid-cols-1 gap-4 md:hidden">
+    <div *ngFor="let activity of pager.items" class="bg-white border rounded-lg p-4 shadow-sm space-y-3">
+      <div class="flex items-start justify-between">
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-gray-900 truncate">{{ activity.name }}</p>
+          <div class="flex flex-col mt-1">
+            <span class="text-xs text-blue-600 font-medium">{{ activity.project?.name || '-' }}</span>
+            <span class="text-[10px] text-gray-400 font-mono">{{ activity.project?.projectCode || '-' }}</span>
+          </div>
         </div>
+        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase shrink-0" [ngClass]="
+          activity.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        ">
+          {{ activity.status }}
+        </span>
+      </div>
+
+      <p *ngIf="activity.description" class="text-xs text-gray-600 line-clamp-2 italic">
+        "{{ activity.description }}"
+      </p>
+
+      <div class="flex items-center justify-between pt-2 border-t gap-2">
+        <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(activity)">
+          <z-icon zType="edit" />
+          <span class="ml-2">Edit</span>
+        </button>
+        
+        <z-switch
+          *ngIf="canToggleStatus(activity)"
+          [zChecked]="activity.status === 'ACTIVE'"
+          [zDisabled]="isActivityStatusLoading(activity.id)"
+          (zCheckedChange)="toggleActivityStatus(activity, $event)"
+        >
+          <span class="sr-only">Toggle activity status</span>
+        </z-switch>
+      </div>
     </div>
+
+    <div *ngIf="!pager.items.length" class="text-center py-10 bg-white border rounded-lg text-gray-500">
+      No activities found.
+    </div>
+  </div>
+
+  <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <p class="text-sm text-gray-500">
+      Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }}
+    </p>
+
+    <div class="flex items-center justify-end gap-2">
+      <button
+        type="button"
+        (click)="prevPage()"
+        [disabled]="pager.page <= 1"
+        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+      >
+        Prev
+      </button>
+
+      <span class="text-sm text-gray-600">
+        Page {{ pager.page }} / {{ pager.totalPages }}
+      </span>
+
+      <button
+        type="button"
+        (click)="nextPage()"
+        [disabled]="pager.page >= pager.totalPages"
+        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+      >
+        Next
+      </button>
+    </div>
+  </div>
 </ng-container>
 
 <ng-template #loader>
-    <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
-        <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
-    </div>
+  <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+    <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
+  </div>
 </ng-template>
 
 <ng-template #activityDialog>
-    <form [formGroup]="activityForm" class="space-y-4 py-2">
-        <z-form-field>
-            <label z-form-label zRequired>Activity Name</label>
-            <z-form-control>
-                <input z-input type="text" formControlName="name" placeholder="Enter activity name" />
-            </z-form-control>
-        </z-form-field>
+  <form [formGroup]="activityForm" class="space-y-4 py-2">
+    <z-form-field>
+      <label z-form-label zRequired>Activity Name</label>
+      <z-form-control [errorMessage]="getErrorMessage(activityForm.get('name'), 'Name')">
+        <div class="space-y-1">
+          <input z-input type="text" formControlName="name" placeholder="e.g. Health Checkup" maxlength="50" />
+          <div class="flex justify-end">
+            <span class="text-[10px] text-gray-400 font-medium whitespace-nowrap">
+              {{ (activityForm.get('name')?.value?.length || 0) }}/50
+            </span>
+          </div>
+        </div>
+      </z-form-control>
+    </z-form-field>
 
-        <z-form-field>
-            <label z-form-label zRequired>Project</label>
-            <z-form-control>
-                <select z-input formControlName="projectId">
-                    <option value="">Select Project</option>
-                    <option *ngFor="let p of projects$ | async" [value]="p.id">{{ p.name }}</option>
-                </select>
-            </z-form-control>
-        </z-form-field>
+    <z-form-field>
+      <label z-form-label zRequired>Project</label>
+      <z-form-control>
+        <z-combobox
+          formControlName="projectId"
+          [options]="(projectOptions$ | async) || []"
+          placeholder="Select a project"
+          zWidth="full"
+        />
+      </z-form-control>
+    </z-form-field>
 
-        <z-form-field>
-            <label z-form-label>Description</label>
-            <z-form-control>
-                <textarea z-input formControlName="description" placeholder="Enter description" rows="3"></textarea>
-            </z-form-control>
-        </z-form-field>
-    </form>
+    <z-form-field>
+      <label z-form-label>Description</label>
+      <z-form-control>
+        <textarea
+          z-input
+          formControlName="description"
+          placeholder="Enter activity description"
+          rows="3"
+          class="resize-none"
+        ></textarea>
+      </z-form-control>
+    </z-form-field>
+  </form>
 </ng-template>

@@ -12,50 +12,58 @@
     <div class="flex-1">
         <input z-input [formControl]="searchControl" placeholder="Search manager (name/email)" class="w-full" />
     </div>
-    <select
+    <z-combobox
         [formControl]="statusFilter"
-        class="w-full md:w-[200px] px-3 py-2 rounded-md border text-sm bg-white"
-    >
-        <option value="ALL">All</option>
-        <option value="ACTIVE">Active</option>
-        <option value="INACTIVE">Inactive</option>
-    </select>
+        [options]="statusOptions"
+        [searchable]="false"
+        placeholder="Filter by status"
+        class="w-full md:w-[200px]"
+    />
 </div>
 
 <!-- ================= MANAGERS TABLE ================= -->
 <ng-container *ngIf="pager$ | async as pager; else loader" class="fade-in">
-    <div class="bg-white border rounded-lg overflow-hidden">
-        <table z-table class="w-full">
+    <!-- ================= DESKTOP TABLE VIEW ================= -->
+    <div class="hidden md:block bg-white border rounded-lg overflow-hidden">
+        <table z-table zType="grid" class="w-full">
             <thead z-table-header>
                 <tr z-table-row>
-                    <th z-table-head>Name</th>
-                    <th z-table-head>Email</th>
-                    <th z-table-head>Status</th>
-                    <th z-table-head class="text-right">Actions</th>
+                    <th z-table-head class="text-center">Name</th>
+                    <th z-table-head class="text-center">Email</th>
+                    <th z-table-head class="text-center">Status</th>
+                    <th z-table-head class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody z-table-body>
                 <tr z-table-row *ngFor="let manager of pager.items">
-                    <td z-table-cell class="font-medium">{{ manager.name }}</td>
-                    <td z-table-cell class="text-gray-600">{{ manager.email }}</td>
-                    <td z-table-cell>
-                        <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="
-              manager.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            ">
+                    <td z-table-cell class="font-medium max-w-[200px] truncate text-center" [title]="manager.name">
+                        {{ manager.name }}
+                    </td>
+                    <td z-table-cell class="text-gray-600 max-w-[200px] truncate text-center" [title]="manager.email">
+                        {{ manager.email }}
+                    </td>
+                    <td z-table-cell class="text-center">
+                        <span class="px-2 py-1 rounded text-xs font-medium inline-block min-w-[70px]" [ngClass]="
+                            manager.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        ">
                             {{ manager.status }}
                         </span>
                     </td>
-                    <td z-table-cell class="text-right">
-                        <div class="flex justify-end gap-2">
+                    <td z-table-cell class="text-center">
+                        <div class="flex justify-center flex-wrap gap-2">
                             <button
                                 z-button
-                                zType="default"
+                                zType="secondary"
                                 zSize="sm"
                                 [zLoading]="isDetailsLoading(manager.id)"
                                 [zDisabled]="isDetailsLoading(manager.id)"
                                 (click)="openDetailsDialog(manager)"
                             >
-                                View Details
+                                <z-icon zType="eye" />
+                                <span class="sr-only">View Details</span>
+                            </button>
+                            <button z-button zType="default" zSize="sm" (click)="openAssignDialog(manager)">
+                                Assign Project
                             </button>
                             <z-switch
                                 *ngIf="canToggleStatus(manager)"
@@ -65,9 +73,6 @@
                             >
                                 <span class="sr-only">Toggle manager status</span>
                             </z-switch>
-                            <button z-button zType="default" zSize="sm" (click)="openAssignDialog(manager)">
-                                Assign Project
-                            </button>
                         </div>
                     </td>
                 </tr>
@@ -78,6 +83,55 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+
+    <!-- ================= MOBILE CARD VIEW ================= -->
+    <div class="grid grid-cols-1 gap-4 md:hidden">
+        <div *ngFor="let manager of pager.items" class="bg-white border rounded-lg p-4 shadow-sm space-y-3">
+            <div class="flex items-start justify-between">
+                <div class="min-w-0 flex-1">
+                    <p class="font-bold text-gray-900 truncate">{{ manager.name }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ manager.email }}</p>
+                </div>
+                <span class="px-2 py-1 rounded text-[10px] font-bold uppercase shrink-0" [ngClass]="
+                    manager.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                ">
+                    {{ manager.status }}
+                </span>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t gap-2">
+                <div class="flex items-center gap-2">
+                    <button
+                        z-button
+                        zType="secondary"
+                        zSize="sm"
+                        [zLoading]="isDetailsLoading(manager.id)"
+                        [zDisabled]="isDetailsLoading(manager.id)"
+                        (click)="openDetailsDialog(manager)"
+                        title="View Details"
+                    >
+                        <z-icon zType="eye" />
+                    </button>
+                    <button z-button zType="default" zSize="sm" (click)="openAssignDialog(manager)">
+                        Assign Project
+                    </button>
+                </div>
+                
+                <z-switch
+                    *ngIf="canToggleStatus(manager)"
+                    [zChecked]="manager.status === 'ACTIVE'"
+                    [zDisabled]="isManagerStatusLoading(manager.id)"
+                    (zCheckedChange)="toggleManagerStatus(manager)"
+                >
+                    <span class="sr-only">Toggle manager status</span>
+                </z-switch>
+            </div>
+        </div>
+
+        <div *ngIf="!pager.items.length" class="text-center py-10 bg-white border rounded-lg text-gray-500">
+            No managers found.
+        </div>
     </div>
 
     <!-- ===== PAGINATION ===== -->
@@ -134,11 +188,11 @@
 
             <div *ngFor="let p of detailsProjects" class="border rounded-lg p-4 mb-3 bg-white">
                 <div class="flex items-start justify-between gap-3">
-                    <div>
-                        <p class="font-semibold text-gray-900">{{ p?.name || 'Project' }}</p>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-semibold text-gray-900 break-all">{{ p?.name || 'Project' }}</p>
                         <p class="text-xs text-gray-500 font-mono">{{ p?.projectCode || '-' }}</p>
                     </div>
-                    <span class="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                    <span class="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 shrink-0">
                         {{ (p?.locations?.length || 0) }} location{{ (p?.locations?.length || 0) === 1 ? '' : 's' }}
                     </span>
                 </div>
@@ -150,11 +204,8 @@
 
                     <div *ngIf="p?.locations?.length" class="space-y-2">
                         <div *ngFor="let l of p.locations" class="flex items-start justify-between gap-3">
-                            <div class="text-sm text-gray-800">
-                                <span class="text-xs text-gray-600 font-mono">{{ l?.locationCode || '-' }}</span>
-                                <span class="ml-2">
-                                    {{ l?.village || '-' }}<ng-container *ngIf="l?.block">, {{ l.block }}</ng-container>
-                                </span>
+                            <div class="text-sm text-gray-800 min-w-0 flex-1">
+                                {{ formatLocationLabel(l) }}
                             </div>
                             <ng-container *ngIf="l?.status">
                                 <span
@@ -196,14 +247,21 @@
 
         <z-form-field>
             <label z-form-label zRequired>Full Name</label>
-            <z-form-control>
-                <input z-input type="text" formControlName="name" placeholder="Enter name" />
+            <z-form-control [errorMessage]="getErrorMessage(managerForm.get('name'), 'Name')">
+                <div class="space-y-1">
+                    <input z-input type="text" formControlName="name" placeholder="Enter name" maxlength="50" />
+                    <div class="flex justify-end">
+                        <span class="text-[10px] text-gray-400 font-medium whitespace-nowrap">
+                            {{ (managerForm.get('name')?.value?.length || 0) }}/50
+                        </span>
+                    </div>
+                </div>
             </z-form-control>
         </z-form-field>
 
         <z-form-field>
             <label z-form-label zRequired>Email Address</label>
-            <z-form-control>
+            <z-form-control [errorMessage]="getErrorMessage(managerForm.get('email'), 'Email')">
                 <input z-input type="email" formControlName="email" placeholder="manager@example.com" />
             </z-form-control>
         </z-form-field>
@@ -211,7 +269,7 @@
         <z-form-field>
             <label z-form-label zRequired *ngIf="!isEditing">Password</label>
             <label z-form-label *ngIf="isEditing">Password (optional)</label>
-            <z-form-control>
+            <z-form-control [errorMessage]="getErrorMessage(managerForm.get('password'), 'Password')">
                 <input z-input type="password" formControlName="password" placeholder="Enter password" />
             </z-form-control>
         </z-form-field>
@@ -220,24 +278,25 @@
             <z-form-field>
                 <label z-form-label>Project (optional)</label>
                 <z-form-control>
-                    <select z-input formControlName="projectId">
-                        <option value="">Select a project</option>
-                        <option *ngFor="let p of projects$ | async" [value]="p.id">
-                            {{ p.name }} ({{ p.projectCode }})
-                        </option>
-                    </select>
+                    <z-combobox
+                        formControlName="projectId"
+                        [options]="(projectOptions$ | async) || []"
+                        placeholder="Select a project"
+                        zWidth="full"
+                    />
                 </z-form-control>
             </z-form-field>
 
             <z-form-field>
                 <label z-form-label>Location (optional)</label>
                 <z-form-control>
-                    <select z-input formControlName="locationId" [disabled]="!managerForm.value.projectId">
-                        <option value="">Select a location</option>
-                        <option *ngFor="let l of managerLocations$ | async" [value]="l.id">
-                            {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
-                        </option>
-                    </select>
+                    <z-combobox
+                        formControlName="locationId"
+                        [options]="(managerLocationOptions$ | async) || []"
+                        [zDisabled]="!managerForm.value.projectId"
+                        placeholder="Select a location"
+                        zWidth="full"
+                    />
                 </z-form-control>
             </z-form-field>
         </ng-container>
@@ -254,24 +313,25 @@
         <z-form-field>
             <label z-form-label zRequired>Project</label>
             <z-form-control>
-                <select z-input formControlName="projectId">
-                    <option value="">Select a project</option>
-                    <option *ngFor="let p of projects$ | async" [value]="p.id">
-                        {{ p.name }} ({{ p.projectCode }})
-                    </option>
-                </select>
+                <z-combobox
+                    formControlName="projectId"
+                    [options]="(projectOptions$ | async) || []"
+                    placeholder="Select a project"
+                    zWidth="full"
+                />
             </z-form-control>
         </z-form-field>
 
         <z-form-field>
             <label z-form-label zRequired>Location</label>
             <z-form-control>
-                <select z-input formControlName="locationId" [disabled]="!assignForm.value.projectId">
-                    <option value="">Select a location</option>
-                    <option *ngFor="let l of locations$ | async" [value]="l.id">
-                        {{ l.locationCode }} - {{ l.village }}, {{ l.block }}
-                    </option>
-                </select>
+                <z-combobox
+                    formControlName="locationId"
+                    [options]="(assignLocationOptions$ | async) || []"
+                    [zDisabled]="!assignForm.value.projectId"
+                    placeholder="Select a location"
+                    zWidth="full"
+                />
             </z-form-control>
         </z-form-field>
     </form>

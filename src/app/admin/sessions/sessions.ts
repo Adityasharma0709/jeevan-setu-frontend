@@ -23,6 +23,7 @@ import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardSwitchComponent } from '@/shared/components/switch';
+import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
 
 @Component({
   selector: 'app-sessions',
@@ -43,6 +44,7 @@ import { ZardSwitchComponent } from '@/shared/components/switch';
     ZardFormFieldComponent,
     ZardIconComponent,
     ZardSwitchComponent,
+    ZardComboboxComponent,
     LottieComponent,
   ],
   templateUrl: './sessions.html',
@@ -65,7 +67,8 @@ export class Sessions {
   readonly sessionStatusLoadingIds = signal<Set<number>>(new Set());
 
   activities$: Observable<Activity[]>;
-  sessions$: Observable<Session[]>;
+  activityOptions$!: Observable<ZardComboboxOption[]>;
+  sessions$!: Observable<Session[]>;
   pager$!: Observable<{
     items: Session[];
     page: number;
@@ -75,6 +78,13 @@ export class Sessions {
     from: number;
     to: number;
   }>;
+
+  readonly statusOptions: ZardComboboxOption[] = [
+    { label: 'All', value: 'ALL' },
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' },
+  ];
+
   private currentUserId: number | null = null;
   private currentUserEmail: string | null = null;
   private assignedProjectIds = new Set<number>();
@@ -114,6 +124,13 @@ export class Sessions {
           (activity) => this.isActivityInAssignedProjects(activity) && (activity?.status ?? '').toString().toUpperCase() === 'ACTIVE'
         )
       )
+    );
+
+    this.activityOptions$ = this.activities$.pipe(
+      map(activities => (activities || []).map(a => ({
+        label: a.name,
+        value: a.id.toString()
+      })))
     );
     this.activities$.subscribe({
       next: (activities) => {
@@ -226,7 +243,7 @@ export class Sessions {
 
   private initForm() {
     this.sessionForm = this.fb.group({
-      name: ['', Validators.required],
+      name: ['', [Validators.required, Validators.pattern(/^[a-zA-Z\s]*$/), Validators.maxLength(50)]],
       activityId: ['', Validators.required],
     });
   }
@@ -273,6 +290,7 @@ export class Sessions {
 
   submitSession() {
     if (this.sessionForm.invalid) {
+      this.sessionForm.markAllAsTouched();
       toast.error('Please fill all required fields');
       return;
     }
@@ -409,5 +427,24 @@ export class Sessions {
       return false;
     }
     return String(creatorEmail).toLowerCase() === this.currentUserEmail;
+  }
+
+  getErrorMessage(err: any, fallback: string): string {
+    if (err instanceof FormGroup || err instanceof FormControl) {
+      if (err.valid || (!err.touched && !err.dirty)) return '';
+      const fieldName = (fallback || '').toString().toLowerCase();
+      if (err.hasError('required')) return `${fallback} is required`;
+      if (err.hasError('pattern')) {
+        if (fieldName.includes('name')) return 'Only letters and spaces are allowed';
+        return `Invalid ${fallback} format`;
+      }
+      if (err.hasError('maxlength')) {
+        const max = err.getError('maxlength')?.requiredLength;
+        return `${fallback} cannot exceed ${max} characters`;
+      }
+      return '';
+    }
+    const msg = err?.error?.message;
+    return Array.isArray(msg) ? msg[0] : (msg || fallback);
   }
 }

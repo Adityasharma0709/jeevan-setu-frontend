@@ -23,6 +23,7 @@ import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/compo
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardDropdownImports } from '@/shared/components/dropdown/dropdown.imports';
 import { ZardSwitchComponent } from '@/shared/components/switch';
+import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
 import { AuthService } from '../../core/services/auth';
 
 @Component({
@@ -44,6 +45,7 @@ import { AuthService } from '../../core/services/auth';
     ZardFormFieldComponent,
     ZardIconComponent,
     ZardSwitchComponent,
+    ZardComboboxComponent,
     ...ZardDropdownImports,
     LottieComponent,
   ],
@@ -60,6 +62,16 @@ export class Managers {
   assignForm!: FormGroup;
   searchControl = new FormControl('');
   statusFilter = new FormControl<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL', { nonNullable: true });
+
+  readonly statusOptions: ZardComboboxOption[] = [
+    { label: 'All', value: 'ALL' },
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' },
+  ];
+
+  projectOptions$!: Observable<ZardComboboxOption[]>;
+  assignLocationOptions$!: Observable<ZardComboboxOption[]>;
+  managerLocationOptions$!: Observable<ZardComboboxOption[]>;
 
   private refresh$ = new Subject<void>();
   isEditing = false;
@@ -113,8 +125,21 @@ export class Managers {
     if (!Number.isFinite(locationId) || locationId <= 0) return 'Select location';
     const location = this.assignLocationsCache.find((l: any) => Number(l?.id) === locationId);
     if (!location) return 'Select location';
-    const label = `${location.locationCode ?? ''}${location.locationCode ? ' - ' : ''}${location.village ?? ''}${location.block ? `, ${location.block}` : ''}`.trim();
-    return label || 'Select location';
+    return this.formatLocationLabel(location) || 'Select location';
+  }
+
+  formatLocationLabel(l: any): string {
+    if (!l) return '';
+    const code = (l.locationCode ?? '').toString().trim();
+    const parts = [
+      l.village,
+      l.block,
+      l.district,
+      l.state
+    ].map(p => (p ?? '').toString().trim()).filter(Boolean);
+
+    const details = parts.join(', ');
+    return [code, details].filter(Boolean).join(' - ');
   }
 
   selectAssignProject(project: any) {
@@ -218,6 +243,14 @@ export class Managers {
       finalize(() => this.projectsLoading.set(false)),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
+
+    this.projectOptions$ = this.projects$.pipe(
+      map(projects => (projects || []).map(p => ({
+        label: `${p.name} ${p.projectCode ? '(' + p.projectCode + ')' : ''}`,
+        value: p.id.toString()
+      })))
+    );
+
     this.initForms();
     this.projects$.pipe(take(1)).subscribe();
   }
@@ -238,7 +271,7 @@ export class Managers {
   private initForms() {
     this.managerForm = this.fb.group({
       usercode: [{ value: '', disabled: true }],
-      name: ['', Validators.required],
+      name: ['', [Validators.required, Validators.pattern(/^[a-zA-Z\s]*$/), Validators.maxLength(50)]],
       email: ['', [Validators.required, Validators.email]],
       password: [''], // Only required during creation
       projectId: [''],
@@ -275,9 +308,24 @@ export class Managers {
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
+    this.assignLocationOptions$ = this.locations$.pipe(
+      map(locations => (locations || []).map(l => ({
+        label: this.formatLocationLabel(l),
+        value: l.id.toString()
+      })))
+    );
+
     this.managerLocations$ = this.managerForm.get('projectId')!.valueChanges.pipe(
       tap(() => this.managerForm.patchValue({ locationId: '' })),
-      switchMap(id => (id ? this.managersService.getLocations(Number(id)) : of([])))
+      switchMap(id => (id ? this.managersService.getLocations(Number(id)) : of([]))),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    this.managerLocationOptions$ = this.managerLocations$.pipe(
+      map(locations => (locations || []).map(l => ({
+        label: this.formatLocationLabel(l),
+        value: l.id.toString()
+      })))
     );
   }
 
@@ -311,6 +359,7 @@ export class Managers {
 
   submitManager() {
     if (this.managerForm.invalid) {
+      this.managerForm.markAllAsTouched();
       toast.error('Please fill all required fields correctly');
       return;
     }
@@ -668,9 +717,7 @@ export class Managers {
     }
 
     const location = this.assignLocationsCache.find((l: any) => Number(l?.id) === locationIdNum);
-    const locationLabel = location
-      ? `${location.locationCode ?? ''}${location.locationCode ? ' - ' : ''}${location.village ?? ''}${location.block ? `, ${location.block}` : ''}`.trim() || `#${locationIdNum}`
-      : `#${locationIdNum}`;
+    const locationLabel = this.formatLocationLabel(location) || `#${locationIdNum}`;
 
     this.pendingAssignments = [
       ...this.pendingAssignments,
@@ -722,7 +769,7 @@ export class Managers {
     return of([{ projectId: projectIdNum, locationId: locationIdNum }]);
   }
 
-  private getErrorMessage(err: any, fallback: string): string {
+  getErrorMessage(err: any, fallback: string): string {
     const status = Number(err?.status);
     const rawMessage = err?.message ?? err?.error?.message;
     const textMessage = typeof rawMessage === 'string' ? rawMessage : '';
@@ -739,6 +786,27 @@ export class Managers {
     if (Array.isArray(message)) return message.join(', ');
     if (typeof message === 'string') return message;
     if (message && typeof message === 'object') return JSON.stringify(message);
+
+    if (err instanceof FormGroup || err instanceof FormControl) {
+      if (err.valid || (!err.touched && !err.dirty)) return '';
+      const fieldName = (fallback || '').toString().toLowerCase();
+      if (err.hasError('required')) return `${fallback} is required`;
+      if (err.hasError('email')) return 'Invalid email address';
+      if (err.hasError('minlength')) {
+        const min = err.getError('minlength')?.requiredLength;
+        return `${fallback} must be at least ${min} characters`;
+      }
+      if (err.hasError('maxlength')) {
+        const max = err.getError('maxlength')?.requiredLength;
+        return `${fallback} cannot exceed ${max} characters`;
+      }
+      if (err.hasError('pattern')) {
+        if (fieldName.includes('name')) return 'Only letters and spaces are allowed';
+        return `Invalid ${fallback} format`;
+      }
+      return '';
+    }
+
     return fallback;
   }
 
