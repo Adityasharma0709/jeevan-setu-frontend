@@ -1,4 +1,4 @@
-import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import { Component, DestroyRef, TemplateRef, ViewChild, inject, signal, computed } from '@angular/core';
 import { afterNextRender } from '@angular/core';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -28,7 +28,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardSwitchComponent } from '@/shared/components/switch';
-
+import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
 import { ZardIconComponent } from '@/shared/components/icon';
 
 import { ProjectsService, Project } from './projects.service';
@@ -82,6 +82,7 @@ type ProjectStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
     ZardFormFieldComponent,
     ZardSwitchComponent,
     ZardIconComponent,
+    ZardComboboxComponent,
     LottieComponent,
   ],
   templateUrl: './projects.html',
@@ -108,6 +109,13 @@ export class ProjectsComponent {
   // âœ… Search controls
   projectSearch = new FormControl('');
   statusFilter = new FormControl<ProjectStatusFilter>('ALL');
+
+  readonly statusOptions: ZardComboboxOption[] = [
+    { label: 'All', value: 'ALL' },
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' },
+  ];
+
   options: AnimationOptions = { path: '/loading.json' };
   isLoadingLocations$ = new BehaviorSubject<boolean>(false);
   targetProject: ProjectWithLocations | null = null;
@@ -120,7 +128,14 @@ export class ProjectsComponent {
     loading: false,
     items: [],
   });
-  availableLocations: LocationModel[] = [];
+  readonly availableLocations = signal<LocationModel[]>([]);
+
+  readonly locationOptions = computed<ZardComboboxOption[]>(() =>
+    this.availableLocations().map((l) => ({
+      label: `${l.locationCode} - ${this.formatFullAddress(l)}${l.project?.name ? ' (' + l.project?.name + ')' : ''}`,
+      value: String(l.id),
+    })),
+  );
 
   readonly pageSize = 10;
   private readonly page$ = new BehaviorSubject<number>(1);
@@ -144,6 +159,7 @@ export class ProjectsComponent {
   );
 
   adminSearchInput = new FormControl('');
+  adminOptions$!: Observable<ZardComboboxOption[]>;
 
   filteredAdmins$: Observable<any[]> = combineLatest([
     this.admins$,
@@ -251,6 +267,15 @@ export class ProjectsComponent {
     this.assignAdminForm = this.fb.group({
       adminId: [''],
     });
+
+    this.adminOptions$ = this.admins$.pipe(
+      map((admins) =>
+        admins.map((a) => ({
+          label: `${a.name} (${a.email})`,
+          value: String(a.id),
+        })),
+      ),
+    );
   }
 
   goToPage(page: number) {
@@ -802,24 +827,26 @@ export class ProjectsComponent {
     }
     this.targetProject = project;
     this.assignLocationForm.reset();
-    this.availableLocations = [];
+    this.availableLocations.set([]);
     this.isLoadingLocations$.next(true);
     this.assignLocationLoading.set(false);
 
     this.api.get('locations').subscribe({
       next: (locations: any) => {
         const list = Array.isArray(locations) ? locations : [];
-        this.availableLocations = list.filter((l: any) => {
-          const raw = l?.status;
-          if (raw == null) return true;
-          if (raw.toString().toUpperCase() !== 'ACTIVE') return false;
-          const pid = l?.projectId;
-          return pid === null || pid === undefined;
-        });
+        this.availableLocations.set(
+          list.filter((l: any) => {
+            const raw = l?.status;
+            if (raw == null) return true;
+            if (raw.toString().toUpperCase() !== 'ACTIVE') return false;
+            const pid = l?.projectId;
+            return pid === null || pid === undefined;
+          }),
+        );
         this.isLoadingLocations$.next(false);
       },
       error: () => {
-        this.availableLocations = [];
+        this.availableLocations.set([]);
         this.isLoadingLocations$.next(false);
         toast.error('Failed to load locations');
       },
@@ -864,7 +891,7 @@ export class ProjectsComponent {
       return;
     }
 
-    const location = this.availableLocations.find(l => l.id === Number(locationId));
+    const location = this.availableLocations().find((l) => l.id === Number(locationId));
 
     if (!location) {
       toast.error('Selected location not found');

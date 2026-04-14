@@ -212,23 +212,13 @@
 
     <z-form-field>
       <label z-form-label zRequired>Admin</label>
-      <z-form-control class="flex flex-col gap-2">
-        <input z-input type="text" [formControl]="adminSearchInput" placeholder="Search by name or email..." class="w-full text-sm" />
-        <div class="max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white">
-          <ng-container *ngIf="filteredAdmins$ | async as admins">
-            <div *ngIf="!admins.length" class="p-4 text-sm text-gray-500 text-center">
-              No admins found
-            </div>
-            <button *ngFor="let a of admins" 
-                    type="button" 
-                    (click)="assignAdminForm.get('adminId')?.setValue(a.id)"
-                    [class.bg-gray-100]="assignAdminForm.get('adminId')?.value === a.id"
-                    [class.font-medium]="assignAdminForm.get('adminId')?.value === a.id"
-                    class="w-full text-left px-3 py-2 text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50 focus:bg-gray-100 focus:outline-none transition-colors">
-              {{ a.name === a.email ? a.name : a.name + ' (' + a.email + ')' }}
-            </button>
-          </ng-container>
-        </div>
+      <z-form-control>
+        <z-combobox
+          formControlName="adminId"
+          [options]="(adminOptions$ | async) ?? []"
+          placeholder="Search by name or email..."
+          class="w-full"
+        ></z-combobox>
       </z-form-control>
     </z-form-field>
   </form>
@@ -248,31 +238,13 @@
     <z-form-field>
       <label z-form-label zRequired>Location</label>
       <z-form-control>
-        <ng-container *ngIf="isLoadingLocations$ | async as isLoadingLocations; else locationSelect">
-          <select class="w-full truncate px-3 py-2 border rounded-md text-sm border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50 appearance-auto" formControlName="locationId" [disabled]="isLoadingLocations">
-            <option *ngIf="isLoadingLocations" value="" disabled>Loading locations...</option>
-            <option *ngIf="!isLoadingLocations && !availableLocations.length" value="" disabled>
-              No locations available
-            </option>
-            <option *ngIf="!isLoadingLocations && availableLocations.length" value="" disabled>
-              Select a location
-            </option>
-            <option *ngFor="let l of availableLocations" [value]="l.id">
-              {{ l.locationCode }} - {{ formatFullAddress(l) }}
-              {{ l.project?.name ? (' (' + l.project?.name + ')') : '' }}
-            </option>
-          </select>
-        </ng-container>
-        <ng-template #locationSelect>
-          <select class="w-full truncate px-3 py-2 border rounded-md text-sm border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50 appearance-auto" formControlName="locationId">
-            <option *ngIf="!availableLocations.length" value="" disabled>No locations available</option>
-            <option *ngIf="availableLocations.length" value="" disabled>Select a location</option>
-            <option *ngFor="let l of availableLocations" [value]="l.id">
-              {{ l.locationCode }} - {{ formatFullAddress(l) }}
-              {{ l.project?.name ? (' (' + l.project?.name + ')') : '' }}
-            </option>
-          </select>
-        </ng-template>
+        <z-combobox
+          formControlName="locationId"
+          [options]="locationOptions()"
+          [zDisabled]="(isLoadingLocations$ | async) ?? false"
+          [placeholder]="((isLoadingLocations$ | async) ? 'Loading locations...' : 'Select a location')"
+          class="w-full"
+        ></z-combobox>
       </z-form-control>
     </z-form-field>
   </form>
@@ -347,14 +319,13 @@
     />
   </div>
 
-  <select
+  <z-combobox
     [formControl]="statusFilter"
-    class="w-full md:w-[200px] px-3 py-2 rounded-md border text-sm bg-white"
-  >
-    <option value="ALL">All</option>
-    <option value="ACTIVE">Active</option>
-    <option value="INACTIVE">Inactive</option>
-  </select>
+    [options]="statusOptions"
+    [searchable]="false"
+    class="w-full md:w-[200px]"
+    placeholder="Filter by status"
+  ></z-combobox>
 </div>
 
 <!-- ================= DESKTOP TABLE ================= -->
@@ -375,7 +346,7 @@
         <tr z-table-row *ngFor="let p of pager.items">
           <td z-table-cell>{{ p.projectCode }}</td>
 
-          <td z-table-cell>{{ p.name }}</td>
+          <td z-table-cell class="break-words whitespace-normal max-w-[220px]">{{ p.name }}</td>
 
           <td z-table-cell>
             <span
@@ -432,40 +403,44 @@
   <!-- ================= MOBILE CARDS ================= -->
   <div class="md:hidden space-y-3">
     <div *ngFor="let p of pager.items" class="border rounded-lg p-4 bg-white shadow-sm">
-      <div class="flex justify-between items-start">
-        <div>
-          <h3 class="font-semibold">{{ p.name }}</h3>
-          <p class="text-sm text-gray-500">Code: {{ p.projectCode }}</p>
+      <!-- Name + Status row -->
+      <div class="flex items-start gap-2">
+        <div class="min-w-0 flex-1">
+          <h3 class="font-semibold break-words whitespace-normal">{{ p.name }}</h3>
+          <p class="text-sm text-gray-500 mt-0.5">Code: {{ p.projectCode }}</p>
         </div>
-
         <span
-          class="px-2 py-1 rounded text-xs font-medium"
-          [ngClass]="
-            p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          "
+          class="shrink-0 px-2 py-1 rounded text-xs font-medium mt-0.5"
+          [ngClass]="p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
         >
           {{ p.status }}
         </span>
       </div>
 
+      <!-- Row 1: View + Edit -->
       <div class="flex gap-2 mt-3">
         <button z-button zType="secondary" class="flex-1" (click)="openProjectDetails(p)">
           <z-icon zType="eye" />
           <span class="sr-only">View Details</span>
         </button>
-
-        <!-- EDIT BUTTON -->
         <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(p)">
           <z-icon zType="edit" />
           <span class="sr-only">Edit</span>
         </button>
+      </div>
 
-        <!-- ASSIGN ADMIN BUTTON -->
-        <button *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'" z-button zType="default" class="flex-1" (click)="openAssignAdminDialog(p)">
+      <!-- Row 2: Assign Admin + Status switch -->
+      <div class="flex gap-2 mt-2">
+        <button
+          *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'"
+          z-button
+          zType="default"
+          class="flex-1"
+          (click)="openAssignAdminDialog(p)"
+        >
           Assign Admin
         </button>
 
-        <!-- STATUS SWITCH -->
         <div class="flex-1 flex items-center justify-between rounded-md border px-3 py-2">
           <span class="text-xs text-gray-500">Status</span>
           <z-switch
@@ -476,11 +451,6 @@
             <span class="sr-only">Toggle project status</span>
           </z-switch>
         </div>
-
-        <!-- DISABLE BUTTON -->
-        <button z-button zType="destructive" class="flex-1" (click)="disableProject(p.id)">
-          Disable
-        </button>
       </div>
     </div>
 
@@ -527,7 +497,4 @@
     <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
   </div>
 </ng-template>
-
-
-
 

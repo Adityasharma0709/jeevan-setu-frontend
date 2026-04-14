@@ -40,7 +40,7 @@
           
           <div class="border-b border-gray-50 pb-4">
             <p class="text-xs text-purple-600 font-semibold mb-1 flex items-center gap-1"><z-icon zType="mail" class="w-3 h-3"></z-icon> CONTACT EMAIL</p>
-            <p class="text-gray-800 font-medium font-mono text-sm">
+            <p class="text-gray-800 font-medium break-words">
               {{ (profile$ | async)?.email || '-' }}
             </p>
           </div>
@@ -122,15 +122,14 @@
 
       <div class="flex items-center gap-2">
         <span class="text-sm font-semibold text-gray-500 whitespace-nowrap hidden sm:block">Filter:</span>
-        <select
-          class="px-3 py-1.5 rounded bg-white border border-gray-200 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        <z-combobox
+          [options]="statusOptions"
           [value]="vm.statusFilter"
-          (change)="setStatusFilter($any($event.target).value)"
-        >
-          <option value="ALL">All</option>
-          <option value="ACTIVE">Active</option>
-          <option value="INACTIVE">Inactive</option>
-        </select>
+          [searchable]="false"
+          (zValueChange)="setStatusFilter($any($event))"
+          placeholder="Filter"
+          class="w-28"
+        ></z-combobox>
       </div>
     </div>
 
@@ -149,7 +148,7 @@
         <tbody z-table-body>
           <tr z-table-row *ngFor="let p of vm.recentProjects" class="hover:bg-slate-50 transition-colors">
             
-            <td z-table-cell class="font-medium text-gray-800">
+            <td z-table-cell class="font-medium text-gray-800 break-words whitespace-normal max-w-[200px]">
               {{ p.name }}
             </td>
 
@@ -203,10 +202,10 @@
         <div class="absolute top-0 left-0 w-1 h-full" [ngClass]="p.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'"></div>
         
         <div class="flex flex-col gap-2 pl-2">
-          <div class="flex justify-between items-start gap-2">
-            <h3 class="font-bold text-gray-800 text-sm">{{ p.name }}</h3>
+          <div class="flex items-start gap-2">
+            <h3 class="font-bold text-gray-800 text-sm break-words whitespace-normal min-w-0 flex-1">{{ p.name }}</h3>
             <span
-              class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+              class="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
               [ngClass]="{
                 'bg-green-100 text-green-700': p.status === 'ACTIVE',
                 'bg-gray-100 text-gray-600': p.status !== 'ACTIVE'

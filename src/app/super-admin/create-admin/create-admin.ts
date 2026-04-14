@@ -31,6 +31,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardSwitchComponent } from '@/shared/components/switch';
+import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 
@@ -65,6 +66,7 @@ interface AdminRecord {
     ZardDialogModule,
     ZardIconComponent,
     ZardSwitchComponent,
+    ZardComboboxComponent,
     LottieComponent,
   ],
   templateUrl: './create-admin.html',
@@ -76,6 +78,12 @@ export class CreateAdminComponent {
   readonly adminStatusLoadingIds = signal<Set<number>>(new Set());
   adminSearch = new FormControl('', { nonNullable: true });
   statusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
+
+  readonly statusOptions: ZardComboboxOption[] = [
+    { label: 'All', value: 'ALL' },
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' },
+  ];
 
   vm$!: Observable<{
     admins: AdminRecord[];

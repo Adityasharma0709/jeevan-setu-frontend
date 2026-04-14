@@ -113,14 +113,13 @@
     />
   </div>
 
-  <select
+  <z-combobox
     [formControl]="statusFilter"
-    class="w-full md:w-[200px] px-3 py-2 rounded-md border text-sm bg-white"
-  >
-    <option value="ALL">All</option>
-    <option value="ACTIVE">Active</option>
-    <option value="INACTIVE">Inactive</option>
-  </select>
+    [options]="statusOptions"
+    [searchable]="false"
+    class="w-full md:w-[200px]"
+    placeholder="Filter by status"
+  ></z-combobox>
 </div>
 
 <!-- ================= DESKTOP TABLE ================= -->
@@ -141,9 +140,9 @@
     <tbody z-table-body>
       <tr z-table-row *ngFor="let a of vm.admins">
         <td z-table-cell class="font-mono text-sm text-gray-700">{{ a.usercode || '-' }}</td>
-        <td z-table-cell>{{ a.name }}</td>
+        <td z-table-cell class="break-words whitespace-normal max-w-[160px]">{{ a.name }}</td>
 
-        <td z-table-cell class="text-gray-600">
+        <td z-table-cell class="text-gray-600 break-words whitespace-normal max-w-[200px]">
           {{ a.email }}
         </td>
 
@@ -187,20 +186,18 @@
 
 <div class="md:hidden space-y-3">
   <div *ngFor="let a of vm.admins" class="border rounded-lg p-4 bg-white shadow-sm">
-    <div class="flex justify-between items-start">
-      <div>
+    <div class="flex items-start gap-2">
+      <div class="min-w-0 flex-1">
         <p class="text-xs text-gray-500 font-mono mb-1">{{ a.usercode || '-' }}</p>
-        <h3 class="font-semibold">{{ a.name }}</h3>
-        <p class="text-sm text-gray-500 break-all">
+        <h3 class="font-semibold break-words whitespace-normal">{{ a.name }}</h3>
+        <p class="text-sm text-gray-500 break-all mt-0.5">
           {{ a.email }}
         </p>
       </div>
 
       <span
-        class="px-2 py-1 rounded text-xs font-medium"
-        [ngClass]="
-          a.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-        "
+        class="shrink-0 px-2 py-1 rounded text-xs font-medium mt-0.5"
+        [ngClass]="a.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
       >
         {{ a.status }}
       </span>

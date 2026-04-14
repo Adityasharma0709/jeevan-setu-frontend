@@ -14,6 +14,7 @@ import { Project } from '../projects/projects.service';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ApiService } from '@/core/services/api';
 import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
+import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 @Component({
@@ -28,6 +29,7 @@ type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
   ZardTableCellComponent,
   LottieComponent,
   ZardIconComponent,
+  ZardComboboxComponent,
   ],
   templateUrl: './dashboard.html'
 })
@@ -44,6 +46,12 @@ export class DashboardComponent {
   }>;
   profile$!: Observable<ProfileVm>;
   options: AnimationOptions = { path: '/loading.json' };
+
+  readonly statusOptions: ZardComboboxOption[] = [
+    { label: 'All', value: 'ALL' },
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' },
+  ];
 
   private readonly pageSize = 10;
   private readonly page$ = new BehaviorSubject<number>(1);

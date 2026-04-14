@@ -13,7 +13,6 @@ import { ApiService } from '../../core/services/api';
 ========================= */
 
 
-import { ZardDropdownImports } from '@/shared/components/dropdown/dropdown.imports';
 import { ZardMenuImports } from '@/shared/components/menu';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardButtonComponent } from '@/shared/components/button';
@@ -32,10 +31,11 @@ import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 
-import { ZardDropdownDirective } from '@/shared/components/dropdown';
+
 
 import { ZardFormFieldComponent, ZardFormControlComponent } from '@/shared/components/form';
 import { ZardSwitchComponent } from '@/shared/components/switch';
+import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
 
 /* =========================
    INTERFACES
@@ -97,13 +97,12 @@ interface LocationPagerVm {
 
     ZardDialogModule,
 
-    ZardDropdownImports,
     ZardMenuImports,
-    ZardDropdownDirective,
 
     ZardFormFieldComponent,
     ZardFormControlComponent,
     ZardSwitchComponent,
+    ZardComboboxComponent,
 
     LottieComponent,
   ],
@@ -144,6 +143,13 @@ export class LocationsComponent {
   locationSearch = new FormControl('');
   statusFilter = new FormControl<LocationStatusFilter>('ALL');
   projectSearchInput = new FormControl('');
+  projectOptions$!: Observable<ZardComboboxOption[]>;
+
+  readonly statusOptions: ZardComboboxOption[] = [
+    { label: 'All', value: 'ALL' },
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' },
+  ];
 
   filteredProjects$!: Observable<ProjectModel[]>;
 
@@ -167,6 +173,24 @@ export class LocationsComponent {
   selectedProjectName = '';
   selectedLocationDetails: LocationModel | null = null;
   targetLocation: LocationModel | null = null;
+
+  get projectValue(): string | null {
+    const id = this.form.get('projectId')?.value;
+    return id ? String(id) : null;
+  }
+
+  onProjectSelect(value: string | null) {
+    this.form.get('projectId')?.setValue(value ? Number(value) : null);
+  }
+
+  get assignProjectValue(): string | null {
+    const id = this.assignProjectForm.get('projectId')?.value;
+    return id ? String(id) : null;
+  }
+
+  onAssignProjectSelect(value: string | null) {
+    this.assignProjectForm.get('projectId')?.setValue(value ? Number(value) : null);
+  }
 
   /* =========================
      CONSTRUCTOR
@@ -208,6 +232,13 @@ export class LocationsComponent {
         ),
       ),
       shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.projectOptions$ = this.projects$.pipe(
+      map((projects) => [
+        { label: 'No Project', value: '' },
+        ...projects.map((p) => ({ label: p.name, value: String(p.id) })),
+      ]),
     );
 
     this.filteredProjects$ = combineLatest([

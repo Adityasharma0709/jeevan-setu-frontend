@@ -22,14 +22,13 @@
       />
     </div>
 
-    <select
+    <z-combobox
       [formControl]="statusFilter"
-      class="w-full md:w-[200px] px-3 py-2 rounded-md border text-sm bg-white"
-    >
-      <option value="ALL">All</option>
-      <option value="ACTIVE">Active</option>
-      <option value="INACTIVE">Inactive</option>
-    </select>
+      [options]="statusOptions"
+      [searchable]="false"
+      class="w-full md:w-[200px]"
+      placeholder="Filter by status"
+    ></z-combobox>
   </div>
 
 <!-- ================= LOCATION DETAILS DIALOG ================= -->
@@ -86,39 +85,25 @@
 
 <ng-template #assignProjectDialog>
   <form [formGroup]="assignProjectForm" class="space-y-5">
+    <!-- LOCATION INFO -->
     <z-form-field>
       <label z-form-label>Location</label>
       <z-form-control>
-        <input z-input type="text" [value]="targetLocation?.locationCode || ''" disabled />
+        <input z-input type="text" [value]="targetLocation?.locationCode || ''" disabled class="truncate" />
       </z-form-control>
     </z-form-field>
 
+    <!-- PROJECT SELECTION -->
     <z-form-field>
       <label z-form-label zRequired>Project</label>
-      <z-form-control class="flex flex-col gap-2">
-        <input z-input type="text" [formControl]="projectSearchInput" placeholder="Search project name..." class="w-full text-sm" />
-        <div class="max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white">
-          <ng-container *ngIf="filteredProjects$ | async as projects">
-            <button type="button"
-                    (click)="assignProjectForm.get('projectId')?.setValue(null)"
-                    [class.bg-gray-100]="assignProjectForm.get('projectId')?.value === null"
-                    [class.font-medium]="assignProjectForm.get('projectId')?.value === null"
-                    class="w-full text-left px-3 py-2 text-sm border-b border-gray-100 hover:bg-gray-50 focus:bg-gray-100 focus:outline-none transition-colors">
-              No Project
-            </button>
-            <div *ngIf="!projects.length" class="p-4 text-sm text-gray-500 text-center">
-              No projects found
-            </div>
-            <button *ngFor="let p of projects" 
-                    type="button" 
-                    (click)="assignProjectForm.get('projectId')?.setValue(p.id)"
-                    [class.bg-gray-100]="assignProjectForm.get('projectId')?.value === p.id"
-                    [class.font-medium]="assignProjectForm.get('projectId')?.value === p.id"
-                    class="w-full text-left px-3 py-2 text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50 focus:bg-gray-100 focus:outline-none transition-colors">
-              {{ p.name }}
-            </button>
-          </ng-container>
-        </div>
+      <z-form-control>
+        <z-combobox
+          [options]="(projectOptions$ | async) ?? []"
+          [value]="assignProjectValue"
+          (zValueChange)="onAssignProjectSelect($event)"
+          placeholder="Search project name..."
+          class="w-full"
+        ></z-combobox>
       </z-form-control>
     </z-form-field>
   </form>
@@ -190,10 +175,10 @@
       <tr z-table-row *ngFor="let l of vm.locations">
 
         <td z-table-cell>{{ l.locationCode }}</td>
-        <td z-table-cell>{{ l.state }}</td>
-        <td z-table-cell>{{ l.district }}</td>
-        <td z-table-cell>{{ l.block }}</td>
-        <td z-table-cell>{{ l.village }}</td>
+        <td z-table-cell class="break-words whitespace-normal max-w-[120px]">{{ l.state }}</td>
+        <td z-table-cell class="break-words whitespace-normal max-w-[120px]">{{ l.district }}</td>
+        <td z-table-cell class="break-words whitespace-normal max-w-[120px]">{{ l.block }}</td>
+        <td z-table-cell class="break-words whitespace-normal max-w-[120px]">{{ l.village }}</td>
 
         <!-- STATUS -->
         <td z-table-cell>
@@ -275,26 +260,22 @@
     class="border rounded-lg p-4 bg-white shadow-sm"
   >
 
-    <div class="flex justify-between items-start">
+    <div class="flex items-start gap-2">
 
-      <div class="space-y-1 text-sm">
+      <div class="min-w-0 flex-1 space-y-1 text-sm">
 
-        <h3 class="font-semibold">{{ l.locationCode }}</h3>
+        <h3 class="font-semibold break-words whitespace-normal">{{ l.locationCode }}</h3>
 
-        <p><strong>State:</strong> {{ l.state }}</p>
-        <p><strong>District:</strong> {{ l.district }}</p>
-        <p><strong>Block:</strong> {{ l.block }}</p>
-        <p><strong>Village:</strong> {{ l.village }}</p>
+        <p><strong>State:</strong> <span class="break-words">{{ l.state }}</span></p>
+        <p><strong>District:</strong> <span class="break-words">{{ l.district }}</span></p>
+        <p><strong>Block:</strong> <span class="break-words">{{ l.block }}</span></p>
+        <p><strong>Village:</strong> <span class="break-words">{{ l.village }}</span></p>
 
       </div>
 
       <span
-        class="px-2 py-1 rounded text-xs font-medium"
-        [ngClass]="
-          l.status === 'ACTIVE'
-            ? 'bg-green-100 text-green-700'
-            : 'bg-red-100 text-red-700'
-        "
+        class="shrink-0 px-2 py-1 rounded text-xs font-medium mt-0.5"
+        [ngClass]="l.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
       >
         {{ l.status }}
       </span>
@@ -396,31 +377,13 @@
 
     <!-- PROJECT DROPDOWN -->
 
-    <button
-      type="button"
-      z-button
-      zType="outline"
-      class="w-full justify-between"
-      zDropdown
-      [zDropdownMenu]="projectMenu"
-    >
-      {{ selectedProjectName || 'Select Project (optional)' }}
-      <z-icon zType="chevron-down" />
-    </button>
-
-    <z-dropdown-menu-content #projectMenu="zDropdownMenuContent" class="w-full">
-      <z-dropdown-menu-item (click)="clearProjectSelection()">
-        No Project
-      </z-dropdown-menu-item>
-
-      <z-dropdown-menu-item
-        *ngFor="let p of projects$ | async"
-        (click)="selectProject(p)"
-      >
-        {{ p.name }}
-      </z-dropdown-menu-item>
-
-    </z-dropdown-menu-content>
+    <z-combobox
+      [options]="(projectOptions$ | async) ?? []"
+      [value]="projectValue"
+      (zValueChange)="onProjectSelect($event)"
+      placeholder="Select Project (optional)"
+      class="w-full"
+    ></z-combobox>
 
     <!-- INPUTS -->
     <z-form-field>
