@@ -300,17 +300,17 @@
 
 <!-- ================= PAGE HEADER ================= -->
 
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+<div class="flex items-center justify-between gap-3 mb-4">
   <div class="flex items-center gap-4">
     <h2 class="text-xl font-bold">Projects</h2>
   </div>
 
-  <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">Create Project</button>
+  <button z-button (click)="openCreateDialog()">Create Project</button>
 </div>
 
 <!-- ================= SEARCH PROJECTS ================= -->
-<div class="flex flex-col md:flex-row gap-3 mb-4">
-  <div class="flex-1">
+<div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+  <div class="w-full sm:w-[300px]">
     <input
       z-input
       [formControl]="projectSearch"
@@ -346,7 +346,7 @@
         <tr z-table-row *ngFor="let p of pager.items">
           <td z-table-cell>{{ p.projectCode }}</td>
 
-          <td z-table-cell class="break-words whitespace-normal max-w-[220px]">{{ p.name }}</td>
+          <td z-table-cell class="break-all max-w-[220px]">{{ p.name }}</td>
 
           <td z-table-cell>
             <span
@@ -404,9 +404,9 @@
   <div class="md:hidden space-y-3">
     <div *ngFor="let p of pager.items" class="border rounded-lg p-4 bg-white shadow-sm">
       <!-- Name + Status row -->
-      <div class="flex items-start gap-2">
+      <div class="flex items-start gap-2 min-w-0">
         <div class="min-w-0 flex-1">
-          <h3 class="font-semibold break-words whitespace-normal">{{ p.name }}</h3>
+          <h3 class="font-semibold break-all">{{ p.name }}</h3>
           <p class="text-sm text-gray-500 mt-0.5">Code: {{ p.projectCode }}</p>
         </div>
         <span
@@ -460,32 +460,36 @@
   </div>
 
   <!-- ===== PAGINATION ===== -->
-  <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-    <p class="text-sm text-gray-500">
-      Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }}
+  <div class="mt-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <p class="text-sm font-medium text-gray-500">
+      Showing
+      <span class="font-bold text-gray-700">{{ pager.total ? pager.from : 0 }}</span>
+      -
+      <span class="font-bold text-gray-700">{{ pager.total ? pager.to : 0 }}</span>
+      of <span class="font-bold text-gray-700">{{ pager.total }}</span>
     </p>
 
-    <div class="flex items-center justify-end gap-2">
+    <div class="flex items-center gap-2">
       <button
         type="button"
         (click)="prevPage()"
         [disabled]="pager.page <= 1"
-        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
-        Prev
+        <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
       </button>
 
-      <span class="text-sm text-gray-600">
-        Page {{ pager.page }} / {{ pager.totalPages }}
+      <span class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap">
+        {{ pager.page }} / {{ pager.totalPages }}
       </span>
 
       <button
         type="button"
         (click)="nextPage()"
         [disabled]="pager.page >= pager.totalPages"
-        class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
-        Next
+        Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
       </button>
     </div>
   </div>

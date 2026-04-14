@@ -1,18 +1,18 @@
 <!-- ================= PAGE HEADER ================= -->
 
 <ng-container *ngIf="vm$ | async as vm; else pageLoader">
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+  <div class="flex items-center justify-between gap-3 mb-4">
     <h2 class="text-xl font-bold">Locations</h2>
 
-    <button z-button class="w-full sm:w-auto" (click)="openCreateDialog()">
+    <button z-button (click)="openCreateDialog()">
       Create Location
     </button>
   </div>
 
   <!-- SEARCH + FILTER -->
 
-  <div class="flex flex-col md:flex-row gap-3 mb-4">
-    <div class="flex-1">
+  <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+    <div class="w-full sm:w-[320px]">
       <input
         z-input
         type="text"
@@ -175,10 +175,10 @@
       <tr z-table-row *ngFor="let l of vm.locations">
 
         <td z-table-cell>{{ l.locationCode }}</td>
-        <td z-table-cell class="break-words whitespace-normal max-w-[120px]">{{ l.state }}</td>
-        <td z-table-cell class="break-words whitespace-normal max-w-[120px]">{{ l.district }}</td>
-        <td z-table-cell class="break-words whitespace-normal max-w-[120px]">{{ l.block }}</td>
-        <td z-table-cell class="break-words whitespace-normal max-w-[120px]">{{ l.village }}</td>
+        <td z-table-cell class="break-all max-w-[120px]">{{ l.state }}</td>
+        <td z-table-cell class="break-all max-w-[120px]">{{ l.district }}</td>
+        <td z-table-cell class="break-all max-w-[120px]">{{ l.block }}</td>
+        <td z-table-cell class="break-all max-w-[120px]">{{ l.village }}</td>
 
         <!-- STATUS -->
         <td z-table-cell>
@@ -260,16 +260,16 @@
     class="border rounded-lg p-4 bg-white shadow-sm"
   >
 
-    <div class="flex items-start gap-2">
+    <div class="flex items-start gap-2 min-w-0">
 
       <div class="min-w-0 flex-1 space-y-1 text-sm">
 
-        <h3 class="font-semibold break-words whitespace-normal">{{ l.locationCode }}</h3>
+        <h3 class="font-semibold break-all">{{ l.locationCode }}</h3>
 
-        <p><strong>State:</strong> <span class="break-words">{{ l.state }}</span></p>
-        <p><strong>District:</strong> <span class="break-words">{{ l.district }}</span></p>
-        <p><strong>Block:</strong> <span class="break-words">{{ l.block }}</span></p>
-        <p><strong>Village:</strong> <span class="break-words">{{ l.village }}</span></p>
+        <p><strong>State:</strong> <span class="break-all">{{ l.state }}</span></p>
+        <p><strong>District:</strong> <span class="break-all">{{ l.district }}</span></p>
+        <p><strong>Block:</strong> <span class="break-all">{{ l.block }}</span></p>
+        <p><strong>Village:</strong> <span class="break-all">{{ l.village }}</span></p>
 
       </div>
 
@@ -284,8 +284,8 @@
 
     <!-- MOBILE ACTION BUTTONS -->
 
+    <!-- Row 1: View + Edit -->
     <div class="flex gap-2 mt-3">
-
       <button
         z-button
         zType="secondary"
@@ -297,15 +297,6 @@
         <span class="sr-only">View</span>
       </button>
 
-      <button *ngIf="(l.status || '').toUpperCase() === 'ACTIVE'"
-        z-button
-        zType="default"
-        class="flex-1"
-        (click)="openAssignProjectDialog(l)"
-      >
-        Assign
-      </button>
-
       <button
         z-button
         zType="secondary"
@@ -314,6 +305,19 @@
       >
         <z-icon zType="edit" />
         <span class="sr-only">Edit</span>
+      </button>
+    </div>
+
+    <!-- Row 2: Assign Project + Status switch -->
+    <div class="flex gap-2 mt-2">
+      <button
+        *ngIf="(l.status || '').toUpperCase() === 'ACTIVE'"
+        z-button
+        zType="default"
+        class="flex-1"
+        (click)="openAssignProjectDialog(l)"
+      >
+        Assign Project
       </button>
 
       <div class="flex-1 flex items-center justify-between rounded-md border px-3 py-2">
@@ -326,7 +330,6 @@
           <span class="sr-only">Toggle location status</span>
         </z-switch>
       </div>
-
     </div>
 
   </div>
@@ -339,32 +342,36 @@
 
 <!-- ===== PAGINATION ===== -->
 
-<div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-  <p class="text-sm text-gray-500">
-    Showing {{ vm.totalLocations ? vm.from : 0 }} - {{ vm.totalLocations ? vm.to : 0 }} of {{ vm.totalLocations }}
+<div class="mt-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+  <p class="text-sm font-medium text-gray-500">
+    Showing
+    <span class="font-bold text-gray-700">{{ vm.totalLocations ? vm.from : 0 }}</span>
+    -
+    <span class="font-bold text-gray-700">{{ vm.totalLocations ? vm.to : 0 }}</span>
+    of <span class="font-bold text-gray-700">{{ vm.totalLocations }}</span>
   </p>
 
-  <div class="flex items-center justify-end gap-2">
+  <div class="flex items-center gap-2">
     <button
       type="button"
       (click)="prevPage()"
       [disabled]="vm.page <= 1"
-      class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+      class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
     >
-      Prev
+      <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
     </button>
 
-    <span class="text-sm text-gray-600">
-      Page {{ vm.page }} / {{ vm.pageCount }}
+    <span class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap">
+      {{ vm.page }} / {{ vm.pageCount }}
     </span>
 
     <button
       type="button"
       (click)="nextPage()"
       [disabled]="vm.page >= vm.pageCount"
-      class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+      class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
     >
-      Next
+      Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
     </button>
   </div>
 </div>
