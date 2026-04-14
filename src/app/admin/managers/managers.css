@@ -6,7 +6,7 @@
 
 /* Ensure the title and text don't overflow the dialog */
 .assign-dialog-text {
-    word-break: break-all;
+    word-break: break-words;
 }
 
 /* Animation for the table/content */

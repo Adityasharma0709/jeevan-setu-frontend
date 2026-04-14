@@ -116,8 +116,8 @@
             <ng-container *ngIf="recentGroupsVm$ | async as vm; else sectionLoader">
                 <div *ngIf="vm.total; else noGroups" class="space-y-3">
                     <div *ngFor="let g of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 truncate">{{ g.name || '-' }}</p>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-gray-900 break-all">{{ g.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5">Age: {{ g.minAge ?? '-' }} – {{ g.maxAge ?? '-' }}</p>
                         </div>
                         <span
@@ -177,8 +177,8 @@
             <ng-container *ngIf="recentActivitiesVm$ | async as vm; else sectionLoader">
                 <div *ngIf="vm.total; else noActivities" class="space-y-3">
                     <div *ngFor="let a of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 truncate">{{ a.name || '-' }}</p>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-gray-900 break-all">{{ a.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5" *ngIf="a.project">
                                 Project:
                                 <span class="font-medium text-gray-700">{{ a.project?.name || '-' }}</span>
@@ -242,8 +242,8 @@
             <ng-container *ngIf="recentSessionsVm$ | async as vm; else sectionLoader">
                 <div *ngIf="vm.total; else noSessions" class="space-y-3">
                     <div *ngFor="let s of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 truncate">{{ s.name || '-' }}</p>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-gray-900 break-all">{{ s.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5">
                                 Activity:
                                 <span class="font-medium text-gray-700">{{ s.activity?.name || '-' }}</span>
@@ -314,13 +314,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="pager.total; else noFilteredProjects">
                     <div *ngFor="let p of pager.items" class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm flex flex-col h-full">
                         <div class="flex items-start justify-between gap-2 mb-3">
-                            <div>
+                            <div class="min-w-0 flex-1">
                                 <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Project</p>
-                                <p class="text-base font-semibold text-gray-900">{{ p.name || '-' }}</p>
-                                <p class="text-sm text-gray-600">Code: <span class="font-medium text-gray-800">{{ p.projectCode || p.code || '-' }}</span></p>
+                                <p class="text-base font-semibold text-gray-900 break-all">{{ p.name || '-' }}</p>
+                                <p class="text-sm text-gray-600">Code: <span class="font-medium text-gray-800 break-all">{{ p.projectCode || p.code || '-' }}</span></p>
                             </div>
                             <span
-                                class="px-2.5 py-1 rounded-full text-xs font-semibold"
+                                class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
                                 [ngClass]="
                                     p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                 "
