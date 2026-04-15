@@ -43,7 +43,7 @@
                             <p class="text-xs text-emerald-600 font-semibold mb-1 flex items-center gap-1">
                                 <z-icon zType="mail" class="w-3 h-3"></z-icon> CONTACT EMAIL
                             </p>
-                            <p class="text-gray-800 font-medium font-mono text-sm">
+                            <p class="text-gray-800 font-medium font-mono text-xs break-all">
                                 {{ (profile$ | async)?.email || '-' }}
                             </p>
                         </div>
@@ -108,14 +108,12 @@
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold">Recent Workers</h3>
                 <div class="flex items-center gap-3">
-                    <select
+                    <z-combobox
                         [formControl]="recentWorkersStatusFilter"
-                        class="w-[110px] px-3 py-2 rounded-md border text-xs bg-white"
-                    >
-                        <option value="ALL">All</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="INACTIVE">Inactive</option>
-                    </select>
+                        [options]="statusOptions"
+                        zWidth="sm"
+                        placeholder="Status"
+                    ></z-combobox>
                 </div>
             </div>
 
@@ -123,7 +121,7 @@
                 <div *ngIf="vm.total; else noWorkers" class="space-y-3">
                     <div *ngFor="let w of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
                         <div class="min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 truncate">{{ w.name || '-' }}</p>
+                            <p class="text-sm font-semibold text-gray-900 break-all whitespace-normal">{{ w.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5 truncate">{{ w.email || w.mobileNumber || '-' }}</p>
                         </div>
                         <span
@@ -152,14 +150,12 @@
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold">Recent Beneficiaries</h3>
                 <div class="flex items-center gap-3">
-                    <select
+                    <z-combobox
                         [formControl]="recentBeneficiariesStatusFilter"
-                        class="w-[110px] px-3 py-2 rounded-md border text-xs bg-white"
-                    >
-                        <option value="ALL">All</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="INACTIVE">Inactive</option>
-                    </select>
+                        [options]="statusOptions"
+                        zWidth="sm"
+                        placeholder="Status"
+                    ></z-combobox>
                 </div>
             </div>
 
@@ -167,7 +163,7 @@
                 <div *ngIf="vm.total; else noBen" class="space-y-3">
                     <div *ngFor="let b of vm.items" class="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
                         <div class="min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 truncate">{{ b.name || '-' }}</p>
+                            <p class="text-sm font-semibold text-gray-900 break-all whitespace-normal">{{ b.name || '-' }}</p>
                             <p class="text-xs text-gray-500 mt-0.5 truncate">{{ b.uid || b.mobileNumber || '-' }}</p>
                         </div>
                     </div>
@@ -196,12 +192,12 @@
                 <div *ngIf="vm.total; else noReq" class="space-y-3">
                     <div *ngFor="let r of vm.items" class="border border-gray-100 rounded-lg p-3 flex flex-col gap-1.5">
                         <div class="flex items-start justify-between">
-                            <p class="text-sm font-semibold text-gray-900 truncate">Request #{{ r.id }}</p>
+                            <p class="text-sm font-semibold text-gray-900 break-words whitespace-normal">Request #{{ r.id }}</p>
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 uppercase bg-amber-100 text-amber-700">
                                 {{ r.status || 'PENDING' }}
                             </span>
                         </div>
-                        <p class="text-xs text-gray-600 truncate">{{ r.requestType | lowercase }}</p>
+                        <p class="text-xs text-gray-600 break-words whitespace-normal">{{ r.requestType | lowercase }}</p>
                     </div>
                 </div>
 
@@ -223,14 +219,12 @@
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold">Assigned Projects & Locations</h3>
             <div class="flex items-center gap-3">
-                <select
+                <z-combobox
                     [formControl]="projectStatusFilter"
-                    class="w-[140px] px-3 py-2 rounded-md border text-sm bg-white"
-                >
-                    <option value="ALL">All</option>
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                </select>
+                    [options]="statusOptions"
+                    zWidth="sm"
+                    placeholder="Status"
+                ></z-combobox>
                 <ng-container *ngIf="assignedProjectsVm$ | async as pager; else assignedProjectsCountLoader">
                     <span class="text-sm text-gray-500">{{ pager.total }} shown</span>
                 </ng-container>
@@ -245,9 +239,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="pager.total; else noFilteredProjects">
                     <div *ngFor="let p of pager.items" class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm flex flex-col h-full">
                         <div class="flex items-start justify-between gap-2 mb-3">
-                            <div>
+                            <div class="min-w-0 flex-1">
                                 <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Project</p>
-                                <p class="text-base font-semibold text-gray-900">{{ p.name || '-' }}</p>
+                                <p class="text-base font-semibold text-gray-900 break-all whitespace-normal">{{ p.name || '-' }}</p>
                                 <p class="text-sm text-gray-600">Code: <span class="font-medium text-gray-800">{{ p.projectCode || p.code || '-' }}</span></p>
                             </div>
                             <span
@@ -276,11 +270,11 @@
                                     <div class="p-3 border-t border-gray-100 bg-white text-sm text-gray-600 grid grid-cols-2 gap-2">
                                         <div>
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wide">Village</p>
-                                            <p class="font-medium text-gray-800 truncate">{{ loc.village || '-' }}</p>
+                                            <p class="font-medium text-gray-800 break-all whitespace-normal">{{ loc.village || '-' }}</p>
                                         </div>
                                         <div>
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wide">Block</p>
-                                            <p class="font-medium text-gray-800 truncate">{{ loc.block || '-' }}</p>
+                                            <p class="font-medium text-gray-800 break-all whitespace-normal">{{ loc.block || '-' }}</p>
                                         </div>
                                         <div>
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wide">District</p>

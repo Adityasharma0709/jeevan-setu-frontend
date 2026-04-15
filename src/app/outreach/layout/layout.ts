@@ -52,6 +52,12 @@ export class Layout {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
 
+  closeSidebar() {
+    if (this.isMobile) {
+      this.sidebarCollapsed = true;
+    }
+  }
+
   logout() {
     this.api.clearCache();
     localStorage.clear();

@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BehaviorSubject, Observable, combineLatest, map, shareReplay, startWith, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, forkJoin, map, shareReplay, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ManagerService } from '../manager.service';
@@ -81,12 +81,10 @@ export class Requests implements OnInit {
   private initPagers() {
     const baseIncoming$ = this.refreshIncoming$.pipe(
       tap(() => this.isLoading = true),
-      switchMap(() => import('rxjs').then(({ forkJoin }) => 
-        forkJoin({
-          beneficiary: this.managerService.getBeneficiaryRequests(),
-          profile: this.managerService.getPendingRequests()
-        })
-      )),
+      switchMap(() => forkJoin({
+        beneficiary: this.managerService.getBeneficiaryRequests(),
+        profile: this.managerService.getPendingRequests()
+      })),
       map((res: any) => {
         const ben = Array.isArray(res.beneficiary) ? res.beneficiary : [];
         const prof = Array.isArray(res.profile) ? res.profile : [];

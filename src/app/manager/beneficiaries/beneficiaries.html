@@ -1,14 +1,96 @@
 <div class="p-6 space-y-6">
     <div class="flex justify-between items-center">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Beneficiaries</h1>
+            <h1 class="text-xl font-bold text-gray-900 mb-2">Beneficiaries</h1>
             <p class="text-gray-600">View and manage beneficiaries in your assigned area.</p>
         </div>
     </div>
 
 <ng-container *ngIf="pager$ | async as pager; else loader" class="fade-in">
-    <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
-        <table z-table class="w-full">
+    <!-- Mobile Card View -->
+    <div class="md:hidden grid grid-cols-1 gap-6">
+        <div *ngFor="let beneficiary of pager.items; trackBy: trackById" 
+             class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col p-5 hover:shadow-md transition-shadow group">
+            
+            <!-- Header: Name & UID -->
+            <div class="flex justify-between items-start mb-4">
+                <div class="min-w-0 flex-1">
+                    <h3 class="text-lg font-bold text-gray-900 break-all leading-tight group-hover:text-emerald-700 transition-colors">
+                        {{ beneficiary.name }}
+                    </h3>
+                    <div class="flex items-center gap-2 mt-1.5">
+                        <span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-mono rounded uppercase tracking-wider flex items-center gap-1">
+                            <z-icon zType="badge-check" class="w-3 h-3" />
+                            {{ beneficiary.uid }}
+                        </span>
+                    </div>
+                </div>
+                <button z-button zType="secondary" zSize="sm" (click)="viewDetails(beneficiary)" class="shrink-0 ml-2" title="View Details">
+                    <z-icon zType="eye" />
+                    <span class="sr-only">View Details</span>
+                </button>
+            </div>
+
+            <!-- Info Body -->
+            <div class="space-y-4 flex-1">
+                <!-- Mobile -->
+                <div class="flex items-center gap-3 text-sm text-gray-600">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                        <z-icon zType="smartphone" class="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-wider">Mobile Number</p>
+                        <p class="font-medium text-gray-800 break-all">{{ beneficiary.mobileNumber || '-' }}</p>
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="flex items-start gap-3 text-sm text-gray-600">
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                        <z-icon zType="map-pin" class="w-4 h-4 text-amber-600" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-wider">Location</p>
+                        <p class="font-medium text-gray-900 break-all">
+                            {{ beneficiary.village || beneficiary.location?.village || beneficiary.location?.name || '-' }}
+                        </p>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wide break-all mt-0.5 bg-gray-50 px-1.5 py-0.5 rounded inline-block">
+                            {{ beneficiary.block || beneficiary.location?.block || '-' }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Project -->
+                <div class="flex items-start gap-3 text-sm text-gray-600">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                        <z-icon zType="layers" class="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-wider">Assigned Project</p>
+                        <p class="font-semibold text-gray-700 break-all">{{ beneficiary.project?.name || '-' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer: Registered By -->
+            <div class="mt-5 pt-4 border-t border-gray-100 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-slate-100 border-2 border-white shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
+                    <z-icon zType="user" class="w-5 h-5 text-slate-400" />
+                </div>
+                <div class="min-w-0 flex-1" *ngIf="beneficiary.createdBy">
+                    <p class="text-[10px] text-gray-400 uppercase tracking-wider">Registered By</p>
+                    <p class="text-sm font-semibold text-gray-800 break-all truncate" [title]="beneficiary.createdBy.name">
+                        {{ beneficiary.createdBy.name }}
+                    </p>
+                </div>
+                <div *ngIf="!beneficiary.createdBy" class="text-xs text-gray-400 italic">No registration info</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="hidden md:block bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+        <table z-table zType="grid" class="w-full">
             <thead z-table-header>
                 <tr z-table-row>
                     <th z-table-head>Name</th>
@@ -17,77 +99,82 @@
                     <th z-table-head>Location</th>
                     <th z-table-head>Project</th>
                     <th z-table-head>Registered By</th>
-                    <th z-table-head class="text-right pr-6">Actions</th>
+                    <th z-table-head class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody z-table-body>
-                <tr z-table-row *ngFor="let beneficiary of pager.items; trackBy: trackById">
-                    <td z-table-cell class="font-medium">{{ beneficiary.name }}</td>
-                    <td z-table-cell class="text-gray-500 text-sm">{{ beneficiary.uid }}</td>
-                    <td z-table-cell>{{ beneficiary.mobileNumber || '-' }}</td>
+                <tr z-table-row *ngFor="let beneficiary of pager.items">
+                    <td z-table-cell class="font-medium text-gray-900">{{ beneficiary.name }}</td>
                     <td z-table-cell>
-                        <div class="flex flex-col gap-0.5">
-                            <span class="text-gray-900 font-medium">
-                                {{ beneficiary.location?.village || beneficiary.location?.name || '-' }}
+                        <span class="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">{{ beneficiary.uid }}</span>
+                    </td>
+                    <td z-table-cell class="text-gray-600">{{ beneficiary.mobileNumber || '-' }}</td>
+                    <td z-table-cell>
+                        <div class="text-sm text-gray-900">{{ beneficiary.village || beneficiary.location?.village || beneficiary.location?.name || '-' }}</div>
+                        <div class="text-[10px] text-gray-400 uppercase tracking-tight">{{ beneficiary.block || beneficiary.location?.block || '-' }}</div>
+                    </td>
+                    <td z-table-cell class="text-gray-700 font-medium">{{ beneficiary.project?.name || '-' }}</td>
+                    <td z-table-cell>
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                <z-icon zType="user" class="w-3.5 h-3.5 text-gray-400" />
                             </span>
-                            <span class="text-[10px] text-gray-500 uppercase tracking-wide">
-                                {{ beneficiary.location?.block || '-' }}
+                            <span class="text-sm text-gray-600 truncate max-w-[150px]" [title]="beneficiary.createdBy?.name">
+                                {{ beneficiary.createdBy?.name || '-' }}
                             </span>
                         </div>
                     </td>
-                    <td z-table-cell>{{ beneficiary.project?.name || '-' }}</td>
-                    <td z-table-cell>
-                        <div *ngIf="beneficiary.createdBy" class="flex flex-col gap-0.5 max-w-[150px]">
-                            <span class="font-medium text-sm text-gray-900 truncate" [title]="beneficiary.createdBy.name">{{ beneficiary.createdBy.name }}</span>
-                            <span class="text-[10px] text-gray-500 truncate" [title]="beneficiary.createdBy.mobileNumber || beneficiary.createdBy.email">{{ beneficiary.createdBy.mobileNumber || beneficiary.createdBy.email }}</span>
-                        </div>
-                        <span *ngIf="!beneficiary.createdBy" class="text-gray-400">-</span>
-                    </td>
-                    <td z-table-cell class="text-right pr-6">
-                        <button z-button zType="secondary" zSize="sm" (click)="viewDetails(beneficiary)">
-                            <z-icon zType="eye" class="mr-1" /> View
+                    <td z-table-cell class="text-right">
+                        <button z-button zType="secondary" zSize="sm" (click)="viewDetails(beneficiary)" title="View Details">
+                            <z-icon zType="eye" />
+                            <span class="sr-only">View Details</span>
                         </button>
-                    </td>
-                </tr>
-                <tr z-table-row *ngIf="pager.items.length === 0">
-                    <td z-table-cell colspan="7" class="text-center py-12 text-gray-500">
-                        <div class="flex flex-col items-center">
-                            <z-icon zType="users" size="32" class="text-gray-300 mb-2" />
-                            <p>No beneficiaries found in your assigned area.</p>
-                        </div>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
 
+    <!-- Empty State -->
+    <div *ngIf="pager.items.length === 0" class="py-20 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center px-6">
+        <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4">
+            <z-icon zType="users" size="32" class="text-gray-300" />
+        </div>
+        <h3 class="text-lg font-bold text-gray-900">No beneficiaries found</h3>
+        <p class="text-gray-500 max-w-xs mt-1">There are no beneficiaries currently registered in your assigned areas.</p>
+    </div>
+
     <!-- ===== PAGINATION ===== -->
-    <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <p class="text-sm text-gray-500">
-            Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }}
+    <div class="mt-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-sm font-medium text-gray-500">
+            Showing
+            <span class="font-bold text-gray-700">{{ pager.total ? pager.from : 0 }}</span>
+            -
+            <span class="font-bold text-gray-700">{{ pager.total ? pager.to : 0 }}</span>
+            of <span class="font-bold text-gray-700">{{ pager.total }}</span>
         </p>
 
-        <div class="flex items-center justify-end gap-2">
+        <div class="flex items-center gap-2">
             <button
                 type="button"
                 (click)="prevPage()"
                 [disabled]="pager.page <= 1"
-                class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 bg-white"
+                class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-                Prev
+                <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
             </button>
 
-            <span class="text-sm text-gray-600">
-                Page {{ pager.page }} / {{ pager.totalPages }}
+            <span class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap">
+                {{ pager.page }} / {{ pager.totalPages }}
             </span>
 
             <button
                 type="button"
                 (click)="nextPage()"
                 [disabled]="pager.page >= pager.totalPages"
-                class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 bg-white"
+                class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-                Next
+                Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
             </button>
         </div>
     </div>

@@ -15,6 +15,7 @@ import {
     ZardTableCellComponent,
 } from '@/shared/components/table';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardButtonComponent } from '@/shared/components/button';
 
 @Component({
     selector: 'app-beneficiaries',
@@ -28,6 +29,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
         ZardTableHeadComponent,
         ZardTableCellComponent,
         ZardIconComponent,
+        ZardButtonComponent,
         LottieComponent,
     ],
     templateUrl: './beneficiaries.html'

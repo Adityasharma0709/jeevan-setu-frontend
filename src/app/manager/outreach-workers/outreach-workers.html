@@ -1,7 +1,7 @@
 <div class="p-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Outreach Workers</h1>
+            <h1 class="text-xl font-bold text-gray-900 mb-2">Outreach Workers</h1>
             <p class="text-gray-600">Raise account requests for Outreach Workers. Admin will approve or reject these requests.</p>
         </div>
         <button z-button (click)="openRequestDialog('CREATE')">
@@ -10,13 +10,130 @@
         </button>
     </div>
 
+    <div class="flex flex-col gap-4 mb-8">
+        <!-- Search and Filter Bar -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-3 relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <z-icon zType="search" class="h-4 w-4 text-gray-400" />
+                </div>
+                <input 
+                    z-input 
+                    type="text" 
+                    placeholder="Search workers by name, email or account code..." 
+                    class="pl-10 w-full"
+                    [ngModel]="search$ | async"
+                    (ngModelChange)="onSearch($event)"
+                />
+            </div>
+            <div class="w-full">
+                <z-combobox
+                    [options]="statusOptions"
+                    [value]="statusFilter$ | async"
+                    (zValueChange)="onStatusChange($event)"
+                    placeholder="All Status"
+                    zWidth="full"
+                ></z-combobox>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dual View Section -->
     <ng-container *ngIf="pager$ | async as pager; else owLoader" class="fade-in">
-        <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
-            <table z-table class="w-full">
+        
+        <!-- Mobile Card View -->
+        <div class="md:hidden grid grid-cols-1 gap-6">
+            <div *ngFor="let worker of pager.items" 
+                 class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col p-5 hover:shadow-md transition-shadow group relative">
+                
+                <!-- Status Badge (Top Right) -->
+                <div class="absolute top-5 right-5">
+                    <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                        [ngClass]="worker.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'">
+                        {{ worker.status }}
+                    </span>
+                </div>
+
+                <!-- Header: Name & Code -->
+                <div class="mb-5 pr-16">
+                    <h3 class="text-lg font-bold text-gray-900 break-all leading-tight group-hover:text-emerald-700 transition-colors">
+                        {{ worker.name }}
+                    </h3>
+                    <span class="inline-block mt-1.5 px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-mono rounded uppercase tracking-wider">
+                        {{ worker.usercode || '-' }}
+                    </span>
+                </div>
+
+                <!-- Info Body -->
+                <div class="space-y-4 flex-1">
+                    <!-- Email -->
+                    <div class="flex items-center gap-3 text-sm text-gray-600">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                            <z-icon zType="mail" class="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[10px] text-gray-400 uppercase tracking-wider">Email Address</p>
+                            <p class="font-medium text-gray-800 break-all">{{ worker.email }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Mobile -->
+                    <div class="flex items-center gap-3 text-sm text-gray-600">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                            <z-icon zType="smartphone" class="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[10px] text-gray-400 uppercase tracking-wider">Mobile Number</p>
+                            <p class="font-medium text-gray-800 break-all">{{ getWorkerMobile(worker) }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Projects -->
+                    <div class="flex items-start gap-3 text-sm text-gray-600">
+                        <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+                            <z-icon zType="layers" class="w-4 h-4 text-purple-600" />
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[10px] text-gray-400 uppercase tracking-wider">Assigned Projects</p>
+                            <p class="font-medium text-gray-800 break-all leading-relaxed">{{ getWorkerProjectsLabel(worker) }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Footer -->
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(worker)" class="w-full">
+                            <z-icon zType="tag" class="mr-1" /> Tag
+                        </button>
+                        <button z-button zType="secondary" zSize="sm" (click)="openRequestDialog('MODIFY', worker)" class="w-full">
+                            <z-icon zType="settings" class="mr-1" /> Edit
+                        </button>
+                        
+                        <div class="col-span-2 pt-1">
+                            <button *ngIf="worker.status === 'ACTIVE'" z-button zType="default" zSize="sm"
+                                (click)="openRequestDialog('DEACTIVATE', worker)"
+                                class="w-full text-red-600 border-red-100 hover:bg-red-50 hover:border-red-200 transition-all">
+                                <z-icon zType="ban" class="mr-1" /> Request Deactivation
+                            </button>
+                            <button *ngIf="worker.status === 'INACTIVE'" z-button zType="default" zSize="sm"
+                                (click)="openRequestDialog('ACTIVATE', worker)"
+                                class="w-full text-green-600 border-green-100 hover:bg-green-50 hover:border-green-200 transition-all">
+                                <z-icon zType="check" class="mr-1" /> Request Activation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden md:block bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+            <table z-table zType="grid" class="w-full">
                 <thead z-table-header>
                     <tr z-table-row>
-                        <th z-table-head>Account Code</th>
-                        <th z-table-head>Name</th>
+                        <th z-table-head>Worker Name</th>
+                        <th z-table-head>Code</th>
                         <th z-table-head>Email</th>
                         <th z-table-head>Mobile</th>
                         <th z-table-head>Projects</th>
@@ -26,61 +143,86 @@
                 </thead>
                 <tbody z-table-body>
                     <tr z-table-row *ngFor="let worker of pager.items">
-                        <td z-table-cell class="font-mono text-xs text-gray-500">{{ worker.usercode || '-' }}</td>
-                        <td z-table-cell class="font-medium">{{ worker.name }}</td>
-                        <td z-table-cell class="text-gray-600">{{ worker.email }}</td>
-                        <td z-table-cell class="text-gray-600">{{ getWorkerMobile(worker) }}</td>
-                        <td z-table-cell class="text-gray-600">{{ getWorkerProjectsLabel(worker) }}</td>
+                        <td z-table-cell class="font-medium text-gray-900">{{ worker.name }}</td>
                         <td z-table-cell>
-                            <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                            <span class="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600">{{ worker.usercode || '-' }}</span>
+                        </td>
+                        <td z-table-cell class="text-gray-600 text-sm break-all max-w-[150px]">{{ worker.email }}</td>
+                        <td z-table-cell class="text-gray-600 text-sm">{{ getWorkerMobile(worker) }}</td>
+                        <td z-table-cell class="text-gray-600 text-xs max-w-[200px] break-words whitespace-normal leading-relaxed">
+                            {{ getWorkerProjectsLabel(worker) }}
+                        </td>
+                        <td z-table-cell>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
                                 [ngClass]="worker.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
                                 {{ worker.status }}
                             </span>
                         </td>
                         <td z-table-cell class="text-right">
                             <div class="flex justify-end gap-2">
-                                <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(worker)">
-                                    <z-icon zType="tag" class="mr-1" /> Tag Project &amp; Location
+                                <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(worker)" title="Tag to project">
+                                    <z-icon zType="tag" />
                                 </button>
-                                <button z-button zType="secondary" zSize="sm" (click)="openRequestDialog('MODIFY', worker)">
-                                    <z-icon zType="settings" class="mr-1" /> Request Modification
+                                <button z-button zType="secondary" zSize="sm" (click)="openRequestDialog('MODIFY', worker)" title="Request Modify">
+                                    <z-icon zType="settings" />
                                 </button>
-                                <button *ngIf="worker.status === 'ACTIVE'" z-button zType="default" zSize="sm"
-                                    (click)="openRequestDialog('DEACTIVATE', worker)"
-                                    class="text-red-600 border-red-200 hover:bg-red-50">
-                                    <z-icon zType="ban" class="mr-1" /> Request Deactivation
+                                <button *ngIf="worker.status === 'ACTIVE'" z-button zType="default" zSize="sm" 
+                                        (click)="openRequestDialog('DEACTIVATE', worker)" title="Request Deactivation"
+                                        class="text-red-600 hover:bg-red-50">
+                                    <z-icon zType="ban" />
                                 </button>
-                                <button *ngIf="worker.status === 'INACTIVE'" z-button zType="default" zSize="sm"
-                                    (click)="openRequestDialog('ACTIVATE', worker)"
-                                    class="text-green-600 border-green-200 hover:bg-green-50">
-                                    <z-icon zType="check" class="mr-1" /> Request Activation
+                                <button *ngIf="worker.status === 'INACTIVE'" z-button zType="default" zSize="sm" 
+                                        (click)="openRequestDialog('ACTIVATE', worker)" title="Request Activation"
+                                        class="text-green-600 hover:bg-green-50">
+                                    <z-icon zType="check" />
                                 </button>
                             </div>
-                        </td>
-                    </tr>
-                    <tr z-table-row *ngIf="pager.items.length === 0">
-                        <td z-table-cell colspan="7" class="text-center py-12 text-gray-500">
-                            No outreach workers found.
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
+        <!-- Empty State -->
+        <div *ngIf="pager.items.length === 0" class="col-span-full py-20 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center px-6">
+            <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4">
+                <z-icon zType="user-plus" size="32" class="text-gray-300" />
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No workers found</h3>
+            <p class="text-gray-500 max-w-xs mt-1">Request new worker accounts to get started with your projects.</p>
+        </div>
+
         <!-- Pagination for Outreach Workers -->
-        <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-gray-50 p-4 rounded-lg">
-            <p class="text-sm text-gray-500">
-                Showing {{ pager.total ? pager.from : 0 }} - {{ pager.total ? pager.to : 0 }} of {{ pager.total }} workers
+        <div class="mt-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-sm font-medium text-gray-500">
+                Showing
+                <span class="font-bold text-gray-700">{{ pager.total ? pager.from : 0 }}</span>
+                -
+                <span class="font-bold text-gray-700">{{ pager.total ? pager.to : 0 }}</span>
+                of <span class="font-bold text-gray-700">{{ pager.total }}</span>
             </p>
-            <div class="flex items-center justify-end gap-2">
-                <button type="button" (click)="prevPage()" [disabled]="pager.page <= 1"
-                    class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white bg-white">
-                    Prev
+
+            <div class="flex items-center gap-2">
+                <button
+                    type="button"
+                    (click)="prevPage()"
+                    [disabled]="pager.page <= 1"
+                    class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                    <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
                 </button>
-                <span class="text-sm text-gray-600">Page {{ pager.page }} / {{ pager.totalPages }}</span>
-                <button type="button" (click)="nextPage()" [disabled]="pager.page >= pager.totalPages"
-                    class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white bg-white">
-                    Next
+
+                <span class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap">
+                    {{ pager.page }} / {{ pager.totalPages }}
+                </span>
+
+                <button
+                    type="button"
+                    (click)="nextPage()"
+                    [disabled]="pager.page >= pager.totalPages"
+                    class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                    Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
                 </button>
             </div>
         </div>

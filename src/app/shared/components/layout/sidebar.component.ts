@@ -95,7 +95,7 @@ export class SidebarComponent {
 
   protected readonly classes = computed(() => mergeClasses(sidebarVariants(), this.class()));
 
-  protected readonly triggerClasses = computed(() => mergeClasses(sidebarTriggerVariants()));
+  protected readonly triggerClasses = computed(() => mergeClasses(sidebarTriggerVariants({ collapsed: this.zCollapsed() })));
 
   toggleCollapsed(): void {
     const newState = !this.zCollapsed();

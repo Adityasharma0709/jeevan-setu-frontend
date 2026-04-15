@@ -34,7 +34,7 @@ import {
   ],
 })
 export class Layout {
-  sidebarCollapsed = false;
+  sidebarCollapsed = window.innerWidth < 768;
   isMobile = window.innerWidth < 768;
   profile$: Observable<ProfileVm>;
 

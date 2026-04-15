@@ -22,7 +22,7 @@
                     <z-icon zType="user" size="32" />
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">{{ beneficiary.name }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900 break-words">{{ beneficiary.name }}</h1>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded border">{{ beneficiary.uid }}</span>
                         <span class="text-gray-400">·</span>
@@ -117,7 +117,7 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="text-xs text-gray-400 uppercase">Guardian Name</label>
-                                <p class="text-lg font-semibold text-gray-900 border-b pb-1">{{ beneficiary.guardianName }}</p>
+                                <p class="text-lg font-semibold text-gray-900 border-b pb-1 break-words">{{ beneficiary.guardianName }}</p>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -196,7 +196,7 @@
                             </thead>
                             <tbody class="divide-y divide-gray-100">
                                 <tr *ngFor="let child of beneficiary.children" class="hover:bg-amber-50/20 transition-colors">
-                                    <td class="px-6 py-4 font-medium text-gray-900">{{ child.name }}</td>
+                                    <td class="px-6 py-4 font-medium text-gray-900 break-words">{{ child.name }}</td>
                                     <td class="px-6 py-4 text-gray-600">{{ child.dateOfBirth | date:'mediumDate' }}</td>
                                     <td class="px-6 py-4">
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"

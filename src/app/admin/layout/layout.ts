@@ -15,8 +15,10 @@ import {
   SidebarGroupLabelComponent,
 } from '@/shared/components/layout';
 import { CommonModule } from '@angular/common';
+
 @Component({
   selector: 'app-layout',
+  standalone: true,
   imports: [
     CommonModule,
     RouterModule,
@@ -32,11 +34,9 @@ import { CommonModule } from '@angular/common';
   templateUrl: './layout.html',
   styleUrl: './layout.css',
 })
-
 export class Layout {
-
-  sidebarCollapsed = false;
-  isMobile = false;
+  sidebarCollapsed = window.innerWidth < 768;
+  isMobile = window.innerWidth < 768;
   profile$: Observable<ProfileVm>;
 
   constructor(
@@ -45,11 +45,6 @@ export class Layout {
     private userProfile: UserProfileService,
   ) {
     this.profile$ = this.userProfile.profile$;
-  }
-
-  ngOnInit() {
-    this.isMobile = window.innerWidth < 768;
-    this.sidebarCollapsed = this.isMobile;
   }
 
   toggleSidebar() {
@@ -71,12 +66,9 @@ export class Layout {
 
   @HostListener('window:resize')
   onResize() {
-    const wasMobile = this.isMobile;
     this.isMobile = window.innerWidth < 768;
-
-    if (this.isMobile !== wasMobile) {
-      this.sidebarCollapsed = this.isMobile;
+    if (this.isMobile) {
+      this.sidebarCollapsed = true;
     }
   }
 }
-

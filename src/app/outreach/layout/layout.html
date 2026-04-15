@@ -17,7 +17,7 @@
         </span>
       </div>
       <button type="button" z-button zType="ghost" (click)="toggleSidebar()"
-        class="ml-4 text-gray-500 hover:text-gray-800 hidden md:block">
+        class="ml-4 text-gray-500 hover:text-gray-800">
         <z-icon zType="panel-left"></z-icon>
       </button>
     </div>
@@ -30,8 +30,10 @@
   <z-layout class="flex-1 overflow-hidden flex border-none bg-transparent">
 
     <!-- ================= SIDEBAR ================= -->
-    <z-sidebar [zWidth]="260" [zCollapsible]="true" [zCollapsed]="sidebarCollapsed" [zCollapsedWidth]="76"
-      (zCollapsedChange)="sidebarCollapsed = $event" class="p-0! bg-white border-r border-gray-200 shadow-sm z-30">
+    <z-sidebar [zWidth]="260" [zCollapsible]="true" [zCollapsed]="sidebarCollapsed" [zCollapsedWidth]="isMobile ? 0 : 76"
+      (zCollapsedChange)="sidebarCollapsed = $event" 
+      class="p-0! bg-white border-r border-gray-200 shadow-sm z-50 transition-all duration-300"
+      [class]="!sidebarCollapsed && isMobile ? 'fixed inset-y-0 left-0 shadow-2xl z-50' : ''">
 
       <nav class="flex h-full flex-col overflow-hidden bg-white"
         [ngClass]="sidebarCollapsed ? 'gap-1 p-2 pt-4' : 'gap-2 p-3'">
@@ -47,7 +49,7 @@
           <!-- Dashboard -->
           <a routerLink="/outreach" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }"
             class="menu-link" [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
-            zPosition="right">
+            zPosition="right" (click)="closeSidebar()">
             <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
             @if (!sidebarCollapsed) { <span class="flex-1">Dashboard</span> }
           </a>
@@ -57,7 +59,7 @@
           <!-- My Requests -->
           <a routerLink="/outreach/requests" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'My Requests' : ''"
-            zPosition="right">
+            zPosition="right" (click)="closeSidebar()">
             <z-icon zType="inbox" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
             @if (!sidebarCollapsed) { <span class="flex-1">My Requests</span> }
           </a>
@@ -65,14 +67,14 @@
           <!-- Beneficiaries -->
           <a routerLink="/outreach/beneficiaries" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Beneficiaries' : ''"
-            zPosition="right">
+            zPosition="right" (click)="closeSidebar()">
             <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
             @if (!sidebarCollapsed) { <span class="flex-1">Beneficiaries</span> }
           </a>
 
           <!-- Activity -->
           <a routerLink="/outreach/activity" routerLinkActive="active-link" class="menu-link"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Activity' : ''" zPosition="right">
+            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Activity' : ''" zPosition="right" (click)="closeSidebar()">
             <z-icon zType="clipboard" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
             @if (!sidebarCollapsed) { <span class="flex-1">Activity</span> }
           </a>
@@ -83,7 +85,7 @@
         <div class="mt-auto pt-2 border-t border-gray-100">
 
           <a routerLink="/outreach/profile" routerLinkActive="active-link" class="menu-link"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''" zPosition="right">
+            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''" zPosition="right" (click)="closeSidebar()">
             <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
             @if (!sidebarCollapsed) { <span class="flex-1 text-left">Profile</span> }
           </a>
@@ -99,6 +101,12 @@
 
       </nav>
     </z-sidebar>
+
+    <!-- Mobile Backdrop -->
+    <div *ngIf="isMobile && !sidebarCollapsed" 
+         (click)="sidebarCollapsed = true"
+         class="fixed inset-0 bg-black/40 z-40 animate-in fade-in duration-300">
+    </div>
 
     <!-- ================= MAIN CONTENT ================= -->
     <div class="flex flex-col flex-1 min-h-0 bg-[#f4f7fe]">

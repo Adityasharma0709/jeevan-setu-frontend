@@ -8,6 +8,7 @@ import { ApiService } from '../../core/services/api';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
+import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
 
 type ProjectStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
@@ -35,7 +36,7 @@ interface RecentCardPagerVm<T> {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ZardIconComponent, LottieComponent],
+  imports: [CommonModule, ReactiveFormsModule, ZardIconComponent, LottieComponent, ZardComboboxComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -56,6 +57,12 @@ export class Dashboard implements OnInit {
   recentWorkersStatusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
   recentBeneficiariesStatusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
   recentRequestsStatusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
+
+  readonly statusOptions: ZardComboboxOption[] = [
+    { value: 'ALL', label: 'All' },
+    { value: 'ACTIVE', label: 'Active' },
+    { value: 'INACTIVE', label: 'Inactive' },
+  ];
 
   recentWorkersVm$!: Observable<RecentCardPagerVm<any>>;
   recentBeneficiariesVm$!: Observable<RecentCardPagerVm<any>>;

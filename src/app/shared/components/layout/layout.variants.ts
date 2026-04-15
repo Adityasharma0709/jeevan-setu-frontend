@@ -34,7 +34,18 @@ export const sidebarVariants = cva(
 );
 
 export const sidebarTriggerVariants = cva(
-  'absolute top-4 z-10 flex items-center justify-center cursor-pointer rounded-sm border border-sidebar-border bg-sidebar hover:bg-sidebar-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 w-6 h-6 -right-3',
+  'absolute top-4 z-10 flex items-center justify-center cursor-pointer rounded-sm border border-sidebar-border bg-sidebar hover:bg-sidebar-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 w-6 h-6',
+  {
+    variants: {
+      collapsed: {
+        true: '-right-4',
+        false: '-right-3',
+      },
+    },
+    defaultVariants: {
+      collapsed: false,
+    },
+  }
 );
 
 // Sidebar Group Variants

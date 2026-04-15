@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { BehaviorSubject, Observable, combineLatest, map, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
@@ -21,6 +21,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent, ZardFormLabelComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardComboboxComponent } from '@/shared/components/combobox';
 
 @Component({
     selector: 'app-outreach-workers',
@@ -28,19 +29,21 @@ import { ZardIconComponent } from '@/shared/components/icon';
     imports: [
         CommonModule,
         ReactiveFormsModule,
-        ZardButtonComponent,
-        ZardInputDirective,
+        FormsModule,
         ZardTableComponent,
         ZardTableHeaderComponent,
         ZardTableBodyComponent,
         ZardTableRowComponent,
         ZardTableHeadComponent,
         ZardTableCellComponent,
+        ZardButtonComponent,
+        ZardInputDirective,
         ZardDialogModule,
         ZardFormControlComponent,
         ZardFormFieldComponent,
         ZardFormLabelComponent,
         ZardIconComponent,
+        ZardComboboxComponent,
         LottieComponent,
     ],
     templateUrl: './outreach-workers.html',
@@ -82,6 +85,15 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         to: number;
     }>;
 
+    readonly search$ = new BehaviorSubject<string>('');
+    readonly statusFilter$ = new BehaviorSubject<string>('ALL');
+
+    readonly statusOptions = [
+        { value: 'ALL', label: 'All Status' },
+        { value: 'ACTIVE', label: 'Active' },
+        { value: 'INACTIVE', label: 'Inactive' }
+    ];
+
     constructor(
         private fb: FormBuilder,
         private managerService: ManagerService,
@@ -102,13 +114,28 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             shareReplay({ bufferSize: 1, refCount: true })
         );
 
-        this.pager$ = combineLatest([baseWorkers$, this.page$]).pipe(
-            map(([workers, page]) => {
-                const total = workers.length;
+        this.pager$ = combineLatest([baseWorkers$, this.page$, this.search$, this.statusFilter$]).pipe(
+            map(([workers, page, search, status]) => {
+                let filtered = [...workers];
+
+                if (status !== 'ALL') {
+                    filtered = filtered.filter(w => w.status === status);
+                }
+
+                if (search) {
+                    const q = search.toLowerCase();
+                    filtered = filtered.filter(w => 
+                        w.name.toLowerCase().includes(q) || 
+                        w.email.toLowerCase().includes(q) ||
+                        (w.usercode || '').toLowerCase().includes(q)
+                    );
+                }
+
+                const total = filtered.length;
                 const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
                 const safePage = Math.min(Math.max(1, page), totalPages);
                 const startIndex = (safePage - 1) * this.pageSize;
-                const items = workers.slice(startIndex, startIndex + this.pageSize);
+                const items = filtered.slice(startIndex, startIndex + this.pageSize);
                 const from = total === 0 ? 0 : startIndex + 1;
                 const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
                 return { items, page: safePage, pageSize: this.pageSize, total, totalPages, from, to };
@@ -223,6 +250,16 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
 
     loadWorkers() {
         this.refresh$.next();
+    }
+
+    onSearch(query: string) {
+        this.search$.next(query);
+        this.page$.next(1);
+    }
+
+    onStatusChange(status: string | null) {
+        this.statusFilter$.next(status || 'ALL');
+        this.page$.next(1);
     }
 
     goToPage(page: number) {

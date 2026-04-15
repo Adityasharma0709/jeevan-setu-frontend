@@ -42,7 +42,7 @@
                 {{ beneficiary.project?.name || '-' }}
               </span>
             </td>
-            <td z-table-cell>{{ beneficiary.location?.village || '-' }}</td>
+            <td z-table-cell>{{ beneficiary.village || beneficiary.location?.village || '-' }}</td>
             <td z-table-cell class="text-right">
               <div class="flex items-center justify-end gap-2">
                 <button z-button zType="outline" zSize="sm" (click)="viewDetails(beneficiary)">
