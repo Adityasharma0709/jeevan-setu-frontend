@@ -217,4 +217,8 @@ export class Requests implements OnInit {
   nextPage() {
     this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
   }
+
+  trackById(index: number, item: any): number | string {
+    return item.id || index;
+  }
 }

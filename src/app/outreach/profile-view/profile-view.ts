@@ -11,6 +11,7 @@ import { OutreachService, Beneficiary, BeneficiaryGroup, OutreachActivity, Outre
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
+import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
 
 @Component({
     selector: 'app-profile-view',
@@ -23,6 +24,7 @@ import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/c
         ZardIconComponent,
         ZardBreadcrumbComponent,
         ZardBreadcrumbItemComponent,
+        ZardComboboxComponent,
         LottieComponent,
     ],
     templateUrl: './profile-view.html',
@@ -46,10 +48,23 @@ export class ProfileView implements OnInit, OnDestroy {
     // UI state
     loading = true;
 
-    // Tagging selections
-    selectedGroupId: number | null = null;
-    selectedActivityId: number | null = null;
-    selectedSessionId: number | null = null;
+    // Tagging selections (Combobox expects string | null)
+    selectedGroupId: string | null = null;
+    selectedActivityId: string | null = null;
+    selectedSessionId: string | null = null;
+
+    // Options mapping
+    get groupOptions(): ZardComboboxOption[] {
+        return this.groups.map(g => ({ value: g.id.toString(), label: g.name }));
+    }
+
+    get activityOptions(): ZardComboboxOption[] {
+        return this.activities.map(a => ({ value: a.id.toString(), label: a.name }));
+    }
+
+    get sessionOptions(): ZardComboboxOption[] {
+        return this.sessions.map(s => ({ value: s.id.toString(), label: s.name }));
+    }
 
     ngOnInit(): void {
         const id = this.route.snapshot.params['id'];
@@ -104,12 +119,13 @@ export class ProfileView implements OnInit, OnDestroy {
         this.destroy$.complete();
     }
 
-    onActivityChange(): void {
+    onActivityChange(activityId: string | null): void {
+        this.selectedActivityId = activityId;
         this.selectedSessionId = null;
         this.sessions = [];
 
         if (this.selectedActivityId) {
-            this.outreachService.getSessions(this.selectedActivityId)
+            this.outreachService.getSessions(Number(this.selectedActivityId))
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({ next: (sessions) => (this.sessions = sessions) });
         }
@@ -117,7 +133,7 @@ export class ProfileView implements OnInit, OnDestroy {
 
     saveGroupTag(): void {
         if (!this.beneficiary || !this.selectedGroupId) return;
-        this.outreachService.tagBeneficiaryGroup(this.beneficiary.id, this.selectedGroupId)
+        this.outreachService.tagBeneficiaryGroup(this.beneficiary.id, Number(this.selectedGroupId))
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: () => toast.success('Group tagged successfully'),
@@ -127,7 +143,7 @@ export class ProfileView implements OnInit, OnDestroy {
 
     saveActivityTag(): void {
         if (!this.beneficiary || !this.selectedActivityId || !this.selectedSessionId) return;
-        this.outreachService.tagBeneficiaryActivity(this.beneficiary.id, this.selectedActivityId, this.selectedSessionId)
+        this.outreachService.tagBeneficiaryActivity(this.beneficiary.id, Number(this.selectedActivityId), Number(this.selectedSessionId))
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: () => toast.success('Activity tagged successfully'),

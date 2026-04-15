@@ -6,9 +6,10 @@ import { toast } from 'ngx-sonner';
 
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
-import { ZardInputDirective, ZardSelectDirective } from '@/shared/components/input';
+import { ZardInputDirective } from '@/shared/components/input';
 
 import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
+import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
 import { OutreachService, Beneficiary } from '../outreach.service';
 
 @Component({
@@ -21,9 +22,9 @@ import { OutreachService, Beneficiary } from '../outreach.service';
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardInputDirective,
-    ZardSelectDirective,
     ZardBreadcrumbComponent,
-    ZardBreadcrumbItemComponent
+    ZardBreadcrumbItemComponent,
+    ZardComboboxComponent
   ],
   templateUrl: './request-update.html',
 })
@@ -55,6 +56,19 @@ export class RequestUpdate implements OnInit {
     primaryIncomeSource: [''],
     employmentStatus: [''],
   });
+
+  readonly genderOptions: ZardComboboxOption[] = [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Other', label: 'Other' }
+  ];
+
+  readonly maritalStatusOptions: ZardComboboxOption[] = [
+    { value: 'Single', label: 'Single' },
+    { value: 'Married', label: 'Married' },
+    { value: 'Widowed', label: 'Widowed' },
+    { value: 'Divorced', label: 'Divorced' }
+  ];
 
   ngOnInit() {
     const id = +this.route.snapshot.params['id'];
@@ -144,7 +158,7 @@ export class RequestUpdate implements OnInit {
     }
 
     this.isSubmitting = true;
-    this.outreachService.requestBeneficiaryUpdate(this.beneficiary.id, { changes }).subscribe({
+    this.outreachService.requestBeneficiaryUpdate(this.beneficiary.id, changes).subscribe({
       next: () => {
         toast.success('Update request submitted for manager approval');
         this.router.navigate(['/outreach/beneficiary', this.beneficiary!.id]);

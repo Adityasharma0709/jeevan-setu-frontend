@@ -40,12 +40,13 @@
         <z-form-field>
           <label z-form-label>Gender</label>
           <z-form-control>
-            <select z-input formControlName="gender">
-              <option value="">Select</option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Other</option>
-            </select>
+            <z-combobox 
+              formControlName="gender" 
+              [options]="genderOptions"
+              [searchable]="false"
+              placeholder="Select"
+              zWidth="full"
+            />
           </z-form-control>
         </z-form-field>
 
@@ -97,13 +98,13 @@
         <z-form-field>
           <label z-form-label>Marital Status</label>
           <z-form-control>
-            <select z-input formControlName="maritalStatus">
-              <option value="">Select</option>
-              <option>Single</option>
-              <option>Married</option>
-              <option>Widowed</option>
-              <option>Divorced</option>
-            </select>
+            <z-combobox 
+              formControlName="maritalStatus" 
+              [options]="maritalStatusOptions"
+              [searchable]="false"
+              placeholder="Select"
+              zWidth="full"
+            />
           </z-form-control>
         </z-form-field>
 

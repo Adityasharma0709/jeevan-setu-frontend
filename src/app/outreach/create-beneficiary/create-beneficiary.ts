@@ -4,6 +4,7 @@ import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } 
 import {
   Subscription,
   combineLatest,
+  map,
   of,
   startWith,
   switchMap,
@@ -15,8 +16,9 @@ import { Router } from '@angular/router';
 import { AuthService } from '@/core/services/auth';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
-import { ZardInputDirective, ZardSelectDirective } from '@/shared/components/input';
+import { ZardInputDirective } from '@/shared/components/input';
 import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
+import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
 
 import { CreateBeneficiaryPayload, OutreachLocation, OutreachService } from '../outreach.service';
 
@@ -30,9 +32,9 @@ import { CreateBeneficiaryPayload, OutreachLocation, OutreachService } from '../
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardInputDirective,
-    ZardSelectDirective,
     ZardBreadcrumbComponent,
     ZardBreadcrumbItemComponent,
+    ZardComboboxComponent
   ],
   templateUrl: './create-beneficiary.html',
 })
@@ -51,7 +53,10 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   // ── Dropdown option lists ─────────────────────────────────────────────────
 
-  readonly qualificationOptions = [
+  private mapStringsToOptions = (opts: string[]): ZardComboboxOption[] => 
+    opts.map(o => ({ value: o, label: o }));
+
+  readonly qualificationOptions = this.mapStringsToOptions([
     'No Formal Education',
     'Primary (Class 1–5)',
     'Upper Primary (Class 6–8)',
@@ -61,16 +66,29 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     'Graduate',
     'Post Graduate',
     'Other',
-  ];
+  ]);
 
-  readonly religionOptions = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Other'];
-  readonly casteOptions    = ['General', 'OBC', 'SC', 'ST', 'NT', 'Other'];
-  readonly economicStatusOptions = ['APL', 'BPL'];
-  readonly primaryIncomeSourceOptions = [
+  readonly religionOptions = this.mapStringsToOptions(['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Other']);
+  readonly casteOptions    = this.mapStringsToOptions(['General', 'OBC', 'SC', 'ST', 'NT', 'Other']);
+  readonly economicStatusOptions = this.mapStringsToOptions(['APL', 'BPL']);
+  readonly primaryIncomeSourceOptions = this.mapStringsToOptions([
     'Agriculture', 'Daily Labour', 'Small Business',
     'Government Service', 'Private Service', 'Pension / Remittance', 'Other',
+  ]);
+  readonly employmentStatusOptions = this.mapStringsToOptions(['Employed', 'Unemployed', 'Self-Employed', 'Student']);
+
+  readonly genderOptions: ZardComboboxOption[] = [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Other', label: 'Other' }
   ];
-  readonly employmentStatusOptions = ['Employed', 'Unemployed', 'Self-Employed', 'Student'];
+
+  readonly maritalStatusOptions: ZardComboboxOption[] = [
+    { value: 'Single', label: 'Single' },
+    { value: 'Married', label: 'Married' },
+    { value: 'Widowed', label: 'Widowed' },
+    { value: 'Divorced', label: 'Divorced' }
+  ];
 
   // ── Form ──────────────────────────────────────────────────────────────────
 
@@ -105,7 +123,10 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   // ── Reactive streams ──────────────────────────────────────────────────────
 
-  projects$ = this.outreachService.getAssignedProjects(this.currentUserId).pipe(startWith([]));
+  projects$ = this.outreachService.getAssignedProjects(this.currentUserId).pipe(
+    startWith([]),
+    map(projects => projects.map(p => ({ value: p.id.toString(), label: p.name })))
+  );
 
   locations$ = this.form.get('projectId')!.valueChanges.pipe(
     startWith(this.form.get('projectId')!.value),
@@ -116,7 +137,11 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       this.cachedLocations = locations;
       this.form.get('locationId')?.setValue('', { emitEvent: false });
       this.form.patchValue({ state: '', district: '', block: '', village: '' }, { emitEvent: false });
-    })
+    }),
+    map(locs => locs.map(l => ({ 
+      value: l.id.toString(), 
+      label: `${l.village} (${l.locationCode})` 
+    })))
   );
 
   // ── Derived getters ───────────────────────────────────────────────────────

@@ -20,10 +20,12 @@
         <z-form-field>
           <label z-form-label zRequired>Activity</label>
           <z-form-control>
-            <select z-input formControlName="activityId">
-              <option value="">Select activity</option>
-              <option *ngFor="let activity of activities$ | async" [value]="activity.id">{{ activity.name }}</option>
-            </select>
+            <z-combobox 
+              formControlName="activityId" 
+              [options]="(activities$ | async) || []" 
+              placeholder="Select activity"
+              zWidth="full"
+            />
           </z-form-control>
         </z-form-field>
 
@@ -31,12 +33,13 @@
         <z-form-field>
           <label z-form-label zRequired>Session</label>
           <z-form-control>
-            <select z-input formControlName="sessionId">
-              <option value="">Select session</option>
-              <option *ngFor="let session of sessions$ | async" [value]="session.id">
-                {{ session.nameOnly }}
-              </option>
-            </select>
+            <z-combobox 
+              formControlName="sessionId" 
+              [options]="(sessions$ | async) || []"
+              [zDisabled]="!reportForm.get('activityId')?.value"
+              placeholder="Select session"
+              zWidth="full"
+            />
           </z-form-control>
         </z-form-field>
 
@@ -68,10 +71,12 @@
         <z-form-field>
           <label z-form-label zRequired>Screening</label>
           <z-form-control>
-            <select z-input formControlName="screening">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
+            <z-combobox 
+              formControlName="screening" 
+              [options]="screeningOptions"
+              [searchable]="false"
+              zWidth="full"
+            />
           </z-form-control>
         </z-form-field>
       </div>
@@ -141,10 +146,12 @@
           <z-form-field *ngIf="isTestSelected('cervicalCancer')">
             <label z-form-label>Cervical Cancer</label>
             <z-form-control>
-              <select z-input formControlName="cervicalCancer">
-                <option value="Negative">Negative</option>
-                <option value="Positive">Positive</option>
-              </select>
+              <z-combobox 
+                formControlName="cervicalCancer" 
+                [options]="cancerResultOptions"
+                [searchable]="false"
+                zWidth="full"
+              />
             </z-form-control>
           </z-form-field>
 
@@ -152,10 +159,12 @@
           <z-form-field *ngIf="isTestSelected('breastCancer')">
             <label z-form-label>Breast Cancer</label>
             <z-form-control>
-              <select z-input formControlName="breastCancer">
-                <option value="Negative">Negative</option>
-                <option value="Positive">Positive</option>
-              </select>
+              <z-combobox 
+                formControlName="breastCancer" 
+                [options]="cancerResultOptions"
+                [searchable]="false"
+                zWidth="full"
+              />
             </z-form-control>
           </z-form-field>
         </div>

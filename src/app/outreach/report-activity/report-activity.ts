@@ -7,8 +7,9 @@ import { Router } from '@angular/router';
 
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardFormFieldComponent, ZardFormLabelComponent, ZardFormControlComponent } from '@/shared/components/form';
-import { ZardInputDirective, ZardSelectDirective } from '@/shared/components/input';
+import { ZardInputDirective } from '@/shared/components/input';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
 import { OutreachService } from '../outreach.service';
 
 @Component({
@@ -22,8 +23,9 @@ import { OutreachService } from '../outreach.service';
     ZardFormLabelComponent,
     ZardFormControlComponent,
     ZardInputDirective,
-    ZardSelectDirective,
-    ZardIconComponent
+    ZardInputDirective,
+    ZardIconComponent,
+    ZardComboboxComponent
   ],
   templateUrl: './report-activity.html',
 })
@@ -55,7 +57,9 @@ export class ReportActivity {
 
   beneficiarySearch$ = new BehaviorSubject<string>('');
 
-  activities$ = this.outreachService.getActiveActivities();
+  activities$ = this.outreachService.getActiveActivities().pipe(
+    map(activities => activities.map(a => ({ value: a.id.toString(), label: a.name })))
+  );
   
   beneficiaries$ = this.beneficiarySearch$.pipe(
     debounceTime(300),
@@ -69,8 +73,21 @@ export class ReportActivity {
     switchMap((activityId) =>
       activityId ? this.outreachService.getSessionsByActivity(Number(activityId)) : of([])
     ),
-    map(sessions => sessions.map(s => ({ ...s, nameOnly: s.name.split('(')[0].trim() })))
+    map(sessions => sessions.map(s => ({ 
+      value: s.id.toString(), 
+      label: s.name.split('(')[0].trim() 
+    })))
   );
+
+  screeningOptions: ZardComboboxOption[] = [
+    { value: 'No', label: 'No' },
+    { value: 'Yes', label: 'Yes' }
+  ];
+
+  cancerResultOptions: ZardComboboxOption[] = [
+    { value: 'Negative', label: 'Negative' },
+    { value: 'Positive', label: 'Positive' }
+  ];
 
   availableTests = [
     { id: 'height', label: 'Height' },

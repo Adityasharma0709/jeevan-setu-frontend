@@ -23,22 +23,25 @@
             <z-form-field>
               <label z-form-label zRequired>Project</label>
               <z-form-control>
-                <select z-input formControlName="projectId">
-                  <option value="">Select project</option>
-                  <option *ngFor="let project of projects$ | async" [value]="project.id">{{ project.name }}</option>
-                </select>
+                <z-combobox 
+                  formControlName="projectId" 
+                  [options]="(projects$ | async) || []" 
+                  placeholder="Select project"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
 
             <z-form-field>
               <label z-form-label zRequired>Location</label>
               <z-form-control>
-                <select z-input formControlName="locationId">
-                  <option value="">Select location</option>
-                  <option *ngFor="let location of locations$ | async" [value]="location.id">
-                    {{ location.village }} ({{ location.locationCode }})
-                  </option>
-                </select>
+                <z-combobox 
+                  formControlName="locationId" 
+                  [options]="(locations$ | async) || []" 
+                  [zDisabled]="!form.get('projectId')?.value"
+                  placeholder="Select location"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
           </div>
@@ -104,12 +107,13 @@
             <z-form-field>
               <label z-form-label zRequired>Gender</label>
               <z-form-control>
-                <select z-input formControlName="gender">
-                  <option value="">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+                <z-combobox 
+                  formControlName="gender" 
+                  [options]="genderOptions"
+                  [searchable]="false"
+                  placeholder="Select gender"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
 
@@ -136,12 +140,12 @@
             <z-form-field>
               <label z-form-label>Marital Status</label>
               <z-form-control>
-                <select z-input formControlName="maritalStatus">
-                  <option value="Single">Single</option>
-                  <option value="Married">Married</option>
-                  <option value="Widowed">Widowed</option>
-                  <option value="Divorced">Divorced</option>
-                </select>
+                <z-combobox 
+                  formControlName="maritalStatus" 
+                  [options]="maritalStatusOptions"
+                  [searchable]="false"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
 
@@ -200,10 +204,12 @@
             <z-form-field>
               <label z-form-label zRequired>Qualification</label>
               <z-form-control>
-                <select z-input formControlName="qualification">
-                  <option value="">Select qualification</option>
-                  <option *ngFor="let opt of qualificationOptions" [value]="opt">{{ opt }}</option>
-                </select>
+                <z-combobox 
+                  formControlName="qualification" 
+                  [options]="qualificationOptions"
+                  placeholder="Select qualification"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
 
@@ -218,10 +224,12 @@
             <z-form-field>
               <label z-form-label zRequired>Religion</label>
               <z-form-control>
-                <select z-input formControlName="religion">
-                  <option value="">Select religion</option>
-                  <option *ngFor="let opt of religionOptions" [value]="opt">{{ opt }}</option>
-                </select>
+                <z-combobox 
+                  formControlName="religion" 
+                  [options]="religionOptions"
+                  placeholder="Select religion"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
 
@@ -236,10 +244,12 @@
             <z-form-field>
               <label z-form-label zRequired>Caste / Category</label>
               <z-form-control>
-                <select z-input formControlName="caste">
-                  <option value="">Select category</option>
-                  <option *ngFor="let opt of casteOptions" [value]="opt">{{ opt }}</option>
-                </select>
+                <z-combobox 
+                  formControlName="caste" 
+                  [options]="casteOptions"
+                  placeholder="Select category"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
 
@@ -266,10 +276,13 @@
             <z-form-field>
               <label z-form-label zRequired>Economic Status</label>
               <z-form-control>
-                <select z-input formControlName="economicStatus">
-                  <option value="">Select status</option>
-                  <option *ngFor="let opt of economicStatusOptions" [value]="opt">{{ opt }}</option>
-                </select>
+                <z-combobox 
+                  formControlName="economicStatus" 
+                  [options]="economicStatusOptions"
+                  [searchable]="false"
+                  placeholder="Select status"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
 
@@ -277,10 +290,12 @@
             <z-form-field>
               <label z-form-label zRequired>Primary Income Source</label>
               <z-form-control>
-                <select z-input formControlName="primaryIncomeSource">
-                  <option value="">Select source</option>
-                  <option *ngFor="let opt of primaryIncomeSourceOptions" [value]="opt">{{ opt }}</option>
-                </select>
+                <z-combobox 
+                  formControlName="primaryIncomeSource" 
+                  [options]="primaryIncomeSourceOptions"
+                  placeholder="Select source"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
 
@@ -294,10 +309,13 @@
             <z-form-field>
               <label z-form-label zRequired>Employment Status</label>
               <z-form-control>
-                <select z-input formControlName="employmentStatus">
-                  <option value="">Select status</option>
-                  <option *ngFor="let opt of employmentStatusOptions" [value]="opt">{{ opt }}</option>
-                </select>
+                <z-combobox 
+                  formControlName="employmentStatus" 
+                  [options]="employmentStatusOptions"
+                  [searchable]="false"
+                  placeholder="Select status"
+                  zWidth="full"
+                />
               </z-form-control>
             </z-form-field>
           </div>

@@ -1,133 +1,167 @@
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-  <!-- Header -->
-  <header class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Activity Reports</h1>
-      <p class="text-sm text-gray-500 mt-1">
-        List of all health screening reports and activity participations.
-      </p>
-    </div>
-    <div class="flex items-center gap-3">
-      <button z-button (click)="addReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white">
-        <z-icon zType="plus" class="mr-2" />
-        Submit Report
+<div class="space-y-6 fade-in max-w-7xl mx-auto p-4 md:p-6 pb-20">
+  <!-- Modern Header with Breadcrumbs -->
+  <div class="flex flex-col gap-4">
+    <nav class="flex" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-1 md:space-x-3 text-xs font-medium">
+        <li class="inline-flex items-center">
+          <a routerLink="/outreach/dashboard" class="text-gray-400 hover:text-indigo-600 transition-colors flex items-center">
+            <z-icon zType="house" class="w-3 h-3 mr-1.5" />
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <z-icon zType="chevron-right" class="w-3 h-3 text-gray-300 mx-1" />
+            <span class="text-gray-500">Activity Reports</span>
+          </div>
+        </li>
+      </ol>
+    </nav>
+
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+      <div class="flex-1 min-w-[280px]">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          Activity Reports
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 border border-green-200 uppercase tracking-wider">
+            Health Tracking
+          </span>
+        </h1>
+        <p class="text-gray-500 mt-1">Review all health screening records and participant activity history.</p>
+      </div>
+
+      <button z-button (click)="addReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100 transition-all hover:-translate-y-0.5">
+        <z-icon zType="plus" class="w-4 h-4 mr-2" />
+        Submit New Report
       </button>
     </div>
-  </header>
+  </div>
 
-  <!-- Reports Container -->
+  <!-- Reports Content -->
   <ng-container *ngIf="vm$ | async as vm; else loadingTpl">
-    <!-- Reports Table -->
-    <section class="bg-white border rounded-xl overflow-hidden shadow-sm">
-      <table z-table>
-        <thead z-table-header>
+    
+    <!-- Large Screens: Modernized Table View -->
+    <div class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+      <table z-table class="w-full">
+        <thead z-table-header class="bg-gray-50/50">
           <tr z-table-row>
-            <th z-table-head>Beneficiary</th>
-            <th z-table-head>Activity & Session</th>
-            <th z-table-head>Screening</th>
-            <th z-table-head>Date</th>
-            <th z-table-head class="text-right">Actions</th>
+            <th z-table-head class="pl-6 py-4 border-r border-gray-100"><div class="flex items-center gap-2"><z-icon zType="user" class="w-3.5 h-3.5" /> Beneficiary</div></th>
+            <th z-table-head class="border-r border-gray-100"><div class="flex items-center gap-2"><z-icon zType="activity" class="w-3.5 h-3.5" /> Activity & Session</div></th>
+            <th z-table-head class="border-r border-gray-100"><div class="flex items-center gap-2"><z-icon zType="shield" class="w-3.5 h-3.5" /> Screening</div></th>
+            <th z-table-head class="border-r border-gray-100"><div class="flex items-center gap-2"><z-icon zType="calendar" class="w-3.5 h-3.5" /> Date</div></th>
+            <th z-table-head class="text-right pr-6"></th>
           </tr>
         </thead>
 
         <tbody z-table-body>
           <ng-container *ngFor="let report of vm.items">
             <!-- Main Row -->
-            <tr z-table-row class="group hover:bg-gray-50 transition-colors border-b last:border-0"
-              [class.bg-indigo-50]="expandedReportId === report.id" [class.hover:bg-indigo-50]="expandedReportId === report.id">
-              <td z-table-cell>
+            <tr z-table-row class="group transition-colors border-b last:border-0"
+              [class.bg-indigo-50/30]="expandedReportId === report.id" 
+              [class.hover:bg-indigo-50/50]="expandedReportId === report.id"
+              [class.hover:bg-gray-50]="expandedReportId !== report.id">
+              <td z-table-cell class="pl-6 border-r border-gray-100">
                 <div class="flex flex-col">
-                  <span class="font-medium text-gray-900">{{ report.beneficiary?.name || 'Unknown' }}</span>
-                  <span class="text-[10px] text-gray-500">{{ report.beneficiary?.uid || '-' }}</span>
+                  <span class="font-bold text-gray-900 group-hover:text-indigo-900 transition-colors">{{ report.beneficiary?.name || 'Unknown' }}</span>
+                  <span class="text-[10px] font-mono font-medium text-gray-400">{{ report.beneficiary?.uid || '-' }}</span>
                 </div>
               </td>
-              <td z-table-cell>
-                <div class="flex flex-col">
-                  <span class="text-sm text-gray-700 font-medium">{{ report.activity?.name || '-' }}</span>
-                  <span class="text-[11px] text-gray-400 italic">{{ report.session?.name || '-' }}</span>
+              <td z-table-cell class="border-r border-gray-100">
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-sm text-gray-800 font-semibold">{{ report.activity?.name || '-' }}</span>
+                  <span class="text-[11px] text-gray-400 italic font-medium flex items-center gap-1">
+                      <z-icon zType="clock" class="w-3 h-3" />
+                      {{ report.session?.name || '-' }}
+                  </span>
                 </div>
               </td>
-              <td z-table-cell>
-                <div class="flex items-center gap-2">
-                  <div [class]="report.reportData?.screening === 'Yes' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'"
-                    class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              <td z-table-cell class="border-r border-gray-100">
+                <div class="flex items-center gap-3">
+                  <span [class]="report.reportData?.screening === 'Yes' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-700 border-gray-200'"
+                    class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border">
                     {{ report.reportData?.screening || 'No' }}
-                  </div>
-                  <span class="text-[10px] text-gray-500 italic max-w-[150px] truncate">
+                  </span>
+                  <span class="text-[10px] text-gray-400 font-medium italic max-w-[180px] truncate block">
                     {{ getScreeningSummary(report) }}
                   </span>
                 </div>
               </td>
-              <td z-table-cell>
-                <span class="text-sm text-gray-600">{{ report.createdAt | date:'mediumDate' }}</span>
+              <td z-table-cell class="border-r border-gray-100">
+                <span class="text-xs font-semibold text-gray-600">{{ report.createdAt | date:'mediumDate' }}</span>
               </td>
-              <td z-table-cell class="text-right">
-                <button z-button variant="ghost" size="sm" (click)="toggleExpand(report.id)" 
-                  class="text-indigo-600 hover:text-indigo-700 font-semibold group/btn">
-                  <span>{{ expandedReportId === report.id ? 'Hide Details' : 'View Details' }}</span>
-                  <z-icon [zType]="expandedReportId === report.id ? 'chevron-up' : 'chevron-down'" class="ml-1.5 w-3.5 h-3.5 transition-transform" />
+              <td z-table-cell class="text-right pr-6">
+                <button z-button zType="outline" zSize="sm" (click)="toggleExpand(report.id)" 
+                  class="transition-all p-2 flex items-center justify-center ml-auto"
+                  [ngClass]="expandedReportId === report.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-indigo-600 hover:bg-indigo-600 hover:text-white shadow-sm'"
+                  title="View Data">
+                  <z-icon zType="eye" class="w-4 h-4" />
                 </button>
               </td>
             </tr>
 
-            <!-- Expanded Row (Screening Details) -->
-            <tr *ngIf="expandedReportId === report.id" class="bg-indigo-50/30">
-              <td colspan="5" class="p-0 border-b">
-                <div class="px-6 py-5 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div class="bg-white border rounded-lg shadow-sm overflow-hidden">
-                    <div class="bg-gray-50/50 px-4 py-2 border-b flex items-center justify-between">
-                      <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Health Screening Data</span>
-                      <span class="text-[10px] text-gray-400">{{ report.createdAt | date:'medium' }}</span>
+            <!-- Expanded Details (Desktop Only) -->
+            <tr *ngIf="expandedReportId === report.id">
+              <td colspan="5" class="p-0 border-b bg-indigo-50/10">
+                <div class="px-8 py-6 animate-in fade-in zoom-in-95 duration-300">
+                  <div class="bg-white border border-indigo-100 rounded-2xl shadow-lg shadow-indigo-100/20 overflow-hidden">
+                    <div class="bg-indigo-600/5 px-5 py-2.5 border-b border-indigo-50 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                          <z-icon zType="activity" class="w-3.5 h-3.5 text-indigo-500" />
+                          <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Diagnostic Measurements</span>
+                      </div>
+                      <span class="text-[10px] font-medium text-gray-400 italic">Reported on {{ report.createdAt | date:'medium' }}</span>
                     </div>
 
                     <div class="p-6">
                       <div *ngIf="report.reportData?.screening === 'Yes' && report.reportData?.screeningDetails; else noScreening" 
-                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-6">
                         
-                        <div *ngIf="report.reportData.screeningDetails.height" class="space-y-1">
-                          <p class="text-[10px] text-gray-400 uppercase font-bold">Height</p>
-                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.height }}<span class="text-xs ml-0.5 text-gray-400">cm</span></p>
+                        <div *ngIf="report.reportData.screeningDetails.height" class="flex flex-col">
+                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Height</span>
+                          <span class="text-xl font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.height }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">cm</span></span>
                         </div>
 
-                        <div *ngIf="report.reportData.screeningDetails.weight" class="space-y-1">
-                          <p class="text-[10px] text-gray-400 uppercase font-bold">Weight</p>
-                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.weight }}<span class="text-xs ml-0.5 text-gray-400">kg</span></p>
+                        <div *ngIf="report.reportData.screeningDetails.weight" class="flex flex-col">
+                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Weight</span>
+                          <span class="text-xl font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.weight }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">kg</span></span>
                         </div>
 
-                        <div *ngIf="report.reportData.screeningDetails.hb" class="space-y-1">
-                          <p class="text-[10px] text-gray-400 uppercase font-bold">Hb</p>
-                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.hb }}<span class="text-xs ml-0.5 text-gray-400">g/dL</span></p>
+                        <div *ngIf="report.reportData.screeningDetails.hb" class="flex flex-col">
+                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Hb Content</span>
+                          <span class="text-xl font-black text-rose-600 leading-none">{{ report.reportData.screeningDetails.hb }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">g/dL</span></span>
                         </div>
 
-                        <div *ngIf="report.reportData.screeningDetails.bp" class="space-y-1">
-                          <p class="text-[10px] text-gray-400 uppercase font-bold">BP (S/D)</p>
-                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.bp }}</p>
+                        <div *ngIf="report.reportData.screeningDetails.bp" class="flex flex-col">
+                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Blood Pressure</span>
+                          <span class="text-xl font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.bp }}</span>
                         </div>
 
-                        <div *ngIf="report.reportData.screeningDetails.sugar" class="space-y-1">
-                          <p class="text-[10px] text-gray-400 uppercase font-bold">Sugar</p>
-                          <p class="text-lg font-bold text-indigo-600">{{ report.reportData.screeningDetails.sugar }}<span class="text-xs ml-0.5 text-gray-400">mg/dL</span></p>
+                        <div *ngIf="report.reportData.screeningDetails.sugar" class="flex flex-col">
+                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Blood Sugar</span>
+                          <span class="text-xl font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.sugar }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">mg/dL</span></span>
                         </div>
 
-                        <div *ngIf="report.reportData.screeningDetails.cervicalCancer" class="space-y-1">
-                          <p class="text-[10px] text-gray-400 uppercase font-bold leading-tight">Cervical Cancer</p>
-                          <p class="text-sm font-bold truncate" [class]="report.reportData.screeningDetails.cervicalCancer === 'Positive' ? 'text-red-600' : 'text-green-600'">
+                        <div *ngIf="report.reportData.screeningDetails.cervicalCancer" class="flex flex-col">
+                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Cervical</span>
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase mt-1 w-fit" 
+                            [class]="report.reportData.screeningDetails.cervicalCancer === 'Positive' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'">
                             {{ report.reportData.screeningDetails.cervicalCancer }}
-                          </p>
+                          </span>
                         </div>
 
-                        <div *ngIf="report.reportData.screeningDetails.breastCancer" class="space-y-1">
-                          <p class="text-[10px] text-gray-400 uppercase font-bold leading-tight">Breast Cancer</p>
-                          <p class="text-sm font-bold truncate" [class]="report.reportData.screeningDetails.breastCancer === 'Positive' ? 'text-red-600' : 'text-green-600'">
+                        <div *ngIf="report.reportData.screeningDetails.breastCancer" class="flex flex-col">
+                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Breast</span>
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase mt-1 w-fit" 
+                            [class]="report.reportData.screeningDetails.breastCancer === 'Positive' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'">
                             {{ report.reportData.screeningDetails.breastCancer }}
-                          </p>
+                          </span>
                         </div>
                       </div>
 
                       <ng-template #noScreening>
-                        <div class="py-4 flex flex-col items-center justify-center text-gray-400 border border-dashed rounded-lg">
-                          <z-icon zType="info" class="w-5 h-5 mb-1 opacity-50" />
-                          <p class="text-xs italic">No health screening measurements were recorded.</p>
+                        <div class="py-6 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 border border-dashed rounded-xl">
+                          <z-icon zType="info" class="w-8 h-8 mb-2 opacity-20" />
+                          <p class="text-xs font-bold uppercase tracking-widest text-gray-300">Basic participation report Only</p>
+                          <p class="text-[10px] italic text-gray-400 mt-1">No height, weight, or diagnostic data recorded for this entry.</p>
                         </div>
                       </ng-template>
                     </div>
@@ -137,58 +171,142 @@
             </tr>
           </ng-container>
 
-          <!-- Empty State -->
+          <!-- Desktop Empty State -->
           <tr z-table-row *ngIf="vm.items.length === 0">
-            <td z-table-cell colspan="5" class="py-20 text-center">
-              <div class="max-w-xs mx-auto">
-                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <z-icon zType="file-text" class="w-8 h-8 text-gray-300" />
+            <td z-table-cell colspan="5" class="py-32 text-center bg-gray-50/20">
+              <div class="max-w-sm mx-auto flex flex-col items-center">
+                <div class="w-20 h-20 bg-white shadow-xl shadow-indigo-100 rounded-3xl flex items-center justify-center mb-6">
+                  <z-icon zType="file-text" class="w-10 h-10 text-indigo-300" />
                 </div>
-                <h3 class="text-gray-900 font-medium mb-1">No reports found</h3>
-                <p class="text-gray-500 text-sm mb-6">You haven't submitted any activity reports yet.</p>
-                <button z-button (click)="addReport()" class="bg-indigo-600 text-white">
-                  Submit Your First Report
+                <h3 class="text-gray-900 font-black text-xl mb-2 tracking-tight">No activity logs yet</h3>
+                <p class="text-gray-500 text-sm mb-8 px-6 leading-relaxed lowercase first-letter:uppercase">start documenting your impact by submitting your first health screening report.</p>
+                <button z-button (click)="addReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 shadow-lg shadow-indigo-200">
+                  Begin First Submission
                 </button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
-    </section>
+    </div>
 
-    <!-- Pagination -->
-    <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-1 pb-4" *ngIf="vm.total > 0">
-      <p class="text-sm text-gray-500">
-        Showing
-        {{ vm.total ? ((vm.page - 1) * vm.pageSize + 1) : 0 }}
+    <!-- Small Screens: Mobile Responsive Cards -->
+    <div class="md:hidden space-y-4">
+        <div *ngFor="let report of vm.items" class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden active:scale-[0.99] transition-transform">
+            <!-- Card Header -->
+            <div class="p-4 flex justify-between items-start gap-3 border-b border-gray-50">
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-black text-gray-900 text-lg leading-none mb-1 truncate">{{ report.beneficiary?.name || 'Unknown' }}</h3>
+                    <p class="text-[10px] font-mono font-bold text-gray-400 tracking-tighter">{{ report.beneficiary?.uid || '-' }}</p>
+                </div>
+                <div class="flex flex-col items-end gap-1.5">
+                    <span [class]="report.reportData?.screening === 'Yes' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'"
+                        class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest leading-none">
+                        {{ report.reportData?.screening || 'No' }}
+                    </span>
+                    <span class="text-[10px] font-bold text-gray-400 italic leading-none">{{ report.createdAt | date:'shortDate' }}</span>
+                </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-4 bg-gray-50/30 grid grid-cols-2 gap-4">
+                <div class="flex flex-col">
+                    <span class="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1.5">Activity</span>
+                    <span class="text-xs font-bold text-gray-700 leading-tight">{{ report.activity?.name || '-' }}</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1.5">Session</span>
+                    <span class="text-xs font-bold text-gray-700 leading-tight line-clamp-1">{{ report.session?.name || '-' }}</span>
+                </div>
+            </div>
+
+            <!-- Card Action Footer -->
+            <button class="w-full py-3 bg-white border-t border-gray-50 flex items-center justify-center gap-2 text-indigo-600 hover:bg-indigo-50/50 transition-colors" (click)="toggleExpand(report.id)">
+                <span class="text-[11px] font-black uppercase tracking-widest">{{ expandedReportId === report.id ? 'Collapse Measurements' : 'Show Measurements' }}</span>
+                <z-icon [zType]="expandedReportId === report.id ? 'chevron-up' : 'chevron-down'" class="w-4 h-4" />
+            </button>
+
+            <!-- Expanded Measurements (Mobile) -->
+            <div *ngIf="expandedReportId === report.id" class="p-4 pt-0 border-t border-indigo-50 bg-white animate-in slide-in-from-top-2">
+                <div class="pt-4 grid grid-cols-3 gap-3">
+                    <div *ngIf="report.reportData?.screeningDetails?.height" class="flex flex-col">
+                        <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">H (cm)</span>
+                        <span class="text-sm font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.height }}</span>
+                    </div>
+                    <div *ngIf="report.reportData?.screeningDetails?.weight" class="flex flex-col">
+                        <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">W (kg)</span>
+                        <span class="text-sm font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.weight }}</span>
+                    </div>
+                    <div *ngIf="report.reportData?.screeningDetails?.hb" class="flex flex-col">
+                        <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">Hb</span>
+                        <span class="text-sm font-black text-rose-600 leading-none">{{ report.reportData.screeningDetails.hb }}</span>
+                    </div>
+                    <div *ngIf="report.reportData?.screeningDetails?.bp" class="flex flex-col">
+                        <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest text-nowrap">BP (S/D)</span>
+                        <span class="text-sm font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.bp }}</span>
+                    </div>
+                    <div *ngIf="report.reportData?.screeningDetails?.sugar" class="flex flex-col">
+                        <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">Sugar</span>
+                        <span class="text-sm font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.sugar }}</span>
+                    </div>
+                </div>
+                <div *ngIf="report.reportData?.screening === 'No' || !report.reportData?.screeningDetails" class="py-4 text-center text-[10px] text-gray-400 italic">
+                    No diagnostic data found for this session.
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Empty State -->
+        <div *ngIf="vm.items.length === 0" class="py-20 text-center bg-white border border-dashed rounded-2xl flex flex-col items-center p-6">
+            <z-icon zType="file-text" class="w-12 h-12 text-gray-200 mb-4" />
+            <p class="text-gray-500 font-bold italic text-sm">No activity reports recorded yet.</p>
+        </div>
+    </div>
+
+    <!-- Standardized Pagination (Admin Style) -->
+    <div class="mt-8 pt-6 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6" *ngIf="vm.total > 0">
+      <p class="text-sm font-medium text-gray-500 order-2 md:order-1 text-center md:text-left">
+        Syncing record
+        <span class="font-bold text-gray-700">{{ vm.total ? vm.startIndex + 1 : 0 }}</span>
         -
-        {{ (vm.page * vm.pageSize < vm.total) ? (vm.page * vm.pageSize) : vm.total }}
-        of {{ vm.total }}
+        <span class="font-bold text-gray-700">{{ vm.endIndex }}</span>
+        of <span class="font-bold text-gray-700">{{ vm.total }}</span>
       </p>
 
-      <div class="flex items-center justify-end gap-2">
-        <button type="button" (click)="prevPage()" [disabled]="vm.page <= 1"
-          class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 bg-white transition-colors">
-          Prev
+      <div class="flex items-center gap-2 order-1 md:order-2">
+        <button 
+          type="button" 
+          (click)="prevPage()" 
+          [disabled]="vm.page <= 1"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+        >
+          <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
         </button>
 
-        <span class="text-sm text-gray-600">
-          Page {{ vm.page }} / {{ vm.pageCount }}
+        <span class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap shadow-sm">
+          {{ vm.page }} / {{ vm.pageCount }}
         </span>
 
-        <button type="button" (click)="nextPage()" [disabled]="vm.page >= vm.pageCount"
-          class="px-3 py-2 rounded-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 bg-white transition-colors">
-          Next
+        <button 
+          type="button" 
+          (click)="nextPage()" 
+          [disabled]="vm.page >= vm.pageCount"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+        >
+          Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
         </button>
       </div>
     </div>
   </ng-container>
 
-  <!-- Loading Template -->
+  <!-- Loading Animation Container -->
   <ng-template #loadingTpl>
-    <div class="flex flex-col items-center justify-center w-full min-h-[60vh] gap-4">
-      <ng-lottie [options]="options" height="160px" width="160px"></ng-lottie>
-      <p class="text-gray-500 font-medium animate-pulse">Loading Activity Reports...</p>
+    <div class="flex flex-col items-center justify-center w-full min-h-[60vh] gap-6">
+      <ng-lottie [options]="options" height="220px" width="220px"></ng-lottie>
+      <div class="flex flex-col items-center gap-1">
+          <p class="text-indigo-900 font-black tracking-[0.2em] uppercase text-xs animate-pulse">Syncing Diagnostic Feed</p>
+          <p class="text-gray-400 text-[10px] italic">Accessing encrypted health records...</p>
+      </div>
     </div>
   </ng-template>
 </div>

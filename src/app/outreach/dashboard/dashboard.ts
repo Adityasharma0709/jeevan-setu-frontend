@@ -19,6 +19,7 @@ import {
 
 import { AuthService } from '@/core/services/auth';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ApiService } from '@/core/services/api';
 import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
@@ -51,7 +52,7 @@ interface AssignedProjectsPagerVm {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, ZardIconComponent, LottieComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, ZardIconComponent, LottieComponent, ZardComboboxComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -87,6 +88,12 @@ export class Dashboard implements OnInit {
   private readonly page$ = new BehaviorSubject<number>(1);
   private lastPage = 1;
   private lastTotalPages = 1;
+
+  readonly statusOptions: ZardComboboxOption[] = [
+    { value: 'ALL', label: 'All Status' },
+    { value: 'ACTIVE', label: 'Active' },
+    { value: 'INACTIVE', label: 'Inactive' },
+  ];
 
   ngOnInit() {
     // ─── STATS ────────────────────────────────────────────────────────────────

@@ -226,13 +226,15 @@
                         <div class="space-y-4">
                             <div class="flex flex-col">
                                 <label class="text-xs font-bold text-indigo-600 uppercase mb-1">Assign to Group</label>
-                                <div class="flex gap-2">
-                                    <select [(ngModel)]="selectedGroupId"
-                                        class="flex-1 px-4 py-2 bg-white border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition-all shadow-sm">
-                                        <option [ngValue]="null">Select Group</option>
-                                        <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
-                                    </select>
-                                    <button z-button zType="default" (click)="saveGroupTag()" [disabled]="!selectedGroupId">
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <z-combobox 
+                                        [(ngModel)]="selectedGroupId"
+                                        [options]="groupOptions"
+                                        placeholder="Select Group"
+                                        zWidth="full"
+                                        class="flex-1"
+                                    />
+                                    <button z-button zType="default" (click)="saveGroupTag()" [disabled]="!selectedGroupId" class="w-full sm:w-auto">
                                         Tag
                                     </button>
                                 </div>
@@ -249,19 +251,24 @@
                         <div class="space-y-4">
                             <div class="flex flex-col">
                                 <label class="text-xs font-bold text-indigo-600 uppercase mb-1">Log Participation</label>
-                                <div class="space-y-2">
-                                    <select [(ngModel)]="selectedActivityId" (change)="onActivityChange()"
-                                        class="w-full px-4 py-2 bg-white border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition-all shadow-sm">
-                                        <option [ngValue]="null">Select Activity</option>
-                                        <option *ngFor="let a of activities" [value]="a.id">{{ a.name }}</option>
-                                    </select>
-                                    <div class="flex gap-2">
-                                        <select [(ngModel)]="selectedSessionId" [disabled]="!selectedActivityId"
-                                            class="flex-1 px-4 py-2 bg-white border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition-all shadow-sm disabled:bg-gray-50 disabled:text-gray-300">
-                                            <option [ngValue]="null">Select Session</option>
-                                            <option *ngFor="let s of sessions" [value]="s.id">{{ s.name }}</option>
-                                        </select>
-                                        <button z-button zType="default" (click)="saveActivityTag()" [disabled]="!selectedSessionId">
+                                <div class="space-y-3">
+                                    <z-combobox 
+                                        [(ngModel)]="selectedActivityId"
+                                        (zValueChange)="onActivityChange($event)"
+                                        [options]="activityOptions"
+                                        placeholder="Select Activity"
+                                        zWidth="full"
+                                    />
+                                    <div class="flex flex-col sm:flex-row gap-2">
+                                        <z-combobox 
+                                            [(ngModel)]="selectedSessionId"
+                                            [zDisabled]="!selectedActivityId"
+                                            [options]="sessionOptions"
+                                            placeholder="Select Session"
+                                            zWidth="full"
+                                            class="flex-1"
+                                        />
+                                        <button z-button zType="default" (click)="saveActivityTag()" [disabled]="!selectedSessionId" class="w-full sm:w-auto">
                                             Log
                                         </button>
                                     </div>
