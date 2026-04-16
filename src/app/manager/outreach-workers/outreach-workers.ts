@@ -21,7 +21,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent, ZardFormLabelComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
-import { ZardComboboxComponent } from '@/shared/components/combobox';
+import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
 
 @Component({
     selector: 'app-outreach-workers',
@@ -65,6 +65,8 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     isTagging = false;
     projects: any[] = [];
     tagLocations: any[] = [];
+    projectOptions: ZardComboboxOption[] = [];
+    locationOptions: ZardComboboxOption[] = [];
     isLoadingWorkers = false;
     options: AnimationOptions = { path: '/loading.json' };
     private refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -227,6 +229,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             const locationControl = this.tagForm.get('locationId');
             locationControl?.reset('', { emitEvent: false });
             this.tagLocations = [];
+            this.locationOptions = [];
 
             const numericProjectId = Number(projectId);
             if (!numericProjectId) {
@@ -241,6 +244,10 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
                     // Defer to next tick to avoid NG0100 during the same CD pass.
                     setTimeout(() => {
                         this.tagLocations = nextLocations;
+                        this.locationOptions = nextLocations.map((l) => ({
+                            value: String(l.id),
+                            label: `${l.village} (${l.block})`,
+                        }));
                     }, 0);
                 },
                 error: () => toast.error('Failed to load assigned locations'),
@@ -294,7 +301,13 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     private loadProjects() {
         const currentUser = this.authService.getCurrentUser();
         this.managerService.getProjects(currentUser?.sub).subscribe({
-            next: (projects) => (this.projects = Array.isArray(projects) ? projects : []),
+            next: (projects) => {
+                this.projects = Array.isArray(projects) ? projects : [];
+                this.projectOptions = this.projects.map((p) => ({
+                    value: String(p.id),
+                    label: p.name,
+                }));
+            },
             error: () => toast.error('Failed to load projects'),
         });
     }

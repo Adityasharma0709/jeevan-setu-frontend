@@ -298,24 +298,24 @@
         <z-form-field>
             <label z-form-label zRequired>Project</label>
             <z-form-control>
-                <select z-input formControlName="projectId">
-                    <option value="">Select project</option>
-                    <option *ngFor="let p of projects" [value]="p.id">
-                        {{ p.name }}
-                    </option>
-                </select>
+                <z-combobox 
+                    formControlName="projectId" 
+                    [options]="projectOptions" 
+                    placeholder="Select project" 
+                    zWidth="full"
+                ></z-combobox>
             </z-form-control>
         </z-form-field>
 
         <z-form-field>
             <label z-form-label zRequired>Location</label>
             <z-form-control>
-                <select z-input formControlName="locationId">
-                    <option value="">Select location</option>
-                    <option *ngFor="let l of tagLocations" [value]="l.id">
-                        {{ l.village }} ({{ l.block }})
-                    </option>
-                </select>
+                <z-combobox 
+                    formControlName="locationId" 
+                    [options]="locationOptions" 
+                    placeholder="Select location" 
+                    zWidth="full"
+                ></z-combobox>
             </z-form-control>
         </z-form-field>
     </form>
