@@ -69,7 +69,7 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
   ]);
 
   readonly religionOptions = this.mapStringsToOptions(['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Other']);
-  readonly casteOptions    = this.mapStringsToOptions(['General', 'OBC', 'SC', 'ST', 'NT', 'Other']);
+  readonly casteOptions    = this.mapStringsToOptions(['General', 'OBC', 'SC', 'ST', 'Other']);
   readonly economicStatusOptions = this.mapStringsToOptions(['APL', 'BPL']);
   readonly primaryIncomeSourceOptions = this.mapStringsToOptions([
     'Agriculture', 'Daily Labour', 'Small Business',
