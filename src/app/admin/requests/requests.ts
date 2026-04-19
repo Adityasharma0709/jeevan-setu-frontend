@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
@@ -97,7 +97,8 @@ export class Requests implements OnInit {
     this.adminService.getBeneficiaryRequests().subscribe({
       next: (requests) => {
         const safeRequests = Array.isArray(requests) ? requests : [];
-        const sorted = safeRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const normalized = safeRequests.map(r => this.normalizeRequest(r));
+        const sorted = normalized.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         this.goToPage(1);
         this.requests$.next(sorted);
         this.isLoading = false;
@@ -111,6 +112,46 @@ export class Requests implements OnInit {
         toast.error(err?.error?.message || 'Failed to load requests');
       }
     });
+  }
+
+  private normalizeRequest(request: any): any {
+    const payload = request?.payload || request?.data || {};
+    const type = this.getRequestType(request);
+    const requesterName = request?.requestedBy?.name || 'Unknown';
+    const requesterEmail = request?.requestedBy?.email || '';
+    
+    let targetLabel = '-';
+    if (['UPDATE_BENEFICIARY', 'MODIFY_BENEFICIARY'].includes(type)) {
+      if (request?.beneficiary?.name) {
+        targetLabel = `${request.beneficiary.name} (${request.beneficiary.uid})`;
+      } else {
+        const id = payload?.beneficiaryId || request?.beneficiaryId || '-';
+        targetLabel = id !== '-' ? `Beneficiary #${id}` : '-';
+      }
+    } else if (type.includes('WORKER')) {
+      if (payload?.name) {
+        targetLabel = `Worker: ${payload.name}`;
+      } else if (payload?.email) {
+        targetLabel = `Worker: ${payload.email}`;
+      } else {
+        targetLabel = 'Worker Account';
+      }
+    }
+
+    return {
+      ...request,
+      type,
+      requesterName,
+      requesterEmail,
+      targetLabel,
+      changes: payload?.changes || payload?.data || payload || {},
+      createdAt: request?.createdAt || new Date().toISOString(),
+    };
+  }
+
+  private getRequestType(request: any): string {
+    const rawType = String(request?.requestType || request?.type || '').toUpperCase();
+    return rawType || 'REQUEST';
   }
 
   approve(requestId: number, requestType?: string) {

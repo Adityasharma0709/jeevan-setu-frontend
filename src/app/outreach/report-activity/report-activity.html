@@ -2,9 +2,9 @@
   <!-- Header -->
   <header class="flex items-center justify-between">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Activity Report Submission</h1>
+      <h1 class="text-2xl font-bold text-gray-900">{{ isEditing ? 'Update Activity Report' : 'Activity Report Submission' }}</h1>
       <p class="text-sm text-gray-500 mt-1">
-        Redirection from Activity list to submit a new report.
+        {{ isEditing ? 'Modify health parameters and data for this report.' : 'Redirection from Activity list to submit a new report.' }}
       </p>
     </div>
     <button z-button variant="outline" (click)="cancel()">
@@ -178,7 +178,7 @@
           <button z-button type="button" variant="ghost" (click)="cancel()">Cancel</button>
           <button z-button type="button" [disabled]="isSubmitting" (click)="submit()" class="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]">
             <z-icon zType="check" class="mr-2" *ngIf="!isSubmitting" />
-            {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
+            {{ isSubmitting ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update Report' : 'Submit Report') }}
           </button>
         </div>
       </div>

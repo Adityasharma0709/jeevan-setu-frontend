@@ -20,8 +20,8 @@
                                     <z-icon zType="user" class="w-4 h-4 text-blue-500" />
                                 </span>
                                 <div class="truncate">
-                                    <div class="font-bold text-gray-900 truncate">{{ request.requestedBy?.name || 'Unknown' }}</div>
-                                    <div class="text-[10px] text-gray-500 truncate">{{ request.requestedBy?.email || '-' }}</div>
+                                    <div class="font-bold text-gray-900 truncate">{{ request.requesterName }}</div>
+                                    <div class="text-[10px] text-gray-500 truncate">{{ request.requesterEmail }}</div>
                                 </div>
                             </div>
                         </div>
@@ -37,6 +37,10 @@
                     </div>
 
                     <div class="space-y-3">
+                        <div class="flex items-center gap-2 text-sm text-gray-700">
+                            <z-icon zType="user" size="14" class="text-gray-400" />
+                            <span class="font-medium underline decoration-gray-200">{{ request.targetLabel }}</span>
+                        </div>
                         <!-- Payload Info -->
                         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100" *ngIf="getPayloadEntries(request) as entries">
                             <div *ngIf="entries.length; else noPayloadMobile" class="flex flex-wrap gap-1.5">
@@ -85,7 +89,13 @@
                             <th z-table-head>
                                 <div class="flex items-center gap-2">
                                     <z-icon zType="user" class="w-3.5 h-3.5" />
-                                    Manager
+                                    Requested By
+                                </div>
+                            </th>
+                            <th z-table-head>
+                                <div class="flex items-center gap-2">
+                                    <z-icon zType="tag" class="w-3.5 h-3.5" />
+                                    Request Target
                                 </div>
                             </th>
                             <th z-table-head>
@@ -122,10 +132,13 @@
                                         <z-icon zType="user" size="14" />
                                     </div>
                                     <div>
-                                        <div class="font-bold text-gray-900">{{ request.requestedBy?.name || 'Unknown' }}</div>
-                                        <div class="text-xs text-gray-500">{{ request.requestedBy?.email || '-' }}</div>
+                                        <div class="font-bold text-gray-900">{{ request.requesterName }}</div>
+                                        <div class="text-xs text-gray-500">{{ request.requesterEmail }}</div>
                                     </div>
                                 </div>
+                            </td>
+                            <td z-table-cell class="font-medium text-gray-800 border-x border-gray-100 bg-gray-50/30">
+                                {{ request.targetLabel }}
                             </td>
                             <td z-table-cell>
                                 <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide" [ngClass]="{

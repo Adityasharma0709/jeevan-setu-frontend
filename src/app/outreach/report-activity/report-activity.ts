@@ -3,7 +3,7 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
 import { toast } from 'ngx-sonner';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardFormFieldComponent, ZardFormLabelComponent, ZardFormControlComponent } from '@/shared/components/form';
@@ -33,8 +33,12 @@ export class ReportActivity {
   private fb = inject(FormBuilder);
   private outreachService = inject(OutreachService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   isSubmitting = false;
+  isEditing = false;
+  reportId: number | null = null;
+
 
   reportForm = this.fb.group({
     activityId: ['', Validators.required],
@@ -146,18 +150,22 @@ export class ReportActivity {
       if (selected.includes('breastCancer')) screeningDetails.breastCancer = raw.testValues.breastCancer;
     }
 
-    this.outreachService
-      .submitReport({
-        beneficiaryId: Number(raw.beneficiaryId),
-        activityId: Number(raw.activityId),
-        sessionId: raw.sessionId ? Number(raw.sessionId) : 0,
-        sessionDate: raw.sessionDate ?? '',
-        reportData: {
-          screening: raw.screening,
-          screeningDetails: raw.screening === 'Yes' ? screeningDetails : null
-        },
-      })
-      .subscribe({
+    const payload = {
+      beneficiaryId: Number(raw.beneficiaryId),
+      activityId: Number(raw.activityId),
+      sessionId: raw.sessionId ? Number(raw.sessionId) : 0,
+      sessionDate: raw.sessionDate ?? '',
+      reportData: {
+        screening: raw.screening,
+        screeningDetails: raw.screening === 'Yes' ? screeningDetails : null
+      },
+    };
+
+    const request$ = this.isEditing && this.reportId 
+      ? this.outreachService.updateReport(this.reportId, payload as any)
+      : this.outreachService.submitReport(payload);
+
+    request$.subscribe({
         next: () => {
           toast.success('Report submitted successfully');
           this.isSubmitting = false;
@@ -172,5 +180,55 @@ export class ReportActivity {
 
   cancel() {
     this.router.navigate(['/outreach/activity']);
+  }
+
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      if (params['reportId']) {
+        this.reportId = +params['reportId'];
+        this.isEditing = true;
+        this.loadReport(this.reportId);
+      }
+    });
+  }
+
+  private loadReport(id: number) {
+    this.outreachService.getReportById(id).subscribe({
+      next: (report) => {
+        const ben = report.beneficiary;
+        if (ben) {
+          this.beneficiarySearch$.next(`${ben.name} (${ben.uid})`);
+        }
+
+        const reportData = report.reportData || {};
+        const screeningDetails = reportData.screeningDetails || {};
+        const screening = reportData.screening || 'No';
+
+        // Set to string format for combobox compatibility
+        this.reportForm.patchValue({
+          activityId: report.activityId?.toString() || '',
+          sessionId: report.sessionId?.toString() || '',
+          sessionDate: reportData.sessionDate || report.createdAt.split('T')[0],
+          beneficiaryId: report.beneficiaryId || '',
+          screening: screening,
+        });
+
+        if (screening === 'Yes') {
+          if (screeningDetails.height) { this.toggleTest('height'); this.reportForm.get('testValues.height')!.setValue(screeningDetails.height); }
+          if (screeningDetails.weight) { this.toggleTest('weight'); this.reportForm.get('testValues.weight')!.setValue(screeningDetails.weight); }
+          if (screeningDetails.hb) { this.toggleTest('hb'); this.reportForm.get('testValues.hb')!.setValue(screeningDetails.hb); }
+          if (screeningDetails.sugar) { this.toggleTest('sugar'); this.reportForm.get('testValues.sugar')!.setValue(screeningDetails.sugar); }
+          if (screeningDetails.bp) { 
+            this.toggleTest('bp'); 
+            const parts = screeningDetails.bp.split('/');
+            this.reportForm.get('testValues.bpSystolic')!.setValue(parts[0] || '');
+            this.reportForm.get('testValues.bpDiastolic')!.setValue(parts[1] || '');
+          }
+          if (screeningDetails.cervicalCancer) { this.toggleTest('cervicalCancer'); this.reportForm.get('testValues.cervicalCancer')!.setValue(screeningDetails.cervicalCancer); }
+          if (screeningDetails.breastCancer) { this.toggleTest('breastCancer'); this.reportForm.get('testValues.breastCancer')!.setValue(screeningDetails.breastCancer); }
+        }
+      },
+      error: () => toast.error('Failed to load report for editing')
+    });
   }
 }

@@ -85,6 +85,10 @@ export class Activity {
     this.router.navigate(['/outreach/report-activity']);
   }
 
+  editReport(reportId: number) {
+    this.router.navigate(['/outreach/report-activity'], { queryParams: { reportId } });
+  }
+
   reload() {
     this.refresh$.next();
   }

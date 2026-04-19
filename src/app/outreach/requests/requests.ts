@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OutreachService } from '../outreach.service';
 import { toast } from 'ngx-sonner';
@@ -13,12 +13,15 @@ import {
     ZardTableCellComponent,
 } from '@/shared/components/table';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardButtonComponent } from '@/shared/components/button';
+import { ZardAlertDialogService } from '@/shared/components/alert-dialog';
 
 @Component({
     selector: 'app-outreach-requests',
     standalone: true,
     imports: [
         CommonModule,
+        ZardButtonComponent,
         ZardTableComponent,
         ZardTableHeaderComponent,
         ZardTableBodyComponent,
@@ -31,6 +34,8 @@ import { ZardIconComponent } from '@/shared/components/icon';
     templateUrl: './requests.html'
 })
 export class Requests {
+    private readonly alertDialog = inject(ZardAlertDialogService);
+
     // ── Loader ──────────────────────────────────────────────────────────────
     options: AnimationOptions = { path: '/loading.json' };
 
@@ -104,6 +109,37 @@ export class Requests {
         }
     }
 
+    cancelRequest(request: any): void {
+        if (request.status !== 'PENDING') return;
+
+        this.alertDialog.confirm({
+            zTitle: 'Cancel Request',
+            zDescription: 'Are you sure you want to cancel this request? This action cannot be undone.',
+            zOkText: 'Yes, Cancel',
+            zCancelText: 'Go Back',
+            zOkDestructive: true,
+            zOnOk: () => {
+                this.outreachService.cancelRequest(request.id).subscribe({
+                    next: () => {
+                        toast.success('Request cancelled successfully');
+                        this.refresh$.next();
+                    },
+                    error: (err: any) => {
+                        toast.error(err?.error?.message || 'Failed to cancel request');
+                    }
+                });
+            }
+        });
+    }
+
+    getBeneficiaryLabel(request: any): string {
+        if (request?.beneficiary?.name) {
+            return `${request.beneficiary.name} (${request.beneficiary.uid})`;
+        }
+        const id = request?.beneficiaryId || request?.payload?.beneficiaryId || '-';
+        return id !== '-' ? `Beneficiary #${id}` : '-';
+    }
+
     getChangedKeys(changes: any): string[] {
         if (!changes || typeof changes !== 'object') return [];
         return Object.keys(changes).filter(key => key !== 'reason' && key !== 'id' && key !== 'beneficiaryId' && key !== 'updatedAt' && key !== 'createdAt');
@@ -137,15 +173,8 @@ export class Requests {
     getPayloadText(request: any): string {
         const payload = request?.payload || request?.data || {};
         if (payload == null) return '-';
-
-        if (typeof payload === 'string') {
-            return payload.trim() || '-';
-        }
-
-        if (typeof payload !== 'object') {
-            return String(payload);
-        }
-
+        if (typeof payload === 'string') return payload.trim() || '-';
+        if (typeof payload !== 'object') return String(payload);
         try {
             return JSON.stringify(payload, null, 2);
         } catch {
@@ -175,13 +204,10 @@ export class Requests {
 
     private extractDisplayPayload(payload: any): any {
         if (!payload || typeof payload !== 'object') return payload;
-
         const maybeChanges = (payload as any)?.changes;
         if (maybeChanges && typeof maybeChanges === 'object') return maybeChanges;
-
         const maybeData = (payload as any)?.data;
         if (maybeData && typeof maybeData === 'object') return maybeData;
-
         return payload;
     }
 

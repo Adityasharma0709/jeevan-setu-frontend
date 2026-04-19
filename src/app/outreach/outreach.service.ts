@@ -210,6 +210,18 @@ export class OutreachService {
     return this.api.post(`${this.endpoint}/activity-report`, data);
   }
 
+  getReportById(id: number): Observable<any> {
+    return this.api.get(`${this.endpoint}/activity-report/${id}`);
+  }
+
+  updateReport(id: number, data: Partial<CreateReportPayload>): Observable<any> {
+    return this.api.patch(`${this.endpoint}/activity-report/${id}`, data);
+  }
+
+  cancelRequest(requestId: number): Observable<any> {
+    return this.api.delete(`${this.endpoint}/my-requests/${requestId}`);
+  }
+
   getDashboardStats(userId?: number): Observable<OutreachDashboardStats> {
     return this.getAssignedProjects(userId).pipe(
       switchMap((projects) => {

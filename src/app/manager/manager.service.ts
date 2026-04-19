@@ -182,6 +182,10 @@ export class ManagerService {
         return this.api.get(`${this.endpoint}/my-requests`) as Observable<any[]>;
     }
 
+    cancelRequest(id: number): Observable<any> {
+        return this.api.delete(`${this.endpoint}/my-requests/${id}`);
+    }
+
     updateRequestStatus(id: number, status: 'APPROVED' | 'REJECTED', reason?: string): Observable<any> {
         const payload: any = { status };
         if (reason) payload.reason = reason;

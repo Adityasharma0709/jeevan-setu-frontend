@@ -62,17 +62,41 @@
 
         <z-form-field>
           <label z-form-label>Qualification</label>
-          <z-form-control><input z-input formControlName="qualification" /></z-form-control>
+          <z-form-control>
+            <z-combobox 
+              formControlName="qualification" 
+              [options]="qualificationOptions"
+              [searchable]="false"
+              placeholder="Select"
+              zWidth="full"
+            />
+          </z-form-control>
         </z-form-field>
 
         <z-form-field>
           <label z-form-label>Religion</label>
-          <z-form-control><input z-input formControlName="religion" /></z-form-control>
+          <z-form-control>
+            <z-combobox 
+              formControlName="religion" 
+              [options]="religionOptions"
+              [searchable]="false"
+              placeholder="Select"
+              zWidth="full"
+            />
+          </z-form-control>
         </z-form-field>
 
         <z-form-field>
           <label z-form-label>Caste</label>
-          <z-form-control><input z-input formControlName="caste" /></z-form-control>
+          <z-form-control>
+            <z-combobox 
+              formControlName="caste" 
+              [options]="casteOptions"
+              [searchable]="false"
+              placeholder="Select"
+              zWidth="full"
+            />
+          </z-form-control>
         </z-form-field>
 
         <z-form-field>
@@ -82,17 +106,41 @@
 
         <z-form-field>
           <label z-form-label>Economic Status</label>
-          <z-form-control><input z-input formControlName="economicStatus" /></z-form-control>
+          <z-form-control>
+            <z-combobox 
+              formControlName="economicStatus" 
+              [options]="economicStatusOptions"
+              [searchable]="false"
+              placeholder="Select"
+              zWidth="full"
+            />
+          </z-form-control>
         </z-form-field>
 
         <z-form-field>
           <label z-form-label>Primary Income Source</label>
-          <z-form-control><input z-input formControlName="primaryIncomeSource" /></z-form-control>
+          <z-form-control>
+            <z-combobox 
+              formControlName="primaryIncomeSource" 
+              [options]="primaryIncomeSourceOptions"
+              [searchable]="false"
+              placeholder="Select"
+              zWidth="full"
+            />
+          </z-form-control>
         </z-form-field>
 
         <z-form-field>
           <label z-form-label>Employment Status</label>
-          <z-form-control><input z-input formControlName="employmentStatus" /></z-form-control>
+          <z-form-control>
+            <z-combobox 
+              formControlName="employmentStatus" 
+              [options]="employmentStatusOptions"
+              [searchable]="false"
+              placeholder="Select"
+              zWidth="full"
+            />
+          </z-form-control>
         </z-form-field>
 
         <z-form-field>

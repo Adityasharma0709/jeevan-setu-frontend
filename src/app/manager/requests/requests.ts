@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BehaviorSubject, Observable, combineLatest, forkJoin, map, shareReplay, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
@@ -14,6 +14,7 @@ import {
   ZardTableCellComponent,
 } from '@/shared/components/table';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardAlertDialogService } from '@/shared/components/alert-dialog';
 
 @Component({
   selector: 'app-requests',
@@ -34,6 +35,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
   styleUrl: './requests.css',
 })
 export class Requests implements OnInit {
+  private readonly alertDialog = inject(ZardAlertDialogService);
   incomingRequests: any[] = [];
   myRequests: any[] = [];
   isLoading = true;
@@ -121,13 +123,54 @@ export class Requests implements OnInit {
       switchMap(() => this.managerService.getMyRequests()),
       map((requests: any) => {
         const safeRequests = Array.isArray(requests) ? requests : [];
-        return safeRequests.map((request: any) => ({
-          ...request,
-          type: this.getRequestType(request),
-          sentTo: request?.targetAdmin?.name || request?.targetAdmin?.email || 'Admin',
-          createdAt: request?.createdAt || new Date().toISOString(),
-          payloadText: this.getPayloadText(request),
-        }));
+        return safeRequests.map((request: any) => {
+            const payload = request?.payload || request?.data || {};
+            const displayPayload = this.extractDisplayPayload(payload);
+            const changesPreview = this.buildChangesPreview(displayPayload);
+            const reqType = this.getRequestType(request);
+            const targetAdmin = request?.targetAdmin || request?.approvedBy || null;
+
+            let targetLabel = '-';
+            let targetSubLabel = '';
+
+            if (reqType === 'BENEFICIARY_UPDATE') {
+              const ben = request?.beneficiary;
+              if (ben?.name) {
+                targetLabel = ben.name;
+                targetSubLabel = ben.uid ? `UID: ${ben.uid}` : '';
+              } else {
+                const id = payload?.beneficiaryId || request?.beneficiaryId || '-';
+                targetLabel = id !== '-' ? `Beneficiary #${id}` : '-';
+              }
+            } else if (['CREATE_REQUEST', 'PROFILE_UPDATE', 'DEACTIVATE_REQUEST', 'ACTIVATE_WORKER', 'DEACTIVATE_WORKER'].includes(reqType)) {
+              const worker = request?.worker;
+              if (worker?.name) {
+                targetLabel = worker.name;
+                targetSubLabel = worker.email || worker.usercode || '';
+              } else if (payload?.name) {
+                targetLabel = payload.name;
+                targetSubLabel = payload.email || '';
+              } else if (payload?.email) {
+                targetLabel = payload.email;
+              } else {
+                targetLabel = 'Worker Account';
+              }
+            }
+
+            return {
+              ...request,
+              type: reqType,
+              sentToName: targetAdmin?.name || 'Admin',
+              sentToEmail: targetAdmin?.email || '',
+              targetLabel,
+              targetSubLabel,
+              createdAt: request?.createdAt || new Date().toISOString(),
+              payloadText: this.getPayloadText(request),
+              changesPreview,
+              changes: payload?.changes || payload?.data || payload || {},
+              beneficiaryId: payload?.beneficiaryId || request?.beneficiaryId || '-'
+            };
+        });
       }),
       shareReplay({ bufferSize: 1, refCount: true })
     );
@@ -221,20 +264,60 @@ export class Requests implements OnInit {
     });
   }
 
+  cancelMyRequest(request: any): void {
+    if (request.status !== 'PENDING') return;
+
+    this.alertDialog.confirm({
+      zTitle: 'Cancel Request',
+      zDescription: 'Are you sure you want to cancel this request? This action cannot be undone.',
+      zOkText: 'Yes, Cancel',
+      zCancelText: 'Go Back',
+      zOkDestructive: true,
+      zOnOk: () => {
+        this.managerService.cancelRequest(request.id).subscribe({
+          next: () => {
+            toast.success('Request cancelled successfully');
+            this.loadMyRequests();
+          },
+          error: (err: any) => {
+            toast.error(err?.error?.message || 'Failed to cancel request');
+          }
+        });
+      }
+    });
+  }
+
   private normalizeIncomingRequest(request: any): any {
     const payload = request?.payload || request?.data || {};
     const type = this.getRequestType(request);
     const workerName = request?.requestedBy?.name || request?.outreachWorker?.name || 'Unknown';
     const workerEmail = request?.requestedBy?.email || request?.outreachWorker?.email || '-';
-    const beneficiaryId = payload?.beneficiaryId || request?.beneficiaryId || '-';
     const changesPreview = this.buildChangesPreview(payload?.changes || payload?.data || {});
+
+    let targetLabel = '-';
+    if (type === 'BENEFICIARY_UPDATE') {
+      if (request?.beneficiary?.name) {
+        targetLabel = `${request.beneficiary.name} (${request.beneficiary.uid})`;
+      } else {
+        const id = payload?.beneficiaryId || request?.beneficiaryId || '-';
+        targetLabel = id !== '-' ? `Beneficiary #${id}` : '-';
+      }
+    } else if (['CREATE_REQUEST', 'PROFILE_UPDATE', 'DEACTIVATE_REQUEST'].includes(type)) {
+      if (payload?.name) {
+        targetLabel = `Worker: ${payload.name}`;
+      } else if (payload?.email) {
+        targetLabel = `Worker: ${payload.email}`;
+      } else {
+        targetLabel = 'Worker Account';
+      }
+    }
 
     return {
       ...request,
       workerName,
       workerEmail,
       type,
-      beneficiaryId,
+      targetLabel,
       changesPreview,
       changes: payload?.changes || payload?.data || payload || {},
       payloadText: this.getPayloadText(request),
@@ -270,8 +353,11 @@ export class Requests implements OnInit {
   }
 
   getBeneficiaryLabel(request: any): string {
+    if (request?.beneficiary?.name) {
+      return `${request.beneficiary.name} (${request.beneficiary.uid})`;
+    }
     const id = request?.beneficiaryId || request?.payload?.beneficiaryId || '-';
-    return `Beneficiary #${id}`;
+    return id !== '-' ? `Beneficiary #${id}` : '-';
   }
 
   getChangesPreview(request: any): string {
@@ -343,8 +429,10 @@ export class Requests implements OnInit {
   private buildChangesPreview(changes: Record<string, any>): string {
     if (!changes || typeof changes !== 'object') return '-';
 
-    const entries = Object.entries(changes).filter(([, value]) => {
-      return value !== undefined && value !== null && value !== '';
+    const excludedKeys = ['id', 'workerId', 'beneficiaryId', 'requestedById', 'targetAdminId', 'status', 'requestType', 'createdAt', 'updatedAt'];
+
+    const entries = Object.entries(changes).filter(([key, value]) => {
+      return !excludedKeys.includes(key) && value !== undefined && value !== null && value !== '';
     });
 
     if (entries.length === 0) return '-';

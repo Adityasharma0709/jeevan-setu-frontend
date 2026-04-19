@@ -63,6 +63,23 @@ export class RequestUpdate implements OnInit {
     { value: 'Other', label: 'Other' }
   ];
 
+  private mapStringsToOptions = (opts: string[]): ZardComboboxOption[] => 
+    opts.map(o => ({ value: o, label: o }));
+
+  readonly qualificationOptions = this.mapStringsToOptions([
+    'No Formal Education', 'Primary (Class 1–5)', 'Upper Primary (Class 6–8)',
+    'Secondary (Class 9–10)', 'Senior Secondary (Class 11–12)', 'Diploma / ITI',
+    'Graduate', 'Post Graduate', 'Other',
+  ]);
+
+  readonly religionOptions = this.mapStringsToOptions(['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Other']);
+  readonly casteOptions    = this.mapStringsToOptions(['General', 'OBC', 'SC', 'ST', 'NT', 'Other']);
+  readonly economicStatusOptions = this.mapStringsToOptions(['APL', 'BPL']);
+  readonly primaryIncomeSourceOptions = this.mapStringsToOptions([
+    'Agriculture', 'Daily Labour', 'Small Business', 'Government Service', 'Private Service', 'Pension / Remittance', 'Other',
+  ]);
+  readonly employmentStatusOptions = this.mapStringsToOptions(['Employed', 'Unemployed', 'Self-Employed', 'Student']);
+
   readonly maritalStatusOptions: ZardComboboxOption[] = [
     { value: 'Single', label: 'Single' },
     { value: 'Married', label: 'Married' },

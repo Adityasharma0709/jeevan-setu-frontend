@@ -89,12 +89,19 @@
                 <span class="text-xs font-semibold text-gray-600">{{ report.createdAt | date:'mediumDate' }}</span>
               </td>
               <td z-table-cell class="text-right pr-6">
-                <button z-button zType="outline" zSize="sm" (click)="toggleExpand(report.id)" 
-                  class="transition-all p-2 flex items-center justify-center ml-auto"
-                  [ngClass]="expandedReportId === report.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-indigo-600 hover:bg-indigo-600 hover:text-white shadow-sm'"
-                  title="View Data">
-                  <z-icon zType="eye" class="w-4 h-4" />
-                </button>
+                <div class="flex items-center justify-end gap-2">
+                  <button z-button zType="outline" zSize="sm" (click)="editReport(report.id)" 
+                    class="bg-white text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors p-2 flex items-center justify-center shadow-sm rounded-lg border-gray-200"
+                    title="Edit Report">
+                    <z-icon zType="edit" class="w-4 h-4" />
+                  </button>
+                  <button z-button zType="outline" zSize="sm" (click)="toggleExpand(report.id)" 
+                    class="transition-all p-2 flex items-center justify-center"
+                    [ngClass]="expandedReportId === report.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-indigo-600 hover:bg-indigo-600 hover:text-white shadow-sm'"
+                    title="View Data">
+                    <z-icon zType="eye" class="w-4 h-4" />
+                  </button>
+                </div>
               </td>
             </tr>
 
@@ -221,10 +228,16 @@
             </div>
 
             <!-- Card Action Footer -->
-            <button class="w-full py-3 bg-white border-t border-gray-50 flex items-center justify-center gap-2 text-indigo-600 hover:bg-indigo-50/50 transition-colors" (click)="toggleExpand(report.id)">
-                <span class="text-[11px] font-black uppercase tracking-widest">{{ expandedReportId === report.id ? 'Collapse Measurements' : 'Show Measurements' }}</span>
-                <z-icon [zType]="expandedReportId === report.id ? 'chevron-up' : 'chevron-down'" class="w-4 h-4" />
-            </button>
+            <div class="grid grid-cols-2 border-t border-gray-50 bg-white">
+                <button class="py-3 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 hover:text-indigo-600 transition-colors border-r border-gray-50" (click)="editReport(report.id)">
+                    <z-icon zType="edit" class="w-4 h-4" />
+                    <span class="text-[11px] font-black uppercase tracking-widest">Edit</span>
+                </button>
+                <button class="py-3 flex items-center justify-center gap-2 text-indigo-600 hover:bg-indigo-50/50 transition-colors" (click)="toggleExpand(report.id)">
+                    <span class="text-[11px] font-black uppercase tracking-widest">{{ expandedReportId === report.id ? 'Collapse' : 'Measurements' }}</span>
+                    <z-icon [zType]="expandedReportId === report.id ? 'chevron-up' : 'chevron-down'" class="w-4 h-4" />
+                </button>
+            </div>
 
             <!-- Expanded Measurements (Mobile) -->
             <div *ngIf="expandedReportId === report.id" class="p-4 pt-0 border-t border-indigo-50 bg-white animate-in slide-in-from-top-2">

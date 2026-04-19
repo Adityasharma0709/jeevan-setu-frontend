@@ -13,9 +13,8 @@
                     <tr z-table-row>
                         <th z-table-head>Outreach Worker</th>
                         <th z-table-head>Request Type</th>
-                        <th z-table-head>Beneficiary</th>
+                        <th z-table-head>Request Target</th>
                         <th z-table-head>Changes</th>
-                        <th z-table-head>Payload</th>
                         <th z-table-head>Requested At</th>
                         <th z-table-head class="text-right">Actions</th>
                     </tr>
@@ -32,32 +31,15 @@
                                 {{ request.type }}
                             </span>
                         </td>
-                        <td z-table-cell class="font-medium text-gray-800">{{ getBeneficiaryLabel(request) }}</td>
+                        <td z-table-cell class="font-medium text-gray-800 border-x border-gray-100 bg-gray-50/30">{{ request.targetLabel }}</td>
                         <td z-table-cell class="max-w-xs">
                             <ng-container *ngIf="request.changes && getChangedKeys(request.changes).length">
-                                <div *ngFor="let key of getChangedKeys(request.changes)" class="text-xs text-gray-500 whitespace-normal">
-                                    <span class="font-medium text-gray-700">{{ formatFieldLabel(key) }}:</span> 
-                                    {{ formatValue(request.changes[key]) }}
+                                <div *ngFor="let key of getChangedKeys(request.changes)" class="text-xs text-gray-500 mb-1">
+                                    <span class="font-medium text-gray-700 whitespace-nowrap">{{ formatFieldLabel(key) }}:</span> 
+                                    <span class="break-words">{{ formatValue(request.changes[key]) }}</span>
                                 </div>
                             </ng-container>
                             <span *ngIf="!request.changes || !getChangedKeys(request.changes).length" class="text-gray-400">-</span>
-                        </td>
-                        <td z-table-cell>
-                            <ng-container *ngIf="getPayloadEntries(request) as entries">
-                                <div *ngIf="entries.length; else emptyPayload" class="flex flex-wrap gap-1 max-w-lg">
-                                    <span *ngFor="let kv of entries"
-                                        class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700"
-                                        [title]="kv.label + ': ' + kv.value"
-                                    >
-                                        <span class="font-semibold">{{ kv.label }}</span>
-                                        <span class="text-gray-400">:</span>
-                                        <span class="font-mono truncate max-w-[220px]">{{ kv.value }}</span>
-                                    </span>
-                                </div>
-                                <ng-template #emptyPayload>
-                                    <span class="text-gray-400">-</span>
-                                </ng-template>
-                            </ng-container>
                         </td>
                         <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
                         <td z-table-cell class="text-right">
@@ -94,7 +76,7 @@
                 <div class="space-y-3">
                     <div class="flex items-center gap-2 text-sm text-gray-700">
                         <z-icon zType="user" size="14" class="text-gray-400" />
-                        <span class="font-medium underline decoration-gray-200">{{ getBeneficiaryLabel(request) }}</span>
+                        <span class="font-medium underline decoration-gray-200">{{ request.targetLabel }}</span>
                     </div>
 
                     <div class="bg-gray-50 p-3 rounded-lg border border-gray-100" *ngIf="request.changes && getChangedKeys(request.changes).length">
@@ -174,11 +156,12 @@
                 <thead z-table-header>
                     <tr z-table-row>
                         <th z-table-head>Request Type</th>
-                        <th z-table-head>Sent To</th>
+                        <th z-table-head>Request Target</th>
+                        <th z-table-head>Changes Preview</th>
+                        <th z-table-head>Sent To / Approved By</th>
                         <th z-table-head>Status</th>
-                        <th z-table-head>Requested At</th>
-                        <th z-table-head>Remarks</th>
-                        <th z-table-head>Payload</th>
+                        <th z-table-head class="border-r border-gray-100">Requested At</th>
+                        <th z-table-head class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody z-table-body>
@@ -189,31 +172,43 @@
                                 {{ request.type }}
                             </span>
                         </td>
-                        <td z-table-cell class="font-medium text-gray-900">{{ request.sentTo }}</td>
+                        <td z-table-cell class="text-sm font-medium text-gray-900 border-x border-gray-100 bg-gray-50/30">
+                            <div class="flex flex-col gap-0.5">
+                                <span class="font-bold text-gray-900">{{ request.targetLabel }}</span>
+                                <span class="text-[10px] text-gray-500 font-normal" *ngIf="request.targetSubLabel">{{ request.targetSubLabel }}</span>
+                            </div>
+                        </td>
                         <td z-table-cell>
-                            <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                            <div class="text-xs text-gray-600 bg-gray-50 px-2 py-1.5 rounded text-left border overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" [title]="request.changesPreview">
+                                {{ request.changesPreview }}
+                            </div>
+                        </td>
+                        <td z-table-cell class="font-medium text-gray-900 border-x border-gray-100 bg-gray-50/30">
+                            <div class="flex flex-col gap-0.5">
+                                <div class="flex items-center gap-1.5 text-xs text-gray-900">
+                                    <z-icon zType="user" size="12" class="text-gray-400" />
+                                    <span class="font-semibold">{{ request.sentToName }}</span>
+                                </div>
+                                <div class="text-[10px] text-gray-500 pl-4" *ngIf="request.sentToEmail">
+                                    {{ request.sentToEmail }}
+                                </div>
+                            </div>
+                        </td>
+                        <td z-table-cell>
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
                                 [ngClass]="getStatusBadgeClass(request.status)">
                                 {{ request.status }}
                             </span>
                         </td>
-                        <td z-table-cell class="text-sm text-gray-500">{{ request.createdAt | date:'short' }}</td>
-                        <td z-table-cell class="text-sm text-gray-600">{{ request.remarks || '-' }}</td>
-                        <td z-table-cell>
-                            <ng-container *ngIf="getPayloadEntries(request) as entries">
-                                <div *ngIf="entries.length; else emptyMyPayload" class="flex flex-wrap gap-1 max-w-lg">
-                                    <span *ngFor="let kv of entries"
-                                        class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700"
-                                        [title]="kv.label + ': ' + kv.value"
-                                    >
-                                        <span class="font-semibold">{{ kv.label }}</span>
-                                        <span class="text-gray-400">:</span>
-                                        <span class="font-mono truncate max-w-[220px]">{{ kv.value }}</span>
-                                    </span>
-                                </div>
-                                <ng-template #emptyMyPayload>
-                                    <span class="text-gray-400">-</span>
-                                </ng-template>
-                            </ng-container>
+                        <td z-table-cell class="text-sm text-gray-500 border-r border-gray-100">{{ request.createdAt | date:'short' }}</td>
+                        <td z-table-cell class="text-right">
+                           <button *ngIf="request.status === 'PENDING'"
+                               z-button zType="default" zSize="sm"
+                               (click)="cancelMyRequest(request)"
+                               class="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 text-xs">
+                               <z-icon zType="x" class="w-3 h-3 mr-1" /> Cancel
+                           </button>
+                           <span *ngIf="request.status !== 'PENDING'" class="text-gray-300 text-xs">—</span>
                         </td>
                     </tr>
                 </tbody>
@@ -234,19 +229,51 @@
                     </span>
                 </div>
 
-                <div class="space-y-2">
-                    <div class="text-xs text-gray-500 flex items-center gap-1">
-                        <z-icon zType="move-right" size="12" />
-                        Sent To: <span class="font-bold text-gray-800">{{ request.sentTo }}</span>
+                <div class="mb-4">
+                    <div class="flex items-center gap-2 text-sm text-gray-700">
+                        <z-icon zType="user" size="14" class="text-gray-400" />
+                        <div class="flex flex-col gap-0.5">
+                            <span class="font-medium underline decoration-gray-200">{{ request.targetLabel }}</span>
+                            <span class="text-[10px] text-gray-500 font-normal no-underline" *ngIf="request.targetSubLabel">{{ request.targetSubLabel }}</span>
+                        </div>
                     </div>
-                    
-                    <div class="text-xs bg-gray-50 p-2 rounded border border-gray-100 italic text-gray-600" *ngIf="request.remarks">
-                        "{{ request.remarks }}"
-                    </div>
+                </div>
 
-                    <div class="text-[10px] text-gray-400 pt-1">
-                        {{ request.createdAt | date:'MMM d, yyyy · h:mm a' }}
+                <!-- Changes Detail -->
+                <div class="mb-4 bg-gray-50/50 p-3 rounded-lg border border-gray-100">
+                    <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-2">Requested Changes</p>
+                    <ng-container *ngIf="request.changesPreview && request.changesPreview !== '-'; else noChangesMobile">
+                        <div class="text-xs text-gray-600">
+                            {{ request.changesPreview }}
+                        </div>
+                    </ng-container>
+                    <ng-template #noChangesMobile><span class="text-gray-400 italic text-xs">No specific changes listed</span></ng-template>
+                </div>
+
+                <!-- Sent To / Approved By -->
+                <div class="mb-3">
+                    <div class="flex flex-col gap-0.5 text-xs text-gray-500">
+                        <div class="flex items-center gap-1.5">
+                            <z-icon zType="move-right" size="12" class="text-gray-400" />
+                            <span class="text-gray-400">{{ request.status === 'APPROVED' ? 'Approved by' : 'Sent to' }}:</span>
+                            <span class="font-semibold text-gray-700">{{ request.sentToName }}</span>
+                        </div>
+                        <span class="pl-[1.625rem] text-[10px] text-gray-400" *ngIf="request.sentToEmail">{{ request.sentToEmail }}</span>
                     </div>
+                </div>
+
+                <!-- Footer Info -->
+                <div class="flex items-center justify-between pt-3 border-t border-gray-50">
+                    <div class="flex items-center gap-1.5">
+                        <z-icon zType="clock" class="w-3.5 h-3.5 text-gray-400" />
+                        <span class="text-[10px] text-gray-500">{{ request.createdAt | date:'shortDate' }} at {{ request.createdAt | date:'shortTime' }}</span>
+                    </div>
+                    <button *ngIf="request.status === 'PENDING'"
+                        z-button zType="default" zSize="sm"
+                        (click)="cancelMyRequest(request)"
+                        class="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 text-xs">
+                        <z-icon zType="x" class="w-3 h-3 mr-1" /> Cancel
+                    </button>
                 </div>
             </div>
 
