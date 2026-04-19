@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { AdminService } from '../admin.service';
-import { BehaviorSubject, combineLatest, map, Observable, shareReplay, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, forkJoin, map, Observable, of, shareReplay, tap, catchError } from 'rxjs';
 import { ZardButtonComponent } from '@/shared/components/button';
 import {
   ZardTableComponent,
@@ -14,6 +14,9 @@ import {
   ZardTableCellComponent,
 } from '@/shared/components/table';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardAlertDialogService } from '@/shared/components/alert-dialog/alert-dialog.service';
+import { FormsModule } from '@angular/forms';
+import { RequestCountService } from '../../core/services/request-count.service';
 
 @Component({
   selector: 'app-admin-requests',
@@ -29,6 +32,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
     ZardTableCellComponent,
     ZardIconComponent,
     LottieComponent,
+    FormsModule,
   ],
   templateUrl: './requests.html',
   styleUrl: './requests.css',
@@ -54,7 +58,9 @@ export class Requests implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private cdr: ChangeDetectorRef
+    private alertDialog: ZardAlertDialogService,
+    private cdr: ChangeDetectorRef,
+    private requestCountService: RequestCountService
   ) {
     this.pager$ = combineLatest([this.requests$, this.page$]).pipe(
       map(([requests, page]) => {
@@ -94,11 +100,21 @@ export class Requests implements OnInit {
 
   loadRequests() {
     this.isLoading = true;
-    this.adminService.getBeneficiaryRequests().subscribe({
-      next: (requests) => {
-        const safeRequests = Array.isArray(requests) ? requests : [];
-        const normalized = safeRequests.map(r => this.normalizeRequest(r));
+    forkJoin({
+      beneficiary: this.adminService.getBeneficiaryRequests().pipe(catchError(() => of([]))),
+      account: this.adminService.getAccountRequests().pipe(catchError(() => of([])))
+    }).subscribe({
+      next: (results) => {
+        const benReqs = Array.isArray(results.beneficiary) ? results.beneficiary : [];
+        const accReqs = Array.isArray(results.account) ? results.account : [];
+        const combined = [...benReqs, ...accReqs];
+        
+        // Deduplicate by ID
+        const unique = Array.from(new Map(combined.map(r => [r.id, r])).values());
+        
+        const normalized = unique.map(r => this.normalizeRequest(r));
         const sorted = normalized.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
         this.goToPage(1);
         this.requests$.next(sorted);
         this.isLoading = false;
@@ -121,22 +137,32 @@ export class Requests implements OnInit {
     const requesterEmail = request?.requestedBy?.email || '';
     
     let targetLabel = '-';
-    if (['UPDATE_BENEFICIARY', 'MODIFY_BENEFICIARY'].includes(type)) {
+    let targetSubLabel = '';
+
+    if (['UPDATE_BENEFICIARY', 'MODIFY_BENEFICIARY', 'BENEFICIARY_UPDATE'].includes(type)) {
       if (request?.beneficiary?.name) {
-        targetLabel = `${request.beneficiary.name} (${request.beneficiary.uid})`;
+        targetLabel = request.beneficiary.name;
+        targetSubLabel = request.beneficiary.uid ? `UID: ${request.beneficiary.uid}` : '';
       } else {
         const id = payload?.beneficiaryId || request?.beneficiaryId || '-';
         targetLabel = id !== '-' ? `Beneficiary #${id}` : '-';
       }
-    } else if (type.includes('WORKER')) {
-      if (payload?.name) {
-        targetLabel = `Worker: ${payload.name}`;
+    } else if (type.includes('WORKER') || type === 'UPDATE_PROFILE' || type === 'PROFILE_UPDATE') {
+      const worker = request?.worker || request?.requestedBy; // If it's a profile update, target is requester
+      if (worker?.name) {
+        targetLabel = worker.name;
+        targetSubLabel = worker.email || worker.usercode || '';
+      } else if (payload?.name) {
+        targetLabel = payload.name;
+        targetSubLabel = payload.email || '';
       } else if (payload?.email) {
-        targetLabel = `Worker: ${payload.email}`;
+        targetLabel = payload.email;
       } else {
-        targetLabel = 'Worker Account';
+        targetLabel = 'Account Request';
       }
     }
+
+    const changes = payload?.changes || payload?.data || payload || {};
 
     return {
       ...request,
@@ -144,7 +170,8 @@ export class Requests implements OnInit {
       requesterName,
       requesterEmail,
       targetLabel,
-      changes: payload?.changes || payload?.data || payload || {},
+      targetSubLabel,
+      changes,
       createdAt: request?.createdAt || new Date().toISOString(),
     };
   }
@@ -164,6 +191,7 @@ export class Requests implements OnInit {
       next: () => {
         toast.success('Request approved successfully');
         this.loadRequests();
+        this.requestCountService.refresh();
       },
       error: (err) => {
         toast.error(err?.error?.message || 'Failed to approve request');
@@ -171,48 +199,57 @@ export class Requests implements OnInit {
     });
   }
 
-  reject(requestId: number, requestType?: string) {
-    const reason = prompt('Enter rejection reason (optional):') || undefined;
-    const isWorkerRequest = requestType && (requestType.includes('WORKER') || requestType === 'ACTIVATE' || requestType === 'DEACTIVATE');
-    const obs = isWorkerRequest
-      ? this.adminService.rejectAccountRequest(requestId, reason)
-      : this.adminService.rejectBeneficiaryRequest(requestId, reason);
+  reject(requestId: number, requestType?: string, template?: any) {
+    let reason = '';
+    
+    this.alertDialog.create({
+      zTitle: 'Reject Request',
+      zContent: template,
+      zOkText: 'Reject',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zWidth: '400px',
+      zOnOk: () => {
+        const isWorkerRequest = requestType && (requestType.includes('WORKER') || requestType === 'ACTIVATE' || requestType === 'DEACTIVATE');
+        const obs = isWorkerRequest
+          ? this.adminService.rejectAccountRequest(requestId, reason || undefined)
+          : this.adminService.rejectBeneficiaryRequest(requestId, reason || undefined);
 
-    obs.subscribe({
-      next: () => {
-        toast.success('Request rejected successfully');
-        this.loadRequests();
+        obs.subscribe({
+          next: () => {
+            toast.success('Request rejected successfully');
+            this.loadRequests();
+            this.requestCountService.refresh();
+          },
+          error: (err) => {
+            toast.error(err?.error?.message || 'Failed to reject request');
+          }
+        });
       },
-      error: (err) => {
-        toast.error(err?.error?.message || 'Failed to reject request');
+      zData: {
+        setReason: (val: string) => reason = val
       }
     });
   }
 
-  getPayloadEntries(request: any): Array<{ key: string; label: string; value: string }> {
-    const rawPayload = request?.payload ?? request?.data ?? {};
-    const payload = this.extractDisplayPayload(rawPayload);
-
-    if (!payload || typeof payload !== 'object') return [];
-    if (Array.isArray(payload)) {
-      return payload.map((v, idx) => ({
-        key: String(idx),
-        label: `#${idx + 1}`,
-        value: this.formatPayloadValue(String(idx), v),
+  getPayloadEntries(request: any): any[] {
+    const changes = request.changes || {};
+    const skipKeys = ['workerId', 'beneficiaryId', 'id', 'projectId', 'locationId', 'requestedById', 'targetAdminId', 'uid', 'usercode'];
+    
+    return Object.entries(changes)
+      .filter(([key, value]) => {
+        if (skipKeys.includes(key)) return false;
+        return value !== null && value !== undefined && value !== '';
+      })
+      .map(([key, value]) => ({
+        label: this.formatFieldLabel(key),
+        value: this.formatPayloadValue(key, value)
       }));
-    }
-
-    return Object.entries(payload as Record<string, unknown>).map(([key, value]) => ({
-      key,
-      label: this.formatFieldLabel(key),
-      value: this.formatPayloadValue(key, value),
-    }));
   }
 
   private extractDisplayPayload(payload: any): any {
     if (!payload || typeof payload !== 'object') return payload;
 
-    // Prefer nested shapes when backend wraps the payload.
     const maybeChanges = (payload as any)?.changes;
     if (maybeChanges && typeof maybeChanges === 'object') return maybeChanges;
 
@@ -240,7 +277,8 @@ export class Requests implements OnInit {
     if (typeof value === 'number' || typeof value === 'boolean') return String(value);
 
     try {
-      return JSON.stringify(value);
+      if (typeof value === 'object') return JSON.stringify(value);
+      return String(value);
     } catch {
       return String(value);
     }

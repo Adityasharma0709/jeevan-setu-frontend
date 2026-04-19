@@ -9,16 +9,16 @@
         <ng-container *ngIf="pager$ | async as pager">
             
             <!-- Mobile Card View -->
-            <div class="md:hidden grid grid-cols-1 gap-4">
+            <div class="md:hidden space-y-4">
                 <div *ngFor="let request of pager.items; trackBy: trackById" 
-                     class="bg-white border hover:border-blue-200 rounded-xl p-5 shadow-sm space-y-4 transition-all group">
+                     class="bg-white border hover:border-blue-200 rounded-xl p-5 shadow-sm space-y-4 transition-all">
                     
                     <div class="flex justify-between items-start">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
-                                <span class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                                <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
                                     <z-icon zType="user" class="w-4 h-4 text-blue-500" />
-                                </span>
+                                </div>
                                 <div class="truncate">
                                     <div class="font-bold text-gray-900 truncate">{{ request.requesterName }}</div>
                                     <div class="text-[10px] text-gray-500 truncate">{{ request.requesterEmail }}</div>
@@ -38,34 +38,34 @@
 
                     <div class="space-y-3">
                         <div class="flex items-center gap-2 text-sm text-gray-700">
-                            <z-icon zType="user" size="14" class="text-gray-400" />
-                            <span class="font-medium underline decoration-gray-200">{{ request.targetLabel }}</span>
+                            <z-icon zType="tag" size="14" class="text-gray-400" />
+                            <div class="flex flex-col gap-0.5">
+                                <span class="font-bold underline decoration-gray-200">{{ request.targetLabel }}</span>
+                                <span class="text-[10px] text-gray-500 font-normal no-underline" *ngIf="request.targetSubLabel">{{ request.targetSubLabel }}</span>
+                            </div>
                         </div>
+
                         <!-- Payload Info -->
                         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100" *ngIf="getPayloadEntries(request) as entries">
-                            <div *ngIf="entries.length; else noPayloadMobile" class="flex flex-wrap gap-1.5">
-                                <span *ngFor="let kv of entries" 
-                                      class="inline-flex items-center gap-1.5 px-2 py-1 bg-white border border-gray-100 rounded text-[10px] text-gray-600 shadow-sm"
-                                      [title]="kv.label + ': ' + kv.value"
-                                >
-                                    <span class="font-bold text-gray-900">{{ kv.label }}:</span>
-                                    <span class="font-mono truncate max-w-[120px]">{{ kv.value }}</span>
-                                </span>
+                            <div *ngIf="entries.length; else noPayloadMobile" class="space-y-1.5">
+                                <div *ngFor="let kv of entries" class="text-[10px] text-gray-600 flex items-start gap-1.5">
+                                    <span class="font-bold text-gray-800 whitespace-nowrap">{{ kv.label }}:</span>
+                                    <span class="break-words">{{ kv.value }}</span>
+                                </div>
                             </div>
                             <ng-template #noPayloadMobile>
-                                <span class="text-xs text-gray-400 italic">No payload details</span>
+                                <span class="text-xs text-gray-400 italic">No specific changes listed</span>
                             </ng-template>
                         </div>
 
-                        <div class="text-[10px] text-gray-400 flex items-center justify-between">
+                        <div class="flex items-center justify-between text-[10px] text-gray-400 font-medium">
                             <div class="flex items-center gap-1">
                                 <z-icon zType="clock" size="10" />
-                                {{ request.createdAt | date:'MMM d, yyyy · h:mm a' }}
+                                {{ request.createdAt | date:'MMM d, h:mm a' }}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Actions -->
                     <div class="flex gap-2 pt-2 border-t border-gray-50">
                         <button z-button zType="secondary" zSize="sm" 
                                 (click)="approve(request.id, request.requestType)" 
@@ -73,7 +73,7 @@
                             <z-icon zType="check" class="mr-1.5" /> Approve
                         </button>
                         <button z-button zType="default" zSize="sm" 
-                                (click)="reject(request.id, request.requestType)" 
+                                (click)="reject(request.id, request.requestType, rejectionTemplate)" 
                                 class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border-red-200">
                             <z-icon zType="x" class="mr-1.5" /> Reject
                         </button>
@@ -83,65 +83,38 @@
 
             <!-- Desktop Table View -->
             <div class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <table z-table class="w-full">
+                <table z-table zType="grid" class="w-full">
                     <thead z-table-header>
                         <tr z-table-row>
-                            <th z-table-head>
-                                <div class="flex items-center gap-2">
-                                    <z-icon zType="user" class="w-3.5 h-3.5" />
-                                    Requested By
-                                </div>
-                            </th>
-                            <th z-table-head>
-                                <div class="flex items-center gap-2">
-                                    <z-icon zType="tag" class="w-3.5 h-3.5" />
-                                    Request Target
-                                </div>
-                            </th>
-                            <th z-table-head>
-                                <div class="flex items-center gap-2">
-                                    <z-icon zType="tag" class="w-3.5 h-3.5" />
-                                    Request Type
-                                </div>
-                            </th>
-                            <th z-table-head>
-                                <div class="flex items-center gap-2">
-                                    <z-icon zType="activity" class="w-3.5 h-3.5" />
-                                    Payload
-                                </div>
-                            </th>
-                            <th z-table-head>
-                                <div class="flex items-center gap-2">
-                                    <z-icon zType="clock" class="w-3.5 h-3.5" />
-                                    Requested At
-                                </div>
-                            </th>
-                            <th z-table-head class="text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <z-icon zType="settings" class="w-3.5 h-3.5" />
-                                    Actions
-                                </div>
-                            </th>
+                            <th z-table-head>Requested By</th>
+                            <th z-table-head>Request Target</th>
+                            <th z-table-head>Request Type</th>
+                            <th z-table-head>Changes</th>
+                            <th z-table-head class="border-r border-gray-100">Requested At</th>
+                            <th z-table-head class="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody z-table-body>
-                        <tr z-table-row *ngFor="let request of pager.items; trackBy: trackById" class="hover:bg-blue-50/10 transition-colors">
+                        <tr z-table-row *ngFor="let request of pager.items; trackBy: trackById" class="hover:bg-blue-50/5 transition-colors group">
                             <td z-table-cell>
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+                                    <div class="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
                                         <z-icon zType="user" size="14" />
                                     </div>
-                                    <div>
-                                        <div class="font-bold text-gray-900">{{ request.requesterName }}</div>
-                                        <div class="text-xs text-gray-500">{{ request.requesterEmail }}</div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-gray-900 truncate max-w-[140px]" [title]="request.requesterName">{{ request.requesterName }}</div>
+                                        <div class="text-[10px] text-gray-500 truncate max-w-[140px]" [title]="request.requesterEmail">{{ request.requesterEmail }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td z-table-cell class="font-medium text-gray-800 border-x border-gray-100 bg-gray-50/30">
-                                {{ request.targetLabel }}
+                            <td z-table-cell class="border-x border-gray-100 bg-gray-50/30">
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="font-bold text-gray-900 leading-tight">{{ request.targetLabel }}</span>
+                                    <span class="text-[10px] text-gray-500 font-normal" *ngIf="request.targetSubLabel">{{ request.targetSubLabel }}</span>
+                                </div>
                             </td>
                             <td z-table-cell>
-                                <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide" [ngClass]="{
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide inline-block" [ngClass]="{
                                     'bg-blue-100 text-blue-700': (request.requestType || '').toString().toUpperCase().includes('CREATE'),
                                     'bg-yellow-100 text-yellow-700': (request.requestType || '').toString().toUpperCase().includes('MODIFY') || (request.requestType || '').toString().toUpperCase().includes('UPDATE'),
                                     'bg-red-100 text-red-700': (request.requestType || '').toString().toUpperCase().includes('DEACTIVATE'),
@@ -150,35 +123,32 @@
                                     {{ request.requestType }}
                                 </span>
                             </td>
-                            <td z-table-cell>
+                            <td z-table-cell class="max-w-xs py-3">
                                 <ng-container *ngIf="getPayloadEntries(request) as entries">
-                                    <div *ngIf="entries.length; else emptyPayload" class="flex flex-wrap gap-1 max-w-[280px] lg:max-w-md">
-                                        <span *ngFor="let kv of entries"
-                                            class="inline-flex items-center gap-1 rounded bg-gray-100/80 px-2 py-0.5 text-[11px] text-gray-700 border border-gray-200/50"
-                                            [title]="kv.label + ': ' + kv.value"
-                                        >
-                                            <span class="font-bold text-gray-900/80">{{ kv.label }}:</span>
-                                            <span class="font-mono truncate max-w-[150px]">{{ kv.value }}</span>
-                                        </span>
+                                    <div *ngIf="entries.length; else emptyPayload" class="space-y-1.5">
+                                        <div *ngFor="let kv of entries" class="text-[11px] leading-relaxed text-gray-600 flex items-start gap-1.5">
+                                            <span class="font-bold text-gray-800 whitespace-nowrap">{{ kv.label }}:</span>
+                                            <span class="break-words">{{ kv.value }}</span>
+                                        </div>
                                     </div>
                                     <ng-template #emptyPayload>
-                                        <span class="text-gray-400 text-xs italic">No payload details</span>
+                                        <span class="text-gray-400 text-[11px] italic">No payload details</span>
                                     </ng-template>
                                 </ng-container>
                             </td>
-                            <td z-table-cell class="text-sm text-gray-600 font-medium">
-                                {{ request.createdAt | date:'MMM d, shortTime' }}
+                            <td z-table-cell class="text-[11px] text-gray-500 font-medium border-r border-gray-100">
+                                {{ request.createdAt | date:'MMM d, h:mm a' }}
                             </td>
                             <td z-table-cell class="text-right">
                                 <div class="flex justify-end gap-2">
                                     <button z-button zType="secondary" zSize="sm"
                                         (click)="approve(request.id, request.requestType)"
-                                        class="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 transition-all">
+                                        class="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 transition-all font-bold text-[11px] px-3">
                                         <z-icon zType="check" class="mr-1" /> Approve
                                     </button>
                                     <button z-button zType="default" zSize="sm"
-                                        (click)="reject(request.id, request.requestType)"
-                                        class="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 transition-all">
+                                        (click)="reject(request.id, request.requestType, rejectionTemplate)"
+                                        class="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 transition-all font-bold text-[11px] px-3">
                                         <z-icon zType="x" class="mr-1" /> Reject
                                     </button>
                                 </div>
@@ -241,3 +211,17 @@
         </div>
     </ng-template>
 </div>
+
+<ng-template #rejectionTemplate let-dialog="alertDialogRef">
+    <div class="px-6 py-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+            Rejection Reason (Optional)
+        </label>
+        <textarea
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border outline-none"
+            rows="3"
+            placeholder="e.g. Duplicate request, missing information..."
+            (input)="dialog.config.zData.setReason($any($event.target).value)"
+        ></textarea>
+    </div>
+</ng-template>

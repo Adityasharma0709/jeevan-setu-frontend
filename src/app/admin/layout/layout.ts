@@ -16,6 +16,9 @@ import {
 } from '@/shared/components/layout';
 import { CommonModule } from '@angular/common';
 
+import { ZardBadgeComponent } from '@/shared/components/badge';
+import { RequestCountService } from '../../core/services/request-count.service';
+
 @Component({
   selector: 'app-layout',
   standalone: true,
@@ -27,6 +30,7 @@ import { CommonModule } from '@angular/common';
     SidebarComponent,
     ContentComponent,
     ZardIconComponent,
+    ZardBadgeComponent,
     SidebarGroupComponent,
     SidebarGroupLabelComponent,
     ZardTooltipDirective,
@@ -38,13 +42,20 @@ export class Layout {
   sidebarCollapsed = window.innerWidth < 768;
   isMobile = window.innerWidth < 768;
   profile$: Observable<ProfileVm>;
+  pendingCount$: Observable<number>;
 
   constructor(
     private router: Router,
     private api: ApiService,
     private userProfile: UserProfileService,
+    private requestCountService: RequestCountService
   ) {
     this.profile$ = this.userProfile.profile$;
+    this.pendingCount$ = this.requestCountService.pendingCount$;
+  }
+
+  onSidebarCollapsedChange(collapsed: boolean) {
+    this.sidebarCollapsed = collapsed;
   }
 
   toggleSidebar() {

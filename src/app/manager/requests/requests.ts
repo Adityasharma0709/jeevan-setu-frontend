@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, combineLatest, forkJoin, map, shareReplay,
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ManagerService } from '../manager.service';
+import { RequestCountService } from '../../core/services/request-count.service';
 import { ZardButtonComponent } from '@/shared/components/button';
 import {
   ZardTableComponent,
@@ -75,7 +76,8 @@ export class Requests implements OnInit {
 
   constructor(
     private managerService: ManagerService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private requestCountService: RequestCountService
   ) {
     this.initPagers();
   }
@@ -91,7 +93,11 @@ export class Requests implements OnInit {
         const ben = Array.isArray(res.beneficiary) ? res.beneficiary : [];
         const prof = Array.isArray(res.profile) ? res.profile : [];
         const requests = [...ben, ...prof];
-        return requests
+        
+        // Deduplicate by ID
+        const unique = Array.from(new Map(requests.map(r => [r.id, r])).values());
+        
+        return unique
           .filter((request) => String(request?.status || 'PENDING').toUpperCase() === 'PENDING')
           .map((request) => this.normalizeIncomingRequest(request))
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -240,6 +246,7 @@ export class Requests implements OnInit {
       next: () => {
         toast.success('Request approved successfully');
         this.loadIncomingRequests();
+        this.requestCountService.refresh();
       },
       error: (err: any) => {
         toast.error(err?.error?.message || 'Failed to approve request');
@@ -247,19 +254,34 @@ export class Requests implements OnInit {
     });
   }
 
-  rejectIncoming(request: any) {
-    const reason = prompt('Enter rejection reason (optional):') || undefined;
-    const ob$ = request.type === 'BENEFICIARY_UPDATE'
-      ? this.managerService.rejectBeneficiaryRequest(request.id, reason)
-      : this.managerService.updateRequestStatus(request.id, 'REJECTED', reason);
+  rejectIncoming(request: any, template?: any) {
+    let reason = '';
+    
+    this.alertDialog.create({
+      zTitle: 'Reject Outreach Request',
+      zContent: template,
+      zOkText: 'Reject',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zWidth: '400px',
+      zOnOk: () => {
+        const ob$ = request.type === 'BENEFICIARY_UPDATE'
+          ? this.managerService.rejectBeneficiaryRequest(request.id, reason || undefined)
+          : this.managerService.updateRequestStatus(request.id, 'REJECTED', reason || undefined);
 
-    ob$.subscribe({
-      next: () => {
-        toast.success('Request rejected successfully');
-        this.loadIncomingRequests();
+        ob$.subscribe({
+          next: () => {
+            toast.success('Request rejected successfully');
+            this.loadIncomingRequests();
+            this.requestCountService.refresh();
+          },
+          error: (err: any) => {
+            toast.error(err?.error?.message || 'Failed to reject request');
+          }
+        });
       },
-      error: (err: any) => {
-        toast.error(err?.error?.message || 'Failed to reject request');
+      zData: {
+        setReason: (val: string) => reason = val
       }
     });
   }
@@ -386,6 +408,7 @@ export class Requests implements OnInit {
   getPayloadEntries(request: any): Array<{ key: string; label: string; value: string }> {
     const rawPayload = request?.payload || request?.data || {};
     const payload = this.extractDisplayPayload(rawPayload);
+    const skipKeys = ['workerId', 'beneficiaryId', 'id', 'projectId', 'locationId', 'requestedById', 'targetAdminId', 'uid', 'usercode'];
 
     if (!payload || typeof payload !== 'object') return [];
     if (Array.isArray(payload)) {
@@ -396,7 +419,9 @@ export class Requests implements OnInit {
       }));
     }
 
-    return Object.entries(payload as Record<string, unknown>).map(([key, value]) => ({
+    return Object.entries(payload as Record<string, unknown>)
+      .filter(([key]) => !skipKeys.includes(key))
+      .map(([key, value]) => ({
       key,
       label: this.formatFieldLabel(key),
       value: this.formatPayloadValue(key, value),

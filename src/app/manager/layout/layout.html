@@ -57,10 +57,25 @@
           <div class="h-px bg-gray-100 my-1 mx-2"></div>
 
           <!-- Requests -->
-          <a routerLink="/manager/requests" routerLinkActive="active-link" class="menu-link"
+          <a routerLink="/manager/requests" routerLinkActive="active-link" class="menu-link relative"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Requests' : ''" zPosition="right" (click)="closeSidebar()">
             <z-icon zType="inbox" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Requests</span> }
+            @if (!sidebarCollapsed) { 
+              <span class="flex-1">Requests</span> 
+              @if ((pendingCount$ | async); as count) {
+                @if (count > 0) {
+                  <z-badge zType="destructive" zShape="pill" class="ml-auto text-[10px] px-1.5 h-4 min-w-[16px] flex items-center justify-center">
+                    {{ count }}
+                  </z-badge>
+                }
+              }
+            } @else {
+              @if ((pendingCount$ | async); as count) {
+                @if (count > 0) {
+                  <div class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border border-white"></div>
+                }
+              }
+            }
           </a>
 
           <!-- Outreach Workers -->

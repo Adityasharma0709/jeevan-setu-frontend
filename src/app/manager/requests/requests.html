@@ -48,7 +48,7 @@
                                     class="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
                                     <z-icon zType="check" class="mr-1" /> Approve
                                 </button>
-                                <button z-button zType="default" zSize="sm" (click)="rejectIncoming(request)"
+                                <button z-button zType="default" zSize="sm" (click)="rejectIncoming(request, rejectionTemplate)"
                                     class="bg-red-50 text-red-700 border-red-200 hover:bg-red-100">
                                     <z-icon zType="x" class="mr-1" /> Reject
                                 </button>
@@ -95,7 +95,7 @@
                     <button z-button zType="secondary" zSize="sm" (click)="approveIncoming(request)" class="flex-1 bg-green-50 text-green-700 border-green-200">
                         <z-icon zType="check" class="mr-1" /> Approve
                     </button>
-                    <button z-button zType="default" zSize="sm" (click)="rejectIncoming(request)" class="flex-1 bg-red-50 text-red-700 border-red-200">
+                    <button z-button zType="default" zSize="sm" (click)="rejectIncoming(request, rejectionTemplate)" class="flex-1 bg-red-50 text-red-700 border-red-200">
                         <z-icon zType="x" class="mr-1" /> Reject
                     </button>
                 </div>
@@ -160,6 +160,7 @@
                         <th z-table-head>Changes Preview</th>
                         <th z-table-head>Sent To / Approved By</th>
                         <th z-table-head>Status</th>
+                        <th z-table-head>Remarks</th>
                         <th z-table-head class="border-r border-gray-100">Requested At</th>
                         <th z-table-head class="text-right">Actions</th>
                     </tr>
@@ -200,6 +201,9 @@
                                 {{ request.status }}
                             </span>
                         </td>
+                        <td z-table-cell class="text-xs text-gray-500 italic max-w-[150px] truncate" [title]="request.remarks || ''">
+                            {{ request.remarks || '-' }}
+                        </td>
                         <td z-table-cell class="text-sm text-gray-500 border-r border-gray-100">{{ request.createdAt | date:'short' }}</td>
                         <td z-table-cell class="text-right">
                            <button *ngIf="request.status === 'PENDING'"
@@ -227,6 +231,12 @@
                         [ngClass]="getStatusBadgeClass(request.status)">
                         {{ request.status }}
                     </span>
+                </div>
+
+                <!-- Admin Remarks -->
+                <div *ngIf="request.remarks" class="bg-red-50/50 border border-red-100 p-2 rounded-lg mb-4">
+                    <div class="text-[9px] text-red-400 uppercase font-bold tracking-wider mb-1">Admin Remark</div>
+                    <p class="text-[11px] text-red-700 italic">"{{ request.remarks }}"</p>
                 </div>
 
                 <div class="mb-4">
@@ -324,4 +334,18 @@
   <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
     <ng-lottie [options]="options" height="200px" width="200px"></ng-lottie>
   </div>
+</ng-template>
+
+<ng-template #rejectionTemplate let-dialog="alertDialogRef">
+    <div class="px-6 py-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+            Rejection Reason (Optional)
+        </label>
+        <textarea
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm p-3 border outline-none"
+            rows="3"
+            placeholder="e.g. Duplicate records, incorrect data..."
+            (input)="dialog.config.zData.setReason($any($event.target).value)"
+        ></textarea>
+    </div>
 </ng-template>
