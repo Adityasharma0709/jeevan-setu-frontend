@@ -53,6 +53,41 @@
   </form>
 </ng-template>
 
+<!-- REMOVE ADMIN DIALOG TEMPLATE -->
+
+<ng-template #removeAdminDialogTpl>
+  <div class="space-y-4 pt-2">
+    <!-- Show a spinner if fetching projects -->
+    <div *ngIf="fetchingAdminProjects" class="flex justify-center py-6 text-sm text-gray-500">
+      Loading projects...
+    </div>
+
+    <!-- If fetched and no projects -->
+    <div *ngIf="!fetchingAdminProjects && !adminProjects.length" class="text-sm text-gray-500 text-center py-6">
+      This admin is not assigned to any projects.
+    </div>
+
+    <!-- If projects exist -->
+    <div *ngIf="!fetchingAdminProjects && adminProjects.length > 0">
+      <p class="text-sm text-gray-600 mb-4">
+        Select a project to unassign <span class="font-bold border px-1 rounded">{{ selectedAdminForRemoval?.name }}</span> from.
+      </p>
+
+      <z-form-field>
+        <label z-form-label zRequired>Project</label>
+        <z-form-control [errorMessage]="projectToRemoveCtrl.invalid && projectToRemoveCtrl.touched ? 'Please select a project' : ''">
+          <z-combobox
+            [formControl]="projectToRemoveCtrl"
+            [options]="adminProjects"
+            placeholder="Select project..."
+            class="w-full"
+          ></z-combobox>
+        </z-form-control>
+      </z-form-field>
+    </div>
+  </div>
+</ng-template>
+
 <!-- EDIT ADMIN DIALOG TEMPLATE -->
 
 <ng-template #editAdminDialog>
@@ -157,16 +192,22 @@
           </span>
         </td>
 
-        <td z-table-cell class="flex gap-2">
-          <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(a)">
+        <td z-table-cell class="flex gap-2 items-center">
+          <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(a)" title="Edit Admin">
             <z-icon zType="edit" />
             <span class="sr-only">Edit</span>
+          </button>
+
+          <button z-button zSize="sm" zType="secondary" (click)="openRemoveDialog(a)" title="Remove from Project">
+            <z-icon zType="trash" class="text-red-500" />
+            <span class="sr-only">Remove from Project</span>
           </button>
 
           <z-switch
             [zChecked]="a.status === 'ACTIVE'"
             [zDisabled]="isAdminStatusLoading(a.id)"
             (zCheckedChange)="toggleAdminStatus(a)"
+            title="Toggle Status"
           >
             <span class="sr-only">Toggle admin status</span>
           </z-switch>
@@ -203,15 +244,28 @@
       </span>
     </div>
 
-    <div class="mt-3 flex items-center justify-between">
-      <span class="text-xs text-gray-500">Status</span>
-      <z-switch
-        [zChecked]="a.status === 'ACTIVE'"
-        [zDisabled]="isAdminStatusLoading(a.id)"
-        (zCheckedChange)="toggleAdminStatus(a)"
+    <div class="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-500 mr-2">Status</span>
+        <z-switch
+          [zChecked]="a.status === 'ACTIVE'"
+          [zDisabled]="isAdminStatusLoading(a.id)"
+          (zCheckedChange)="toggleAdminStatus(a)"
+        >
+          <span class="sr-only">Toggle admin status</span>
+        </z-switch>
+      </div>
+
+      <button 
+        z-button 
+        zSize="sm" 
+        zType="secondary" 
+        (click)="openRemoveDialog(a)" 
+        class="text-xs px-2 py-1 text-red-600 border-red-200"
       >
-        <span class="sr-only">Toggle admin status</span>
-      </z-switch>
+        <z-icon zType="trash" class="w-3 h-3 mr-1" />
+        Unassign
+      </button>
     </div>
   </div>
 

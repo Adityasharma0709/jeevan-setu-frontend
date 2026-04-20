@@ -6,6 +6,7 @@ import { DashboardComponent } from './dashboard/dashboard';
 import { CreateAdminComponent } from './create-admin/create-admin';
 import { ProjectsComponent } from './projects/projects';
 import { LocationsComponent } from './locations/locations';
+import { ProfileComponent } from './profile/profile';
 import { Layout } from './layout/layout';
 
 const routes: Routes = [
@@ -40,6 +41,12 @@ const routes: Routes = [
         path: 'locations',
         component: LocationsComponent,
         data: { pageTitle: 'Locations' },
+      },
+
+      {
+        path: 'profile',
+        component: ProfileComponent,
+        data: { pageTitle: 'Profile' },
       }
 
     ]

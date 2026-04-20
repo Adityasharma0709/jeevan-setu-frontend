@@ -110,7 +110,16 @@ export class CreateAdminComponent {
   @ViewChild('editAdminDialog')
   editAdminDialog!: TemplateRef<any>;
 
+  @ViewChild('removeAdminDialogTpl')
+  removeAdminDialogTpl!: TemplateRef<any>;
+
   dialogRef!: ZardDialogRef<any>;
+
+  fetchingAdminProjects = false;
+  adminProjects: ZardComboboxOption[] = [];
+  projectToRemoveCtrl = new FormControl(null, [Validators.required]);
+  selectedAdminForRemoval: any = null;
+  readonly removingProjectLoading = signal(false);
 
   /* ======================
      FORMS
@@ -366,6 +375,69 @@ export class CreateAdminComponent {
         this.updateAdminLoading.set(false);
         toast.error('Update failed');
       },
+    });
+  }
+
+  /* ======================
+     REMOVE FROM PROJECT
+  ====================== */
+
+  openRemoveDialog(admin: any) {
+    this.selectedAdminForRemoval = admin;
+    this.projectToRemoveCtrl.reset();
+    this.adminProjects = [];
+    this.fetchingAdminProjects = true;
+    this.removingProjectLoading.set(false);
+
+    this.api.get(`projects/user/${admin.id}`).subscribe({
+      next: (projects: any) => {
+        this.fetchingAdminProjects = false;
+        this.adminProjects = projects.map((p: any) => ({ label: p.name + (p.projectCode ? ` (${p.projectCode})` : ''), value: p.id }));
+      },
+      error: () => {
+        this.fetchingAdminProjects = false;
+        toast.error('Failed to load admin projects');
+      }
+    });
+
+    this.dialogRef = this.dialog.create({
+      zTitle: 'Remove from Project',
+      zContent: this.removeAdminDialogTpl,
+      zOkText: 'Remove',
+      zOkLoading: this.removingProjectLoading,
+      zOnOk: () => {
+        if (!this.adminProjects.length) {
+          this.dialogRef.close();
+          return false;
+        }
+        if (this.projectToRemoveCtrl.invalid) {
+          this.projectToRemoveCtrl.markAsTouched();
+          toast.error('Please select a project');
+          return false;
+        }
+        
+        const projectId = this.projectToRemoveCtrl.value;
+        if (projectId !== null) {
+          this.removeAssignedProject(admin.id, projectId);
+        }
+        return false;
+      }
+    });
+  }
+
+  removeAssignedProject(adminId: number, projectId: number) {
+    this.removingProjectLoading.set(true);
+    this.api.delete(`users/admin/${adminId}/project/${projectId}`).subscribe({
+      next: () => {
+        toast.success('Admin removed from project');
+        this.removingProjectLoading.set(false);
+        this.dialogRef.close();
+        this.refresh$.next();
+      },
+      error: () => {
+        toast.error('Failed to remove from project');
+        this.removingProjectLoading.set(false);
+      }
     });
   }
 

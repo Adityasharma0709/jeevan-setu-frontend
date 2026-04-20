@@ -77,7 +77,14 @@
         </z-sidebar-group>
 
         <!-- ===== LOGOUT ===== -->
-        <div class="mt-auto pt-2 border-t border-gray-100">
+        <div class="mt-auto pt-2 border-t border-gray-100 flex flex-col gap-1">
+
+          <a routerLink="/super-admin/profile" routerLinkActive="active-link" class="menu-link"
+            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''"
+            zPosition="right" (click)="closeSidebar()">
+            <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-3 text-orange-500'" />
+            @if (!sidebarCollapsed) { <span class="flex-1">Profile</span> }
+          </a>
 
           <button type="button" class="menu-link w-full text-red-600 hover:bg-red-50"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Logout' : ''" zPosition="right"
