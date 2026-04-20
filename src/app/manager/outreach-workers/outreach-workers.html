@@ -110,6 +110,12 @@
                             <z-icon zType="settings" class="mr-1" /> Edit
                         </button>
                         
+                        <div class="col-span-2 pt-1 border-t border-gray-50 flex gap-2">
+                            <button *ngIf="worker.status === 'ACTIVE'" z-button zType="secondary" zSize="sm" (click)="openRemoveDialog(worker)" class="flex-1" title="Remove from Project">
+                                <z-icon zType="trash" class="mr-1" /> Remove from Project
+                            </button>
+                        </div>
+                        
                         <div class="col-span-2 pt-1">
                             <button *ngIf="worker.status === 'ACTIVE'" z-button zType="default" zSize="sm"
                                 (click)="openRequestDialog('DEACTIVATE', worker)"
@@ -162,6 +168,9 @@
                             <div class="flex justify-end gap-2">
                                 <button z-button zType="secondary" zSize="sm" (click)="openTagDialog(worker)" title="Tag to project">
                                     <z-icon zType="tag" />
+                                </button>
+                                <button *ngIf="worker.status === 'ACTIVE'" z-button zType="secondary" zSize="sm" (click)="openRemoveDialog(worker)" title="Remove from project">
+                                    <z-icon zType="trash" />
                                 </button>
                                 <button z-button zType="secondary" zSize="sm" (click)="openRequestDialog('MODIFY', worker)" title="Request Modify">
                                     <z-icon zType="settings" />
@@ -319,4 +328,25 @@
             </z-form-control>
         </z-form-field>
     </form>
+</ng-template>
+
+<!-- ================= REMOVE PROJECT DIALOG ================= -->
+<ng-template #removeOutreachDialog>
+    <div class="space-y-4 py-2">
+        <p class="text-sm text-gray-600">
+            Select a project to remove <strong>{{ targetWorkerForRemoval?.name }}</strong> from.
+        </p>
+
+        <z-form-field>
+            <label z-form-label zRequired>Assigned Projects</label>
+            <z-form-control>
+                <z-combobox
+                    [formControl]="projectToRemoveCtrl"
+                    [options]="workerProjects"
+                    placeholder="Select a project"
+                    zWidth="full"
+                />
+            </z-form-control>
+        </z-form-field>
+    </div>
 </ng-template>

@@ -32,7 +32,8 @@ export class Profile implements OnInit {
     this.profileForm = this.fb.group({
       name: ['', Validators.required],
       email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
-      mobile: ['', [Validators.pattern('^[0-9]{10}$')]]
+      mobile: ['', [Validators.pattern('^[0-9]{10}$')]],
+      password: ['']
     });
   }
 
@@ -66,10 +67,16 @@ export class Profile implements OnInit {
     }
 
     this.isSubmitting = true;
-    this.managerService.updateProfile(this.profileForm.getRawValue()).subscribe({
+    
+    const payload: any = this.profileForm.getRawValue();
+    if (!payload.password) delete payload.password;
+    delete payload.email; // Do not send disabled email
+    
+    this.managerService.updateProfile(payload).subscribe({
       next: () => {
         this.isSubmitting = false;
         setTimeout(() => toast.success('Profile updated successfully'));
+        this.profileForm.get('password')?.setValue('');
       },
       error: (err) => {
         this.isSubmitting = false;

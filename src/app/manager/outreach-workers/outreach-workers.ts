@@ -1,6 +1,6 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
 import { BehaviorSubject, Observable, combineLatest, map, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
@@ -22,6 +22,7 @@ import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
 import { ZardFormControlComponent, ZardFormFieldComponent, ZardFormLabelComponent } from '@/shared/components/form';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
+import { ApiService } from '../../core/services/api';
 
 @Component({
     selector: 'app-outreach-workers',
@@ -52,6 +53,7 @@ import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/c
 export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('requestDialog') requestDialog!: TemplateRef<any>;
     @ViewChild('tagDialog') tagDialog!: TemplateRef<any>;
+    @ViewChild('removeOutreachDialog') removeOutreachDialog!: TemplateRef<any>;
 
     workers: OutreachWorker[] = [];
     isSubmitting = false;
@@ -70,6 +72,13 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     isLoadingWorkers = false;
     options: AnimationOptions = { path: '/loading.json' };
     private refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+    projectToRemoveCtrl = new FormControl('', Validators.required);
+    workerProjects: ZardComboboxOption[] = [];
+    fetchingWorkerProjects = false;
+    removingProjectLoading = signal<boolean>(false);
+    targetWorkerForRemoval: OutreachWorker | null = null;
+    removeDialogRef!: ZardDialogRef<any>;
 
     readonly pageSize = 10;
     private readonly page$ = new BehaviorSubject<number>(1);
@@ -101,7 +110,8 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         private managerService: ManagerService,
         private dialog: ZardDialogService,
         private authService: AuthService,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        private api: ApiService
     ) {
         this.initForm();
         this.initPager();
@@ -491,5 +501,66 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
                     this.requestForm.get('usercode')?.setValue('OW01', { emitEvent: false });
                 },
             });
+    }
+
+    openRemoveDialog(worker: OutreachWorker) {
+        this.targetWorkerForRemoval = worker;
+        this.projectToRemoveCtrl.reset();
+        this.workerProjects = [];
+        this.fetchingWorkerProjects = true;
+        
+        this.api.get(`projects/user/${worker.id}`).subscribe({
+            next: (projects: any) => {
+                const list = Array.isArray(projects) ? projects : (projects?.data || []);
+                this.workerProjects = list.map((p: any) => ({
+                    label: `${p.name} ${p.projectCode ? '(' + p.projectCode + ')' : ''}`,
+                    value: p.id.toString()
+                }));
+                this.fetchingWorkerProjects = false;
+                this.cdr.detectChanges();
+            },
+            error: () => {
+                toast.error('Failed to load worker projects');
+                this.fetchingWorkerProjects = false;
+                this.cdr.detectChanges();
+            }
+        });
+
+        this.removeDialogRef = this.dialog.create({
+            zTitle: `Remove ${worker.name} from Project`,
+            zContent: this.removeOutreachDialog,
+            zOkText: 'Remove',
+            zOkLoading: this.removingProjectLoading,
+            zOnOk: () => {
+                this.submitRemoveProject();
+                return false;
+            },
+            zOnCancel: () => {
+                this.targetWorkerForRemoval = null;
+            }
+        });
+    }
+
+    submitRemoveProject() {
+        if (this.projectToRemoveCtrl.invalid || !this.targetWorkerForRemoval) {
+            toast.error('Please select a project');
+            return;
+        }
+        const projectId = Number(this.projectToRemoveCtrl.value);
+        this.removingProjectLoading.set(true);
+
+        this.api.delete(`users/outreach/${this.targetWorkerForRemoval.id}/project/${projectId}`).subscribe({
+            next: () => {
+                toast.success('Outreach worker removed from project successfully');
+                this.removingProjectLoading.set(false);
+                this.removeDialogRef.close();
+                this.loadWorkers();
+            },
+            error: (err: any) => {
+                const errorMessage = err?.error?.message || err?.message || 'Failed to remove from project';
+                toast.error(errorMessage);
+                this.removingProjectLoading.set(false);
+            }
+        });
     }
 }

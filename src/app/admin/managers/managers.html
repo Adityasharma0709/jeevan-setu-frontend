@@ -67,6 +67,10 @@
                                 <z-icon zType="layers" />
                                 <span class="sr-only">Assign Project</span>
                             </button>
+                            <button *ngIf="manager.status === 'ACTIVE'" z-button zType="secondary" zSize="sm" (click)="openRemoveDialog(manager)" title="Remove from Project">
+                                <z-icon zType="trash" />
+                                <span class="sr-only">Remove from Project</span>
+                            </button>
                             <z-switch
                                 *ngIf="canToggleStatus(manager)"
                                 [zChecked]="manager.status === 'ACTIVE'"
@@ -125,6 +129,17 @@
                 >
                     <z-icon zType="layers" />
                     <span class="sr-only">Assign Project</span>
+                </button>
+                <button
+                    *ngIf="manager.status === 'ACTIVE'"
+                    z-button
+                    zType="secondary"
+                    class="flex-1"
+                    title="Remove from Project"
+                    (click)="openRemoveDialog(manager)"
+                >
+                    <z-icon zType="trash" />
+                    <span class="sr-only">Remove from Project</span>
                 </button>
             </div>
             
@@ -353,4 +368,25 @@
             </z-form-control>
         </z-form-field>
     </form>
+</ng-template>
+
+<!-- ================= REMOVE PROJECT DIALOG ================= -->
+<ng-template #removeManagerDialog>
+    <div class="space-y-4 py-2">
+        <p class="text-sm text-gray-600">
+            Select a project to remove <strong>{{ targetManager?.name }}</strong> from.
+        </p>
+
+        <z-form-field>
+            <label z-form-label zRequired>Assigned Projects</label>
+            <z-form-control>
+                <z-combobox
+                    [formControl]="projectToRemoveCtrl"
+                    [options]="managerProjects"
+                    placeholder="Select a project"
+                    zWidth="full"
+                />
+            </z-form-control>
+        </z-form-field>
+    </div>
 </ng-template>

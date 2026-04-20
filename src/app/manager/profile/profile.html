@@ -29,6 +29,14 @@
                             <input z-input type="tel" formControlName="mobile" placeholder="9876543210" />
                         </z-form-control>
                     </z-form-field>
+
+                    <z-form-field>
+                        <label z-form-label>New Password (optional)</label>
+                        <z-form-control>
+                            <input z-input type="password" formControlName="password" placeholder="Enter new password" autocomplete="new-password" />
+                        </z-form-control>
+                        <p class="mt-1 text-xs text-gray-500">Leave blank if you don't want to change it.</p>
+                    </z-form-field>
                 </div>
 
                 <div class="pt-6 border-t border-gray-100 flex justify-end">

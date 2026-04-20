@@ -3,6 +3,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toast } from 'ngx-sonner';
 import { catchError, defer, map, of, shareReplay, startWith, tap } from 'rxjs';
+import { ApiService } from '../../core/services/api';
 
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
@@ -31,6 +32,7 @@ import { OutreachService } from '../outreach.service';
 export class Profile implements OnInit {
   private outreachService = inject(OutreachService);
   private fb = inject(FormBuilder);
+  private api = inject(ApiService);
   private readonly cacheKey = 'outreach.profile.cache';
 
   isSubmitting = false;
@@ -40,6 +42,7 @@ export class Profile implements OnInit {
     name: ['', Validators.required],
     email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
     mobile: ['', [Validators.pattern('^[0-9]{10}$')]],
+    password: [''],
   });
 
   readonly state$ = defer(() => {
@@ -113,25 +116,22 @@ export class Profile implements OnInit {
       return;
     }
 
-    const raw = this.form.getRawValue();
+    const payload: any = this.form.getRawValue();
+    if (!payload.password) delete payload.password;
+    delete payload.email;
+
     this.isSubmitting = true;
 
-    this.outreachService
-      .raiseRequest('MODIFY_PROFILE', {
-        changes: {
-          name: raw.name,
-          mobile: raw.mobile,
-        },
-      })
-      .subscribe({
-        next: () => {
-          toast.success('Profile change request submitted');
-          this.isSubmitting = false;
-        },
-        error: (err) => {
-          toast.error(err?.error?.message || 'Failed to submit request');
-          this.isSubmitting = false;
-        },
-      });
+    this.api.put('users/profile', payload).subscribe({
+      next: () => {
+        toast.success('Profile updated successfully');
+        this.form.get('password')?.setValue('');
+        this.isSubmitting = false;
+      },
+      error: (err) => {
+        toast.error(err?.error?.message || 'Failed to update profile');
+        this.isSubmitting = false;
+      }
+    });
   }
 }

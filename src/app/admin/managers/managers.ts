@@ -25,6 +25,7 @@ import { ZardDropdownImports } from '@/shared/components/dropdown/dropdown.impor
 import { ZardSwitchComponent } from '@/shared/components/switch';
 import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
 import { AuthService } from '../../core/services/auth';
+import { ApiService } from '../../core/services/api';
 
 @Component({
   selector: 'app-managers',
@@ -56,6 +57,12 @@ export class Managers {
   @ViewChild('managerDialog') managerDialog!: TemplateRef<any>;
   @ViewChild('assignDialog') assignDialog!: TemplateRef<any>;
   @ViewChild('detailsDialog') detailsDialog!: TemplateRef<any>;
+  @ViewChild('removeManagerDialog') removeManagerDialog!: TemplateRef<any>;
+
+  projectToRemoveCtrl = new FormControl('', Validators.required);
+  managerProjects: ZardComboboxOption[] = [];
+  fetchingManagerProjects = false;
+  removingProjectLoading = signal(false);
 
   dialogRef!: ZardDialogRef<any>;
   managerForm!: FormGroup;
@@ -164,7 +171,8 @@ export class Managers {
     private fb: FormBuilder,
     private managersService: ManagersService,
     private dialog: ZardDialogService,
-    private authService: AuthService
+    private authService: AuthService,
+    private api: ApiService
   ) {
     const status$ = this.statusFilter.valueChanges.pipe(
       startWith(this.statusFilter.value),
@@ -691,6 +699,64 @@ export class Managers {
       error: (err) => {
         toast.error(this.getErrorMessage(err, 'Assignment failed'));
       },
+    });
+  }
+
+  openRemoveDialog(manager: User) {
+    this.targetManager = manager;
+    this.projectToRemoveCtrl.reset();
+    this.managerProjects = [];
+    this.fetchingManagerProjects = true;
+    
+    this.managersService.getProjects(manager.id).subscribe({
+      next: (projects) => {
+        const list = Array.isArray(projects) ? projects : [];
+        this.managerProjects = list.map(p => ({
+          label: `${p.name} ${p.projectCode ? '(' + p.projectCode + ')' : ''}`,
+          value: p.id.toString()
+        }));
+        this.fetchingManagerProjects = false;
+      },
+      error: () => {
+        toast.error('Failed to load manager projects');
+        this.fetchingManagerProjects = false;
+      }
+    });
+
+    this.dialogRef = this.dialog.create({
+      zTitle: `Remove ${manager.name} from Project`,
+      zContent: this.removeManagerDialog,
+      zOkText: 'Remove',
+      zOkLoading: this.removingProjectLoading,
+      zOnOk: () => {
+        this.submitRemoveProject();
+        return false;
+      },
+      zOnCancel: () => {
+        this.targetManager = null;
+      }
+    });
+  }
+
+  submitRemoveProject() {
+    if (this.projectToRemoveCtrl.invalid || !this.targetManager) {
+        toast.error('Please select a project');
+        return;
+    }
+    const projectId = Number(this.projectToRemoveCtrl.value);
+    this.removingProjectLoading.set(true);
+
+    this.api.delete(`users/manager/${this.targetManager.id}/project/${projectId}`).subscribe({
+      next: () => {
+        toast.success('Manager removed from project successfully');
+        this.removingProjectLoading.set(false);
+        this.dialogRef.close();
+        this.refresh$.next();
+      },
+      error: (err: any) => {
+        toast.error(this.getErrorMessage(err, 'Failed to remove from project'));
+        this.removingProjectLoading.set(false);
+      }
     });
   }
 

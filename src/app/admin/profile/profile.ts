@@ -35,7 +35,8 @@ export class Profile implements OnInit {
         this.profileForm = this.fb.group({
             name: ['', Validators.required],
             email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
-            mobile: ['', [Validators.pattern('^[0-9]{10}$')]]
+            mobile: ['', [Validators.pattern('^[0-9]{10}$')]],
+            password: [''],
         });
     }
 
@@ -160,7 +161,11 @@ export class Profile implements OnInit {
         }
 
         this.isSubmitting = true;
-        this.api.put('users/profile', this.profileForm.getRawValue()).pipe(
+        const payload: any = this.profileForm.getRawValue();
+        if (!payload.password) delete payload.password;
+        delete payload.email; // Do not send disabled email if it causes issues, but getRawValue includes it.
+        
+        this.api.put('users/profile', payload).pipe(
             take(1),
             timeout({ each: 15000 }),
             finalize(() => {
@@ -170,6 +175,7 @@ export class Profile implements OnInit {
         ).subscribe({
             next: () => {
                 setTimeout(() => toast.success('Profile updated successfully'), 0);
+                this.profileForm.get('password')?.setValue('');
             },
             error: (err: any) => {
                 setTimeout(() => toast.error(err?.error?.message || 'Update failed'), 0);
