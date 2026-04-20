@@ -41,12 +41,15 @@ export class ProfileView implements OnInit, OnDestroy {
     groups: BeneficiaryGroup[] = [];
     activities: OutreachActivity[] = [];
     sessions: OutreachSession[] = [];
+    activityReports: any[] = [];
+    reportsLoading = false;
 
     // Loader
     options: AnimationOptions = { path: '/loading.json' };
 
     // UI state
     loading = true;
+    activeTab: 'detail' | 'history' = 'detail';
 
     // Tagging selections (Combobox expects string | null)
     selectedGroupId: string | null = null;
@@ -94,6 +97,7 @@ export class ProfileView implements OnInit, OnDestroy {
             this.beneficiary = stateData;
             this.loading = false;
             this.cdr.markForCheck();
+            this.loadReports(stateData.id);
             return;
         }
 
@@ -105,6 +109,7 @@ export class ProfileView implements OnInit, OnDestroy {
                     this.beneficiary = data;
                     this.loading = false;
                     this.cdr.markForCheck();
+                    this.loadReports(data.id);
                 },
                 error: () => {
                     toast.error('Beneficiary not found');
@@ -157,6 +162,27 @@ export class ProfileView implements OnInit, OnDestroy {
             ['/outreach/beneficiary', this.beneficiary.id, 'request-update'],
             { state: { beneficiary: this.beneficiary } }
         );
+    }
+
+    private loadReports(beneficiaryId: number): void {
+        this.reportsLoading = true;
+        this.outreachService.getReportsByBeneficiary(beneficiaryId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (reports) => {
+                    this.activityReports = reports;
+                    this.reportsLoading = false;
+                    this.cdr.markForCheck();
+                },
+                error: () => {
+                    this.reportsLoading = false;
+                    this.cdr.markForCheck();
+                }
+            });
+    }
+
+    getScreeningBadge(report: any): string {
+        return report?.reportData?.screening === 'Yes' ? 'Yes' : 'No';
     }
 
     goBack(): void {

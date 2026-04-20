@@ -1,266 +1,331 @@
-<div class="p-6 space-y-6 max-w-7xl mx-auto">
+<div class="min-h-screen bg-gray-50/60">
 
-    <!-- Breadcrumb -->
-    <z-breadcrumb>
-        <z-breadcrumb-item [routerLink]="['/outreach/beneficiaries']">Beneficiaries</z-breadcrumb-item>
-        <z-breadcrumb-item>Beneficiary Detail</z-breadcrumb-item>
-    </z-breadcrumb>
-
-    <!-- Loading State -->
-    <div *ngIf="loading" class="flex flex-col items-center justify-center w-full min-h-[60vh] gap-4">
+    <!-- ===== LOADING STATE ===== -->
+    <div *ngIf="loading" class="flex flex-col items-center justify-center w-full min-h-screen gap-4">
         <ng-lottie [options]="options" height="160px" width="160px"></ng-lottie>
         <p class="text-gray-500 font-medium animate-pulse">Loading Profile...</p>
     </div>
 
-    <!-- Data Loaded State -->
+    <!-- ===== DATA LOADED ===== -->
     <ng-container *ngIf="!loading && beneficiary">
-        
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row justify-between items-start gap-4">
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                    <z-icon zType="user" size="32" />
-                </div>
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900 break-words">{{ beneficiary.name }}</h1>
-                    <div class="flex items-center gap-2 mt-1">
-                        <span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded border">{{ beneficiary.uid }}</span>
-                        <span class="text-gray-400">·</span>
-                        <span class="text-sm text-gray-500 flex items-center gap-1">
-                            <z-icon zType="calendar" size="14" />
-                            Registered on {{ beneficiary.createdAt | date:'mediumDate' }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button z-button zType="secondary" (click)="goBack()">
-                    <z-icon zType="arrow-left" class="mr-2" /> Back
-                </button>
-                <button z-button (click)="goToRequestUpdate()">
-                    <z-icon zType="edit" class="mr-2" /> Request Update
-                </button>
-            </div>
-        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Left Column: Key Stats & Demographic -->
-            <div class="lg:col-span-1 space-y-6">
-                <!-- Location Card -->
-                <div class="bg-white rounded-2xl border p-6 shadow-sm">
-                    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <z-icon zType="house" size="16" />
-                        Residential Address
-                    </h2>
-                    <div class="space-y-4">
-                        <div class="flex flex-col">
-                            <span class="text-lg font-bold text-gray-900">{{ beneficiary.village || beneficiary.location?.village || '-' }}</span>
-                            <span class="text-sm text-gray-500">{{ beneficiary.block || beneficiary.location?.block || '-' }}</span>
-                        </div>
-                        <div class="pt-4 border-t grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-[10px] text-gray-400 uppercase">District</label>
-                                <p class="font-medium truncate">{{ beneficiary.district || '-' }}</p>
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-gray-400 uppercase">State</label>
-                                <p class="font-medium truncate">{{ beneficiary.state || '-' }}</p>
-                            </div>
-                        </div>
-                    </div>
+        <!-- ===== HERO HEADER ===== -->
+        <div class="bg-white px-4 sm:px-6 pt-5 pb-0 border-b border-gray-100 shadow-sm">
+            <!-- Breadcrumb -->
+            <div class="max-w-7xl mx-auto">
+                <div class="overflow-x-auto no-scrollbar mb-4">
+                    <z-breadcrumb class="[&_*]:!text-gray-500 [&_a]:hover:!text-indigo-600 whitespace-nowrap">
+                        <z-breadcrumb-item [routerLink]="['/outreach/beneficiaries']">Beneficiaries</z-breadcrumb-item>
+                        <z-breadcrumb-item>Beneficiary Detail</z-breadcrumb-item>
+                    </z-breadcrumb>
                 </div>
 
-                <!-- Demographic Profile -->
-                <div class="bg-white rounded-2xl border p-6 shadow-sm">
-                    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <z-icon zType="user" size="16" />
-                        Demographic Profile
-                    </h2>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
-                            <span class="text-sm text-gray-500">Gender</span>
-                            <span class="font-medium px-2 py-0.5 rounded text-xs capitalize" 
-                                  [ngClass]="beneficiary.gender === 'female' ? 'bg-pink-50 text-pink-700' : 'bg-blue-50 text-blue-700'">
-                                {{ beneficiary.gender }}
-                            </span>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-5">
+                    <!-- Identity -->
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center shadow-sm border border-indigo-100 shrink-0">
+                            <z-icon zType="user" size="32" class="text-indigo-600" />
                         </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
-                            <span class="text-sm text-gray-500">Religion</span>
-                            <span class="font-medium">{{ beneficiary.religion || '-' }}</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
-                            <span class="text-sm text-gray-500">Caste</span>
-                            <span class="font-medium">{{ beneficiary.caste || '-' }}</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
-                            <span class="text-sm text-gray-500">Qualification</span>
-                            <span class="font-medium">{{ beneficiary.qualification || '-' }}</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2">
-                            <span class="text-sm text-gray-500 font-bold text-indigo-600">Mobile Number</span>
-                            <span class="font-bold text-indigo-700 tracking-wider">{{ beneficiary.mobileNumber || '-' }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column: Personal, Marital, Economic & Family -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- Personal & Marital History -->
-                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
-                    <div class="bg-gray-50 px-6 py-3 border-b">
-                        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Personal & Marital History</h2>
-                    </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="space-y-5">
-                            <div>
-                                <label class="text-xs text-gray-400 uppercase">Guardian Name</label>
-                                <p class="text-lg font-semibold text-gray-900 border-b pb-1 break-words">{{ beneficiary.guardianName }}</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-xs text-gray-400 uppercase">Birth Date</label>
-                                    <p class="font-medium">{{ beneficiary.dateOfBirth | date:'longDate' }}</p>
-                                </div>
-                                <div>
-                                    <label class="text-xs text-gray-400 uppercase">Marital Status</label>
-                                    <p class="font-medium capitalize">{{ beneficiary.maritalStatus || 'Single' }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Age Metrics -->
-                        <div class="bg-slate-50 p-4 rounded-xl space-y-4">
-                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest text-center">Calculated Metrics</h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-white p-3 rounded-lg border text-center shadow-sm">
-                                    <span class="text-[10px] text-gray-400 block mb-1">Age at Marriage</span>
-                                    <span class="text-2xl font-black text-indigo-600">{{ beneficiary.womanAgeAtMarriage || '-' }}</span>
-                                </div>
-                                <div class="bg-white p-3 rounded-lg border text-center shadow-sm">
-                                    <span class="text-[10px] text-gray-400 block mb-1">Husband Age</span>
-                                    <span class="text-2xl font-black text-emerald-600">{{ beneficiary.husbandAgeAtMarriage || '-' }}</span>
-                                </div>
-                            </div>
-                            <div class="text-center pt-2">
-                                <span class="text-xs text-slate-400 italic">Date of Marriage: {{ beneficiary.dateOfMarriage || '-' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Economic Status -->
-                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
-                    <div class="bg-emerald-50 px-6 py-3 border-b border-emerald-100">
-                        <h2 class="text-sm font-bold text-emerald-800 uppercase tracking-wider">Economic & Employment Profile</h2>
-                    </div>
-                    <div class="p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <div>
-                            <label class="text-xs text-gray-400 uppercase block mb-1">Monthly Income</label>
-                            <p class="text-xl font-bold text-emerald-600">{{ beneficiary.monthlyIncome | currency:'INR' }}</p>
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-400 uppercase block mb-1">Income Source</label>
-                            <p class="font-semibold text-gray-700 capitalize">{{ beneficiary.primaryIncomeSource || '-' }}</p>
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-400 uppercase block mb-1">Economic Status</label>
-                            <p class="font-semibold text-gray-700 uppercase">{{ beneficiary.economicStatus || '-' }}</p>
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-400 uppercase block mb-1">Employment</label>
-                            <p class="font-semibold text-gray-700 capitalize">{{ beneficiary.employmentStatus || '-' }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Children Section -->
-                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
-                    <div class="bg-amber-50 px-6 py-3 border-b border-amber-100 flex justify-between items-center">
-                        <h2 class="text-sm font-bold text-amber-800 uppercase tracking-wider">Children Details</h2>
-                        <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" *ngIf="beneficiary.children?.length">
-                            {{ beneficiary.children?.length }} CHILD(REN)
-                        </span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-amber-50/50 text-amber-900 border-b border-amber-100">
-                                <tr>
-                                    <th class="px-6 py-3 font-semibold">Name</th>
-                                    <th class="px-6 py-3 font-semibold">Date of Birth</th>
-                                    <th class="px-6 py-3 font-semibold">Gender</th>
-                                    <th class="px-6 py-3 font-semibold">Schooling Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <tr *ngFor="let child of beneficiary.children" class="hover:bg-amber-50/20 transition-colors">
-                                    <td class="px-6 py-4 font-medium text-gray-900 break-words">{{ child.name }}</td>
-                                    <td class="px-6 py-4 text-gray-600">{{ child.dateOfBirth | date:'mediumDate' }}</td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
-                                              [ngClass]="child.gender === 'female' ? 'bg-pink-50 text-pink-700' : 'bg-blue-50 text-blue-700'">
-                                            {{ child.gender }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-600">{{ child.schoolingStatus }}</td>
-                                </tr>
-                                <tr *ngIf="!beneficiary.children?.length">
-                                    <td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">No children registered for this beneficiary.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Tagging & Engagement Section (Outreach Specific) -->
-                <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
-                    <h2 class="text-sm font-bold text-indigo-900 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <z-icon zType="tag" size="16" />
-                        Engagement & Tagging Actions
-                    </h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <!-- Group Tagging -->
-                        <div class="space-y-4">
-                            <div class="flex flex-col">
-                                <label class="text-xs font-bold text-indigo-600 uppercase mb-1">Assign to Group</label>
-                                <div class="flex flex-col sm:flex-row gap-2">
-                                    <z-combobox 
-                                        [(ngModel)]="selectedGroupId"
-                                        [options]="groupOptions"
-                                        placeholder="Select Group"
-                                        zWidth="full"
-                                        class="flex-1"
-                                    />
-                                    <button z-button zType="default" (click)="saveGroupTag()" [disabled]="!selectedGroupId" class="w-full sm:w-auto">
-                                        Tag
-                                    </button>
-                                </div>
-                            </div>
-                            <!-- Existing Group Badges -->
-                            <div *ngIf="beneficiary.groups?.length" class="flex flex-wrap gap-2 pt-2">
-                                <span *ngFor="let g of beneficiary.groups" class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-1 rounded-lg border border-indigo-200 shadow-sm">
-                                    {{ g.group?.name }}
+                        <div class="min-w-0">
+                            <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight break-words truncate">{{ beneficiary.name }}</h1>
+                            <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                                <span class="text-[11px] font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200 shrink-0">{{ beneficiary.uid }}</span>
+                                <span class="text-gray-500 text-xs flex items-center gap-1 shrink-0">
+                                    <z-icon zType="calendar" size="12" />
+                                    Registered {{ beneficiary.createdAt | date:'mediumDate' }}
+                                </span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0"
+                                      [ngClass]="beneficiary.gender === 'female' ? 'bg-pink-100 text-pink-700 border border-pink-200' : 'bg-blue-100 text-blue-700 border border-blue-200'">
+                                    {{ beneficiary.gender }}
                                 </span>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Activity Tagging -->
-                        <div class="space-y-4">
-                            <div class="flex flex-col">
-                                <label class="text-xs font-bold text-indigo-600 uppercase mb-1">Log Participation</label>
-                                <div class="space-y-3">
-                                    <z-combobox 
+                    <!-- Actions -->
+                    <div class="flex gap-2 shrink-0">
+                        <button z-button zType="secondary"
+                                class="!bg-gray-50 !border-gray-200 !text-gray-700 hover:!bg-gray-100"
+                                (click)="goBack()">
+                            <z-icon zType="arrow-left" class="mr-2" /> Back
+                        </button>
+                        <button z-button
+                                class="!bg-indigo-600 !text-white hover:!bg-indigo-700 shadow"
+                                (click)="goToRequestUpdate()">
+                            <z-icon zType="edit" class="mr-2" /> Request Update
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ===== PILL TAB SWITCHER (on the hero, blends into content) ===== -->
+                <div class="grid grid-cols-2 gap-1 -mb-px w-full">
+                    <button
+                        (click)="activeTab = 'detail'"
+                        class="relative py-3 flex items-center justify-center text-xs sm:text-sm font-semibold rounded-t-xl transition-all duration-200"
+                        [ngClass]="activeTab === 'detail'
+                            ? 'bg-gray-50/95 text-indigo-700 shadow-sm'
+                            : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'"
+                    >
+                        <z-icon zType="user" size="14" class="mr-1.5 shrink-0" />
+                        <span class="truncate">Details</span>
+                    </button>
+                    <button
+                        (click)="activeTab = 'history'"
+                        class="relative py-3 flex items-center justify-center text-xs sm:text-sm font-semibold rounded-t-xl transition-all duration-200"
+                        [ngClass]="activeTab === 'history'
+                            ? 'bg-gray-50/95 text-indigo-700 shadow-sm'
+                            : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'"
+                    >
+                        <z-icon zType="activity" size="14" class="mr-1.5 shrink-0" />
+                        <span class="truncate">History</span>
+                        <span *ngIf="activityReports.length"
+                              class="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 flex items-center justify-center"
+                              [ngClass]="activeTab === 'history' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'">
+                            {{ activityReports.length }}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB CONTENT AREA ===== -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-10">
+
+            <!-- ===== TAB: BENEFICIARY DETAILS ===== -->
+            <div *ngIf="activeTab === 'detail'" class="space-y-6 animate-fadeIn">
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    <!-- LEFT COLUMN -->
+                    <div class="lg:col-span-1 space-y-5">
+
+                        <!-- Location Card -->
+                        <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                            <div class="flex items-center gap-2 mb-4 min-w-0">
+                                <div class="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center shrink-0">
+                                    <z-icon zType="house" size="15" class="text-indigo-600" />
+                                </div>
+                                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Residential Address</h2>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <span class="text-xl font-bold text-gray-900">{{ beneficiary.village || beneficiary.location?.village || '—' }}</span>
+                                    <p class="text-sm text-gray-500 mt-0.5">{{ beneficiary.block || beneficiary.location?.block || '—' }}</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50">
+                                    <div class="bg-gray-50 rounded-lg px-3 py-2">
+                                        <label class="text-[10px] text-gray-400 uppercase font-semibold block">District</label>
+                                        <p class="font-semibold text-gray-800 text-sm mt-0.5">{{ beneficiary.district || '—' }}</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg px-3 py-2">
+                                        <label class="text-[10px] text-gray-400 uppercase font-semibold block">State</label>
+                                        <p class="font-semibold text-gray-800 text-sm mt-0.5">{{ beneficiary.state || '—' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Demographic Profile -->
+                        <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                            <div class="flex items-center gap-2 mb-4 min-w-0">
+                                <div class="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                                    <z-icon zType="user" size="15" class="text-blue-600" />
+                                </div>
+                                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Demographic Profile</h2>
+                            </div>
+                            <div class="space-y-0 divide-y divide-gray-50">
+                                <div class="flex justify-between items-center py-2.5">
+                                    <span class="text-sm text-gray-500">Gender</span>
+                                    <span class="font-semibold text-xs px-2.5 py-1 rounded-full capitalize"
+                                          [ngClass]="beneficiary.gender === 'female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'">
+                                        {{ beneficiary.gender }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center py-2.5">
+                                    <span class="text-sm text-gray-500">Religion</span>
+                                    <span class="font-semibold text-sm text-gray-800">{{ beneficiary.religion || '—' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2.5">
+                                    <span class="text-sm text-gray-500">Caste</span>
+                                    <span class="font-semibold text-sm text-gray-800">{{ beneficiary.caste || '—' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2.5">
+                                    <span class="text-sm text-gray-500">Qualification</span>
+                                    <span class="font-semibold text-sm text-gray-800">{{ beneficiary.qualification || '—' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pt-3">
+                                    <span class="text-sm font-bold text-indigo-600">Mobile</span>
+                                    <span class="font-bold text-indigo-700 tracking-wider text-sm">{{ beneficiary.mobileNumber || '—' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN -->
+                    <div class="lg:col-span-2 space-y-5">
+
+                        <!-- Personal & Marital History -->
+                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                            <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex items-center gap-2 min-w-0">
+                                <div class="w-7 h-7 bg-purple-50 rounded-lg flex items-center justify-center shrink-0">
+                                    <z-icon zType="heart" size="15" class="text-purple-600" />
+                                </div>
+                                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Personal & Marital History</h2>
+                            </div>
+                            <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-5 min-w-0">
+                                    <div>
+                                        <label class="text-[10px] text-gray-400 uppercase font-semibold">Guardian Name</label>
+                                        <p class="text-lg font-bold text-gray-900 mt-1 border-b border-gray-100 pb-2">{{ beneficiary.guardianName }}</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="bg-gray-50 rounded-xl p-3">
+                                            <label class="text-[10px] text-gray-400 uppercase font-semibold">Birth Date</label>
+                                            <p class="font-semibold text-gray-800 text-sm mt-1">{{ beneficiary.dateOfBirth | date:'mediumDate' }}</p>
+                                        </div>
+                                        <div class="bg-gray-50 rounded-xl p-3">
+                                            <label class="text-[10px] text-gray-400 uppercase font-semibold">Marital Status</label>
+                                            <p class="font-semibold text-gray-800 text-sm mt-1 capitalize">{{ beneficiary.maritalStatus || 'Single' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Age Metrics -->
+                                <div class="bg-gray-50 p-5 rounded-2xl border border-indigo-100/60 space-y-4">
+                                    <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Calculated Metrics</h3>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="bg-white p-4 rounded-xl border border-indigo-100 text-center shadow-sm">
+                                            <span class="text-[10px] text-gray-400 block mb-1 font-semibold uppercase">Age at Marriage</span>
+                                            <span class="text-3xl font-black text-indigo-600">{{ beneficiary.womanAgeAtMarriage || '—' }}</span>
+                                        </div>
+                                        <div class="bg-white p-4 rounded-xl border border-emerald-100 text-center shadow-sm">
+                                            <span class="text-[10px] text-gray-400 block mb-1 font-semibold uppercase">Husband Age</span>
+                                            <span class="text-3xl font-black text-emerald-600">{{ beneficiary.husbandAgeAtMarriage || '—' }}</span>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="beneficiary.dateOfMarriage" class="text-center pt-1">
+                                        <span class="text-xs text-slate-400">Married: {{ beneficiary.dateOfMarriage | date:'mediumDate' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Economic Status -->
+                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                            <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex items-center gap-2 min-w-0">
+                                <div class="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
+                                    <z-icon zType="circle-dollar-sign" size="15" class="text-emerald-600" />
+                                </div>
+                                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest break-words truncate">Economic & Employment Profile</h2>
+                            </div>
+                            <div class="p-4 sm:p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="bg-emerald-50 rounded-xl p-4">
+                                    <label class="text-[10px] text-emerald-600 uppercase font-bold block mb-1">Monthly Income</label>
+                                    <p class="text-xl font-black text-emerald-700">{{ beneficiary.monthlyIncome | currency:'INR':'symbol':'1.0-0' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-xl p-4">
+                                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Income Source</label>
+                                    <p class="font-semibold text-gray-700 capitalize text-sm">{{ beneficiary.primaryIncomeSource || '—' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-xl p-4">
+                                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Economic Status</label>
+                                    <p class="font-semibold text-gray-700 uppercase text-sm">{{ beneficiary.economicStatus || '—' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-xl p-4">
+                                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Employment</label>
+                                    <p class="font-semibold text-gray-700 capitalize text-sm">{{ beneficiary.employmentStatus || '—' }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Children -->
+                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                            <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <div class="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center shrink-0">
+                                        <z-icon zType="users" size="15" class="text-amber-600" />
+                                    </div>
+                                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Children Details</h2>
+                                </div>
+                                <span *ngIf="beneficiary.children?.length"
+                                      class="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                                    {{ beneficiary.children?.length }} Child(ren)
+                                </span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="bg-amber-50/60 text-amber-800 border-b border-amber-100">
+                                        <tr>
+                                            <th class="px-6 py-3 font-semibold">Name</th>
+                                            <th class="px-6 py-3 font-semibold">Date of Birth</th>
+                                            <th class="px-6 py-3 font-semibold">Gender</th>
+                                            <th class="px-6 py-3 font-semibold">Schooling</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr *ngFor="let child of beneficiary.children" class="hover:bg-amber-50/20 transition-colors">
+                                            <td class="px-6 py-3.5 font-medium text-gray-900">{{ child.name }}</td>
+                                            <td class="px-6 py-3.5 text-gray-500">{{ child.dateOfBirth | date:'mediumDate' }}</td>
+                                            <td class="px-6 py-3.5">
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
+                                                      [ngClass]="child.gender === 'female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'">
+                                                    {{ child.gender }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-3.5 text-gray-500">{{ child.schoolingStatus }}</td>
+                                        </tr>
+                                        <tr *ngIf="!beneficiary.children?.length">
+                                            <td colspan="4" class="px-6 py-10 text-center text-gray-400 italic text-sm">No children registered.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Engagement & Tagging -->
+                        <div class="bg-gray-50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
+                            <div class="flex items-center gap-2 mb-5">
+                                <div class="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                    <z-icon zType="tag" size="15" class="text-indigo-600" />
+                                </div>
+                                <h2 class="text-xs font-bold text-indigo-700 uppercase tracking-widest">Engagement & Tagging</h2>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Group Tagging -->
+                                <div class="bg-white rounded-xl border border-indigo-100/60 p-4 space-y-3">
+                                    <label class="text-xs font-bold text-indigo-600 uppercase">Assign to Group</label>
+                                    <div class="flex gap-2">
+                                        <z-combobox
+                                            [(ngModel)]="selectedGroupId"
+                                            [options]="groupOptions"
+                                            placeholder="Select Group"
+                                            zWidth="full"
+                                            class="flex-1"
+                                        />
+                                        <button z-button zType="default" (click)="saveGroupTag()" [disabled]="!selectedGroupId">
+                                            Tag
+                                        </button>
+                                    </div>
+                                    <div *ngIf="beneficiary.groups?.length" class="flex flex-wrap gap-1.5 pt-1">
+                                        <span *ngFor="let g of beneficiary.groups"
+                                              class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-1 rounded-lg border border-indigo-200">
+                                            {{ g.group?.name }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Activity Tagging -->
+                                <div class="bg-white rounded-xl border border-indigo-100/60 p-4 space-y-3">
+                                    <label class="text-xs font-bold text-indigo-600 uppercase">Log Participation</label>
+                                    <z-combobox
                                         [(ngModel)]="selectedActivityId"
                                         (zValueChange)="onActivityChange($event)"
                                         [options]="activityOptions"
                                         placeholder="Select Activity"
                                         zWidth="full"
                                     />
-                                    <div class="flex flex-col sm:flex-row gap-2">
-                                        <z-combobox 
+                                    <div class="flex gap-2">
+                                        <z-combobox
                                             [(ngModel)]="selectedSessionId"
                                             [zDisabled]="!selectedActivityId"
                                             [options]="sessionOptions"
@@ -268,27 +333,170 @@
                                             zWidth="full"
                                             class="flex-1"
                                         />
-                                        <button z-button zType="default" (click)="saveActivityTag()" [disabled]="!selectedSessionId" class="w-full sm:w-auto">
+                                        <button z-button zType="default" (click)="saveActivityTag()" [disabled]="!selectedSessionId">
                                             Log
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                    </div>
+                </div>
+            </div><!-- end detail tab -->
+
+            <!-- ===== TAB: ACTIVITY HISTORY ===== -->
+            <div *ngIf="activeTab === 'history'" class="animate-fadeIn">
+
+                <!-- Loading -->
+                <div *ngIf="reportsLoading" class="flex flex-col items-center justify-center py-24 gap-3">
+                    <ng-lottie [options]="options" height="120px" width="120px" />
+                    <p class="text-gray-400 text-sm animate-pulse">Loading activity history...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div *ngIf="!reportsLoading && !activityReports.length"
+                     class="bg-white rounded-2xl border border-gray-100 p-16 flex flex-col items-center justify-center text-center shadow-sm">
+                    <div class="w-16 h-16 bg-violet-50 rounded-full flex items-center justify-center mb-4">
+                        <z-icon zType="activity" size="28" class="text-violet-300" />
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">No Activity Reports Yet</h3>
+                    <p class="text-gray-400 text-sm mt-1">Activity reports for this beneficiary will appear here once recorded.</p>
+                </div>
+
+                <!-- Reports Table -->
+                <div *ngIf="!reportsLoading && activityReports.length" class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                    <!-- Table Header Bar -->
+                    <div class="px-4 sm:px-6 py-4 border-b border-gray-100 flex flex-col items-start sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2 min-w-0 w-full sm:w-auto">
+                            <div class="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center shrink-0">
+                                <z-icon zType="activity" size="16" class="text-violet-600" />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h2 class="font-bold text-gray-900 truncate">Activity Report History</h2>
+                                <p class="text-xs text-gray-400 truncate">All recorded activity sessions for {{ beneficiary.name }}</p>
+                            </div>
+                        </div>
+                        <span class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap self-start sm:self-auto">
+                            {{ activityReports.length }} Record(s)
+                        </span>
+                    </div>
+
+                    <!-- Desktop Table View -->
+                    <div class="overflow-x-auto w-full hidden md:block">
+                        <table class="w-full text-sm text-left min-w-[600px]">
+                            <thead class="bg-gray-50/80 border-b border-gray-100">
+                                <tr>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase w-10">#</th>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Activity</th>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Session</th>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Date</th>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Screening</th>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr *ngFor="let r of activityReports; let i = index"
+                                    class="hover:bg-violet-50/30 transition-colors group">
+                                    <td class="px-5 py-4 text-gray-300 font-mono text-xs">{{ i + 1 }}</td>
+                                    <td class="px-5 py-4">
+                                        <span class="font-semibold text-gray-800 group-hover:text-violet-700 transition-colors">
+                                            {{ r.activity?.name || '—' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-5 py-4 text-gray-500">{{ r.session?.name || '—' }}</td>
+                                    <td class="px-5 py-4 text-gray-500 whitespace-nowrap">
+                                        {{ (r.reportData?.sessionDate || r.createdAt) | date:'mediumDate' }}
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase"
+                                              [ngClass]="getScreeningBadge(r) === 'Yes'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-gray-100 text-gray-400'">
+                                            <span class="w-1.5 h-1.5 rounded-full inline-block"
+                                                  [ngClass]="getScreeningBadge(r) === 'Yes' ? 'bg-green-500' : 'bg-gray-300'"></span>
+                                            {{ getScreeningBadge(r) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <ng-container *ngIf="r.reportData?.screening === 'Yes' && r.reportData?.screeningDetails as sd">
+                                            <div class="flex flex-wrap gap-1">
+                                                <span *ngIf="sd.height" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Ht: {{sd.height}}</span>
+                                                <span *ngIf="sd.weight" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Wt: {{sd.weight}}</span>
+                                                <span *ngIf="sd.hb" class="bg-red-50 text-red-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Hb: {{sd.hb}}</span>
+                                                <span *ngIf="sd.bp" class="bg-orange-50 text-orange-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">BP: {{sd.bp}}</span>
+                                                <span *ngIf="sd.sugar" class="bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Sugar: {{sd.sugar}}</span>
+                                                <span *ngIf="sd.cervicalCancer" class="bg-pink-50 text-pink-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">CC: {{sd.cervicalCancer}}</span>
+                                                <span *ngIf="sd.breastCancer" class="bg-pink-50 text-pink-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">BC: {{sd.breastCancer}}</span>
+                                            </div>
+                                        </ng-container>
+                                        <span *ngIf="r.reportData?.screening !== 'Yes'" class="text-gray-300 text-xs italic">—</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Card View -->
+                    <div class="grid grid-cols-1 divide-y divide-gray-100 md:hidden bg-gray-50/30">
+                        <div *ngFor="let r of activityReports; let i = index" class="p-4 space-y-3">
+                            <div class="flex items-start justify-between min-w-0 gap-2">
+                                <div class="min-w-0">
+                                    <div class="font-bold text-gray-900 break-words mb-0.5 mt-0">
+                                        <span class="text-xs text-gray-400 font-mono mr-1">#{{ i + 1 }}</span>
+                                        {{ r.activity?.name || '—' }}
+                                    </div>
+                                    <div class="text-sm text-gray-500 break-words">
+                                        {{ r.session?.name || '—' }}
+                                    </div>
+                                </div>
+                                <span class="bg-white px-2 py-1 border border-gray-100 rounded text-[10px] text-gray-400 font-semibold uppercase tracking-wide whitespace-nowrap shrink-0 shadow-sm mt-0.5">
+                                    {{ (r.reportData?.sessionDate || r.createdAt) | date:'mediumDate' }}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between border-t border-gray-100 pt-3 mt-3">
+                                <span class="text-xs text-gray-500 font-medium">Screening</span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm border border-transparent"
+                                      [ngClass]="getScreeningBadge(r) === 'Yes'
+                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                        : 'bg-gray-100 text-gray-500 border-gray-200'">
+                                    <span class="w-1.5 h-1.5 rounded-full inline-block"
+                                          [ngClass]="getScreeningBadge(r) === 'Yes' ? 'bg-green-500' : 'bg-gray-400'"></span>
+                                    {{ getScreeningBadge(r) }}
+                                </span>
+                            </div>
+
+                            <div *ngIf="r.reportData?.screening === 'Yes' && r.reportData?.screeningDetails as sd" class="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
+                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Screening Results</div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span *ngIf="sd.height" class="bg-blue-50/80 text-blue-700 border border-blue-100 px-2 py-1 rounded-md text-[10px] font-bold">Ht: {{sd.height}}</span>
+                                    <span *ngIf="sd.weight" class="bg-blue-50/80 text-blue-700 border border-blue-100 px-2 py-1 rounded-md text-[10px] font-bold">Wt: {{sd.weight}}</span>
+                                    <span *ngIf="sd.hb" class="bg-red-50 text-red-700 border border-red-100 px-2 py-1 rounded-md text-[10px] font-bold">Hb: {{sd.hb}}</span>
+                                    <span *ngIf="sd.bp" class="bg-orange-50 text-orange-700 border border-orange-100 px-2 py-1 rounded-md text-[10px] font-bold">BP: {{sd.bp}}</span>
+                                    <span *ngIf="sd.sugar" class="bg-yellow-50 text-yellow-700 border border-yellow-100 px-2 py-1 rounded-md text-[10px] font-bold">Sugar: {{sd.sugar}}</span>
+                                    <span *ngIf="sd.cervicalCancer" class="bg-pink-50 text-pink-700 border border-pink-100 px-2 py-1 rounded-md text-[10px] font-bold">CC: {{sd.cervicalCancer}}</span>
+                                    <span *ngIf="sd.breastCancer" class="bg-pink-50 text-pink-700 border border-pink-100 px-2 py-1 rounded-md text-[10px] font-bold">BC: {{sd.breastCancer}}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-            </div>
+            </div><!-- end history tab -->
+
         </div>
 
     </ng-container>
 
-    <!-- Error/No Data State -->
-    <div *ngIf="!loading && !beneficiary" class="bg-white rounded-2xl border p-12 flex flex-col items-center justify-center text-center">
-        <z-icon zType="circle-alert" size="48" class="text-red-300 mb-4" />
-        <h2 class="text-xl font-bold text-gray-900">Beneficiary Not Found</h2>
-        <p class="text-gray-500 mb-6">The profile you are looking for does not exist or has been moved.</p>
-        <button z-button zType="default" (click)="goBack()">Return to List</button>
+    <!-- ===== ERROR STATE ===== -->
+    <div *ngIf="!loading && !beneficiary" class="max-w-7xl mx-auto px-6 py-20 flex flex-col items-center justify-center text-center">
+        <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
+            <z-icon zType="circle-alert" size="36" class="text-red-300" />
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">Beneficiary Not Found</h2>
+        <p class="text-gray-500 mt-2 mb-8">The profile you are looking for does not exist or has been moved.</p>
+        <button z-button (click)="goBack()">Return to List</button>
     </div>
 
 </div>
