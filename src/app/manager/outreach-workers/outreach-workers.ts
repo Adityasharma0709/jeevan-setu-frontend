@@ -54,6 +54,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('requestDialog') requestDialog!: TemplateRef<any>;
     @ViewChild('tagDialog') tagDialog!: TemplateRef<any>;
     @ViewChild('removeOutreachDialog') removeOutreachDialog!: TemplateRef<any>;
+    @ViewChild('detailsDialog') detailsDialog!: TemplateRef<any>;
 
     workers: OutreachWorker[] = [];
     isSubmitting = false;
@@ -69,6 +70,12 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     tagLocations: any[] = [];
     projectOptions: ZardComboboxOption[] = [];
     locationOptions: ZardComboboxOption[] = [];
+
+    detailsWorker: OutreachWorker | null = null;
+    detailsProjects: any[] = [];
+    detailsLoading = signal(false);
+    detailsLoaderOptions: AnimationOptions = { path: '/loadingcircle.json' };
+
     isLoadingWorkers = false;
     options: AnimationOptions = { path: '/loading.json' };
     private refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -220,6 +227,61 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         return value || '-';
     }
 
+    formatLocationLabel(l: any): string {
+        if (!l) return '';
+        const code = (l.locationCode ?? '').toString().trim();
+        const parts = [
+            l.village,
+            l.block,
+            l.district,
+            l.state
+        ].map(p => (p ?? '').toString().trim()).filter(Boolean);
+
+        const details = parts.join(', ');
+        return [code, details].filter(Boolean).join(' - ');
+    }
+
+    openDetailsDialog(worker: OutreachWorker) {
+        this.detailsWorker = worker;
+        this.detailsLoading.set(true);
+
+        // Map and Group Project Assignments
+        const assignments = (worker as any)?.projectAssignments || [];
+        const projectMap = new Map<number, any>();
+
+        assignments.forEach((a: any) => {
+            if (!a.project) return;
+            const pid = a.projectId;
+            if (!projectMap.has(pid)) {
+                projectMap.set(pid, {
+                    ...a.project,
+                    locations: []
+                });
+            }
+            if (a.location) {
+                projectMap.get(pid).locations.push(a.location);
+            }
+        });
+
+        this.detailsProjects = Array.from(projectMap.values());
+        this.detailsLoading.set(false);
+
+        this.dialog.create({
+            zTitle: `Assigned Projects: ${worker.name}`,
+            zContent: this.detailsDialog,
+            zOkText: 'Close',
+            zWidth: '600px',
+            zOnOk: () => {
+                this.detailsWorker = null;
+                this.detailsProjects = [];
+            },
+            zOnCancel: () => {
+                this.detailsWorker = null;
+                this.detailsProjects = [];
+            }
+        });
+    }
+
     private initForm() {
         this.requestForm = this.fb.group({
             usercode: [{ value: '', disabled: true }],
@@ -256,7 +318,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
                         this.tagLocations = nextLocations;
                         this.locationOptions = nextLocations.map((l) => ({
                             value: String(l.id),
-                            label: `${l.village} (${l.block})`,
+                            label: this.formatLocationLabel(l),
                         }));
                     }, 0);
                 },
