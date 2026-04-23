@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, switchMap, tap } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { Router, ActivatedRoute } from '@angular/router';
 
@@ -10,7 +10,7 @@ import { ZardFormFieldComponent, ZardFormLabelComponent, ZardFormControlComponen
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
-import { OutreachService } from '../outreach.service';
+import { OutreachService, OutreachSession } from '../outreach.service';
 
 @Component({
   selector: 'app-report-activity',
@@ -38,6 +38,7 @@ export class ReportActivity {
   isSubmitting = false;
   isEditing = false;
   reportId: number | null = null;
+  private rawSessions: OutreachSession[] = [];
 
 
   reportForm = this.fb.group({
@@ -77,9 +78,10 @@ export class ReportActivity {
     switchMap((activityId) =>
       activityId ? this.outreachService.getSessionsByActivity(Number(activityId)) : of([])
     ),
-    map(sessions => sessions.map(s => ({ 
+    tap((sessions: OutreachSession[]) => this.rawSessions = sessions),
+    map((sessions: OutreachSession[]) => sessions.map(s => ({ 
       value: s.id.toString(), 
-      label: s.name.split('(')[0].trim() 
+      label: (s.name || '').split('(')[0].trim() 
     })))
   );
 
@@ -188,6 +190,16 @@ export class ReportActivity {
         this.reportId = +params['reportId'];
         this.isEditing = true;
         this.loadReport(this.reportId);
+      }
+    });
+
+    this.reportForm.get('sessionId')?.valueChanges.subscribe(sessionId => {
+      if (sessionId) {
+        const session = this.rawSessions.find(s => s.id.toString() === sessionId);
+        if (session && session.sessionDate) {
+          const date = new Date(session.sessionDate).toISOString().split('T')[0];
+          this.reportForm.get('sessionDate')?.setValue(date);
+        }
       }
     });
   }

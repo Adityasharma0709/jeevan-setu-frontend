@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { ApiService } from '../core/services/api';
@@ -45,6 +45,7 @@ export interface Session {
     id: number;
     activityId: number;
     name: string;
+    sessionDate?: string | Date;
     description?: string;
     status: string;
     activity?: {

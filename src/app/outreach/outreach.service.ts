@@ -105,6 +105,7 @@ export interface OutreachSession {
   id: number;
   activityId: number;
   name: string;
+  sessionDate?: string | Date;
   status: string;
 }
 
