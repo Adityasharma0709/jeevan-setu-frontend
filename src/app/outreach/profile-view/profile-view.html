@@ -406,7 +406,7 @@
                                     </td>
                                     <td class="px-5 py-4 text-gray-500">{{ r.session?.name || '—' }}</td>
                                     <td class="px-5 py-4 text-gray-500 whitespace-nowrap">
-                                        {{ (r.reportData?.sessionDate || r.createdAt) | date:'mediumDate' }}
+                                        {{ (r.date || r.createdAt) | date:'mediumDate' }}
                                     </td>
                                     <td class="px-5 py-4">
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase"
@@ -451,7 +451,7 @@
                                     </div>
                                 </div>
                                 <span class="bg-white px-2 py-1 border border-gray-100 rounded text-[10px] text-gray-400 font-semibold uppercase tracking-wide whitespace-nowrap shrink-0 shadow-sm mt-0.5">
-                                    {{ (r.reportData?.sessionDate || r.createdAt) | date:'mediumDate' }}
+                                    {{ (r.date || r.createdAt) | date:'mediumDate' }}
                                 </span>
                             </div>
 

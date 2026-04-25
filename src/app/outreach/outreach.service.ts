@@ -201,8 +201,8 @@ export class OutreachService {
   }
 
   getSessionsByActivity(activityId: number): Observable<OutreachSession[]> {
-    return (this.api.get(`admin/activity/${activityId}/sessions`) as Observable<OutreachSession[]>).pipe(
-      map((rows) => rows || []),
+    return (this.api.get(`outreach/activity/${activityId}/sessions`) as Observable<OutreachSession[]>).pipe(
+      map(sessions => sessions || []),
       catchError(() => of([]))
     );
   }

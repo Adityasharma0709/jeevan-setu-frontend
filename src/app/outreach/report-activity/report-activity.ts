@@ -194,13 +194,7 @@ export class ReportActivity {
     });
 
     this.reportForm.get('sessionId')?.valueChanges.subscribe(sessionId => {
-      if (sessionId) {
-        const session = this.rawSessions.find(s => s.id.toString() === sessionId);
-        if (session && session.sessionDate) {
-          const date = new Date(session.sessionDate).toISOString().split('T')[0];
-          this.reportForm.get('sessionDate')?.setValue(date);
-        }
-      }
+      // Logic removed to allow Reporting Date to remain independent of Session Date
     });
   }
 
@@ -220,7 +214,7 @@ export class ReportActivity {
         this.reportForm.patchValue({
           activityId: report.activityId?.toString() || '',
           sessionId: report.sessionId?.toString() || '',
-          sessionDate: reportData.sessionDate || report.createdAt.split('T')[0],
+          sessionDate: report.date ? new Date(report.date).toISOString().split('T')[0] : report.createdAt.split('T')[0],
           beneficiaryId: report.beneficiaryId || '',
           screening: screening,
         });

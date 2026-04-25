@@ -86,7 +86,7 @@
                 </div>
               </td>
               <td z-table-cell class="border-r border-gray-100">
-                <span class="text-xs font-semibold text-gray-600">{{ report.createdAt | date:'mediumDate' }}</span>
+                <span class="text-xs font-semibold text-gray-600">{{ report.date | date:'mediumDate' }}</span>
               </td>
               <td z-table-cell class="text-right pr-6">
                 <div class="flex items-center justify-end gap-2">
@@ -115,7 +115,7 @@
                           <z-icon zType="activity" class="w-3.5 h-3.5 text-indigo-500" />
                           <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Diagnostic Measurements</span>
                       </div>
-                      <span class="text-[10px] font-medium text-gray-400 italic">Reported on {{ report.createdAt | date:'medium' }}</span>
+                      <span class="text-[10px] font-medium text-gray-400 italic">Reported on {{ report.date | date:'medium' }}</span>
                     </div>
 
                     <div class="p-6">
@@ -211,7 +211,7 @@
                         class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest leading-none">
                         {{ report.reportData?.screening || 'No' }}
                     </span>
-                    <span class="text-[10px] font-bold text-gray-400 italic leading-none">{{ report.createdAt | date:'shortDate' }}</span>
+                    <span class="text-[10px] font-bold text-gray-400 italic leading-none">{{ report.date | date:'shortDate' }}</span>
                 </div>
             </div>
 
