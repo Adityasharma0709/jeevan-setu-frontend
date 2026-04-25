@@ -43,7 +43,7 @@ export interface Beneficiary {
   economicStatus: string;
   primaryIncomeSource: string;
   employmentStatus: string;
-  children?: any[];
+  children?: FamilyMember[];
   activities?: any[];
   groups?: any[];
   /** Beneficiary's actual address — may differ from the project location */
@@ -99,6 +99,27 @@ export interface BeneficiaryGroup {
   id: number;
   name: string;
   status?: string;
+}
+
+export interface FamilyMember {
+  id: number;
+  uid: string;
+  beneficiaryId: number;
+  name: string;
+  relationship: string;
+  dateOfBirth: string;
+  gender: string;
+  schoolingStatus?: string | null;
+  employmentStatus?: string | null;
+}
+
+export interface AddFamilyMemberPayload {
+  name: string;
+  relationship: string;
+  dateOfBirth: string;
+  gender: string;
+  schoolingStatus?: string;
+  employmentStatus?: string;
 }
 
 export interface OutreachSession {
@@ -318,5 +339,16 @@ export class OutreachService {
       }),
       catchError(() => of([]))
     );
+  }
+
+  getFamilyMembers(beneficiaryId: number): Observable<FamilyMember[]> {
+    return (this.api.get(`${this.endpoint}/beneficiary/${beneficiaryId}/family-members`) as Observable<FamilyMember[]>).pipe(
+      map((rows) => rows || []),
+      catchError(() => of([])),
+    );
+  }
+
+  addFamilyMember(beneficiaryId: number, payload: AddFamilyMemberPayload): Observable<FamilyMember> {
+    return this.api.post(`${this.endpoint}/beneficiary/${beneficiaryId}/family-member`, payload) as Observable<FamilyMember>;
   }
 }

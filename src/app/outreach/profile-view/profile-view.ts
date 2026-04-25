@@ -12,6 +12,8 @@ import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
+import { ZardDialogService } from '@/shared/components/dialog';
+import { ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
 
 @Component({
     selector: 'app-profile-view',
@@ -33,8 +35,13 @@ export class ProfileView implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private outreachService = inject(OutreachService);
+    private dialog = inject(ZardDialogService);
+    private viewContainerRef = inject(ViewContainerRef);
     private cdr = inject(ChangeDetectorRef);
     private destroy$ = new Subject<void>();
+
+    @ViewChild('familyModalTemplate') familyModalTemplate!: TemplateRef<any>;
+    private dialogRef: any;
 
     // Data
     beneficiary: Beneficiary | null = null;
@@ -49,12 +56,34 @@ export class ProfileView implements OnInit, OnDestroy {
 
     // UI state
     loading = true;
-    activeTab: 'detail' | 'history' = 'detail';
+    activeTab: 'detail' | 'family' | 'history' = 'detail';
 
     // Tagging selections (Combobox expects string | null)
     selectedGroupId: string | null = null;
     selectedActivityId: string | null = null;
     selectedSessionId: string | null = null;
+
+    // Family Member Modal
+    showFamilyModal = false;
+    savingFamily = false;
+    familyForm = {
+        name: '',
+        relationship: '',
+        dateOfBirth: '',
+        gender: '',
+        schoolingStatus: '',
+        employmentStatus: ''
+    };
+
+    get familyAge(): number {
+        if (!this.familyForm.dateOfBirth) return 0;
+        const dob = new Date(this.familyForm.dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+        return age;
+    }
 
     // Options mapping
     get groupOptions(): ZardComboboxOption[] {
@@ -68,6 +97,35 @@ export class ProfileView implements OnInit, OnDestroy {
     get sessionOptions(): ZardComboboxOption[] {
         return this.sessions.map(s => ({ value: s.id.toString(), label: s.name }));
     }
+
+    // Family Member Options
+    relationshipOptions: ZardComboboxOption[] = [
+        { value: 'Son/Daughter', label: 'Son/Daughter' },
+        { value: 'Spouse', label: 'Spouse' },
+        { value: 'Parents/In-Laws', label: 'Parents/In-Laws' },
+        { value: 'Others', label: 'Others' }
+    ];
+
+    genderOptions: ZardComboboxOption[] = [
+        { value: 'Female', label: 'Female' },
+        { value: 'Male', label: 'Male' },
+        { value: 'Other', label: 'Other' }
+    ];
+
+    schoolingOptions: ZardComboboxOption[] = [
+        { value: 'Going to School', label: 'Going to School' },
+        { value: 'Not Going to School', label: 'Not Going to School' },
+        { value: 'Dropped Out', label: 'Dropped Out' },
+        { value: 'Completed', label: 'Completed' }
+    ];
+
+    employmentOptions: ZardComboboxOption[] = [
+        { value: 'Employed', label: 'Employed' },
+        { value: 'Unemployed', label: 'Unemployed' },
+        { value: 'Self-Employed', label: 'Self-Employed' },
+        { value: 'Student', label: 'Student' },
+        { value: 'Home Maker', label: 'Home Maker' }
+    ];
 
     ngOnInit(): void {
         const id = this.route.snapshot.params['id'];
@@ -98,6 +156,7 @@ export class ProfileView implements OnInit, OnDestroy {
             this.loading = false;
             this.cdr.markForCheck();
             this.loadReports(stateData.id);
+            this.loadFamilyMembers(stateData.id);
             return;
         }
 
@@ -110,6 +169,7 @@ export class ProfileView implements OnInit, OnDestroy {
                     this.loading = false;
                     this.cdr.markForCheck();
                     this.loadReports(data.id);
+                    this.loadFamilyMembers(data.id);
                 },
                 error: () => {
                     toast.error('Beneficiary not found');
@@ -162,6 +222,89 @@ export class ProfileView implements OnInit, OnDestroy {
             ['/outreach/beneficiary', this.beneficiary.id, 'request-update'],
             { state: { beneficiary: this.beneficiary } }
         );
+    }
+
+    openFamilyModal(): void {
+        this.familyForm = {
+            name: '',
+            relationship: '',
+            dateOfBirth: '',
+            gender: 'Female',
+            schoolingStatus: '',
+            employmentStatus: ''
+        };
+        
+        this.dialogRef = this.dialog.create({
+            zTitle: 'Add Family Member',
+            zContent: this.familyModalTemplate,
+            zWidth: '500px',
+            zViewContainerRef: this.viewContainerRef,
+            zHideFooter: true // We use our own footer in the template
+        });
+    }
+
+    closeFamilyModal(): void {
+        if (this.dialogRef) {
+            this.dialogRef.close();
+            this.dialogRef = null;
+        }
+    }
+
+    saveFamilyMember(): void {
+        if (!this.beneficiary) return;
+        
+        // Basic validation
+        if (!this.familyForm.name || !this.familyForm.relationship || !this.familyForm.dateOfBirth || !this.familyForm.gender) {
+            toast.error('Please fill all required fields');
+            return;
+        }
+
+        const age = this.familyAge;
+        if (age <= 14 && !this.familyForm.schoolingStatus) {
+            toast.error('Schooling status is required for children');
+            return;
+        }
+        if (age > 14 && !this.familyForm.employmentStatus) {
+            toast.error('Employment status is required for adults');
+            return;
+        }
+
+        this.savingFamily = true;
+        this.outreachService.addFamilyMember(this.beneficiary.id, this.familyForm)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: () => {
+                    toast.success('Family member added successfully');
+
+                    this.loadFamilyMembers(this.beneficiary!.id, () => {
+                        this.closeFamilyModal();
+                        this.savingFamily = false;
+                        this.cdr.markForCheck();
+                    });
+                },
+                error: (err) => {
+                    toast.error(err.error?.message || 'Failed to add family member');
+                    this.savingFamily = false;
+                    this.cdr.markForCheck();
+                }
+            });
+    }
+
+    private loadFamilyMembers(beneficiaryId: number, onDone?: () => void): void {
+        this.outreachService.getFamilyMembers(beneficiaryId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (members) => {
+                    if (this.beneficiary?.id === beneficiaryId) {
+                        this.beneficiary.children = members;
+                    }
+                    this.cdr.markForCheck();
+                    onDone?.();
+                },
+                error: () => {
+                    onDone?.();
+                },
+            });
     }
 
     private loadReports(beneficiaryId: number): void {

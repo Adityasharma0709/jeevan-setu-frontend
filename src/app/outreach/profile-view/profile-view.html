@@ -7,7 +7,7 @@
     </div>
 
     <!-- ===== DATA LOADED ===== -->
-    <ng-container *ngIf="!loading && beneficiary">
+    <div *ngIf="!loading && beneficiary">
 
         <!-- ===== HERO HEADER ===== -->
         <div class="bg-white px-4 sm:px-6 pt-5 pb-0 border-b border-gray-100 shadow-sm">
@@ -58,25 +58,28 @@
                 </div>
 
                 <!-- ===== PILL TAB SWITCHER (on the hero, blends into content) ===== -->
-                <div class="grid grid-cols-2 gap-1 -mb-px w-full">
-                    <button
-                        (click)="activeTab = 'detail'"
-                        class="relative py-3 flex items-center justify-center text-xs sm:text-sm font-semibold rounded-t-xl transition-all duration-200"
-                        [ngClass]="activeTab === 'detail'
-                            ? 'bg-gray-50/95 text-indigo-700 shadow-sm'
-                            : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'"
-                    >
-                        <z-icon zType="user" size="14" class="mr-1.5 shrink-0" />
+                <div class="flex flex-wrap gap-2 -mb-px w-full">
+                    <button (click)="activeTab = 'detail'"
+                            class="flex-1 sm:flex-none flex items-center justify-center px-6 py-2 rounded-xl text-sm font-bold transition-all gap-2"
+                            [ngClass]="activeTab === 'detail' ? 'bg-white text-indigo-700 shadow-sm border border-gray-100 ring-4 ring-indigo-50/50' : 'text-gray-500 hover:text-gray-700'">
+                        <z-icon zType="user" size="16" />
                         <span class="truncate">Details</span>
                     </button>
-                    <button
-                        (click)="activeTab = 'history'"
-                        class="relative py-3 flex items-center justify-center text-xs sm:text-sm font-semibold rounded-t-xl transition-all duration-200"
-                        [ngClass]="activeTab === 'history'
-                            ? 'bg-gray-50/95 text-indigo-700 shadow-sm'
-                            : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'"
-                    >
-                        <z-icon zType="activity" size="14" class="mr-1.5 shrink-0" />
+                    <button (click)="activeTab = 'family'"
+                            class="flex-1 sm:flex-none flex items-center justify-center px-6 py-2 rounded-xl text-sm font-bold transition-all gap-2"
+                            [ngClass]="activeTab === 'family' ? 'bg-white text-indigo-700 shadow-sm border border-gray-100 ring-4 ring-indigo-50/50' : 'text-gray-500 hover:text-gray-700'">
+                        <z-icon zType="users" size="16" />
+                        <span class="truncate">Family</span>
+                        <span *ngIf="beneficiary.children?.length"
+                              class="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 flex items-center justify-center"
+                              [ngClass]="activeTab === 'family' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'">
+                            {{ beneficiary.children?.length }}
+                        </span>
+                    </button>
+                    <button (click)="activeTab = 'history'"
+                            class="flex-1 sm:flex-none flex items-center justify-center px-6 py-2 rounded-xl text-sm font-bold transition-all gap-2"
+                            [ngClass]="activeTab === 'history' ? 'bg-white text-indigo-700 shadow-sm border border-gray-100 ring-4 ring-indigo-50/50' : 'text-gray-500 hover:text-gray-700'">
+                        <z-icon zType="activity" size="16" />
                         <span class="truncate">History</span>
                         <span *ngIf="activityReports.length"
                               class="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 flex items-center justify-center"
@@ -238,50 +241,6 @@
                             </div>
                         </div>
 
-                        <!-- Children -->
-                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                            <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex flex-wrap items-center justify-between gap-2">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <div class="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center shrink-0">
-                                        <z-icon zType="users" size="15" class="text-amber-600" />
-                                    </div>
-                                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Children Details</h2>
-                                </div>
-                                <span *ngIf="beneficiary.children?.length"
-                                      class="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
-                                    {{ beneficiary.children?.length }} Child(ren)
-                                </span>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm text-left">
-                                    <thead class="bg-amber-50/60 text-amber-800 border-b border-amber-100">
-                                        <tr>
-                                            <th class="px-6 py-3 font-semibold">Name</th>
-                                            <th class="px-6 py-3 font-semibold">Date of Birth</th>
-                                            <th class="px-6 py-3 font-semibold">Gender</th>
-                                            <th class="px-6 py-3 font-semibold">Schooling</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-50">
-                                        <tr *ngFor="let child of beneficiary.children" class="hover:bg-amber-50/20 transition-colors">
-                                            <td class="px-6 py-3.5 font-medium text-gray-900">{{ child.name }}</td>
-                                            <td class="px-6 py-3.5 text-gray-500">{{ child.dateOfBirth | date:'mediumDate' }}</td>
-                                            <td class="px-6 py-3.5">
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
-                                                      [ngClass]="child.gender === 'female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'">
-                                                    {{ child.gender }}
-                                                </span>
-                                            </td>
-                                            <td class="px-6 py-3.5 text-gray-500">{{ child.schoolingStatus }}</td>
-                                        </tr>
-                                        <tr *ngIf="!beneficiary.children?.length">
-                                            <td colspan="4" class="px-6 py-10 text-center text-gray-400 italic text-sm">No children registered.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
                         <!-- Engagement & Tagging -->
                         <div class="bg-gray-50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
                             <div class="flex items-center gap-2 mb-5">
@@ -341,9 +300,110 @@
                             </div>
                         </div>
 
+                </div>
+            </div>
+        </div>
+    </div><!-- end detail tab -->
+
+            <!-- ===== TAB: FAMILY MEMBERS ===== -->
+            <div *ngIf="activeTab === 'family'" class="space-y-6 animate-fadeIn">
+                <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                    <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <div class="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center shrink-0">
+                                <z-icon zType="users" size="15" class="text-amber-600" />
+                            </div>
+                            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Family Members</h2>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-bold bg-amber-50 text-amber-600 px-3 py-1 rounded-full uppercase tracking-wider">{{ beneficiary.children?.length || 0 }} Member(s)</span>
+                            <button z-button (click)="openFamilyModal()" zType="default" zSize="sm" class="font-bold">
+                                <z-icon zType="plus" size="14" />
+                                ADD MEMBER
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- DESKTOP TABLE VIEW -->
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-amber-50/30 text-[10px] text-amber-700 uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-6 py-3 font-semibold">UID</th>
+                                    <th class="px-6 py-3 font-semibold">Name</th>
+                                    <th class="px-6 py-3 font-semibold">Relationship</th>
+                                    <th class="px-6 py-3 font-semibold">Date of Birth</th>
+                                    <th class="px-6 py-3 font-semibold">Gender</th>
+                                    <th class="px-6 py-3 font-semibold">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr *ngFor="let child of beneficiary.children" class="hover:bg-amber-50/20 transition-colors">
+                                    <td class="px-6 py-3.5"><span class="text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 text-gray-600">{{ child.uid }}</span></td>
+                                    <td class="px-6 py-3.5 font-bold text-gray-900">{{ child.name }}</td>
+                                    <td class="px-6 py-3.5 text-gray-500">{{ child.relationship }}</td>
+                                    <td class="px-6 py-3.5 text-gray-500">{{ child.dateOfBirth | date:'mediumDate' }}</td>
+                                    <td class="px-6 py-3.5">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
+                                              [ngClass]="child.gender === 'Female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'">
+                                            {{ child.gender }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-3.5 text-gray-500">
+                                        <span *ngIf="child.schoolingStatus" class="inline-flex items-center gap-1">
+                                            <z-icon zType="book-open-text" size="12" /> {{ child.schoolingStatus }}
+                                        </span>
+                                        <span *ngIf="child.employmentStatus" class="inline-flex items-center gap-1">
+                                            <z-icon zType="file-text" size="12" /> {{ child.employmentStatus }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- MOBILE CARD VIEW -->
+                    <div class="md:hidden divide-y divide-gray-50">
+                        <div *ngFor="let child of beneficiary.children" class="p-4 space-y-3">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold text-gray-900 capitalize">{{ child.name }}</p>
+                                    <span class="text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 text-gray-600">{{ child.uid }}</span>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
+                                      [ngClass]="child.gender === 'Female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'">
+                                    {{ child.gender }}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <p class="text-gray-400 uppercase font-bold text-[9px]">Relationship</p>
+                                    <p class="text-gray-700 font-medium">{{ child.relationship }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 uppercase font-bold text-[9px]">Birth Date</p>
+                                    <p class="text-gray-700 font-medium">{{ child.dateOfBirth | date:'mediumDate' }}</p>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-gray-400 uppercase font-bold text-[9px]">Status</p>
+                                    <p class="text-gray-700 font-medium">
+                                        <span *ngIf="child.schoolingStatus" class="inline-flex items-center gap-1">
+                                            <z-icon zType="book-open-text" size="12" /> {{ child.schoolingStatus }}
+                                        </span>
+                                        <span *ngIf="child.employmentStatus" class="inline-flex items-center gap-1">
+                                            <z-icon zType="file-text" size="12" /> {{ child.employmentStatus }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="!beneficiary.children?.length" class="px-4 py-10 text-center text-gray-400 italic text-sm">
+                        No family members registered yet.
                     </div>
                 </div>
-            </div><!-- end detail tab -->
+            </div>
 
             <!-- ===== TAB: ACTIVITY HISTORY ===== -->
             <div *ngIf="activeTab === 'history'" class="animate-fadeIn">
@@ -482,12 +542,11 @@
                         </div>
                     </div>
                 </div>
-
             </div><!-- end history tab -->
 
         </div>
 
-    </ng-container>
+    </div>
 
     <!-- ===== ERROR STATE ===== -->
     <div *ngIf="!loading && !beneficiary" class="max-w-7xl mx-auto px-6 py-20 flex flex-col items-center justify-center text-center">
@@ -498,5 +557,52 @@
         <p class="text-gray-500 mt-2 mb-8">The profile you are looking for does not exist or has been moved.</p>
         <button z-button (click)="goBack()">Return to List</button>
     </div>
+    
+    <!-- ===== ADD FAMILY MEMBER MODAL TEMPLATE ===== -->
+    <ng-template #familyModalTemplate>
+        <div class="space-y-4 pt-2">
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Full Name</label>
+                <input type="text" [(ngModel)]="familyForm.name" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm" placeholder="Enter name">
+            </div>
 
-</div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Relationship</label>
+                <z-combobox [options]="relationshipOptions" [(ngModel)]="familyForm.relationship" placeholder="Select Relationship" [searchable]="false" />
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Date of Birth</label>
+                    <input type="date" [(ngModel)]="familyForm.dateOfBirth" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Gender</label>
+                    <z-combobox [options]="genderOptions" [(ngModel)]="familyForm.gender" placeholder="Select Gender" [searchable]="false" />
+                </div>
+            </div>
+
+            <div *ngIf="familyForm.dateOfBirth" class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                <p class="text-xs text-indigo-700 font-medium">Calculated Age: <span class="font-bold">{{ familyAge }} years</span></p>
+            </div>
+
+            <div *ngIf="familyAge <= 14">
+                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Schooling Status</label>
+                <z-combobox [options]="schoolingOptions" [(ngModel)]="familyForm.schoolingStatus" placeholder="Select Status" [searchable]="false" />
+            </div>
+
+            <div *ngIf="familyAge > 14">
+                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Employment Status</label>
+                <z-combobox [options]="employmentOptions" [(ngModel)]="familyForm.employmentStatus" placeholder="Select Status" [searchable]="false" />
+            </div>
+
+            <div class="flex gap-3 pt-4">
+                <button z-button zType="secondary" class="flex-1" (click)="closeFamilyModal()" [disabled]="savingFamily">Cancel</button>
+                <button z-button zType="default" class="flex-1" (click)="saveFamilyMember()" [disabled]="savingFamily">
+                    {{ savingFamily ? 'Saving...' : 'Add Member' }}
+                </button>
+            </div>
+        </div>
+    </ng-template>
+
+<!-- </div> -->
