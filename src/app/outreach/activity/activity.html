@@ -61,8 +61,14 @@
               [class.hover:bg-gray-50]="expandedReportId !== report.id">
               <td z-table-cell class="pl-6 border-r border-gray-100">
                 <div class="flex flex-col">
-                  <span class="font-bold text-gray-900 group-hover:text-indigo-900 transition-colors">{{ report.beneficiary?.name || 'Unknown' }}</span>
-                  <span class="text-[10px] font-mono font-medium text-gray-400">{{ report.beneficiary?.uid || '-' }}</span>
+                  <span class="font-bold text-gray-900 group-hover:text-indigo-900 transition-colors">
+                    {{ report.child?.name || report.beneficiary?.name || 'Unknown' }}
+                  </span>
+                  <div class="flex items-center gap-1">
+                    <span class="text-[10px] font-mono font-medium text-gray-400">{{ report.child?.uid || report.beneficiary?.uid || '-' }}</span>
+                    <span *ngIf="report.child" class="text-[9px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold uppercase">Family</span>
+                  </div>
+                  <span *ngIf="report.child" class="text-[10px] text-gray-400 italic">Child of {{ report.beneficiary?.name }}</span>
                 </div>
               </td>
               <td z-table-cell class="border-r border-gray-100">
@@ -203,8 +209,14 @@
             <!-- Card Header -->
             <div class="p-4 flex justify-between items-start gap-3 border-b border-gray-50">
                 <div class="flex-1 min-w-0">
-                    <h3 class="font-black text-gray-900 text-lg leading-none mb-1 truncate">{{ report.beneficiary?.name || 'Unknown' }}</h3>
-                    <p class="text-[10px] font-mono font-bold text-gray-400 tracking-tighter">{{ report.beneficiary?.uid || '-' }}</p>
+                    <h3 class="font-black text-gray-900 text-lg leading-none mb-1 truncate">
+                        {{ report.child?.name || report.beneficiary?.name || 'Unknown' }}
+                    </h3>
+                    <div class="flex items-center gap-1 mb-1">
+                        <p class="text-[10px] font-mono font-bold text-gray-400 tracking-tighter">{{ report.child?.uid || report.beneficiary?.uid || '-' }}</p>
+                        <span *ngIf="report.child" class="text-[8px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold uppercase">Family</span>
+                    </div>
+                    <p *ngIf="report.child" class="text-[9px] text-gray-400 italic">Child of {{ report.beneficiary?.name }}</p>
                 </div>
                 <div class="flex flex-col items-end gap-1.5">
                     <span [class]="report.reportData?.screening === 'Yes' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'"

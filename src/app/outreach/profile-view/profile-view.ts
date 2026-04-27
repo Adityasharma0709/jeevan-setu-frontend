@@ -72,7 +72,8 @@ export class ProfileView implements OnInit, OnDestroy {
         dateOfBirth: '',
         gender: '',
         schoolingStatus: '',
-        employmentStatus: ''
+        employmentStatus: '',
+        qualification: ''
     };
 
     get familyAge(): number {
@@ -112,11 +113,29 @@ export class ProfileView implements OnInit, OnDestroy {
         { value: 'Other', label: 'Other' }
     ];
 
+        qualificationOptions: ZardComboboxOption[] = [
+        { value: 'No Formal Education', label: 'No Formal Education' },
+        { value: 'Primary (Class 1–5)', label: 'Primary (Class 1–5)' },
+        { value: 'Upper Primary (Class 6–8)', label: 'Upper Primary (Class 6–8)' },
+        { value: 'Secondary (Class 9–10)', label: 'Secondary (Class 9–10)' },
+        { value: 'Senior Secondary (Class 11–12)', label: 'Senior Secondary (Class 11–12)' },
+        { value: 'Diploma / ITI', label: 'Diploma / ITI' },
+        { value: 'Graduate', label: 'Graduate' },
+        { value: 'Post Graduate', label: 'Post Graduate' },
+    ];
+        qualificationStudyingOptions: ZardComboboxOption[] = [
+        { value: 'Primary (Class 1–5)', label: 'Primary (Class 1–5)' },
+        { value: 'Upper Primary (Class 6–8)', label: 'Upper Primary (Class 6–8)' },
+        { value: 'Secondary (Class 9–10)', label: 'Secondary (Class 9–10)' },
+        { value: 'Senior Secondary (Class 11–12)', label: 'Senior Secondary (Class 11–12)' },
+        { value: 'Diploma / ITI', label: 'Diploma / ITI' },
+        { value: 'Graduate', label: 'Graduate' },
+        { value: 'Post Graduate', label: 'Post Graduate' },
+    ];
+
     schoolingOptions: ZardComboboxOption[] = [
-        { value: 'Going to School', label: 'Going to School' },
-        { value: 'Not Going to School', label: 'Not Going to School' },
-        { value: 'Dropped Out', label: 'Dropped Out' },
-        { value: 'Completed', label: 'Completed' }
+        { value: 'Currently studying', label: 'Currently Studying' },
+        { value: 'Not studying', label: 'Not Studying' },
     ];
 
     employmentOptions: ZardComboboxOption[] = [
@@ -126,6 +145,13 @@ export class ProfileView implements OnInit, OnDestroy {
         { value: 'Student', label: 'Student' },
         { value: 'Home Maker', label: 'Home Maker' }
     ];
+
+    get filteredEmploymentOptions(): ZardComboboxOption[] {
+        if (this.familyForm.schoolingStatus === 'Currently studying') {
+            return this.employmentOptions.filter(opt => opt.value === 'Student');
+        }
+        return this.employmentOptions;
+    }
 
     ngOnInit(): void {
         const id = this.route.snapshot.params['id'];
@@ -196,6 +222,12 @@ export class ProfileView implements OnInit, OnDestroy {
         }
     }
 
+    onSchoolingStatusChange(status: string | null): void {
+        if (status === 'Currently studying') {
+            this.familyForm.employmentStatus = 'Student';
+        }
+    }
+
     saveGroupTag(): void {
         if (!this.beneficiary || !this.selectedGroupId) return;
         this.outreachService.tagBeneficiaryGroup(this.beneficiary.id, Number(this.selectedGroupId))
@@ -231,7 +263,8 @@ export class ProfileView implements OnInit, OnDestroy {
             dateOfBirth: '',
             gender: 'Female',
             schoolingStatus: '',
-            employmentStatus: ''
+            employmentStatus: '',
+            qualification: ''
         };
         
         this.dialogRef = this.dialog.create({
@@ -266,6 +299,10 @@ export class ProfileView implements OnInit, OnDestroy {
         }
         if (age > 14 && !this.familyForm.employmentStatus) {
             toast.error('Employment status is required for adults');
+            return;
+        }
+        if (age > 6 && !this.familyForm.qualification) {
+            toast.error('Qualification is required');
             return;
         }
 

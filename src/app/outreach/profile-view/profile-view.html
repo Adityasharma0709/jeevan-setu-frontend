@@ -356,6 +356,9 @@
                                         <span *ngIf="child.employmentStatus" class="inline-flex items-center gap-1">
                                             <z-icon zType="file-text" size="12" /> {{ child.employmentStatus }}
                                         </span>
+                                        <span *ngIf="child.qualification" class="inline-flex items-center gap-1">
+                                            <z-icon zType="book-open" size="12" /> {{ child.qualification }}
+                                        </span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -450,6 +453,7 @@
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase w-10">#</th>
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Activity</th>
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Session</th>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Member</th>
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Date</th>
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Screening</th>
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Details</th>
@@ -465,6 +469,10 @@
                                         </span>
                                     </td>
                                     <td class="px-5 py-4 text-gray-500">{{ r.session?.name || '—' }}</td>
+                                    <td class="px-5 py-4">
+                                        <span *ngIf="r.child" class="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold uppercase">{{ r.child.name }}</span>
+                                        <span *ngIf="!r.child" class="text-[10px] text-gray-400 italic">Self</span>
+                                    </td>
                                     <td class="px-5 py-4 text-gray-500 whitespace-nowrap">
                                         {{ (r.date || r.createdAt) | date:'mediumDate' }}
                                     </td>
@@ -509,6 +517,9 @@
                                     <div class="text-sm text-gray-500 break-words">
                                         {{ r.session?.name || '—' }}
                                     </div>
+                                </div>
+                                <div *ngIf="r.child" class="shrink-0">
+                                    <span class="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-black uppercase">{{ r.child.name }}</span>
                                 </div>
                                 <span class="bg-white px-2 py-1 border border-gray-100 rounded text-[10px] text-gray-400 font-semibold uppercase tracking-wide whitespace-nowrap shrink-0 shadow-sm mt-0.5">
                                     {{ (r.date || r.createdAt) | date:'mediumDate' }}
@@ -586,15 +597,25 @@
                 <p class="text-xs text-indigo-700 font-medium">Calculated Age: <span class="font-bold">{{ familyAge }} years</span></p>
             </div>
 
-            <div *ngIf="familyAge <= 14">
+            <div *ngIf="familyAge <= 19 && familyAge > 3">
                 <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Schooling Status</label>
-                <z-combobox [options]="schoolingOptions" [(ngModel)]="familyForm.schoolingStatus" placeholder="Select Status" [searchable]="false" />
+                <z-combobox [options]="schoolingOptions" [(ngModel)]="familyForm.schoolingStatus" (ngModelChange)="onSchoolingStatusChange($event)" placeholder="Select Status" [searchable]="false" />
+            </div>
+            
+            <div *ngIf="familyForm.schoolingStatus == 'Currently studying'">
+                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qualification (Studying in)</label>
+                <z-combobox [options]="qualificationStudyingOptions" [(ngModel)]="familyForm.qualification" placeholder="Select Qualification" [searchable]="false" />
             </div>
 
             <div *ngIf="familyAge > 14">
                 <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Employment Status</label>
-                <z-combobox [options]="employmentOptions" [(ngModel)]="familyForm.employmentStatus" placeholder="Select Status" [searchable]="false" />
+                <z-combobox [options]="filteredEmploymentOptions" [(ngModel)]="familyForm.employmentStatus" placeholder="Select Status" [searchable]="false" />
             </div>
+             <div *ngIf="familyAge > 6">
+                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qualification</label>
+                <z-combobox [options]="qualificationOptions" [(ngModel)]="familyForm.qualification" placeholder="Select Status" [searchable]="false" />
+            </div>
+
 
             <div class="flex gap-3 pt-4">
                 <button z-button zType="secondary" class="flex-1" (click)="closeFamilyModal()" [disabled]="savingFamily">Cancel</button>

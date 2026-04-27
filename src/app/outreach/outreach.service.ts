@@ -111,6 +111,7 @@ export interface FamilyMember {
   gender: string;
   schoolingStatus?: string | null;
   employmentStatus?: string | null;
+  qualification?: string | null;
 }
 
 export interface AddFamilyMemberPayload {
@@ -120,6 +121,7 @@ export interface AddFamilyMemberPayload {
   gender: string;
   schoolingStatus?: string;
   employmentStatus?: string;
+  qualification?: string;
 }
 
 export interface OutreachSession {
@@ -132,6 +134,7 @@ export interface OutreachSession {
 
 export interface CreateReportPayload {
   beneficiaryId: number;
+  childId?: number;
   activityId: number;
   sessionId?: number;
   sessionDate: string;

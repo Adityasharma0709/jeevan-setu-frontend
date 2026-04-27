@@ -10,7 +10,7 @@ import { ZardFormFieldComponent, ZardFormLabelComponent, ZardFormControlComponen
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
-import { OutreachService, OutreachSession } from '../outreach.service';
+import { OutreachService, OutreachSession, Beneficiary } from '../outreach.service';
 
 @Component({
   selector: 'app-report-activity',
@@ -38,6 +38,7 @@ export class ReportActivity {
   isSubmitting = false;
   isEditing = false;
   reportId: number | null = null;
+  selectedBeneficiary: Beneficiary | null = null;
   private rawSessions: OutreachSession[] = [];
 
 
@@ -46,6 +47,7 @@ export class ReportActivity {
     sessionId: ['', Validators.required],
     sessionDate: [new Date().toISOString().split('T')[0], Validators.required],
     beneficiaryId: ['', Validators.required],
+    childId: [''],
     screening: ['No', Validators.required],
     selectedTests: this.fb.array([]),
     testValues: this.fb.group({
@@ -69,7 +71,30 @@ export class ReportActivity {
   beneficiaries$ = this.beneficiarySearch$.pipe(
     debounceTime(300),
     distinctUntilChanged(),
-    switchMap(search => this.outreachService.getBeneficiaries(search)),
+    switchMap(search => {
+      if (!search) return of([]);
+      return this.outreachService.getBeneficiaries(search);
+    }),
+    map(beneficiaries => {
+      const flattened: any[] = [];
+      beneficiaries.forEach(ben => {
+        // Add the main beneficiary
+        flattened.push({ ...ben, isChild: false });
+        
+        // Add children as selectable entities
+        if (ben.children && ben.children.length > 0) {
+          ben.children.forEach(child => {
+            flattened.push({
+              ...child,
+              isChild: true,
+              parentName: ben.name,
+              beneficiaryId: ben.id // Keep parent ID for report linking
+            });
+          });
+        }
+      });
+      return flattened;
+    }),
     startWith([])
   );
 
@@ -105,6 +130,20 @@ export class ReportActivity {
     { id: 'breastCancer', label: 'Breast Cancer' },
   ];
 
+  get familyMemberOptions(): ZardComboboxOption[] {
+    const options: ZardComboboxOption[] = [
+      { value: '', label: 'Main Beneficiary' }
+    ];
+    
+    if (this.selectedBeneficiary?.children) {
+      this.selectedBeneficiary.children.forEach(child => {
+        options.push({ value: child.id.toString(), label: child.name });
+      });
+    }
+    
+    return options;
+  }
+
   isTestSelected(testId: string): boolean {
     return (this.reportForm.get('selectedTests') as any).value.includes(testId);
   }
@@ -120,12 +159,36 @@ export class ReportActivity {
   }
 
   onSearchBeneficiary(event: any) {
-    this.beneficiarySearch$.next(event.target.value);
+    const value = event.target.value;
+    this.beneficiarySearch$.next(value);
+    
+    // Clear selection when user starts typing a new search
+    if (this.reportForm.get('beneficiaryId')?.value) {
+      this.reportForm.patchValue({ beneficiaryId: '', childId: '' });
+      this.selectedBeneficiary = null;
+    }
   }
 
-  onSelectBeneficiary(beneficiary: any) {
-    this.reportForm.patchValue({ beneficiaryId: beneficiary.id });
-    this.beneficiarySearch$.next(`${beneficiary.name} (${beneficiary.uid})`);
+  onSelectBeneficiary(item: any) {
+    const benId = item.isChild ? item.beneficiaryId : item.id;
+    
+    this.outreachService.getBeneficiary(benId).subscribe(beneficiary => {
+      this.selectedBeneficiary = beneficiary;
+      
+      if (item.isChild) {
+        this.reportForm.patchValue({ 
+          beneficiaryId: benId.toString(),
+          childId: item.id.toString() 
+        });
+        this.beneficiarySearch$.next(item.parentName);
+      } else {
+        this.reportForm.patchValue({ 
+          beneficiaryId: benId.toString(),
+          childId: ''
+        });
+        this.beneficiarySearch$.next(item.name);
+      }
+    });
   }
 
   submit() {
@@ -152,7 +215,7 @@ export class ReportActivity {
       if (selected.includes('breastCancer')) screeningDetails.breastCancer = raw.testValues.breastCancer;
     }
 
-    const payload = {
+    const payload: any = {
       beneficiaryId: Number(raw.beneficiaryId),
       activityId: Number(raw.activityId),
       sessionId: raw.sessionId ? Number(raw.sessionId) : 0,
@@ -162,6 +225,10 @@ export class ReportActivity {
         screeningDetails: raw.screening === 'Yes' ? screeningDetails : null
       },
     };
+
+    if (raw.childId) {
+      payload.childId = Number(raw.childId);
+    }
 
     const request$ = this.isEditing && this.reportId 
       ? this.outreachService.updateReport(this.reportId, payload as any)
@@ -201,9 +268,12 @@ export class ReportActivity {
   private loadReport(id: number) {
     this.outreachService.getReportById(id).subscribe({
       next: (report) => {
-        const ben = report.beneficiary;
-        if (ben) {
-          this.beneficiarySearch$.next(`${ben.name} (${ben.uid})`);
+        const benId = report.beneficiaryId;
+        if (benId) {
+          this.outreachService.getBeneficiary(benId).subscribe(ben => {
+            this.selectedBeneficiary = ben;
+            this.beneficiarySearch$.next(ben.name);
+          });
         }
 
         const reportData = report.reportData || {};
@@ -215,7 +285,8 @@ export class ReportActivity {
           activityId: report.activityId?.toString() || '',
           sessionId: report.sessionId?.toString() || '',
           sessionDate: report.date ? new Date(report.date).toISOString().split('T')[0] : report.createdAt.split('T')[0],
-          beneficiaryId: report.beneficiaryId || '',
+          beneficiaryId: report.beneficiaryId?.toString() || '',
+          childId: report.childId?.toString() || '',
           screening: screening,
         });
 

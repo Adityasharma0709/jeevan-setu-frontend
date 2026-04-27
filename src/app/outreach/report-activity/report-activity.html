@@ -58,10 +58,30 @@
             <input z-input type="text" placeholder="Search by name, UID or mobile..." (input)="onSearchBeneficiary($event)" [value]="beneficiarySearch$.value" />
             <div *ngIf="beneficiarySearch$.value && !reportForm.get('beneficiaryId')?.value" class="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
               <div *ngFor="let ben of beneficiaries$ | async" (click)="onSelectBeneficiary(ben)" class="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-sm">
-                <div class="font-medium">{{ ben.name }}</div>
-                <div class="text-[10px] text-gray-500">{{ ben.uid }} · {{ ben.mobileNumber }}</div>
+                <div class="flex items-center justify-between">
+                  <div class="font-medium">{{ ben.name }}</div>
+                  <div *ngIf="ben.isChild" class="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full font-bold uppercase">Family</div>
+                </div>
+                <div class="text-[10px] text-gray-500">
+                  <ng-container *ngIf="!ben.isChild">{{ ben.uid }} · {{ ben.mobileNumber }}</ng-container>
+                  <ng-container *ngIf="ben.isChild">Child of {{ ben.parentName }} · {{ ben.uid }}</ng-container>
+                </div>
               </div>
             </div>
+          </z-form-control>
+        </z-form-field>
+
+        <!-- Family Member Selection (Conditional) -->
+        <z-form-field *ngIf="selectedBeneficiary && selectedBeneficiary.children && selectedBeneficiary.children.length > 0">
+          <label z-form-label>Target Person (Family Member)</label>
+          <z-form-control>
+            <z-combobox 
+              formControlName="childId" 
+              [options]="familyMemberOptions"
+              [searchable]="false"
+              placeholder="Select person"
+              zWidth="full"
+            />
           </z-form-control>
         </z-form-field>
       </div>
