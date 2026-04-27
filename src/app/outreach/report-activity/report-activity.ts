@@ -45,7 +45,7 @@ export class ReportActivity {
   reportForm = this.fb.group({
     activityId: ['', Validators.required],
     sessionId: ['', Validators.required],
-    sessionDate: [new Date().toISOString().split('T')[0], Validators.required],
+    sessionDate: [this.getTodayFormatted(), Validators.required],
     beneficiaryId: ['', Validators.required],
     childId: [''],
     screening: ['No', Validators.required],
@@ -144,6 +144,36 @@ export class ReportActivity {
     return options;
   }
 
+  private getTodayFormatted(): string {
+    const now = new Date();
+    const d = String(now.getDate()).padStart(2, '0');
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const y = now.getFullYear();
+    return `${d}-${m}-${y}`;
+  }
+
+  private parseDateForApi(d: string): string {
+    if (!d) return '';
+    const parts = d.split('-');
+    if (parts.length === 3) {
+      // If it's already yyyy-mm-dd (from some other source), keep it
+      if (parts[0].length === 4) return d;
+      // Convert dd-mm-yyyy to yyyy-mm-dd
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return d;
+  }
+
+  private formatDateForInput(d: any): string {
+    if (!d) return '';
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return d;
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
   isTestSelected(testId: string): boolean {
     return (this.reportForm.get('selectedTests') as any).value.includes(testId);
   }
@@ -155,6 +185,15 @@ export class ReportActivity {
       testsArray.removeAt(index);
     } else {
       testsArray.push(this.fb.control(testId));
+    }
+  }
+
+  onPickerChange(event: any) {
+    const pickerDate = event.target.value; // yyyy-mm-dd
+    if (pickerDate) {
+      const parts = pickerDate.split('-');
+      const formatted = `${parts[2]}-${parts[1]}-${parts[0]}`; // dd-mm-yyyy
+      this.reportForm.patchValue({ sessionDate: formatted });
     }
   }
 
@@ -219,7 +258,7 @@ export class ReportActivity {
       beneficiaryId: Number(raw.beneficiaryId),
       activityId: Number(raw.activityId),
       sessionId: raw.sessionId ? Number(raw.sessionId) : 0,
-      sessionDate: raw.sessionDate ?? '',
+      sessionDate: this.parseDateForApi(raw.sessionDate || ''),
       reportData: {
         screening: raw.screening,
         screeningDetails: raw.screening === 'Yes' ? screeningDetails : null
@@ -284,13 +323,13 @@ export class ReportActivity {
         this.reportForm.patchValue({
           activityId: report.activityId?.toString() || '',
           sessionId: report.sessionId?.toString() || '',
-          sessionDate: report.date ? new Date(report.date).toISOString().split('T')[0] : report.createdAt.split('T')[0],
           beneficiaryId: report.beneficiaryId?.toString() || '',
           childId: report.childId?.toString() || '',
-          screening: screening,
-        });
-
-        if (screening === 'Yes') {
+          sessionDate: this.formatDateForInput(report.sessionDate),
+          screening: report.reportData?.screening || 'No',
+          selectedTests: [],
+          testValues: {}
+        });if (screening === 'Yes') {
           if (screeningDetails.height) { this.toggleTest('height'); this.reportForm.get('testValues.height')!.setValue(screeningDetails.height); }
           if (screeningDetails.weight) { this.toggleTest('weight'); this.reportForm.get('testValues.weight')!.setValue(screeningDetails.weight); }
           if (screeningDetails.hb) { this.toggleTest('hb'); this.reportForm.get('testValues.hb')!.setValue(screeningDetails.hb); }

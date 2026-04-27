@@ -46,8 +46,12 @@
         <!-- Reporting Date -->
         <z-form-field>
           <label z-form-label zRequired>Reporting Date</label>
-          <z-form-control>
-            <input z-input type="date" formControlName="sessionDate" />
+          <z-form-control class="relative">
+            <input z-input type="text" formControlName="sessionDate" placeholder="DD-MM-YYYY" maxlength="10" class="pr-10" />
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <z-icon zType="calendar" class="w-4 h-4 text-gray-400 pointer-events-none" />
+              <input type="date" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" (change)="onPickerChange($event)" />
+            </div>
           </z-form-control>
         </z-form-field>
 
