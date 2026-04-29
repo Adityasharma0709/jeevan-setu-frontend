@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../core/services/api';
 
@@ -72,6 +72,10 @@ export class ProjectsService {
      */
     findAssignedToUser(userId: number): Observable<Project[]> {
         return this.api.get(`${this.endpoint}/user/${userId}`) as Observable<Project[]>;
+    }
+
+    bulkAssignAllIndia(projectId: number): Observable<any> {
+        return this.api.post(`locations/bulk-all-india`, { projectId });
     }
 }
 

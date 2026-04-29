@@ -37,8 +37,8 @@ interface LocationModel {
   id: number;
   projectId: number | null;
   locationCode: string;
-  state: string;
-  district: string;
+  state: any;
+  district: any;
   block: string;
   village: string;
   project?: {
@@ -106,7 +106,7 @@ export class ProjectsComponent {
   assignLocationForm!: FormGroup;
   assignAdminForm!: FormGroup;
 
-  // âœ… Search controls
+  // Search controls
   projectSearch = new FormControl('');
   statusFilter = new FormControl<ProjectStatusFilter>('ALL');
 
@@ -129,6 +129,14 @@ export class ProjectsComponent {
     items: [],
   });
   readonly availableLocations = signal<LocationModel[]>([]);
+  readonly states = signal<any[]>([]);
+
+  readonly stateOptions = computed<ZardComboboxOption[]>(() =>
+    this.states().map((s) => ({
+      label: s.name,
+      value: String(s.id),
+    }))
+  );
 
   readonly locationOptions = computed<ZardComboboxOption[]>(() =>
     this.availableLocations().map((l) => ({
@@ -142,7 +150,7 @@ export class ProjectsComponent {
   private lastPage = 1;
   private lastTotalPages = 1;
 
-  // âœ… refresh trigger stream
+  // refresh trigger stream
   private refresh$ = new Subject<void>();
 
   admins$: Observable<any[]> = this.refresh$.pipe(
@@ -176,7 +184,7 @@ export class ProjectsComponent {
     })
   );
 
-  // âœ… server-side search stream
+  // server-side search stream
   projects$: Observable<ProjectWithLocations[]> = combineLatest([
     this.refresh$.pipe(startWith(void 0)),
     this.projectSearch.valueChanges.pipe(
@@ -251,13 +259,23 @@ export class ProjectsComponent {
       description: [''],
     });
 
-    const lettersOnlyPattern = /^[a-zA-Z\s]*$/;
     this.locationForm = this.fb.group({
-      locationCode: ['', [Validators.required]],
-      state: ['', [Validators.required, Validators.pattern(lettersOnlyPattern)]],
-      district: ['', [Validators.pattern(lettersOnlyPattern)]],
-      block: ['', [Validators.pattern(lettersOnlyPattern)]],
-      village: ['', [Validators.pattern(lettersOnlyPattern)]],
+      stateId: ['', [Validators.required]],
+      allIndia: [false],
+    });
+
+    // Handle allIndia toggle
+    this.locationForm.get('allIndia')?.valueChanges.pipe(takeUntilDestroyed()).subscribe(allIndia => {
+      const stateIdCtrl = this.locationForm.get('stateId');
+
+      if (allIndia) {
+        stateIdCtrl?.disable();
+        stateIdCtrl?.clearValidators();
+      } else {
+        stateIdCtrl?.enable();
+        stateIdCtrl?.setValidators([Validators.required]);
+      }
+      stateIdCtrl?.updateValueAndValidity();
     });
 
     this.assignLocationForm = this.fb.group({
@@ -276,6 +294,8 @@ export class ProjectsComponent {
         })),
       ),
     );
+
+    this.loadStates();
   }
 
   goToPage(page: number) {
@@ -355,7 +375,6 @@ export class ProjectsComponent {
           this.form.get('projectCode')?.setValue(nextCode, { emitEvent: false });
         },
         error: () => {
-          // keep fallback code if fetch fails
         },
       });
   }
@@ -407,22 +426,16 @@ export class ProjectsComponent {
         const code = res?.projectCode as string | undefined;
         toast.success(code ? `Project created (Code: ${code})` : 'Project created successfully');
         this.createProjectLoading.set(false);
-
         this.form.reset();
-
-        // âœ… trigger refresh safely
         this.refresh$.next();
-
         this.dialogRef?.close();
       },
       error: (err) => {
         let msg = 'Something went wrong';
-
         if (err.status === 400) msg = err.error?.message || 'Bad Request';
         else if (err.status === 409) msg = 'Project code already exists';
         else if (err.status === 401) msg = 'Session expired. Login again';
         else if (err.status === 500) msg = 'Server error. Try later';
-
         this.createProjectLoading.set(false);
         toast.error(msg);
       },
@@ -432,10 +445,8 @@ export class ProjectsComponent {
   // =============================
   // EDIT PROJECT DIALOG
   // =============================
-  @ViewChild('editProjectDialog')
-  editProjectDialog!: TemplateRef<any>;
-  @ViewChild('projectDetailsDialog')
-  projectDetailsDialog!: TemplateRef<any>;
+  @ViewChild('editProjectDialog') editProjectDialog!: TemplateRef<any>;
+  @ViewChild('projectDetailsDialog') projectDetailsDialog!: TemplateRef<any>;
 
   openEditDialog(project: any) {
     this.editForm.patchValue(project);
@@ -469,12 +480,10 @@ export class ProjectsComponent {
       },
       error: (err) => {
         let msg = 'Something went wrong';
-
         if (err.status === 400) msg = err.error?.message || 'Bad Request';
         else if (err.status === 409) msg = 'Project code already exists';
         else if (err.status === 401) msg = 'Session expired. Login again';
         else if (err.status === 500) msg = 'Server error. Try later';
-
         this.updateProjectLoading.set(false);
         toast.error(msg);
       },
@@ -507,8 +516,17 @@ export class ProjectsComponent {
       afterNextRender(() => {
         if (!Number.isFinite(projectId) || Number(this.selectedProjectDetails?.id) !== projectId) return;
         this.loadSelectedProjectAdmins(projectId);
-        this.loadSelectedProjectLocations(projectId);
+        this.loadSelectedProjectStates(projectId);
       });
+    });
+
+    this.loadStates();
+  }
+
+  private loadStates() {
+    this.api.get('locations/states').subscribe({
+      next: (res: any) => this.states.set(res || []),
+      error: () => toast.error('Failed to load states'),
     });
   }
 
@@ -540,17 +558,15 @@ export class ProjectsComponent {
     });
   }
 
-  private loadSelectedProjectLocations(projectId: number) {
-    (this.api.get(`locations?projectId=${projectId}`) as Observable<LocationModel[]>).subscribe({
-      next: (locations) => {
+  private loadSelectedProjectStates(projectId: number) {
+    this.api.get(`locations/project/${projectId}/states`).subscribe({
+      next: (states: any) => {
         if (Number(this.selectedProjectDetails?.id) !== projectId) return;
-        const list = Array.isArray(locations) ? locations : [];
-        const items = list.filter((l: any) => {
-          const raw = (l as any)?.status;
-          if (raw == null) return true;
-          return raw.toString().toUpperCase() === 'ACTIVE';
+        const list = Array.isArray(states) ? states : [];
+        this.selectedProjectLocationsState$.next({ 
+          loading: false, 
+          items: list.map((s: any) => ({ ...s, locationCode: 'STATE', state: s })) 
         });
-        this.selectedProjectLocationsState$.next({ loading: false, items });
       },
       error: () => {
         if (Number(this.selectedProjectDetails?.id) !== projectId) return;
@@ -559,40 +575,7 @@ export class ProjectsComponent {
     });
   }
 
-  private isUserAssignedToProject(user: any, projectId: number) {
-    if (!Number.isFinite(projectId)) return false;
-
-    const directProjectId = Number(user?.projectId);
-    if (Number.isFinite(directProjectId) && directProjectId === projectId) return true;
-
-    const nestedProjectId = Number(user?.project?.id);
-    if (Number.isFinite(nestedProjectId) && nestedProjectId === projectId) return true;
-
-    const maybeProjects = user?.projects;
-    if (Array.isArray(maybeProjects)) {
-      return maybeProjects.some((p: any) => {
-        const id = Number(p?.id ?? p?.projectId);
-        return Number.isFinite(id) && id === projectId;
-      });
-    }
-
-    const maybeAssignments = user?.assignments;
-    if (Array.isArray(maybeAssignments)) {
-      return maybeAssignments.some((a: any) => {
-        const id = Number(a?.projectId ?? a?.project?.id);
-        return Number.isFinite(id) && id === projectId;
-      });
-    }
-
-    return false;
-  }
-
   private resolveAssignedAdmins(projectId: number, admins: any[]): Observable<any[]> {
-    const directlyAssigned = this.getUniqueAdmins(admins.filter((a) => this.isUserAssignedToProject(a, projectId)));
-    if (directlyAssigned.length) {
-      return of(directlyAssigned);
-    }
-
     const requests = admins
       .map((admin) => {
         const adminId = Number(admin?.id);
@@ -608,38 +591,25 @@ export class ProjectsComponent {
       })
       .filter(Boolean) as Observable<any | null>[];
 
-    if (!requests.length) {
-      return of([]);
-    }
+    if (!requests.length) return of([]);
 
     return forkJoin(requests).pipe(
-      map((results) => this.getUniqueAdmins(results.filter(Boolean))),
+      map((results) => {
+        const uniqueById = new Map<number, any>();
+        for (const admin of results) {
+          if (admin && !uniqueById.has(admin.id)) uniqueById.set(admin.id, admin);
+        }
+        return [...uniqueById.values()];
+      }),
       catchError(() => of([])),
     );
-  }
-
-  private getUniqueAdmins(admins: any[]): any[] {
-    const uniqueById = new Map<number, any>();
-    for (const admin of admins) {
-      const adminId = Number(admin?.id);
-      if (Number.isFinite(adminId) && !uniqueById.has(adminId)) {
-        uniqueById.set(adminId, admin);
-      }
-    }
-    return [...uniqueById.values()];
   }
 
   formatAdminNames(admins: any[] | null | undefined) {
     const list = Array.isArray(admins) ? admins : [];
     if (!list.length) return '-';
-    return list
-      .map((a) => (a?.name || a?.email || '').toString().trim())
-      .filter(Boolean)
-      .join(', ') || '-';
+    return list.map((a) => a?.name || a?.email || '').filter(Boolean).join(', ') || '-';
   }
-  // =============================
-  // STATUS TOGGLE
-  // =============================
 
   isProjectStatusLoading(projectId: number): boolean {
     return this.projectStatusLoadingIds().has(projectId);
@@ -655,13 +625,10 @@ export class ProjectsComponent {
   toggleProjectStatus(project: Project) {
     if (this.isProjectStatusLoading(project.id)) return;
     const status = project.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-
     this.setProjectStatusLoading(project.id, true);
     this.projectService.updateStatus(project.id, status).subscribe({
       next: () => {
         toast.success(status === 'ACTIVE' ? 'Project activated' : 'Project deactivated');
-
-        // âœ… safe refresh
         this.refresh$.next();
         this.setProjectStatusLoading(project.id, false);
       },
@@ -672,40 +639,12 @@ export class ProjectsComponent {
     });
   }
 
-  // =============================
-  // DISABLE PROJECT
-  // =============================
-
-  disableProject(id: number) {
-    if (!confirm('Are you sure you want to disable this project?')) return;
-
-    this.projectService.disable(id).subscribe({
-      next: () => {
-        toast.success('Project disabled');
-        this.refresh$.next();
-      },
-      error: () => toast.error('Failed to disable project'),
-    });
-  }
-
-  // =============================
-  // ASSIGN ADMIN TO PROJECT
-  // =============================
-
-  @ViewChild('assignAdminDialog')
-  assignAdminDialog!: TemplateRef<any>;
+  @ViewChild('assignAdminDialog') assignAdminDialog!: TemplateRef<any>;
 
   openAssignAdminDialog(project: ProjectWithLocations) {
-    const projectStatus = (project as any)?.status;
-    if (projectStatus != null && projectStatus.toString().toUpperCase() !== 'ACTIVE') {
-      toast.error('Inactive projects cannot be assigned');
-      return;
-    }
     this.targetProject = project;
     this.assignAdminForm.reset();
     this.adminSearchInput.reset();
-    this.assignAdminLoading.set(false);
-
     this.dialogRef = this.dialog.create({
       zTitle: `Assign Admin`,
       zContent: this.assignAdminDialog,
@@ -713,384 +652,132 @@ export class ProjectsComponent {
       zCancelText: 'Cancel',
       zWidth: '450px',
       zOkLoading: this.assignAdminLoading,
-
       zOnOk: () => {
         this.assignAdminToProject();
         return false;
-      },
-
-      zOnCancel: () => {
-        this.targetProject = null;
-        this.assignAdminLoading.set(false);
-        this.assignAdminForm.reset();
-        this.adminSearchInput.reset();
       },
     });
   }
 
   assignAdminToProject() {
-    if (!this.targetProject) {
-      toast.error('No project selected');
-      return;
-    }
-
-    const projectStatus = (this.targetProject as any)?.status;
-    if (projectStatus != null && projectStatus.toString().toUpperCase() !== 'ACTIVE') {
-      toast.error('Inactive projects cannot be assigned');
-      return;
-    }
-
+    if (!this.targetProject) return;
     const { adminId } = this.assignAdminForm.value;
-
     if (!adminId) {
       toast.error('Please select an admin');
       return;
     }
-
-    const projectId = Number(this.targetProject.id);
     this.assignAdminLoading.set(true);
-
-    forkJoin({
-      admins: this.admins$.pipe(take(1)),
-      locations: this.api.get(`locations?projectId=${projectId}`) as Observable<LocationModel[]>,
-    }).subscribe({
-      next: ({ admins, locations }) => {
-        if (!this.targetProject || Number(this.targetProject.id) !== projectId) {
-          this.assignAdminLoading.set(false);
-          return;
-        }
-
-        const adminList = Array.isArray(admins) ? admins : [];
-        const selectedAdmin = adminList.find((a) => Number((a as any)?.id) === Number(adminId));
-        const adminStatus = (selectedAdmin as any)?.status;
-        if (selectedAdmin && adminStatus != null && adminStatus.toString().toUpperCase() !== 'ACTIVE') {
-          toast.error('Inactive admins cannot be assigned');
-          this.assignAdminLoading.set(false);
-          return;
-        }
-
-        const locationList = Array.isArray(locations) ? locations : [];
-        const activeLocations = locationList.filter((l: any) => {
-          const raw = (l as any)?.status;
-          if (raw == null) return true;
-          return raw.toString().toUpperCase() === 'ACTIVE';
-        });
-        if (!activeLocations.length) {
-          toast.error('No active locations assigned to this project');
-          this.assignAdminLoading.set(false);
-          return;
-        }
-
-        this.api.post('users/assign-project-location', {
-          userId: Number(adminId),
-          projectId,
-          locationId: Number(activeLocations[0].id),
-        }).subscribe({
-          next: () => {
-            toast.success('Admin assigned successfully');
-            this.assignAdminLoading.set(false);
-            this.assignAdminForm.reset();
-            this.adminSearchInput.reset();
-            this.targetProject = null;
-            this.refresh$.next();
-            this.dialogRef?.close();
-          },
-          error: (err) => {
-            this.assignAdminLoading.set(false);
-            if (err?.status === 409) {
-              toast.info('Already assigned');
-              return;
-            }
-            toast.error('Failed to assign admin');
-          },
-        });
-      },
-      error: () => {
-        this.assignAdminLoading.set(false);
-        toast.error('Failed to validate admin/locations');
-      },
-    });
-  }
-
-  // =============================
-  // ASSIGN EXISTING LOCATION TO PROJECT
-  // =============================
-
-  @ViewChild('assignLocationDialog')
-  assignLocationDialog!: TemplateRef<any>;
-
-  openAssignLocationDialog(project: Project) {
-    const projectStatus = (project as any)?.status;
-    if (projectStatus != null && projectStatus.toString().toUpperCase() !== 'ACTIVE') {
-      toast.error('Inactive projects cannot be assigned');
-      return;
-    }
-    this.targetProject = project;
-    this.assignLocationForm.reset();
-    this.availableLocations.set([]);
-    this.isLoadingLocations$.next(true);
-    this.assignLocationLoading.set(false);
-
-    this.api.get('locations').subscribe({
-      next: (locations: any) => {
-        const list = Array.isArray(locations) ? locations : [];
-        this.availableLocations.set(
-          list.filter((l: any) => {
-            const raw = l?.status;
-            if (raw == null) return true;
-            if (raw.toString().toUpperCase() !== 'ACTIVE') return false;
-            const pid = l?.projectId;
-            return pid === null || pid === undefined;
-          }),
-        );
-        this.isLoadingLocations$.next(false);
-      },
-      error: () => {
-        this.availableLocations.set([]);
-        this.isLoadingLocations$.next(false);
-        toast.error('Failed to load locations');
-      },
-    });
-
-    this.dialogRef = this.dialog.create({
-      zTitle: `Assign Location`,
-      zContent: this.assignLocationDialog,
-      zOkText: 'Assign',
-      zCancelText: 'Cancel',
-      zWidth: '450px',
-      zOkLoading: this.assignLocationLoading,
-
-      zOnOk: () => {
-        this.assignExistingLocation();
-        return false;
-      },
-      zOnCancel: () => {
-        this.targetProject = null;
-        this.assignLocationLoading.set(false);
-        this.assignLocationForm.reset();
-      },
-    });
-  }
-
-  assignExistingLocation() {
-    if (!this.targetProject) {
-      toast.error('No project selected');
-      return;
-    }
-
-    const projectStatus = (this.targetProject as any)?.status;
-    if (projectStatus != null && projectStatus.toString().toUpperCase() !== 'ACTIVE') {
-      toast.error('Inactive projects cannot be assigned');
-      return;
-    }
-
-    const { locationId } = this.assignLocationForm.value;
-
-    if (!locationId) {
-      toast.error('Please select a location');
-      return;
-    }
-
-    const location = this.availableLocations().find((l) => l.id === Number(locationId));
-
-    if (!location) {
-      toast.error('Selected location not found');
-      return;
-    }
-
-    const locationStatus = (location as any)?.status;
-    if (locationStatus != null && locationStatus.toString().toUpperCase() !== 'ACTIVE') {
-      toast.error('Inactive locations cannot be assigned');
-      return;
-    }
-
-    if (location.projectId === this.targetProject.id) {
-      toast.info('Location is already assigned to this project');
-      return;
-    }
-
-    this.assignLocationLoading.set(true);
-    this.api.put(`locations/${location.id}`, {
+    this.api.post('users/assign-project-location', {
+      userId: Number(adminId),
       projectId: this.targetProject.id,
-      locationCode: location.locationCode,
-      state: location.state,
-      district: location.district,
-      block: location.block,
-      village: location.village,
     }).subscribe({
       next: () => {
-        toast.success('Location assigned successfully');
-        this.assignLocationLoading.set(false);
-        this.assignLocationForm.reset();
-        this.targetProject = null;
+        toast.success('Admin assigned successfully');
+        this.assignAdminLoading.set(false);
         this.refresh$.next();
         this.dialogRef?.close();
       },
-      error: (err) => {
-        this.assignLocationLoading.set(false);
-        if (err?.status === 409) {
-          toast.info('Already assigned');
-          return;
-        }
-        toast.error('Failed to assign location');
+      error: () => {
+        this.assignAdminLoading.set(false);
+        toast.error('Failed to assign admin');
       },
     });
   }
 
-  // =============================
-  // ADD LOCATION TO PROJECT
-  // =============================
-
-  @ViewChild('createLocationDialog')
-  createLocationDialog!: TemplateRef<any>;
+  @ViewChild('createLocationDialog') createLocationDialog!: TemplateRef<any>;
 
   openCreateLocationDialog(project: Project) {
-    const projectStatus = (project as any)?.status;
-    if (projectStatus != null && projectStatus.toString().toUpperCase() !== 'ACTIVE') {
-      toast.error('Inactive projects cannot be assigned');
-      return;
-    }
     this.targetProject = project;
-    this.locationForm.reset();
+    this.locationForm.reset({ allIndia: false });
     this.createLocationLoading.set(false);
-
     this.dialogRef = this.dialog.create({
-      zTitle: `Add Location to ${project.name}`,
+      zTitle: `Assign State to ${project.name}`,
       zContent: this.createLocationDialog,
-      zOkText: 'Create',
+      zOkText: 'Assign',
       zCancelText: 'Cancel',
       zWidth: '450px',
       zOkLoading: this.createLocationLoading,
-
       zOnOk: () => {
         this.submitLocation();
         return false;
-      },
-      zOnCancel: () => {
-        this.targetProject = null;
-        this.createLocationLoading.set(false);
-        this.locationForm.reset();
       },
     });
   }
 
   submitLocation() {
-    if (!this.targetProject) {
-      toast.error('No project selected');
-      return;
-    }
-
-    const projectStatus = (this.targetProject as any)?.status;
-    if (projectStatus != null && projectStatus.toString().toUpperCase() !== 'ACTIVE') {
-      toast.error('Inactive projects cannot be assigned');
-      return;
-    }
-
+    if (!this.targetProject) return;
     if (this.locationForm.invalid) {
       this.locationForm.markAllAsTouched();
       return;
     }
-
     this.createLocationLoading.set(true);
-    const { locationCode, state, district, block, village } = this.locationForm.value;
-    const trimmedCode = (locationCode ?? '').toString().trim();
+    const { stateId, allIndia } = this.locationForm.getRawValue();
 
-    const payload: any = {
-      projectId: this.targetProject.id,
-      state,
-      district,
-      block,
-      village,
-    };
-
-    if (trimmedCode) {
-      payload.locationCode = trimmedCode;
+    if (allIndia) {
+      this.api.post('locations/bulk-all-india', { projectId: this.targetProject.id }).subscribe({
+        next: (res: any) => {
+          toast.success(res?.message || 'All states mapped successfully');
+          this.finishLocationSubmission();
+        },
+        error: () => {
+          this.createLocationLoading.set(false);
+          toast.error('Failed to map all states');
+        }
+      });
+      return;
     }
 
-    this.api.post('locations', payload).subscribe({
+    const payload = {
+      projectId: this.targetProject.id,
+      stateIds: [Number(stateId)],
+    };
+
+    this.api.post('locations/project-states', payload).subscribe({
       next: () => {
-        toast.success('Location created successfully');
-        this.createLocationLoading.set(false);
-        this.locationForm.reset();
-        this.targetProject = null;
-        this.refresh$.next();
-        this.dialogRef?.close();
+        toast.success('State assigned successfully');
+        this.finishLocationSubmission();
       },
-      error: (err) => {
-        let msg = 'Something went wrong';
-
-        if (err.status === 400) msg = err.error?.message || 'Bad Request';
-        else if (err.status === 409) msg = 'Location code already exists';
-        else if (err.status === 401) msg = 'Session expired. Login again';
-        else if (err.status === 500) msg = 'Server error. Try later';
-
+      error: () => {
         this.createLocationLoading.set(false);
-        toast.error(msg);
+        toast.error('Failed to assign state');
       },
     });
+  }
+
+  private finishLocationSubmission() {
+    this.createLocationLoading.set(false);
+    this.locationForm.reset({ allIndia: false });
+    this.targetProject = null;
+    this.refresh$.next();
+    this.dialogRef?.close();
   }
 
   getProjectErrorMessage(f: FormGroup): string {
     const control = f.get('name');
     if (!control || !(control.dirty || control.touched) || control.valid) return '';
     if (control.hasError('required')) return 'Name is required';
-    if (control.hasError('pattern')) return 'Must start with a letter and contain no special characters';
-    if (control.hasError('maxlength')) return 'Maximum 50 characters allowed';
     return '';
   }
 
   getLocationErrorMessage(controlName: string): string {
     const control = this.locationForm.get(controlName);
     if (!control || !(control.dirty || control.touched) || control.valid) return '';
-    if (control.hasError('required')) return `${this.formatControlName(controlName)} is required`;
-    if (control.hasError('pattern')) return 'Must contain only letters';
-    return '';
+    return 'Required';
   }
 
-  private formatControlName(name: string): string {
-    return name
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, (str) => str.toUpperCase())
-      .trim();
-  }
-
-  formatLocationCodes(locations?: LocationModel[]) {
-    const list = Array.isArray(locations) ? locations : [];
-    if (!list.length) return '-';
-    const labels = list
-      .map((l) => {
-        const code = (l as any)?.locationCode;
-        if (code != null && code.toString().trim()) return code.toString().trim();
-        
-        const village = (l as any)?.village;
-        const block = (l as any)?.block;
-        
-        const villageStr = (village || '').toString().trim();
-        const blockStr = (block || '').toString().trim();
-
-        if (villageStr && blockStr) return `${villageStr} (${blockStr})`;
-        if (villageStr) return villageStr;
-        if (blockStr) return blockStr;
-        
-        return '';
-      })
-      .filter(Boolean);
-    return labels.join(', ') || '-';
-  }
-
-  formatFullAddress(l?: LocationModel | any): string {
+  getLocationDisplayName(l: any): string {
     if (!l) return '-';
-    const parts = [l.village, l.block, l.district, l.state]
-      .map((p) => (p || '').toString().trim())
-      .filter(Boolean);
+    return (l.village || l.block || l.district?.name || l.district || l.state?.name || l.state || '-').toString();
+  }
+
+  formatFullAddress(l?: any): string {
+    if (!l) return '-';
+    const parts = [l.village, l.block, l.district?.name || l.district, l.state?.name || l.state]
+      .map(p => (p || '').toString().trim()).filter(Boolean);
     return parts.join(', ') || '-';
   }
 
-  getLocationCount(locations?: LocationModel[]) {
-    return locations?.length ?? 0;
+  getLocationDisplayNameTemplate(l: any): string {
+    return `<span class="truncate max-w-[180px]">${this.getLocationDisplayName(l)}</span>`;
   }
-
 }
-
-
-
