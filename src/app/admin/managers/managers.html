@@ -207,58 +207,98 @@
 
 <!-- ================= VIEW DETAILS DIALOG ================= -->
 <ng-template #detailsDialog>
-    <div class="min-w-[320px] max-w-[800px]">
-        <ng-container *ngIf="detailsLoading(); else detailsContent">
-            <div class="flex items-center justify-center py-10 w-full">
-                <ng-lottie [options]="detailsLoaderOptions" height="140px" width="140px"></ng-lottie>
-            </div>
-        </ng-container>
-
-        <ng-template #detailsContent>
-            <div *ngIf="!detailsProjects.length" class="text-sm text-gray-500 py-6 text-center">
-                No assigned projects/locations found.
-            </div>
-
-            <div *ngFor="let p of detailsProjects" class="border rounded-lg p-4 mb-3 bg-white">
-                <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0 flex-1">
-                        <p class="font-semibold text-gray-900 break-words">{{ p?.name || 'Project' }}</p>
-                        <p class="text-xs text-gray-500 font-mono">{{ p?.projectCode || '-' }}</p>
+    <div class="space-y-5 w-full max-w-[600px] max-h-[80vh] overflow-y-auto px-1">
+        <!-- Manager Profile Header -->
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex flex-col sm:flex-row items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Manager Profile</p>
+                    <p class="mt-1 break-words text-lg font-extrabold text-gray-900 leading-tight">{{ detailsManager?.name || '-' }}</p>
+                    <p class="text-xs text-gray-500 truncate mb-3">{{ detailsManager?.email }}</p>
+                    
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] text-gray-700">
+                            <span class="text-gray-400">Code</span>
+                            <span class="font-mono font-bold text-gray-900">{{ detailsManager?.usercode || detailsManager?.id || '-' }}</span>
+                        </span>
+                        <span class="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase" [ngClass]="
+                            detailsManager?.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        ">
+                            {{ detailsManager?.status || 'ACTIVE' }}
+                        </span>
                     </div>
-                    <span class="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 shrink-0">
-                        {{ (p?.locations?.length || 0) }} location{{ (p?.locations?.length || 0) === 1 ? '' : 's' }}
-                    </span>
+                </div>
+                <div class="hidden sm:flex shrink-0 w-12 h-12 rounded-full bg-blue-100 items-center justify-center text-blue-600">
+                    <z-icon zType="user" class="w-6 h-6" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Assigned Projects Section -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+                <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Assigned Projects</h3>
+                <span class="text-[9px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">
+                    {{ detailsProjects.length }} Total
+                </span>
+            </div>
+
+            <ng-container *ngIf="detailsLoading(); else detailsContent">
+                <div class="flex flex-col items-center justify-center py-12 bg-white border border-dashed rounded-xl">
+                    <div class="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="mt-3 text-[10px] text-gray-400 font-bold uppercase tracking-widest">Loading...</p>
+                </div>
+            </ng-container>
+
+            <ng-template #detailsContent>
+                <div *ngIf="!detailsProjects.length" class="text-center py-12 bg-white border border-dashed rounded-xl">
+                    <z-icon zType="layers" class="w-10 h-10 text-gray-100 mx-auto mb-2" />
+                    <p class="text-xs text-gray-400 font-medium">No assigned projects found.</p>
                 </div>
 
-                <div class="mt-3">
-                    <div *ngIf="!(p?.locations?.length)" class="text-sm text-gray-500">
-                        No locations assigned for this project.
-                    </div>
-
-                    <div *ngIf="p?.locations?.length" class="space-y-2">
-                        <div *ngFor="let l of p.locations" class="flex items-start justify-between gap-3">
-                            <div class="text-sm text-gray-800 min-w-0 flex-1">
-                                {{ formatLocationLabel(l) }}
+                <div class="space-y-4">
+                    <div *ngFor="let p of detailsProjects" class="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
+                        <div class="flex items-start justify-between gap-3 mb-4">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <z-icon zType="layers" class="w-4 h-4 text-blue-500" />
+                                    <p class="font-bold text-gray-900 break-words leading-none">{{ p?.name || 'Project' }}</p>
+                                </div>
+                                <p class="text-[10px] text-gray-400 font-mono mt-1 px-6 uppercase">{{ p?.projectCode || '-' }}</p>
                             </div>
-                            <ng-container *ngIf="l?.status">
-                                <span
-                                    class="px-2 py-1 rounded text-xs font-medium"
-                                    [ngClass]="
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+                                {{ (p?.locations?.length || 0) }} AWC
+                            </span>
+                        </div>
+
+                        <div class="space-y-2 pl-6">
+                            <div *ngIf="!(p?.locations?.length)" class="text-[10px] text-gray-400 italic">
+                                No assigned AWCs.
+                            </div>
+
+                            <div *ngIf="p?.locations?.length" class="space-y-2">
+                                <div *ngFor="let l of p.locations" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-100">
+                                    <div class="flex items-start gap-2 min-w-0 flex-1">
+                                        <z-icon zType="map-pin" class="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+                                        <span class="text-xs text-gray-700 break-words font-medium leading-tight">{{ formatLocationLabel(l) }}</span>
+                                    </div>
+                                    <span class="self-start sm:self-center px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase shrink-0" [ngClass]="
                                         (l.status || '').toString().toUpperCase() === 'ACTIVE'
                                             ? 'bg-green-100 text-green-700'
                                             : 'bg-red-100 text-red-700'
-                                    "
-                                >
-                                    {{ l.status }}
-                                </span>
-                            </ng-container>
+                                    ">
+                                        {{ l.status || 'ACTIVE' }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </ng-template>
+            </ng-template>
+        </div>
     </div>
 </ng-template>
+
 
 <!-- ================= CREATE/EDIT DIALOG ================= -->
 <ng-template #managerDialog>

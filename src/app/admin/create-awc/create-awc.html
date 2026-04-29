@@ -16,90 +16,227 @@
     </button>
   </div>
 
-  <!-- Table Section -->
-  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-    <table z-table>
-      <thead z-table-header>
-        <tr z-table-row>
-          <th z-table-head>AWC Details</th>
-          <th z-table-head>Project</th>
-          <th z-table-head>AWC</th>
-          <th z-table-head>AWC Code</th>
-          <th z-table-head class="text-right">Actions</th>
-        </tr>
-      </thead>
-      
-      <tbody z-table-body>
-        @for (loc of (locations$ | async); track loc.id) {
-          <tr z-table-row class="hover:bg-gray-50 transition-colors">
-            <td z-table-cell>
-              <div class="flex flex-col">
-                <span class="font-semibold text-gray-900">{{ loc.awcName || 'Unnamed Center' }}</span>
-                <span class="text-xs text-gray-500 uppercase tracking-wider">{{ loc.village }}</span>
-              </div>
-            </td>
-            
-            <td z-table-cell>
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                <span class="text-sm text-gray-700 font-medium">{{ loc.project?.name || 'Unassigned' }}</span>
-              </div>
-            </td>
-            
-            <td z-table-cell>
-              <div class="text-sm text-gray-600">
-                <span class="font-medium">{{ loc.stateName }}</span>
-                <div class="text-xs text-gray-400">{{ loc.districtName }} • {{ loc.block }}</div>
-              </div>
-            </td>
-            
-            <td z-table-cell>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 font-mono">
-                {{ loc.locationCode }}
-              </span>
-            </td>
-            
-            <td z-table-cell class="text-right">
-              <button z-button zType="secondary" (click)="openEditDialog(loc)" class="!p-2">
-                <z-icon zType="edit" class="w-4 h-4"></z-icon>
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr z-table-row *ngIf="!isLoading()">
-            <td z-table-cell colspan="5" class="py-12 text-center">
-              <div class="flex flex-col items-center justify-center text-gray-400">
-                <z-icon zType="inbox" class="w-12 h-12 mb-2 opacity-20"></z-icon>
-                <p>No AWCs found. Create your first one!</p>
-              </div>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  <!-- Search Section -->
+  <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+    <div class="w-full sm:w-[350px]">
+      <div class="relative">
+        <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></z-icon>
+        <input 
+          z-input 
+          [formControl]="searchControl" 
+          placeholder="Search by name, code, village, project..." 
+          class="w-full pl-10"
+        />
+      </div>
+    </div>
   </div>
+
+  <!-- Table Section -->
+  <ng-container *ngIf="pager$ | async as pager; else loader">
+    
+    <!-- ================= DESKTOP TABLE VIEW ================= -->
+    <div class="hidden md:block bg-white border rounded-lg overflow-hidden shadow-sm">
+      <table z-table zType="grid" class="w-full">
+        <thead z-table-header>
+          <tr z-table-row>
+            <th z-table-head class="text-center">AWC Details</th>
+            <th z-table-head class="text-center">Project</th>
+            <th z-table-head class="text-center">Location</th>
+            <th z-table-head class="text-center">AWC Code</th>
+            <th z-table-head class="text-center">Status</th>
+            <th z-table-head class="text-center">Actions</th>
+          </tr>
+        </thead>
+        
+        <tbody z-table-body>
+          @for (loc of pager.items; track loc.id) {
+            <tr z-table-row class="hover:bg-gray-50 transition-colors">
+              <td z-table-cell class="text-center">
+                <div class="flex flex-col items-center">
+                  <span class="font-bold text-gray-900">{{ loc.awcName || 'Unnamed Center' }}</span>
+                  <span class="text-[10px] text-gray-400 uppercase font-medium">{{ loc.village }}</span>
+                </div>
+              </td>
+              
+              <td z-table-cell class="text-center">
+                <span class="text-sm text-gray-700 font-medium break-words">{{ loc.project?.name || 'Unassigned' }}</span>
+              </td>
+              
+              <td z-table-cell class="text-center">
+                <div class="text-sm text-gray-600">
+                  <span class="font-semibold text-gray-800">{{ loc.stateName }}</span>
+                  <div class="text-[11px] text-gray-400">{{ loc.districtName }} • {{ loc.block }}</div>
+                </div>
+              </td>
+              
+              <td z-table-cell class="text-center">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-600 font-mono border">
+                  {{ loc.locationCode }}
+                </span>
+              </td>
+
+              <td z-table-cell class="text-center">
+                <span class="px-2 py-1 rounded text-[10px] font-bold uppercase inline-block min-w-[70px]" 
+                  [ngClass]="loc.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                  {{ loc.status || 'ACTIVE' }}
+                </span>
+              </td>
+              
+              <td z-table-cell class="text-center">
+                <div class="flex justify-center items-center gap-3">
+                  <button z-button zType="secondary" zSize="sm" (click)="openEditDialog(loc)" title="Edit AWC">
+                    <z-icon zType="edit" class="w-4 h-4"></z-icon>
+                  </button>
+                  <z-switch
+                    [zChecked]="loc.status === 'ACTIVE'"
+                    [zDisabled]="isStatusLoading(loc.id)"
+                    (zCheckedChange)="toggleAwcStatus(loc)"
+                  >
+                    <span class="sr-only">Toggle AWC status</span>
+                  </z-switch>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr z-table-row *ngIf="!isLoading()">
+              <td z-table-cell colspan="6" class="py-12 text-center text-gray-400">
+                <div class="flex flex-col items-center justify-center">
+                  <z-icon zType="inbox" class="w-12 h-12 mb-2 opacity-20"></z-icon>
+                  <p>No AWCs found matching your search.</p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ================= MOBILE CARD VIEW ================= -->
+    <div class="grid grid-cols-1 gap-4 md:hidden">
+      <div *ngFor="let loc of pager.items" class="bg-white border rounded-lg p-4 shadow-sm space-y-3">
+        <div class="flex items-start justify-between gap-2 min-w-0">
+          <div class="min-w-0 flex-1">
+            <p class="font-bold text-gray-900 break-words">{{ loc.awcName || 'Unnamed Center' }}</p>
+            <p class="text-[10px] text-gray-400 uppercase font-medium mt-0.5">{{ loc.village }}</p>
+          </div>
+          <span class="px-2 py-1 rounded text-[10px] font-bold uppercase shrink-0 mt-0.5" [ngClass]="
+            loc.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          ">
+            {{ loc.status || 'ACTIVE' }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm pt-2 border-t">
+          <div>
+            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Project</p>
+            <p class="text-gray-700 font-medium truncate">{{ loc.project?.name || 'Unassigned' }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">AWC Code</p>
+            <p class="text-gray-700 font-mono text-xs">{{ loc.locationCode }}</p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Location</p>
+            <p class="text-gray-700">{{ loc.stateName }}, {{ loc.districtName }}, {{ loc.block }}</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2 mt-3 pt-3 border-t">
+          <button
+            z-button
+            zType="secondary"
+            zSize="sm"
+            class="flex-1"
+            (click)="openEditDialog(loc)"
+            title="Edit AWC"
+          >
+            <z-icon zType="edit" />
+            <span class="ml-2">Edit</span>
+          </button>
+          <div class="flex-1 flex items-center justify-between rounded-md border px-3 py-1 bg-gray-50">
+            <span class="text-xs font-medium text-gray-500">Status</span>
+            <z-switch
+              [zChecked]="loc.status === 'ACTIVE'"
+              [zDisabled]="isStatusLoading(loc.id)"
+              (zCheckedChange)="toggleAwcStatus(loc)"
+            >
+              <span class="sr-only">Toggle AWC status</span>
+            </z-switch>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!pager.items.length && !isLoading()" class="text-center py-10 bg-white border rounded-lg text-gray-500">
+        <div class="flex flex-col items-center justify-center opacity-40">
+          <z-icon zType="inbox" class="w-10 h-10 mb-2"></z-icon>
+          <p>No AWCs found.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm font-medium text-gray-500">
+        Showing
+        <span class="font-bold text-gray-700">{{ pager.total ? pager.from : 0 }}</span>
+        -
+        <span class="font-bold text-gray-700">{{ pager.total ? pager.to : 0 }}</span>
+        of <span class="font-bold text-gray-700">{{ pager.total }}</span>
+      </p>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="pager.page <= 1"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
+        </button>
+
+        <span class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap">
+          {{ pager.page }} / {{ pager.totalPages }}
+        </span>
+
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="pager.page >= pager.totalPages"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #loader>
+    <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  </ng-template>
 </div>
 
 <!-- Create/Edit AWC Dialog Template -->
 <ng-template #awcDialog>
-  <form [formGroup]="form" (ngSubmit)="submit()" class="p-6 space-y-6">
+  <form [formGroup]="form" class="space-y-4 py-2">
     
     <!-- Project Selection -->
     <z-form-field>
-      <label z-form-label zRequired>Select Project</label>
+      <label z-form-label zRequired>Project</label>
       <z-form-control [errorMessage]="getErrorMessage('projectId')">
         <z-combobox
           [options]="(projectOptions$ | async) ?? []"
           [value]="toString(form.get('projectId')?.value)"
           (zValueChange)="onProjectSelect($event)"
-          placeholder="Search and select project..."
-          class="w-full"
+          placeholder="Select project"
+          zWidth="full"
         ></z-combobox>
       </z-form-control>
     </z-form-field>
 
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- State Selection -->
       <z-form-field>
         <label z-form-label zRequired>State</label>
@@ -108,8 +245,9 @@
             [options]="stateOptions"
             [value]="toString(form.get('stateId')?.value)"
             (zValueChange)="onStateSelect($event)"
-            placeholder="Select state..."
-            class="w-full"
+            [zDisabled]="!form.get('projectId')?.value"
+            placeholder="Select state"
+            zWidth="full"
           ></z-combobox>
         </z-form-control>
       </z-form-field>
@@ -123,14 +261,14 @@
             [value]="toString(form.get('districtId')?.value)"
             (zValueChange)="onDistrictSelect($event)"
             [zDisabled]="!form.get('stateId')?.value"
-            placeholder="Select district..."
-            class="w-full"
+            placeholder="Select district"
+            zWidth="full"
           ></z-combobox>
         </z-form-control>
       </z-form-field>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Block -->
       <z-form-field>
         <label z-form-label zRequired>Block</label>
@@ -148,9 +286,7 @@
       </z-form-field>
     </div>
 
-    <hr class="border-gray-100" />
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- AWC Name -->
       <z-form-field>
         <label z-form-label zRequired>AWC Name</label>
@@ -163,18 +299,9 @@
       <z-form-field>
         <label z-form-label>AWC Code (Auto)</label>
         <z-form-control>
-          <input z-input formControlName="locationCode" readonly class="bg-gray-50 text-gray-500 font-mono" />
+          <input z-input formControlName="locationCode" readonly class="bg-gray-50 text-gray-400 font-mono" />
         </z-form-control>
       </z-form-field>
-    </div>
-
-    <div class="flex items-center justify-end gap-3 pt-4">
-      <button z-button type="button" zType="secondary" (click)="cancel()" [disabled]="isSubmitting()">
-        Cancel
-      </button>
-      <button z-button type="submit" [zLoading]="isSubmitting()">
-        {{ isEditMode() ? 'Update AWC' : 'Create AWC' }}
-      </button>
     </div>
 
   </form>

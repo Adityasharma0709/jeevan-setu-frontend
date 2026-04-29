@@ -1,9 +1,9 @@
 import { Component, DestroyRef, OnInit, inject, signal, TemplateRef, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Observable, of, startWith, switchMap, map, combineLatest, Subject, catchError } from 'rxjs';
+import { Observable, of, startWith, switchMap, map, combineLatest, Subject, catchError, BehaviorSubject, debounceTime, distinctUntilChanged, tap, shareReplay } from 'rxjs';
 import { toast } from 'ngx-sonner';
 
 import { ApiService } from '../../core/services/api';
@@ -118,7 +118,24 @@ export class CreateAwcComponent implements OnInit {
   districtOptions$!: Observable<ZardComboboxOption[]>;
 
   private refresh$ = new Subject<void>();
+  
+  readonly pageSize = 10;
+  private readonly page$ = new BehaviorSubject<number>(1);
+  private lastPage = 1;
+  private lastTotalPages = 1;
+  public readonly searchControl = new FormControl('');
+  public readonly statusLoadingIds = signal<Set<number>>(new Set());
+  
   locations$!: Observable<AwcModel[]>;
+  pager$!: Observable<{
+    items: AwcModel[];
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    from: number;
+    to: number;
+  }>;
   allLocations: AwcModel[] = [];
 
   constructor() {
@@ -144,23 +161,74 @@ export class CreateAwcComponent implements OnInit {
       map(projects => projects.map(p => ({ label: p.name, value: String(p.id) })))
     );
 
-    // 2. Load All AWCs for Listing
-    this.locations$ = this.refresh$.pipe(
-      startWith(void 0),
-      switchMap(() => {
+    // 2. Load and Filter AWCs
+    this.locations$ = combineLatest([
+      this.refresh$.pipe(startWith(void 0)),
+      this.searchControl.valueChanges.pipe(
+        startWith(''),
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+    ]).pipe(
+      tap(() => this.goToPage(1)),
+      switchMap(([_, query]) => {
         this.isLoading.set(true);
         return (this.api.get('locations') as Observable<AwcModel[]>).pipe(
           map(locs => {
             this.allLocations = locs || [];
+            const filtered = this.allLocations.filter(loc => {
+              const q = (query || '').toLowerCase();
+              return (
+                (loc.awcName?.toLowerCase() || '').includes(q) ||
+                (loc.locationCode?.toLowerCase() || '').includes(q) ||
+                (loc.village?.toLowerCase() || '').includes(q) ||
+                (loc.block?.toLowerCase() || '').includes(q) ||
+                (loc.districtName?.toLowerCase() || '').includes(q) ||
+                (loc.stateName?.toLowerCase() || '').includes(q) ||
+                (loc.project?.name?.toLowerCase() || '').includes(q)
+              );
+            });
             this.isLoading.set(false);
-            return this.allLocations;
+            return filtered;
           }),
-          catchError((err: any) => {
+          catchError(() => {
             this.isLoading.set(false);
             return of([] as AwcModel[]);
           })
         );
-      })
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    // 2.1 Pagination logic
+    this.pager$ = combineLatest([this.locations$, this.page$]).pipe(
+      map(([locations, page]) => {
+        const total = (locations || []).length;
+        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+
+        const startIndex = (safePage - 1) * this.pageSize;
+        const endIndexExclusive = Math.min(startIndex + this.pageSize, total);
+        const items = (locations || []).slice(startIndex, endIndexExclusive);
+
+        const from = total === 0 ? 0 : startIndex + 1;
+        const to = total === 0 ? 0 : endIndexExclusive;
+
+        return {
+          items,
+          page: safePage,
+          pageSize: this.pageSize,
+          total,
+          totalPages,
+          from,
+          to,
+        };
+      }),
+      tap((vm) => {
+        this.lastPage = vm.page;
+        this.lastTotalPages = vm.totalPages;
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
 
     // 3. Dynamic State Options based on Selected Project
@@ -220,7 +288,12 @@ export class CreateAwcComponent implements OnInit {
     this.dialogRef = this.dialogService.create({ 
       zTitle: 'Create New AWC',
       zContent: this.awcDialog,
-      zWidth: '600px'
+      zWidth: '500px',
+      zOkText: 'Create',
+      zOnOk: () => {
+        this.submit();
+        return false;
+      }
     });
   }
 
@@ -239,7 +312,12 @@ export class CreateAwcComponent implements OnInit {
     this.dialogRef = this.dialogService.create({ 
       zTitle: 'Edit AWC',
       zContent: this.awcDialog,
-      zWidth: '600px'
+      zWidth: '500px',
+      zOkText: 'Update',
+      zOnOk: () => {
+        this.submit();
+        return false;
+      }
     });
   }
 
@@ -310,6 +388,41 @@ export class CreateAwcComponent implements OnInit {
     });
   }
 
+  toggleAwcStatus(loc: AwcModel) {
+    const newStatus = loc.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    
+    this.statusLoadingIds.update(set => {
+      const next = new Set(set);
+      next.add(loc.id);
+      return next;
+    });
+    
+    // Use the correct location update endpoint: locations/:id
+    this.api.put(`locations/${loc.id}`, { status: newStatus }).subscribe({
+      next: () => {
+        this.statusLoadingIds.update(set => {
+          const next = new Set(set);
+          next.delete(loc.id);
+          return next;
+        });
+        toast.success(`AWC ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully`);
+        this.refresh$.next();
+      },
+      error: (err) => {
+        this.statusLoadingIds.update(set => {
+          const next = new Set(set);
+          next.delete(loc.id);
+          return next;
+        });
+        toast.error(err?.error?.message || 'Failed to update status');
+      }
+    });
+  }
+
+  isStatusLoading(id: number): boolean {
+    return this.statusLoadingIds().has(id);
+  }
+
   getErrorMessage(controlName: string): string {
     const control = this.form.get(controlName);
     if (control?.touched && control?.invalid) {
@@ -326,5 +439,18 @@ export class CreateAwcComponent implements OnInit {
     if (this.dialogRef) {
       this.dialogRef.close();
     }
+  }
+
+  goToPage(page: number) {
+    const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+    this.page$.next(nextPage);
+  }
+
+  prevPage() {
+    this.page$.next(Math.max(1, this.lastPage - 1));
+  }
+
+  nextPage() {
+    this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
   }
 }

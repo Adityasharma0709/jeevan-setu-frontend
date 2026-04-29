@@ -63,6 +63,13 @@
             @if (!sidebarCollapsed) { <span class="flex-1">Managers</span> }
           </a>
 
+          <!-- AWCs -->
+          <a routerLink="/admin/awcs" routerLinkActive="active-link" class="menu-link"
+            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'AWCs' : ''" zPosition="right" (click)="closeSidebar()">
+            <z-icon zType="map-pin" [class]="sidebarCollapsed ? '' : 'mr-3 text-red-500'" />
+            @if (!sidebarCollapsed) { <span class="flex-1">AWCs</span> }
+          </a>
+
           <!-- Groups -->
           <a routerLink="/admin/groups" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Groups' : ''" zPosition="right" (click)="closeSidebar()">

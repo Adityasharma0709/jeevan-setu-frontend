@@ -138,12 +138,21 @@ export class Managers {
   formatLocationLabel(l: any): string {
     if (!l) return '';
     const code = (l.locationCode ?? '').toString().trim();
+
+    const getVal = (val: any) => {
+      if (!val) return '';
+      if (typeof val === 'object') {
+        return val.name || val.label || val.nameLabel || '';
+      }
+      return String(val).trim();
+    };
+
     const parts = [
       l.village,
       l.block,
-      l.district,
-      l.state
-    ].map(p => (p ?? '').toString().trim()).filter(Boolean);
+      l.districtName || l.district,
+      l.stateName || l.state
+    ].map(p => getVal(p)).filter(Boolean);
 
     const details = parts.join(', ');
     return [code, details].filter(Boolean).join(' - ');
@@ -605,12 +614,26 @@ export class Managers {
       next: (projects) => {
         if (token !== this.detailsFetchToken) return;
         const list = Array.isArray(projects) ? projects : [];
-        this.detailsProjects = list.map((p: any) => ({
-          ...p,
-          locations: Array.isArray(p?.locations)
-            ? p.locations.filter((l: any) => (l?.status ?? '').toString().toUpperCase() === 'ACTIVE')
-            : [],
-        }));
+        this.detailsProjects = list.map((p: any) => {
+          // Normalize locations from possible keys (locations, awcs, or userProjectLocations)
+          let rawLocations = p.locations || p.awcs || p.userProjectLocations || [];
+          if (!Array.isArray(rawLocations)) rawLocations = [];
+
+          // Extract actual location objects if they are wrapped (e.g., in userProjectLocations)
+          const locations = rawLocations.map((item: any) => {
+            if (item?.awc) return item.awc;
+            if (item?.location) return item.location;
+            return item;
+          });
+
+          return {
+            ...p,
+            locations: locations.filter((l: any) => {
+              const status = (l?.status || 'ACTIVE').toString().toUpperCase();
+              return status === 'ACTIVE';
+            }),
+          };
+        });
         this.detailsLoading.set(false);
         this.detailsLoadingManagerId.set(null);
       },
