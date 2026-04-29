@@ -189,5 +189,9 @@ export class AdminService {
     rejectAccountRequest(id: number, reason?: string): Observable<any> {
         return this.api.patch(`${this.endpoint}/profile-requests/${id}/reject`, { reason });
     }
+
+    getStates(): Observable<any[]> {
+        return this.api.get(`${this.endpoint}/states`) as Observable<any[]>;
+    }
 }
 

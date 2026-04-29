@@ -66,13 +66,6 @@
             @if (!sidebarCollapsed) { <span class="flex-1">Projects</span> }
           </a>
 
-          <!-- Locations -->
-          <a routerLink="/super-admin/locations" routerLinkActive="active-link" class="menu-link"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Locations' : ''"
-            zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="arrow-up-right" [class]="sidebarCollapsed ? '' : 'mr-3 text-teal-500'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Locations</span> }
-          </a>
 
         </z-sidebar-group>
 

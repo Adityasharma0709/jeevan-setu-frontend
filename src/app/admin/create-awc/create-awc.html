@@ -1,0 +1,181 @@
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div>
+      <z-breadcrumb>
+        <z-breadcrumb-item href="/admin">Dashboard</z-breadcrumb-item>
+        <z-breadcrumb-item>AWC Management</z-breadcrumb-item>
+      </z-breadcrumb>
+      <h1 class="text-3xl font-bold mt-2 text-gray-900">Anganwadi Centers (AWC)</h1>
+      <p class="text-gray-500 mt-1">Manage and monitor all your registered Anganwadi Centers.</p>
+    </div>
+    
+    <button z-button (click)="openCreateDialog()" class="flex items-center gap-2">
+      <z-icon zType="plus" class="w-4 h-4"></z-icon>
+      Create AWC
+    </button>
+  </div>
+
+  <!-- Table Section -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <table z-table>
+      <thead z-table-header>
+        <tr z-table-row>
+          <th z-table-head>AWC Details</th>
+          <th z-table-head>Project</th>
+          <th z-table-head>AWC</th>
+          <th z-table-head>AWC Code</th>
+          <th z-table-head class="text-right">Actions</th>
+        </tr>
+      </thead>
+      
+      <tbody z-table-body>
+        @for (loc of (locations$ | async); track loc.id) {
+          <tr z-table-row class="hover:bg-gray-50 transition-colors">
+            <td z-table-cell>
+              <div class="flex flex-col">
+                <span class="font-semibold text-gray-900">{{ loc.awcName || 'Unnamed Center' }}</span>
+                <span class="text-xs text-gray-500 uppercase tracking-wider">{{ loc.village }}</span>
+              </div>
+            </td>
+            
+            <td z-table-cell>
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span class="text-sm text-gray-700 font-medium">{{ loc.project?.name || 'Unassigned' }}</span>
+              </div>
+            </td>
+            
+            <td z-table-cell>
+              <div class="text-sm text-gray-600">
+                <span class="font-medium">{{ loc.stateName }}</span>
+                <div class="text-xs text-gray-400">{{ loc.districtName }} • {{ loc.block }}</div>
+              </div>
+            </td>
+            
+            <td z-table-cell>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 font-mono">
+                {{ loc.locationCode }}
+              </span>
+            </td>
+            
+            <td z-table-cell class="text-right">
+              <button z-button zType="secondary" (click)="openEditDialog(loc)" class="!p-2">
+                <z-icon zType="edit" class="w-4 h-4"></z-icon>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr z-table-row *ngIf="!isLoading()">
+            <td z-table-cell colspan="5" class="py-12 text-center">
+              <div class="flex flex-col items-center justify-center text-gray-400">
+                <z-icon zType="inbox" class="w-12 h-12 mb-2 opacity-20"></z-icon>
+                <p>No AWCs found. Create your first one!</p>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create/Edit AWC Dialog Template -->
+<ng-template #awcDialog>
+  <form [formGroup]="form" (ngSubmit)="submit()" class="p-6 space-y-6">
+    
+    <!-- Project Selection -->
+    <z-form-field>
+      <label z-form-label zRequired>Select Project</label>
+      <z-form-control [errorMessage]="getErrorMessage('projectId')">
+        <z-combobox
+          [options]="(projectOptions$ | async) ?? []"
+          [value]="toString(form.get('projectId')?.value)"
+          (zValueChange)="onProjectSelect($event)"
+          placeholder="Search and select project..."
+          class="w-full"
+        ></z-combobox>
+      </z-form-control>
+    </z-form-field>
+
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- State Selection -->
+      <z-form-field>
+        <label z-form-label zRequired>State</label>
+        <z-form-control [errorMessage]="getErrorMessage('stateId')">
+          <z-combobox
+            [options]="stateOptions"
+            [value]="toString(form.get('stateId')?.value)"
+            (zValueChange)="onStateSelect($event)"
+            placeholder="Select state..."
+            class="w-full"
+          ></z-combobox>
+        </z-form-control>
+      </z-form-field>
+ 
+      <!-- District Selection -->
+      <z-form-field>
+        <label z-form-label zRequired>District</label>
+        <z-form-control [errorMessage]="getErrorMessage('districtId')">
+          <z-combobox
+            [options]="(districtOptions$ | async) ?? []"
+            [value]="toString(form.get('districtId')?.value)"
+            (zValueChange)="onDistrictSelect($event)"
+            [zDisabled]="!form.get('stateId')?.value"
+            placeholder="Select district..."
+            class="w-full"
+          ></z-combobox>
+        </z-form-control>
+      </z-form-field>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Block -->
+      <z-form-field>
+        <label z-form-label zRequired>Block</label>
+        <z-form-control [errorMessage]="getErrorMessage('block')">
+          <input z-input formControlName="block" placeholder="Enter block name" />
+        </z-form-control>
+      </z-form-field>
+ 
+      <!-- Village -->
+      <z-form-field>
+        <label z-form-label zRequired>Village</label>
+        <z-form-control [errorMessage]="getErrorMessage('village')">
+          <input z-input formControlName="village" placeholder="Enter village name" />
+        </z-form-control>
+      </z-form-field>
+    </div>
+
+    <hr class="border-gray-100" />
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- AWC Name -->
+      <z-form-field>
+        <label z-form-label zRequired>AWC Name</label>
+        <z-form-control [errorMessage]="getErrorMessage('awcName')">
+          <input z-input formControlName="awcName" placeholder="e.g. Center 01" />
+        </z-form-control>
+      </z-form-field>
+
+      <!-- AWC Code (Readonly) -->
+      <z-form-field>
+        <label z-form-label>AWC Code (Auto)</label>
+        <z-form-control>
+          <input z-input formControlName="locationCode" readonly class="bg-gray-50 text-gray-500 font-mono" />
+        </z-form-control>
+      </z-form-field>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-4">
+      <button z-button type="button" zType="secondary" (click)="cancel()" [disabled]="isSubmitting()">
+        Cancel
+      </button>
+      <button z-button type="submit" [zLoading]="isSubmitting()">
+        {{ isEditMode() ? 'Update AWC' : 'Create AWC' }}
+      </button>
+    </div>
+
+  </form>
+</ng-template>

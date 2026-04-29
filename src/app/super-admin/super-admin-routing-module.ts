@@ -5,7 +5,6 @@ import { roleGuard } from '../core/guards/role-guard';
 import { DashboardComponent } from './dashboard/dashboard';
 import { CreateAdminComponent } from './create-admin/create-admin';
 import { ProjectsComponent } from './projects/projects';
-import { LocationsComponent } from './locations/locations';
 import { ProfileComponent } from './profile/profile';
 import { Layout } from './layout/layout';
 
@@ -37,11 +36,6 @@ const routes: Routes = [
         data: { pageTitle: 'Projects' },
       },
 
-      {
-        path: 'locations',
-        component: LocationsComponent,
-        data: { pageTitle: 'Locations' },
-      },
 
       {
         path: 'profile',
