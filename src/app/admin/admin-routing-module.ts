@@ -10,9 +10,9 @@ import { Activities } from './activities/activities';
 import { Sessions } from './sessions/sessions';
 import { Profile } from './profile/profile';
 import { Requests } from './requests/requests';
+import { CreateAwcComponent } from './create-awc/create-awc';
 
 const routes: Routes = [
-
   {
     path: '',
     component: Layout,   // 👈 Layout wrapper
@@ -68,6 +68,13 @@ const routes: Routes = [
         path: 'profile',
         component: Profile,
         data: { pageTitle: 'Profile' },
+      },
+      
+      // AWC Management
+      {
+        path: 'awcs',
+        component: CreateAwcComponent,
+        data: { pageTitle: 'AWC Management' },
       }
 
     ]
