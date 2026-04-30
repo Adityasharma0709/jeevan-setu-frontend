@@ -278,11 +278,11 @@
                                         </div>
                                         <div>
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wide">District</p>
-                                            <p class="font-medium text-gray-800 truncate">{{ loc.district || '-' }}</p>
+                                            <p class="font-medium text-gray-800 truncate">{{ getLocationPart(loc.district) }}</p>
                                         </div>
                                         <div>
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wide">State</p>
-                                            <p class="font-medium text-gray-800 truncate">{{ loc.state || '-' }}</p>
+                                            <p class="font-medium text-gray-800 truncate">{{ getLocationPart(loc.state) }}</p>
                                         </div>
                                     </div>
                                 </details>
