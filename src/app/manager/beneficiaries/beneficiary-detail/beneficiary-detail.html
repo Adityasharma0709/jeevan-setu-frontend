@@ -58,11 +58,11 @@
                         <div class="pt-4 border-t grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-[10px] text-gray-400 uppercase">District</label>
-                                <p class="font-medium truncate">{{ beneficiary.district || '-' }}</p>
+                                <p class="font-medium truncate">{{ getLocationPart(beneficiary.district) }}</p>
                             </div>
                             <div>
                                 <label class="text-[10px] text-gray-400 uppercase">State</label>
-                                <p class="font-medium truncate">{{ beneficiary.state || '-' }}</p>
+                                <p class="font-medium truncate">{{ getLocationPart(beneficiary.state) }}</p>
                             </div>
                         </div>
                     </div>

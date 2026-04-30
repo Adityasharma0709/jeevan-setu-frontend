@@ -246,4 +246,9 @@ export class Dashboard implements OnInit {
   goToPage(page: number) { this.page$.next(Math.max(1, Math.floor(Number(page) || 1))); }
   prevPage() { this.page$.next(Math.max(1, this.lastPage - 1)); }
   nextPage() { this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1)); }
+
+  getLocationPart(val: any): string {
+    if (!val) return '-';
+    return (val?.name || val).toString();
+  }
 }

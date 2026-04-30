@@ -386,18 +386,31 @@
                         No locations assigned for this project.
                     </div>
 
-                    <div *ngIf="p?.locations?.length" class="space-y-2">
-                        <div *ngFor="let l of p.locations" class="flex items-start justify-between gap-3">
-                            <div class="text-sm text-gray-800 min-w-0 flex-1">
-                                {{ formatLocationLabel(l) }}
+                    <div *ngIf="p?.locations?.length" class="space-y-3">
+                        <div *ngFor="let l of p.locations" class="flex items-start justify-between gap-4 p-3 bg-gray-50/50 rounded-lg border border-gray-100/50">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    <span class="text-[10px] font-mono bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 uppercase tracking-wider">{{ l.locationCode || '-' }}</span>
+                                    <span class="text-sm font-bold text-gray-900">{{ l.village || 'N/A' }}</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-500">
+                                    <span class="flex items-center gap-1">
+                                        <z-icon zType="map-pin" class="w-3 h-3" />
+                                        Block: <span class="text-gray-700 font-medium">{{ l.block || 'N/A' }}</span>
+                                    </span>
+                                    <span class="text-gray-300 mx-0.5">•</span>
+                                    <span>District: <span class="text-gray-700 font-medium">{{ getLocationPart(l.district) }}</span></span>
+                                    <span class="text-gray-300 mx-0.5">•</span>
+                                    <span>State: <span class="text-gray-700 font-medium">{{ getLocationPart(l.state) }}</span></span>
+                                </div>
                             </div>
                             <ng-container *ngIf="l?.status">
                                 <span
-                                    class="px-2 py-1 rounded text-xs font-medium"
+                                    class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
                                     [ngClass]="
                                         (l.status || '').toString().toUpperCase() === 'ACTIVE'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-red-100 text-red-700'
+                                            ? 'bg-green-100 text-green-700 border border-green-200'
+                                            : 'bg-red-100 text-red-700 border border-red-200'
                                     "
                                 >
                                     {{ l.status }}

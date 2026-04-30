@@ -118,11 +118,11 @@
                                 <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50">
                                     <div class="bg-gray-50 rounded-lg px-3 py-2">
                                         <label class="text-[10px] text-gray-400 uppercase font-semibold block">District</label>
-                                        <p class="font-semibold text-gray-800 text-sm mt-0.5">{{ beneficiary.district || '—' }}</p>
+                                        <p class="font-semibold text-gray-800 text-sm mt-0.5">{{ getLocationPart(beneficiary.district) }}</p>
                                     </div>
                                     <div class="bg-gray-50 rounded-lg px-3 py-2">
                                         <label class="text-[10px] text-gray-400 uppercase font-semibold block">State</label>
-                                        <p class="font-semibold text-gray-800 text-sm mt-0.5">{{ beneficiary.state || '—' }}</p>
+                                        <p class="font-semibold text-gray-800 text-sm mt-0.5">{{ getLocationPart(beneficiary.state) }}</p>
                                     </div>
                                 </div>
                             </div>

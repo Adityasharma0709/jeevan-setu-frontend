@@ -68,6 +68,11 @@ export class BeneficiaryDetail implements OnInit {
     });
   }
 
+  getLocationPart(val: any): string {
+    if (!val) return '-';
+    return (val?.name || val).toString();
+  }
+
   goBack(): void {
     this.router.navigate(['/manager/beneficiaries']);
   }

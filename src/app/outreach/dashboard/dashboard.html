@@ -300,11 +300,11 @@
                                         </div>
                                         <div>
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wide">District</p>
-                                            <p class="font-medium text-gray-800 break-words">{{ loc.district || '-' }}</p>
+                                            <p class="font-medium text-gray-800 break-words">{{ getLocationPart(loc.district) }}</p>
                                         </div>
                                         <div>
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wide">State</p>
-                                            <p class="font-medium text-gray-800 break-words">{{ loc.state || '-' }}</p>
+                                            <p class="font-medium text-gray-800 break-words">{{ getLocationPart(loc.state) }}</p>
                                         </div>
                                     </div>
                                 </details>

@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
-import { BehaviorSubject, Observable, combineLatest, map, shareReplay, startWith, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, map, shareReplay, startWith, switchMap, tap, forkJoin, of, catchError } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ManagerService, OutreachWorker } from '../manager.service';
@@ -230,47 +230,111 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     formatLocationLabel(l: any): string {
         if (!l) return '';
         const code = (l.locationCode ?? '').toString().trim();
+
+        const getVal = (val: any) => {
+            if (!val) return '';
+            if (typeof val === 'object') {
+                return val.name || val.label || val.nameLabel || '';
+            }
+            return String(val).trim();
+        };
+
         const parts = [
             l.village,
             l.block,
-            l.district,
-            l.state
-        ].map(p => (p ?? '').toString().trim()).filter(Boolean);
+            l.districtName || l.district,
+            l.stateName || l.state
+        ].map(p => getVal(p)).filter(Boolean);
 
         const details = parts.join(', ');
         return [code, details].filter(Boolean).join(' - ');
+    }
+
+    getLocationPart(val: any): string {
+        if (!val) return '—';
+        return (val?.name || val).toString();
     }
 
     openDetailsDialog(worker: OutreachWorker) {
         this.detailsWorker = worker;
         this.detailsLoading.set(true);
 
-        // Map and Group Project Assignments
-        const assignments = (worker as any)?.projectAssignments || [];
-        const projectMap = new Map<number, any>();
+        // 1. Get the projects assigned to this worker
+        this.managerService.getProjects(worker.id).subscribe({
+            next: (projects) => {
+                const projectList = Array.isArray(projects) ? projects : [];
+                if (!projectList.length) {
+                    this.detailsProjects = [];
+                    this.detailsLoading.set(false);
+                    this.openDetailsDialogUI(worker);
+                    return;
+                }
 
-        assignments.forEach((a: any) => {
-            if (!a.project) return;
-            const pid = a.projectId;
-            if (!projectMap.has(pid)) {
-                projectMap.set(pid, {
-                    ...a.project,
-                    locations: []
+                // 2. For each project, fetch the FULL location details for enrichment
+                forkJoin(
+                    projectList.map((p: any) =>
+                        this.managerService.getLocations(p.id).pipe(
+                            map(allLocs => {
+                                // Extract assigned location IDs from the project object itself
+                                // (projects/user/{id} returns the specific assignments in these fields)
+                                let rawLocations = p.locations || p.awcs || p.userProjectLocations || [];
+                                if (!Array.isArray(rawLocations)) rawLocations = [];
+                                
+                                const assignedIds = rawLocations.map((item: any) => {
+                                    // Handle both direct objects and wrapped objects
+                                    const locObj = item.location || item.awc || item;
+                                    const locId = locObj?.id || item.locationId || item.id;
+                                    return Number(locId);
+                                }).filter(Boolean);
+
+                                // Fallback for legacy workers or those missing the nested structure
+                                if (assignedIds.length === 0) {
+                                    const assignments = (worker as any).projectAssignments || [];
+                                    const fromAssignments = assignments
+                                        .filter((a: any) => (a.projectId || a.project?.id) === p.id)
+                                        .map((a: any) => Number(a.locationId || a.location?.id))
+                                        .filter(Boolean);
+                                    assignedIds.push(...fromAssignments);
+                                }
+
+                                // Final fallback for very old data
+                                if (assignedIds.length === 0 && worker.projectId === p.id && worker.locationId) {
+                                    assignedIds.push(Number(worker.locationId));
+                                }
+
+                                // Match the assigned IDs with FULL objects from allLocs to get State/District
+                                const workerLocs = allLocs.filter((l: any) => assignedIds.includes(Number(l.id)));
+
+                                return {
+                                    ...p,
+                                    name: p.name || p.project?.name || 'Project',
+                                    projectCode: p.projectCode || p.code || p.project?.projectCode || '-',
+                                    locations: workerLocs
+                                };
+                            }),
+                            catchError(() => of({ ...p, locations: [] }))
+                        )
+                    )
+                ).subscribe(enrichedProjects => {
+                    this.detailsProjects = enrichedProjects;
+                    this.detailsLoading.set(false);
+                    this.openDetailsDialogUI(worker);
                 });
-            }
-            if (a.location) {
-                projectMap.get(pid).locations.push(a.location);
+            },
+            error: () => {
+                this.detailsProjects = [];
+                this.detailsLoading.set(false);
+                this.openDetailsDialogUI(worker);
             }
         });
+    }
 
-        this.detailsProjects = Array.from(projectMap.values());
-        this.detailsLoading.set(false);
-
+    private openDetailsDialogUI(worker: OutreachWorker) {
         this.dialog.create({
             zTitle: `Assigned Projects: ${worker.name}`,
             zContent: this.detailsDialog,
             zOkText: 'Close',
-            zWidth: '600px',
+            zCancelText: null,
             zOnOk: () => {
                 this.detailsWorker = null;
                 this.detailsProjects = [];

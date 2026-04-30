@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { BehaviorSubject, combineLatest, catchError, distinctUntilChanged, map, Observable, of, shareReplay, startWith, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, catchError, distinctUntilChanged, map, Observable, of, shareReplay, startWith, tap, forkJoin, switchMap } from 'rxjs';
 import { ManagerService } from '../manager.service';
 import { AuthService } from '../../core/services/auth';
 import { ApiService } from '../../core/services/api';
@@ -106,6 +106,17 @@ export class Dashboard implements OnInit {
     // Projects Mapping
     const assignedProjects$ = this.managerService.getProjects(currentUserId).pipe(
       map((rows) => (Array.isArray(rows) ? rows : [])),
+      switchMap((projects: any[]) => {
+        if (!projects.length) return of([] as any[]);
+        return forkJoin(
+          projects.map((p: any) =>
+            this.managerService.getLocations(p.id).pipe(
+              map((locs) => ({ ...p, locations: locs })),
+              catchError(() => of({ ...p, locations: [] }))
+            )
+          )
+        );
+      }),
       shareReplay(1)
     );
 
@@ -116,13 +127,13 @@ export class Dashboard implements OnInit {
 
     const filteredProjectsVm$ = combineLatest([assignedProjects$, status$]).pipe(
       tap(() => this.goToPage(1)),
-      map(([projects, status]) => {
+      map(([projects, status]: [any[], ProjectStatusFilter]) => {
         const normalizedStatus = (status ?? 'ALL').toString().toUpperCase() as ProjectStatusFilter;
         const filtered =
           normalizedStatus === 'ALL'
             ? projects
             : projects.filter(
-              (p) => (p?.status ?? '').toString().toUpperCase() === normalizedStatus
+              (p: any) => (p?.status ?? '').toString().toUpperCase() === normalizedStatus
             );
 
         return {
@@ -291,5 +302,10 @@ export class Dashboard implements OnInit {
 
   nextPage() {
     this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
+  }
+
+  getLocationPart(val: any): string {
+    if (!val) return '-';
+    return (val?.name || val).toString();
   }
 }
