@@ -67,9 +67,9 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     taggingWorker: OutreachWorker | null = null;
     isTagging = false;
     projects: any[] = [];
-    tagLocations: any[] = [];
+    tagLocations = signal<any[]>([]);
     projectOptions: ZardComboboxOption[] = [];
-    stateOptions: ZardComboboxOption[] = [];
+    stateOptions = signal<ZardComboboxOption[]>([]);
 
     detailsWorker: OutreachWorker | null = null;
     detailsProjects: any[] = [];
@@ -162,7 +162,6 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             tap((vm) => {
                 this.lastPage = vm.page;
                 this.lastTotalPages = vm.totalPages;
-                this.cdr.detectChanges();
             }),
             shareReplay({ bufferSize: 1, refCount: true })
         );
@@ -243,48 +242,17 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         this.detailsWorker = worker;
         this.detailsLoading.set(true);
 
-        // 1. Get the projects assigned to this worker
         this.managerService.getProjects(worker.id).subscribe({
             next: (projects) => {
-                const projectList = Array.isArray(projects) ? projects : [];
-                if (!projectList.length) {
-                    this.detailsProjects = [];
-                    this.detailsLoading.set(false);
-                    this.openDetailsDialogUI(worker);
-                    return;
-                }
-
-                // 2. For each project, fetch the FULL location details for enrichment
-                forkJoin(
-                    projectList.map((p: any) =>
-                        this.managerService.getLocations(p.id).pipe(
-                            map(allLocs => {
-                                let rawAssignments = p.projectAssignments || p.userProjectLocations || [];
-                                if (!Array.isArray(rawAssignments)) rawAssignments = [];
-                                
-                                const assignedIds = rawAssignments
-                                    .filter((a: any) => (a.userId || worker.id) === worker.id)
-                                    .map((a: any) => Number(a.stateId || a.id))
-                                    .filter(Boolean);
-
-                                // Match the assigned IDs with FULL objects from allLocs
-                                const workerLocs = allLocs.filter((l: any) => assignedIds.includes(Number(l.id)));
-
-                                return {
-                                    ...p,
-                                    name: p.name || p.project?.name || 'Project',
-                                    projectCode: p.projectCode || p.code || p.project?.projectCode || '-',
-                                    states: workerLocs
-                                };
-                            }),
-                            catchError(() => of({ ...p, locations: [] }))
-                        )
-                    )
-                ).subscribe(enrichedProjects => {
-                    this.detailsProjects = enrichedProjects;
-                    this.detailsLoading.set(false);
-                    this.openDetailsDialogUI(worker);
-                });
+                this.detailsProjects = (projects || []).map(p => ({
+                    ...p,
+                    name: p.name || p.project?.name || 'Project',
+                    projectCode: p.projectCode || p.code || p.project?.projectCode || '-',
+                    // The backend returns assigned states in the 'awcs' field for user-specific project lists
+                    states: p.awcs || []
+                }));
+                this.detailsLoading.set(false);
+                this.openDetailsDialogUI(worker);
             },
             error: () => {
                 this.detailsProjects = [];
@@ -329,8 +297,8 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         this.tagForm.get('projectId')?.valueChanges.subscribe((projectId) => {
             const stateControl = this.tagForm.get('stateId');
             stateControl?.reset('', { emitEvent: false });
-            this.tagLocations = [];
-            this.stateOptions = [];
+            this.tagLocations.set([]);
+            this.stateOptions.set([]);
 
             const numericProjectId = Number(projectId);
             if (!numericProjectId) {
@@ -342,14 +310,11 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             this.managerService.getAssignedLocations(numericProjectId).subscribe({
                 next: (locations) => {
                     const nextLocations = Array.isArray(locations) ? locations : [];
-                    // Defer to next tick to avoid NG0100 during the same CD pass.
-                    setTimeout(() => {
-                        this.tagLocations = nextLocations;
-                        this.stateOptions = nextLocations.map((l) => ({
-                            value: String(l.id),
-                            label: this.formatLocationLabel(l),
-                        }));
-                    }, 0);
+                    this.tagLocations.set(nextLocations);
+                    this.stateOptions.set(nextLocations.map((l) => ({
+                        value: String(l.id),
+                        label: this.formatLocationLabel(l),
+                    })));
                 },
                 error: () => toast.error('Failed to load assigned states'),
             });
@@ -385,7 +350,8 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     openTagDialog(worker: OutreachWorker) {
         this.taggingWorker = worker;
         this.tagForm.reset({ projectId: '', stateId: '' });
-        this.tagLocations = [];
+        this.tagLocations.set([]);
+        this.stateOptions.set([]);
         this.tagForm.get('stateId')?.disable({ emitEvent: false });
 
         this.tagDialogRef = this.dialog.create({
