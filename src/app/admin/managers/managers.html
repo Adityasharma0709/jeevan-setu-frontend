@@ -267,20 +267,20 @@
                                 <p class="text-[10px] text-gray-400 font-mono mt-1 px-6 uppercase">{{ p?.projectCode || '-' }}</p>
                             </div>
                             <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
-                                {{ (p?.locations?.length || 0) }} AWC
+                                {{ (p?.locations?.length || 0) }} States
                             </span>
                         </div>
 
                         <div class="space-y-2 pl-6">
                             <div *ngIf="!(p?.locations?.length)" class="text-[10px] text-gray-400 italic">
-                                No assigned AWCs.
+                                No assigned States.
                             </div>
 
                             <div *ngIf="p?.locations?.length" class="space-y-2">
                                 <div *ngFor="let l of p.locations" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-100">
                                     <div class="flex items-start gap-2 min-w-0 flex-1">
                                         <z-icon zType="map-pin" class="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-                                        <span class="text-xs text-gray-700 break-words font-medium leading-tight">{{ formatLocationLabel(l) }}</span>
+                                        <span class="text-xs text-gray-700 break-words font-medium leading-tight">{{ formatStateLabel(l) }}</span>
                                     </div>
                                     <span class="self-start sm:self-center px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase shrink-0" [ngClass]="
                                         (l.status || '').toString().toUpperCase() === 'ACTIVE'
@@ -361,13 +361,13 @@
             </z-form-field>
 
             <z-form-field>
-                <label z-form-label>Location (optional)</label>
+                <label z-form-label>State (optional)</label>
                 <z-form-control>
                     <z-combobox
-                        formControlName="locationId"
-                        [options]="(managerLocationOptions$ | async) || []"
+                        formControlName="stateId"
+                        [options]="(managerStateOptions$ | async) || []"
                         [zDisabled]="!managerForm.value.projectId"
-                        placeholder="Select a location"
+                        placeholder="Select a state"
                         zWidth="full"
                     />
                 </z-form-control>
@@ -396,13 +396,13 @@
         </z-form-field>
 
         <z-form-field>
-            <label z-form-label zRequired>Location</label>
+            <label z-form-label zRequired>State</label>
             <z-form-control>
                 <z-combobox
-                    formControlName="locationId"
-                    [options]="(assignLocationOptions$ | async) || []"
+                    formControlName="stateId"
+                    [options]="(assignStateOptions$ | async) || []"
                     [zDisabled]="!assignForm.value.projectId"
-                    placeholder="Select a location"
+                    placeholder="Select a state"
                     zWidth="full"
                 />
             </z-form-control>

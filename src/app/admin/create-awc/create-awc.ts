@@ -67,6 +67,16 @@ interface DistrictModel {
   name: string;
 }
 
+interface BlockModel {
+  id: number;
+  name: string;
+}
+
+interface VillageModel {
+  id: number;
+  name: string;
+}
+
 @Component({
   selector: 'app-create-awc',
   standalone: true,
@@ -116,6 +126,9 @@ export class CreateAwcComponent implements OnInit {
   allStates: StateModel[] = [];
   stateOptions: ZardComboboxOption[] = [];
   districtOptions$!: Observable<ZardComboboxOption[]>;
+  blockOptions$!: Observable<ZardComboboxOption[]>;
+  villageOptions$!: Observable<ZardComboboxOption[]>;
+  private currentBlocks: BlockModel[] = [];
 
   private refresh$ = new Subject<void>();
   
@@ -233,8 +246,9 @@ export class CreateAwcComponent implements OnInit {
 
     // 3. Dynamic State Options based on Selected Project
     this.form.get('projectId')!.valueChanges.pipe(
-      startWith(this.form.get('projectId')?.value),
-      switchMap(projectId => {
+      startWith(undefined),
+      switchMap(() => {
+        const projectId = this.form.get('projectId')?.value;
         if (!projectId) return of([]);
         return (this.api.get(`locations/project/${projectId}/states`) as Observable<StateModel[]>).pipe(
           map(states => {
@@ -253,14 +267,53 @@ export class CreateAwcComponent implements OnInit {
 
     // 4. Dynamic District Options based on Selected State
     this.districtOptions$ = this.form.get('stateId')!.valueChanges.pipe(
-      startWith(this.form.get('stateId')?.value),
-      switchMap(stateId => {
+      startWith(undefined),
+      switchMap(() => {
+        const stateId = this.form.get('stateId')?.value;
         if (!stateId) return of([]);
         return (this.api.get(`locations/districts/${stateId}`) as Observable<DistrictModel[]>).pipe(
           map(districts => (districts || []).map(d => ({ label: d.name, value: String(d.id) })))
         );
-      })
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
+
+    
+    // 5. Dynamic Block Options
+    this.blockOptions$ = this.form.get('districtId')!.valueChanges.pipe(
+      startWith(undefined),
+      switchMap(() => {
+        const districtId = this.form.get('districtId')?.value;
+        if (!districtId) {
+          this.currentBlocks = [];
+          return of([]);
+        }
+        return (this.api.get(`locations/blocks/${districtId}`) as Observable<BlockModel[]>).pipe(
+          map(blocks => {
+            this.currentBlocks = blocks || [];
+            return this.currentBlocks.map(b => ({ label: b.name, value: b.name }));
+          })
+        );
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    // 6. Dynamic Village Options
+    this.villageOptions$ = combineLatest([
+      this.form.get('districtId')!.valueChanges.pipe(startWith(undefined)),
+      this.form.get('block')!.valueChanges.pipe(startWith(undefined))
+    ]).pipe(
+      switchMap(() => {
+        const districtId = this.form.get('districtId')?.value;
+        const blockName = this.form.get('block')?.value;
+        if (!districtId || !blockName) return of([]);
+        return (this.api.get(`locations/villages/by-block-name/${districtId}/${encodeURIComponent(blockName)}`) as Observable<VillageModel[]>).pipe(
+          map(villages => (villages || []).map(v => ({ label: v.name, value: v.name })))
+        );
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
 
     // Auto-update code and AWC Name
     combineLatest([
@@ -335,6 +388,21 @@ export class CreateAwcComponent implements OnInit {
 
   onDistrictSelect(value: string | null) {
     this.form.get('districtId')?.setValue(value ? Number(value) : null);
+    if (!this.isEditMode()) {
+      this.form.get('block')?.setValue('');
+      this.form.get('village')?.setValue('');
+    }
+  }
+
+  onBlockSelect(value: string | null) {
+    this.form.get('block')?.setValue(value);
+    if (!this.isEditMode()) {
+      this.form.get('village')?.setValue('');
+    }
+  }
+
+  onVillageSelect(value: string | null) {
+    this.form.get('village')?.setValue(value);
   }
 
   private updateAutoLocationCode(): void {

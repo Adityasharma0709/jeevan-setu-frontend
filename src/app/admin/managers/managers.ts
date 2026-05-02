@@ -77,8 +77,8 @@ export class Managers {
   ];
 
   projectOptions$!: Observable<ZardComboboxOption[]>;
-  assignLocationOptions$!: Observable<ZardComboboxOption[]>;
-  managerLocationOptions$!: Observable<ZardComboboxOption[]>;
+  assignStateOptions$!: Observable<ZardComboboxOption[]>;
+  managerStateOptions$!: Observable<ZardComboboxOption[]>;
 
   private refresh$ = new Subject<void>();
   isEditing = false;
@@ -91,7 +91,7 @@ export class Managers {
   readonly detailsLoadingManagerId = signal<number | null>(null);
   readonly assignLoading = signal(false);
   readonly projectsLoading = signal(true);
-  readonly assignLocationsLoading = signal(false);
+  readonly assignStatesLoading = signal(false);
   detailsProjects: any[] = [];
   private detailsFetchToken = 0;
 
@@ -106,14 +106,13 @@ export class Managers {
     to: number;
   }>;
   projects$!: Observable<any[]>;
-  locations$!: Observable<any[]>;
-  managerLocations$!: Observable<any[]>;
+  states$!: Observable<any[]>;
+  managerStates$!: Observable<any[]>;
   private projectsCache: any[] = [];
-  private assignLocationsCache: any[] = [];
+  assignStatesCache: any[] = [];
   private currentUserId: number | null = null;
   private currentUserRoles: string[] = [];
   readonly managerStatusLoadingIds = signal<Set<number>>(new Set());
-  pendingAssignments: Array<{ projectId: number; locationId: number; projectName: string; locationLabel: string }> = [];
 
   get selectedAssignProjectLabel(): string {
     const rawProjectId = this.assignForm?.get('projectId')?.value;
@@ -126,36 +125,20 @@ export class Managers {
     return [name, code ? `(${code})` : ''].filter(Boolean).join(' ');
   }
 
-  get selectedLocationsLabel(): string {
-    const rawLocationId = this.assignForm?.get('locationId')?.value;
-    const locationId = Number(rawLocationId);
-    if (!Number.isFinite(locationId) || locationId <= 0) return 'Select location';
-    const location = this.assignLocationsCache.find((l: any) => Number(l?.id) === locationId);
-    if (!location) return 'Select location';
-    return this.formatLocationLabel(location) || 'Select location';
+  get selectedStatesLabel(): string {
+    const rawStateId = this.assignForm?.get('stateId')?.value;
+    const stateId = Number(rawStateId);
+    if (!Number.isFinite(stateId) || stateId <= 0) return 'Select state';
+    const state = this.assignStatesCache.find((l: any) => Number(l?.id) === stateId);
+    if (!state) return 'Select state';
+    return this.formatStateLabel(state) || 'Select state';
   }
 
-  formatLocationLabel(l: any): string {
+  formatStateLabel(l: any): string {
     if (!l) return '';
     const code = (l.locationCode ?? '').toString().trim();
-
-    const getVal = (val: any) => {
-      if (!val) return '';
-      if (typeof val === 'object') {
-        return val.name || val.label || val.nameLabel || '';
-      }
-      return String(val).trim();
-    };
-
-    const parts = [
-      l.village,
-      l.block,
-      l.districtName || l.district,
-      l.stateName || l.state
-    ].map(p => getVal(p)).filter(Boolean);
-
-    const details = parts.join(', ');
-    return [code, details].filter(Boolean).join(' - ');
+    const name = l.name || l.label || l.stateName || '';
+    return [code, name].filter(Boolean).join(' - ');
   }
 
   selectAssignProject(project: any) {
@@ -167,8 +150,9 @@ export class Managers {
 
   clearAssignProjectSelection() {
     this.assignForm.get('projectId')?.setValue(null);
-    this.clearLocationSelection();
+    this.assignForm.get('stateId')?.setValue(null);
     this.assignForm.get('projectId')?.markAsDirty();
+    this.assignForm.get('stateId')?.markAsDirty();
   }
 
   readonly pageSize = 10;
@@ -292,55 +276,55 @@ export class Managers {
       email: ['', [Validators.required, Validators.email]],
       password: [''], // Only required during creation
       projectId: [''],
-      locationId: [''],
+      stateId: [''],
     });
 
     this.assignForm = this.fb.group({
       projectId: [null, Validators.required],
-      locationId: [null, Validators.required],
+      stateId: [null, Validators.required],
     });
 
-    this.locations$ = this.assignForm.get('projectId')!.valueChanges.pipe(
+    this.states$ = this.assignForm.get('projectId')!.valueChanges.pipe(
       startWith(this.assignForm.get('projectId')!.value),
-      tap(() => this.assignForm.patchValue({ locationId: null }, { emitEvent: false })),
+      tap(() => this.assignForm.patchValue({ stateId: null }, { emitEvent: false })),
       switchMap((id) => {
         const projectId = Number(id);
         if (!Number.isFinite(projectId) || projectId <= 0) {
-          this.assignLocationsLoading.set(false);
+          this.assignStatesLoading.set(false);
           return of([]);
         }
-        this.assignLocationsLoading.set(true);
-        return this.managersService.getLocations(projectId).pipe(
+        this.assignStatesLoading.set(true);
+        return this.managersService.getProjectStates(projectId).pipe(
           startWith([]),
           catchError((err) => {
             toast.error(this.getErrorMessage(err, 'Failed to load locations'));
             return of([]);
           }),
-          finalize(() => this.assignLocationsLoading.set(false)),
+          finalize(() => this.assignStatesLoading.set(false)),
         );
       }),
       tap((locations) => {
-        this.assignLocationsCache = Array.isArray(locations) ? locations : [];
+        this.assignStatesCache = Array.isArray(locations) ? locations : [];
       }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
-    this.assignLocationOptions$ = this.locations$.pipe(
+    this.assignStateOptions$ = this.states$.pipe(
       map(locations => (locations || []).map(l => ({
-        label: this.formatLocationLabel(l),
+        label: this.formatStateLabel(l),
         value: l.id.toString()
       })))
     );
 
-    this.managerLocations$ = this.managerForm.get('projectId')!.valueChanges.pipe(
-      tap(() => this.managerForm.patchValue({ locationId: '' })),
-      switchMap(id => (id ? this.managersService.getLocations(Number(id)) : of([]))),
+    this.managerStates$ = this.managerForm.get('projectId')!.valueChanges.pipe(
+      tap(() => this.managerForm.patchValue({ stateId: '' })),
+      switchMap(id => (id ? this.managersService.getProjectStates(Number(id)) : of([]))),
       shareReplay({ bufferSize: 1, refCount: true })
     );
 
-    this.managerLocationOptions$ = this.managerLocations$.pipe(
+    this.managerStateOptions$ = this.managerStates$.pipe(
       map(locations => (locations || []).map(l => ({
-        label: this.formatLocationLabel(l),
+        label: this.formatStateLabel(l),
         value: l.id.toString()
       })))
     );
@@ -383,7 +367,7 @@ export class Managers {
 
     const formValue = this.managerForm.getRawValue();
     const selectedProjectId = this.parseOptionalId(formValue.projectId);
-    const selectedLocationId = this.parseOptionalId(formValue.locationId);
+    const selectedLocationId = this.parseOptionalId(formValue.stateId);
     const assignmentError = this.validateAssignmentSelection(selectedProjectId, selectedLocationId);
     if (assignmentError) {
       toast.error(assignmentError);
@@ -433,7 +417,7 @@ export class Managers {
       email: '',
       password: '',
       projectId: '',
-      locationId: '',
+      stateId: '',
     });
     this.setPasswordValidators(true);
     this.populateNextManagerCode();
@@ -448,7 +432,7 @@ export class Managers {
       email: manager.email,
       password: '',
       projectId: '',
-      locationId: '',
+      stateId: '',
     });
     this.setPasswordValidators(false);
   }
@@ -469,8 +453,8 @@ export class Managers {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
-  private validateAssignmentSelection(projectId: number | null, locationId: number | null): string | null {
-    if (this.isEditing && (!!projectId !== !!locationId)) {
+  private validateAssignmentSelection(projectId: number | null, stateId: number | null): string | null {
+    if (this.isEditing && (!!projectId !== !!stateId)) {
       return 'For edit reassignment, select both project and location';
     }
 
@@ -487,7 +471,7 @@ export class Managers {
   private buildCreatePayload(
     formValue: any,
     projectId: number | null,
-    locationId: number | null,
+    stateId: number | null,
   ): any {
     const payload: any = {
       usercode: formValue.usercode,
@@ -496,7 +480,7 @@ export class Managers {
       password: formValue.password,
     };
     if (projectId) payload.projectId = projectId;
-    if (locationId) payload.locationId = locationId;
+    if (stateId) payload.stateId = stateId;
     return payload;
   }
 
@@ -577,9 +561,8 @@ export class Managers {
 
   openAssignDialog(manager: User) {
     this.targetManager = manager;
-    this.assignForm.reset({ projectId: null, locationId: null });
-    this.pendingAssignments = [];
-    this.assignLocationsCache = [];
+    this.assignForm.reset({ projectId: null, stateId: null });
+    this.assignStatesCache = [];
     this.assignLoading.set(false);
 
     this.dialogRef = this.dialog.create({
@@ -594,8 +577,7 @@ export class Managers {
       },
       zOnCancel: () => {
         this.targetManager = null;
-        this.pendingAssignments = [];
-        this.assignLocationsCache = [];
+        this.assignStatesCache = [];
         this.assignLoading.set(false);
       },
     });
@@ -673,56 +655,30 @@ export class Managers {
   }
 
   submitAssignment() {
-    if (!this.targetManager) return;
-    if (this.assignLoading()) return;
+    if (!this.targetManager || this.assignLoading() || this.assignForm.invalid) {
+      if (this.assignForm.invalid) {
+        this.assignForm.markAllAsTouched();
+        toast.error('Please select both project and state');
+      }
+      return;
+    }
 
-    const targetUserId = Number(this.targetManager.id);
-    if (!Number.isFinite(targetUserId)) return;
+    const { projectId, stateId } = this.assignForm.value;
+    const targetUserId = this.targetManager.id;
 
     this.assignLoading.set(true);
-
-    this.getAssignmentsToSubmit().pipe(
-      switchMap((assignments) => {
-        if (!assignments.length) {
-          return throwError(() => new Error('No assignments selected'));
+    this.managersService.assignProject(targetUserId, Number(projectId), Number(stateId))
+      .pipe(finalize(() => this.assignLoading.set(false)))
+      .subscribe({
+        next: () => {
+          toast.success('Project and State assigned successfully');
+          this.refresh$.next();
+          this.dialogRef.close();
+        },
+        error: (err) => {
+          toast.error(this.getErrorMessage(err, 'Assignment failed'));
         }
-        return from(assignments).pipe(
-          concatMap((a) => {
-            return this.managersService.assignProject(targetUserId, a.projectId, a.locationId).pipe(
-              map(() => ({ ...a, status: 'ASSIGNED' as const })),
-              catchError((err) => {
-                if (err?.status === 409) {
-                  return of({ ...a, status: 'SKIPPED' as const });
-                }
-                return throwError(() => err);
-              }),
-            );
-          }),
-          toArray(),
-        );
-      }),
-      finalize(() => this.assignLoading.set(false)),
-    ).subscribe({
-      next: (results) => {
-        const assignedCount = results.filter((r) => r.status === 'ASSIGNED').length;
-        const skippedCount = results.filter((r) => r.status === 'SKIPPED').length;
-
-        if (assignedCount) {
-          toast.success(assignedCount > 1 ? 'Assignments saved successfully' : 'Assignment saved successfully');
-        }
-        if (skippedCount) {
-          toast.info(`${skippedCount} already assigned`);
-        }
-        if (!assignedCount && !skippedCount) {
-          toast.info('No changes');
-        }
-        this.refresh$.next();
-        this.dialogRef.close();
-      },
-      error: (err) => {
-        toast.error(this.getErrorMessage(err, 'Assignment failed'));
-      },
-    });
+      });
   }
 
   openRemoveDialog(manager: User) {
@@ -783,80 +739,7 @@ export class Managers {
     });
   }
 
-  addToPendingAssignments() {
-    const projectIdNum = Number(this.assignForm.get('projectId')?.value);
-    const locationIdNum = Number(this.assignForm.get('locationId')?.value);
 
-    if (!Number.isFinite(projectIdNum) || projectIdNum <= 0 || !Number.isFinite(locationIdNum) || locationIdNum <= 0) {
-      toast.error('Select a project and a location');
-      return;
-    }
-
-    const selectedProject = this.projectsCache.find((p) => Number(p?.id) === projectIdNum);
-    if (!selectedProject) {
-      toast.error('Selected project is inactive or unavailable');
-      return;
-    }
-
-    const key = `${projectIdNum}:${locationIdNum}`;
-    const seen = new Set(this.pendingAssignments.map((a) => `${a.projectId}:${a.locationId}`));
-    if (seen.has(key)) {
-      toast.info('Already added');
-      return;
-    }
-
-    const location = this.assignLocationsCache.find((l: any) => Number(l?.id) === locationIdNum);
-    const locationLabel = this.formatLocationLabel(location) || `#${locationIdNum}`;
-
-    this.pendingAssignments = [
-      ...this.pendingAssignments,
-      {
-        projectId: projectIdNum,
-        locationId: locationIdNum,
-        projectName: `${selectedProject.name ?? ''}`.trim() || `#${projectIdNum}`,
-        locationLabel,
-      }
-    ];
-    this.assignForm.patchValue({ locationId: null }, { emitEvent: false });
-  }
-
-  clearPendingAssignments() {
-    this.pendingAssignments = [];
-  }
-
-  selectAllLocations() {
-    const ids = (this.assignLocationsCache || [])
-      .map((l: any) => Number(l?.id))
-      .filter((n: number) => Number.isFinite(n));
-    this.assignForm.get('locationId')?.setValue(ids[0] ?? null);
-    this.assignForm.get('locationId')?.markAsDirty();
-  }
-
-  clearLocationSelection() {
-    this.assignForm.get('locationId')?.setValue(null);
-    this.assignForm.get('locationId')?.markAsDirty();
-  }
-
-  removePendingAssignment(projectId: number, locationId: number) {
-    this.pendingAssignments = this.pendingAssignments.filter(
-      (a) => !(a.projectId === projectId && a.locationId === locationId),
-    );
-  }
-
-  private getAssignmentsToSubmit(): Observable<Array<{ projectId: number; locationId: number }>> {
-    if (this.pendingAssignments.length) {
-      return of(this.pendingAssignments.map((a) => ({ projectId: a.projectId, locationId: a.locationId })));
-    }
-
-    const projectIdNum = Number(this.assignForm.get('projectId')?.value);
-    const locationIdNum = Number(this.assignForm.get('locationId')?.value);
-
-    if (!Number.isFinite(projectIdNum) || projectIdNum <= 0 || !Number.isFinite(locationIdNum) || locationIdNum <= 0) {
-      return of([]);
-    }
-
-    return of([{ projectId: projectIdNum, locationId: locationIdNum }]);
-  }
 
   getErrorMessage(err: any, fallback: string): string {
     const status = Number(err?.status);

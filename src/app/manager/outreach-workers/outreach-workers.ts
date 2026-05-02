@@ -67,9 +67,9 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     taggingWorker: OutreachWorker | null = null;
     isTagging = false;
     projects: any[] = [];
-    tagLocations: any[] = [];
+    tagLocations = signal<any[]>([]);
     projectOptions: ZardComboboxOption[] = [];
-    locationOptions: ZardComboboxOption[] = [];
+    stateOptions = signal<ZardComboboxOption[]>([]);
 
     detailsWorker: OutreachWorker | null = null;
     detailsProjects: any[] = [];
@@ -162,7 +162,6 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             tap((vm) => {
                 this.lastPage = vm.page;
                 this.lastTotalPages = vm.totalPages;
-                this.cdr.detectChanges();
             }),
             shareReplay({ bufferSize: 1, refCount: true })
         );
@@ -230,24 +229,8 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     formatLocationLabel(l: any): string {
         if (!l) return '';
         const code = (l.locationCode ?? '').toString().trim();
-
-        const getVal = (val: any) => {
-            if (!val) return '';
-            if (typeof val === 'object') {
-                return val.name || val.label || val.nameLabel || '';
-            }
-            return String(val).trim();
-        };
-
-        const parts = [
-            l.village,
-            l.block,
-            l.districtName || l.district,
-            l.stateName || l.state
-        ].map(p => getVal(p)).filter(Boolean);
-
-        const details = parts.join(', ');
-        return [code, details].filter(Boolean).join(' - ');
+        const name = l.name || l.label || l.stateName || '';
+        return [code, name].filter(Boolean).join(' - ');
     }
 
     getLocationPart(val: any): string {
@@ -259,67 +242,17 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         this.detailsWorker = worker;
         this.detailsLoading.set(true);
 
-        // 1. Get the projects assigned to this worker
         this.managerService.getProjects(worker.id).subscribe({
             next: (projects) => {
-                const projectList = Array.isArray(projects) ? projects : [];
-                if (!projectList.length) {
-                    this.detailsProjects = [];
-                    this.detailsLoading.set(false);
-                    this.openDetailsDialogUI(worker);
-                    return;
-                }
-
-                // 2. For each project, fetch the FULL location details for enrichment
-                forkJoin(
-                    projectList.map((p: any) =>
-                        this.managerService.getLocations(p.id).pipe(
-                            map(allLocs => {
-                                // Extract assigned location IDs from the project object itself
-                                // (projects/user/{id} returns the specific assignments in these fields)
-                                let rawLocations = p.locations || p.awcs || p.userProjectLocations || [];
-                                if (!Array.isArray(rawLocations)) rawLocations = [];
-                                
-                                const assignedIds = rawLocations.map((item: any) => {
-                                    // Handle both direct objects and wrapped objects
-                                    const locObj = item.location || item.awc || item;
-                                    const locId = locObj?.id || item.locationId || item.id;
-                                    return Number(locId);
-                                }).filter(Boolean);
-
-                                // Fallback for legacy workers or those missing the nested structure
-                                if (assignedIds.length === 0) {
-                                    const assignments = (worker as any).projectAssignments || [];
-                                    const fromAssignments = assignments
-                                        .filter((a: any) => (a.projectId || a.project?.id) === p.id)
-                                        .map((a: any) => Number(a.locationId || a.location?.id))
-                                        .filter(Boolean);
-                                    assignedIds.push(...fromAssignments);
-                                }
-
-                                // Final fallback for very old data
-                                if (assignedIds.length === 0 && worker.projectId === p.id && worker.locationId) {
-                                    assignedIds.push(Number(worker.locationId));
-                                }
-
-                                // Match the assigned IDs with FULL objects from allLocs to get State/District
-                                const workerLocs = allLocs.filter((l: any) => assignedIds.includes(Number(l.id)));
-
-                                return {
-                                    ...p,
-                                    name: p.name || p.project?.name || 'Project',
-                                    projectCode: p.projectCode || p.code || p.project?.projectCode || '-',
-                                    locations: workerLocs
-                                };
-                            }),
-                            catchError(() => of({ ...p, locations: [] }))
-                        )
-                    )
-                ).subscribe(enrichedProjects => {
-                    this.detailsProjects = enrichedProjects;
-                    this.detailsLoading.set(false);
-                    this.openDetailsDialogUI(worker);
-                });
+                this.detailsProjects = (projects || []).map(p => ({
+                    ...p,
+                    name: p.name || p.project?.name || 'Project',
+                    projectCode: p.projectCode || p.code || p.project?.projectCode || '-',
+                    // The backend returns assigned states in the 'awcs' field for user-specific project lists
+                    states: p.awcs || []
+                }));
+                this.detailsLoading.set(false);
+                this.openDetailsDialogUI(worker);
             },
             error: () => {
                 this.detailsProjects = [];
@@ -358,35 +291,32 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
 
         this.tagForm = this.fb.group({
             projectId: ['', Validators.required],
-            locationId: [{ value: '', disabled: true }, Validators.required],
+            stateId: [{ value: '', disabled: true }, Validators.required],
         });
 
         this.tagForm.get('projectId')?.valueChanges.subscribe((projectId) => {
-            const locationControl = this.tagForm.get('locationId');
-            locationControl?.reset('', { emitEvent: false });
-            this.tagLocations = [];
-            this.locationOptions = [];
+            const stateControl = this.tagForm.get('stateId');
+            stateControl?.reset('', { emitEvent: false });
+            this.tagLocations.set([]);
+            this.stateOptions.set([]);
 
             const numericProjectId = Number(projectId);
             if (!numericProjectId) {
-                locationControl?.disable({ emitEvent: false });
+                stateControl?.disable({ emitEvent: false });
                 return;
             }
 
-            locationControl?.enable({ emitEvent: false });
+            stateControl?.enable({ emitEvent: false });
             this.managerService.getAssignedLocations(numericProjectId).subscribe({
                 next: (locations) => {
                     const nextLocations = Array.isArray(locations) ? locations : [];
-                    // Defer to next tick to avoid NG0100 during the same CD pass.
-                    setTimeout(() => {
-                        this.tagLocations = nextLocations;
-                        this.locationOptions = nextLocations.map((l) => ({
-                            value: String(l.id),
-                            label: this.formatLocationLabel(l),
-                        }));
-                    }, 0);
+                    this.tagLocations.set(nextLocations);
+                    this.stateOptions.set(nextLocations.map((l) => ({
+                        value: String(l.id),
+                        label: this.formatLocationLabel(l),
+                    })));
                 },
-                error: () => toast.error('Failed to load assigned locations'),
+                error: () => toast.error('Failed to load assigned states'),
             });
         });
     }
@@ -419,12 +349,13 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
 
     openTagDialog(worker: OutreachWorker) {
         this.taggingWorker = worker;
-        this.tagForm.reset({ projectId: '', locationId: '' });
-        this.tagLocations = [];
-        this.tagForm.get('locationId')?.disable({ emitEvent: false });
+        this.tagForm.reset({ projectId: '', stateId: '' });
+        this.tagLocations.set([]);
+        this.stateOptions.set([]);
+        this.tagForm.get('stateId')?.disable({ emitEvent: false });
 
         this.tagDialogRef = this.dialog.create({
-            zTitle: 'Tag Project & Location',
+            zTitle: 'Tag Project & State',
             zContent: this.tagDialog,
             zOkText: 'Tag',
             zOnOk: () => {
@@ -457,14 +388,14 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
 
         const raw = this.tagForm.getRawValue();
         const projectId = Number(raw.projectId);
-        const locationId = Number(raw.locationId);
-        if (!Number.isFinite(projectId) || !Number.isFinite(locationId)) {
-            toast.error('Invalid project/location selection');
+        const stateId = Number(raw.stateId);
+        if (!Number.isFinite(projectId) || !Number.isFinite(stateId)) {
+            toast.error('Invalid project/state selection');
             return;
         }
 
         this.isTagging = true;
-        this.managerService.tagOutreachWorkerProjectLocation(this.taggingWorker.id, projectId, locationId).subscribe({
+        this.managerService.tagOutreachWorkerProjectLocation(this.taggingWorker.id, projectId, stateId).subscribe({
             next: (res) => {
                 const msg = res?.message || 'Tagged successfully';
                 toast.success(msg);

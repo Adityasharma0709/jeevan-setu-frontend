@@ -97,14 +97,24 @@ export interface ZardComboboxGroup {
       <z-popover [class]="popoverClasses()">
         <z-command class="min-h-auto" (zCommandSelected)="handleSelect($event)" #commandRef>
           @if (searchable()) {
-            <z-command-input [placeholder]="searchPlaceholder()" #commandInputRef />
+            <z-command-input [placeholder]="searchPlaceholder()" #commandInputRef (valueChange)="onSearchChange($event)" />
           }
 
           <z-command-list id="combobox-listbox" role="listbox">
-            @if (emptyText()) {
+            @if (emptyText() && (!allowCustomValue() || !searchTerm() || hasExactMatch())) {
               <z-command-empty>
                 <z-empty [zDescription]="emptyText()" />
               </z-command-empty>
+            }
+
+            @if (allowCustomValue() && searchTerm() && !hasExactMatch()) {
+              <z-command-option
+                [zValue]="searchTerm()"
+                [zLabel]="searchTerm()"
+                [parentCommand]="commandRef"
+              >
+                Create "{{ searchTerm() }}"
+              </z-command-option>
             }
 
             @for (group of groups(); track group.label ?? $index) {
@@ -197,6 +207,7 @@ export class ZardComboboxComponent implements ControlValueAccessor {
   readonly emptyText = input<string>('No results found.');
   readonly zDisabled = input(false, { transform: booleanAttribute });
   readonly searchable = input(true, { transform: booleanAttribute });
+  readonly allowCustomValue = input(false, { transform: booleanAttribute });
   readonly value = input<string | null>(null);
   readonly options = input<ZardComboboxOption[]>([]);
   readonly groups = input<ZardComboboxGroup[]>([]);
@@ -214,6 +225,16 @@ export class ZardComboboxComponent implements ControlValueAccessor {
   protected readonly disabledState = linkedSignal(() => this.zDisabled());
   protected readonly internalValue = signal<string | null>(null);
   protected readonly open = signal(false);
+  protected readonly searchTerm = signal('');
+
+  protected readonly hasExactMatch = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return false;
+    if (this.groups().length) {
+      return this.groups().some(g => g.options.some(o => o.label.toLowerCase() === term || o.value.toLowerCase() === term));
+    }
+    return this.options().some(o => o.label.toLowerCase() === term || o.value.toLowerCase() === term);
+  });
 
   protected readonly classes = computed(() =>
     mergeClasses(
@@ -251,7 +272,9 @@ export class ZardComboboxComponent implements ControlValueAccessor {
 
     // Then search in flat options
     const option = this.options().find(opt => opt.value === currentValue);
-    return option?.label ?? null;
+    if (option) return option.label;
+    if (this.allowCustomValue()) return currentValue;
+    return null;
   });
 
   private onChange: (value: string | null) => void = () => {
@@ -261,6 +284,10 @@ export class ZardComboboxComponent implements ControlValueAccessor {
   private onTouched: () => void = () => {
     // ControlValueAccessor implementation
   };
+
+  onSearchChange(term: string) {
+    this.searchTerm.set(term);
+  }
 
   setOpen(open: boolean) {
     this.open.set(open);
@@ -310,6 +337,8 @@ export class ZardComboboxComponent implements ControlValueAccessor {
 
       if (selectedOption) {
         this.zComboSelected.emit(selectedOption);
+      } else if (this.allowCustomValue() && newValue === this.searchTerm()) {
+        this.zComboSelected.emit({ value: newValue, label: newValue });
       }
     }
 

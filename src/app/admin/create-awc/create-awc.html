@@ -273,7 +273,15 @@
       <z-form-field>
         <label z-form-label zRequired>Block</label>
         <z-form-control [errorMessage]="getErrorMessage('block')">
-          <input z-input formControlName="block" placeholder="Enter block name" />
+          <z-combobox
+            [options]="(blockOptions$ | async) ?? []"
+            [value]="toString(form.get('block')?.value)"
+            (zValueChange)="onBlockSelect($event)"
+            [zDisabled]="!form.get('districtId')?.value"
+            placeholder="Select or create block"
+            zWidth="full"
+            [allowCustomValue]="true"
+          ></z-combobox>
         </z-form-control>
       </z-form-field>
  
@@ -281,7 +289,15 @@
       <z-form-field>
         <label z-form-label zRequired>Village</label>
         <z-form-control [errorMessage]="getErrorMessage('village')">
-          <input z-input formControlName="village" placeholder="Enter village name" />
+          <z-combobox
+            [options]="(villageOptions$ | async) ?? []"
+            [value]="toString(form.get('village')?.value)"
+            (zValueChange)="onVillageSelect($event)"
+            [zDisabled]="!form.get('block')?.value"
+            placeholder="Select or create village"
+            zWidth="full"
+            [allowCustomValue]="true"
+          ></z-combobox>
         </z-form-control>
       </z-form-field>
     </div>
