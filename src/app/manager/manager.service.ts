@@ -21,13 +21,13 @@ export interface OutreachWorker {
     usercode?: string;
     status: string;
     projectId?: number;
-    locationId?: number;
+    stateId?: number;
     projects?: Array<{ id: number; name?: string }>;
     projectAssignments?: Array<{
         projectId: number;
-        locationId: number;
+        stateId: number | null;
         project?: { id: number; name?: string };
-        location?: { id: number; village?: string; block?: string };
+        state?: { id: number; name?: string; locationCode?: string };
     }>;
 }
 
@@ -62,14 +62,17 @@ export interface ManagerBeneficiary {
     dateOfMarriage?: string | null;
     womanAgeAtMarriage?: number | null;
     husbandAgeAtMarriage?: number | null;
-    state?: string | null;
+    // state?: string | null;
     district?: string | null;
     block?: string | null;
     village?: string | null;
     projectId?: number | null;
     locationId?: number | null;
+    stateId?: number | null;
     project?: ManagerBeneficiaryProject | null;
     location?: ManagerBeneficiaryLocation | null;
+    awc?: ManagerBeneficiaryLocation | null;
+    state?: any | null;
     createdBy?: {
         name?: string;
         email?: string;
@@ -150,8 +153,8 @@ export class ManagerService {
         return this.api.get(`${this.endpoint}/projects/${projectId}/locations`) as Observable<any[]>;
     }
 
-    tagOutreachWorkerProjectLocation(workerId: number, projectId: number, locationId: number): Observable<any> {
-        return this.api.post(`${this.endpoint}/outreach-workers/${workerId}/tag`, { projectId, locationId });
+    tagOutreachWorkerProjectLocation(workerId: number, projectId: number, stateId: number): Observable<any> {
+        return this.api.post(`${this.endpoint}/outreach-workers/${workerId}/tag`, { projectId, stateId });
     }
 
     submitAccountRequest(type: string, data: any): Observable<any> {

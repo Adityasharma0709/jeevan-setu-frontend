@@ -145,11 +145,11 @@ export class ManagersService {
     /**
      * Assign project and location to a user (Manager)
      */
-    assignProject(userId: number, projectId: number, locationId: number): Observable<any> {
+    assignProject(userId: number, projectId: number, stateId: number): Observable<any> {
         return this.api.post(`${this.endpoint}/assign-project-location`, {
             userId,
             projectId,
-            locationId,
+            stateId,
         });
     }
 
@@ -176,15 +176,9 @@ export class ManagersService {
     /**
      * Get locations for a specific project (for assignment dropdown)
      */
-    getLocations(projectId: number): Observable<any[]> {
-        return (this.api.get(`locations?projectId=${projectId}`) as Observable<any[]>).pipe(
-            map((locations) =>
-                (locations || []).filter((l: any) => {
-                    const raw = l?.status;
-                    if (raw == null) return true;
-                    return raw.toString().toUpperCase() === 'ACTIVE';
-                }),
-            ),
+    getProjectStates(projectId: number): Observable<any[]> {
+        return (this.api.get(`locations/project/${projectId}/states`) as Observable<any[]>).pipe(
+            map((states) => states || []),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     return of([]);

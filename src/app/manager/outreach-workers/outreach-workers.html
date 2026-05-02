@@ -307,7 +307,7 @@
 <ng-template #tagDialog>
     <form [formGroup]="tagForm" class="space-y-4 py-2">
         <p class="text-sm text-gray-600 mb-2">
-            Tag <strong>{{ taggingWorker?.name }}</strong> to an already-authorized project and location.
+            Tag <strong>{{ taggingWorker?.name }}</strong> to an already-authorized project and state.
         </p>
 
         <z-form-field>
@@ -323,12 +323,12 @@
         </z-form-field>
 
         <z-form-field>
-            <label z-form-label zRequired>Location</label>
+            <label z-form-label zRequired>State</label>
             <z-form-control>
                 <z-combobox 
-                    formControlName="locationId" 
-                    [options]="locationOptions" 
-                    placeholder="Select location" 
+                    formControlName="stateId" 
+                    [options]="stateOptions" 
+                    placeholder="Select state" 
                     zWidth="full"
                 ></z-combobox>
             </z-form-control>
@@ -377,31 +377,21 @@
                         <p class="text-xs text-gray-500 font-mono">{{ p?.projectCode || '-' }}</p>
                     </div>
                     <span class="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 shrink-0">
-                        {{ (p?.locations?.length || 0) }} location{{ (p?.locations?.length || 0) === 1 ? '' : 's' }}
+                        {{ (p?.states?.length || 0) }} state{{ (p?.states?.length || 0) === 1 ? '' : 's' }}
                     </span>
                 </div>
 
                 <div class="mt-3">
-                    <div *ngIf="!(p?.locations?.length)" class="text-sm text-gray-500">
-                        No locations assigned for this project.
+                    <div *ngIf="!(p?.states?.length)" class="text-sm text-gray-500">
+                        No states assigned for this project.
                     </div>
 
-                    <div *ngIf="p?.locations?.length" class="space-y-3">
-                        <div *ngFor="let l of p.locations" class="flex items-start justify-between gap-4 p-3 bg-gray-50/50 rounded-lg border border-gray-100/50">
+                    <div *ngIf="p?.states?.length" class="space-y-3">
+                        <div *ngFor="let l of p.states" class="flex items-start justify-between gap-4 p-3 bg-gray-50/50 rounded-lg border border-gray-100/50">
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2 mb-1.5">
                                     <span class="text-[10px] font-mono bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 uppercase tracking-wider">{{ l.locationCode || '-' }}</span>
-                                    <span class="text-sm font-bold text-gray-900">{{ l.village || 'N/A' }}</span>
-                                </div>
-                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-500">
-                                    <span class="flex items-center gap-1">
-                                        <z-icon zType="map-pin" class="w-3 h-3" />
-                                        Block: <span class="text-gray-700 font-medium">{{ l.block || 'N/A' }}</span>
-                                    </span>
-                                    <span class="text-gray-300 mx-0.5">•</span>
-                                    <span>District: <span class="text-gray-700 font-medium">{{ getLocationPart(l.district) }}</span></span>
-                                    <span class="text-gray-300 mx-0.5">•</span>
-                                    <span>State: <span class="text-gray-700 font-medium">{{ getLocationPart(l.state) }}</span></span>
+                                    <span class="text-sm font-bold text-gray-900">{{ l.name || 'N/A' }}</span>
                                 </div>
                             </div>
                             <ng-container *ngIf="l?.status">
