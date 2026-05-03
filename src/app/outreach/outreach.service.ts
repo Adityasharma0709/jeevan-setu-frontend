@@ -63,24 +63,25 @@ export interface Beneficiary {
 }
 
 export interface CreateBeneficiaryPayload {
+  beneficiaryType?: string;
   projectId: number;
-  locationId: number;
+  locationId?: number;
   mobileNumber: string;
   name: string;
   gender: string;
-  guardianName: string;
+  guardianName?: string;
   dateOfBirth: string;
   maritalStatus?: string;
   dateOfMarriage?: string;
   womanAgeAtMarriage?: number;
   husbandAgeAtMarriage?: number;
-  qualification: string;
-  religion: string;
-  caste: string;
-  monthlyIncome: number;
-  economicStatus: string;
-  primaryIncomeSource: string;
-  employmentStatus: string;
+  qualification?: string;
+  religion?: string;
+  caste?: string;
+  monthlyIncome?: number;
+  economicStatus?: string;
+  primaryIncomeSource?: string;
+  employmentStatus?: string;
   /** Beneficiary's actual address — may differ from the project location */
   state?: string;
   district?: string;

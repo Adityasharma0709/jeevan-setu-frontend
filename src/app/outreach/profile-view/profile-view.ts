@@ -86,6 +86,22 @@ export class ProfileView implements OnInit, OnDestroy {
         return age;
     }
 
+    get beneficiaryAge(): number | string {
+        if (!this.beneficiary?.dateOfBirth) return '—';
+        const dob = new Date(this.beneficiary.dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+        return age;
+    }
+
+    get isPriority(): boolean {
+        if (!this.beneficiary) return false;
+        // Guess based on data presence
+        return !!(this.beneficiary.guardianName || this.beneficiary.qualification || this.beneficiary.religion || this.beneficiary.caste);
+    }
+
     // Options mapping
     get groupOptions(): ZardComboboxOption[] {
         return this.groups.map(g => ({ value: g.id.toString(), label: g.name }));

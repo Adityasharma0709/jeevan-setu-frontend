@@ -325,7 +325,7 @@ export class ReportActivity {
           sessionId: report.sessionId?.toString() || '',
           beneficiaryId: report.beneficiaryId?.toString() || '',
           childId: report.childId?.toString() || '',
-          sessionDate: this.formatDateForInput(report.sessionDate),
+          sessionDate: this.formatDateForInput(report.date || report.sessionDate),
           screening: report.reportData?.screening || 'No',
           selectedTests: [],
           testValues: {}

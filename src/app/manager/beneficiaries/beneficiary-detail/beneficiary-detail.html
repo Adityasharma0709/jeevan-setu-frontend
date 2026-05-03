@@ -69,7 +69,7 @@
                 </div>
 
                 <!-- Demographic Card -->
-                <div class="bg-white rounded-2xl border p-6 shadow-sm">
+                <div class="bg-white rounded-2xl border p-6 shadow-sm" *ngIf="isPriority">
                     <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <z-icon zType="user" size="16" />
                         Demographic Profile
@@ -100,13 +100,34 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Basic Info Card for Non-Priority -->
+                <div class="bg-white rounded-2xl border p-6 shadow-sm" *ngIf="!isPriority">
+                    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <z-icon zType="user" size="16" />
+                        Contact Info
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                            <span class="text-sm text-gray-500">Gender</span>
+                            <span class="font-medium px-2 py-0.5 rounded text-xs" 
+                                  [ngClass]="beneficiary.gender === 'female' ? 'bg-pink-50 text-pink-700' : 'bg-blue-50 text-blue-700'">
+                                {{ beneficiary.gender | titlecase }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <span class="text-sm text-gray-500 font-bold text-indigo-600">Mobile Number</span>
+                            <span class="font-bold text-indigo-700 tracking-wider">{{ beneficiary.mobileNumber || '-' }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Right Column: Personal, Marital & Economic -->
             <div class="lg:col-span-2 space-y-6">
                 
                 <!-- Personal & Marital History -->
-                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm" *ngIf="isPriority">
                     <div class="bg-gray-50 px-6 py-3 border-b">
                         <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Personal & Marital History</h2>
                     </div>
@@ -149,8 +170,27 @@
                     </div>
                 </div>
 
+                <!-- Simple Personal Info for Non-Priority -->
+                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm" *ngIf="!isPriority">
+                    <div class="bg-gray-50 px-6 py-3 border-b">
+                        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Personal Details</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase">Age</label>
+                                <p class="text-xl font-bold text-gray-900">{{ beneficiaryAge }} Years</p>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase">Gender</label>
+                                <p class="font-medium capitalize">{{ beneficiary.gender || '-' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Economic Status -->
-                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                <div class="bg-white rounded-2xl border overflow-hidden shadow-sm" *ngIf="isPriority">
                     <div class="bg-emerald-50 px-6 py-3 border-b border-emerald-100">
                         <h2 class="text-sm font-bold text-emerald-800 uppercase tracking-wider">Economic & Employment Profile</h2>
                     </div>
