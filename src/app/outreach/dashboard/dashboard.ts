@@ -114,9 +114,13 @@ export class Dashboard implements OnInit {
         if (!projects.length) return of([] as any[]);
         return forkJoin(
           projects.map((p) =>
-            this.outreachService.getLocationsByProject(p.id).pipe(
-              map((locs) => ({ ...p, locations: locs })),
-              catchError(() => of({ ...p, locations: [] }))
+            this.outreachService.getProjectAssignments(p.id).pipe(
+              map((res) => ({ 
+                ...p, 
+                locations: res.awcs,
+                assignedStates: res.states 
+              })),
+              catchError(() => of({ ...p, locations: [], assignedStates: [] }))
             )
           )
         );
@@ -249,6 +253,7 @@ export class Dashboard implements OnInit {
 
   getLocationPart(val: any): string {
     if (!val) return '-';
-    return (val?.name || val).toString();
+    if (typeof val === 'string') return val;
+    return val.name || val.awcName || val.locationCode || val.label || '-';
   }
 }
