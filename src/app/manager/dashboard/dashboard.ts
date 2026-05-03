@@ -110,7 +110,7 @@ export class Dashboard implements OnInit {
         if (!projects.length) return of([] as any[]);
         return forkJoin(
           projects.map((p: any) =>
-            this.managerService.getLocations(p.id).pipe(
+            this.managerService.getAssignedLocations(p.id).pipe(
               map((locs) => ({ ...p, locations: locs })),
               catchError(() => of({ ...p, locations: [] }))
             )
