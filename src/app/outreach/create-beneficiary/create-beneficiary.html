@@ -147,7 +147,15 @@
             <z-form-field *ngIf="isPriority">
               <label z-form-label zRequired>Date of Birth</label>
               <z-form-control>
-                <input z-input type="date" formControlName="dateOfBirth" />
+                <div class="relative flex items-center">
+                  <input z-input type="text" formControlName="dateOfBirth" placeholder="DD/MM/YYYY" (input)="formatDateInput($event, 'dateOfBirth')" maxlength="10" class="pr-10" />
+                  
+                  <input #dobPicker type="date" class="absolute opacity-0 w-1 h-1 pointer-events-none" style="right: 20px; top: 20px;" (change)="onNativeDateChange($event, 'dateOfBirth')" [value]="getNativeDateValue('dateOfBirth')" />
+                  
+                  <button type="button" class="absolute right-3 text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none" (click)="openPicker(dobPicker)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  </button>
+                </div>
               </z-form-control>
             </z-form-field>
 
@@ -186,7 +194,15 @@
             <z-form-field *ngIf="isMarried()">
               <label z-form-label>Date of Marriage</label>
               <z-form-control>
-                <input z-input type="date" formControlName="dateOfMarriage" />
+                <div class="relative flex items-center">
+                  <input z-input type="text" formControlName="dateOfMarriage" placeholder="DD/MM/YYYY" (input)="formatDateInput($event, 'dateOfMarriage')" maxlength="10" class="pr-10" />
+                  
+                  <input #domPicker type="date" class="absolute opacity-0 w-1 h-1 pointer-events-none" style="right: 20px; top: 20px;" (change)="onNativeDateChange($event, 'dateOfMarriage')" [value]="getNativeDateValue('dateOfMarriage')" />
+                  
+                  <button type="button" class="absolute right-3 text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none" (click)="openPicker(domPicker)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  </button>
+                </div>
               </z-form-control>
             </z-form-field>
 
@@ -301,7 +317,7 @@
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Economic Information</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <z-form-field>
-              <label z-form-label zRequired>Monthly Income (₹)</label>
+              <label z-form-label zRequired>Household's Monthly Income (₹) from all sources</label>
               <z-form-control>
                 <input z-input type="number" formControlName="monthlyIncome" min="0" placeholder="0" />
               </z-form-control>
@@ -322,7 +338,7 @@
 
             <!-- Primary Income Source -->
             <z-form-field>
-              <label z-form-label zRequired>Primary Income Source</label>
+              <label z-form-label zRequired>Primary Income Source of Household</label>
               <z-form-control>
                 <z-combobox 
                   formControlName="primaryIncomeSource" 
