@@ -65,7 +65,7 @@
                         <z-icon zType="user" size="16" />
                         <span class="truncate">Details</span>
                     </button>
-                    <button (click)="activeTab = 'family'"
+                    <button (click)="activeTab = 'family'" *ngIf="isPriority"
                             class="flex-1 sm:flex-none flex items-center justify-center px-6 py-2 rounded-xl text-sm font-bold transition-all gap-2"
                             [ngClass]="activeTab === 'family' ? 'bg-white text-indigo-700 shadow-sm border border-gray-100 ring-4 ring-indigo-50/50' : 'text-gray-500 hover:text-gray-700'">
                         <z-icon zType="users" size="16" />
@@ -108,7 +108,7 @@
                                 <div class="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center shrink-0">
                                     <z-icon zType="house" size="15" class="text-indigo-600" />
                                 </div>
-                                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Residential Address</h2>
+                                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Location</h2>
                             </div>
                             <div class="space-y-3">
                                 <div>
@@ -128,8 +128,8 @@
                             </div>
                         </div>
 
-                        <!-- Demographic Profile -->
-                        <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                        <!-- Demographic Profile (Priority Only) -->
+                        <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm" *ngIf="isPriority">
                             <div class="flex items-center gap-2 mb-4 min-w-0">
                                 <div class="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
                                     <z-icon zType="user" size="15" class="text-blue-600" />
@@ -162,13 +162,36 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Basic Info (Non-Priority) -->
+                        <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm" *ngIf="!isPriority">
+                            <div class="flex items-center gap-2 mb-4 min-w-0">
+                                <div class="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                                    <z-icon zType="user" size="15" class="text-blue-600" />
+                                </div>
+                                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Contact Info</h2>
+                            </div>
+                            <div class="space-y-0 divide-y divide-gray-50">
+                                <div class="flex justify-between items-center py-2.5">
+                                    <span class="text-sm text-gray-500">Gender</span>
+                                    <span class="font-semibold text-xs px-2.5 py-1 rounded-full capitalize"
+                                          [ngClass]="beneficiary.gender === 'female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'">
+                                        {{ beneficiary.gender }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center pt-3">
+                                    <span class="text-sm font-bold text-indigo-600">Mobile</span>
+                                    <span class="font-bold text-indigo-700 tracking-wider text-sm">{{ beneficiary.mobileNumber || '—' }}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- RIGHT COLUMN -->
                     <div class="lg:col-span-2 space-y-5">
 
-                        <!-- Personal & Marital History -->
-                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                        <!-- Personal & Marital History (Priority Only) -->
+                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm" *ngIf="isPriority">
                             <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex items-center gap-2 min-w-0">
                                 <div class="w-7 h-7 bg-purple-50 rounded-lg flex items-center justify-center shrink-0">
                                     <z-icon zType="heart" size="15" class="text-purple-600" />
@@ -213,8 +236,30 @@
                             </div>
                         </div>
 
-                        <!-- Economic Status -->
-                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                        <!-- Simple Personal Info (Non-Priority) -->
+                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm" *ngIf="!isPriority">
+                            <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex items-center gap-2 min-w-0">
+                                <div class="w-7 h-7 bg-purple-50 rounded-lg flex items-center justify-center shrink-0">
+                                    <z-icon zType="heart" size="15" class="text-purple-600" />
+                                </div>
+                                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Personal Details</h2>
+                            </div>
+                            <div class="p-4 sm:p-6">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-gray-50 rounded-xl p-4">
+                                        <label class="text-[10px] text-gray-400 uppercase font-semibold">Current Age</label>
+                                        <p class="text-2xl font-bold text-gray-900 mt-1">{{ beneficiaryAge }} Years</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-xl p-4">
+                                        <label class="text-[10px] text-gray-400 uppercase font-semibold">Gender</label>
+                                        <p class="font-semibold text-gray-800 text-sm mt-1 capitalize">{{ beneficiary.gender || '—' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Economic Status (Priority Only) -->
+                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm" *ngIf="isPriority">
                             <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex items-center gap-2 min-w-0">
                                 <div class="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
                                     <z-icon zType="circle-dollar-sign" size="15" class="text-emerald-600" />

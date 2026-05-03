@@ -84,6 +84,12 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     { value: 'Other', label: 'Other' }
   ];
 
+  readonly beneficiaryTypeOptions: ZardComboboxOption[] = [
+    { value: 'Priority', label: 'Priority' },
+    { value: 'Stakeholder', label: 'Stakeholder' },
+    { value: 'General', label: 'General' }
+  ];
+
   readonly maritalStatusOptions: ZardComboboxOption[] = [
     { value: 'Single', label: 'Single' },
     { value: 'Married', label: 'Married' },
@@ -100,10 +106,12 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     blockSelect:                [''],
     villageSelect:              [''],
     locationId:                 ['', Validators.required],
+    beneficiaryType:            ['General', Validators.required],
     name:                       ['', Validators.required],
     mobileNumber:               ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
     gender:                     ['', Validators.required],
     dateOfBirth:                ['', Validators.required],
+    age:                        [''],
     guardianName:               ['', Validators.required],
     maritalStatus:              ['Single'],
     dateOfMarriage:             [''],
@@ -277,6 +285,10 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     return String(this.form.get('gender')?.value ?? '').toLowerCase();
   }
 
+  get isPriority(): boolean {
+    return this.form.get('beneficiaryType')?.value === 'Priority';
+  }
+
   isAgeAutoCalc(field: 'woman' | 'husband'): boolean {
     const g = this.currentGender;
     return (field === 'woman' && g === 'female') || (field === 'husband' && g === 'male');
@@ -295,6 +307,7 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.setupAgeAutoCalculation();
     this.setupOtherValidators();
+    this.setupPriorityValidators();
   }
 
   ngOnDestroy(): void {
@@ -325,6 +338,62 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       });
       this.subs.add(sub);
     }
+  }
+
+  private setupPriorityValidators(): void {
+    const priorityFields = [
+      'guardianName',
+      'qualification',
+      'religion',
+      'caste',
+      'monthlyIncome',
+      'economicStatus',
+      'primaryIncomeSource',
+      'employmentStatus'
+    ];
+
+    const sub = this.form.get('beneficiaryType')!.valueChanges.pipe(
+      startWith(this.form.get('beneficiaryType')!.value)
+    ).subscribe(type => {
+      const isPriority = type === 'Priority';
+      
+      priorityFields.forEach(field => {
+        const ctrl = this.form.get(field)!;
+        if (isPriority) {
+          if (field === 'monthlyIncome') {
+            ctrl.setValidators([Validators.required, Validators.min(0)]);
+          } else {
+            ctrl.setValidators(Validators.required);
+          }
+        } else {
+          ctrl.clearValidators();
+        }
+        ctrl.updateValueAndValidity({ emitEvent: false });
+      });
+
+      // Age vs DOB
+      const dobCtrl = this.form.get('dateOfBirth')!;
+      const ageCtrl = this.form.get('age')!;
+      if (isPriority) {
+        dobCtrl.setValidators(Validators.required);
+        ageCtrl.clearValidators();
+      } else {
+        dobCtrl.clearValidators();
+        ageCtrl.setValidators([Validators.required, Validators.min(0), Validators.max(120)]);
+      }
+      dobCtrl.updateValueAndValidity({ emitEvent: false });
+      ageCtrl.updateValueAndValidity({ emitEvent: false });
+
+      // AWC (locationId)
+      const locCtrl = this.form.get('locationId')!;
+      if (isPriority) {
+        locCtrl.setValidators(Validators.required);
+      } else {
+        locCtrl.clearValidators();
+      }
+      locCtrl.updateValueAndValidity({ emitEvent: false });
+    });
+    this.subs.add(sub);
   }
 
   private setupAgeAutoCalculation(): void {
@@ -395,13 +464,20 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     }
 
     const payload: CreateBeneficiaryPayload = {
+      beneficiaryType:     String(raw.beneficiaryType),
       projectId:           Number(raw.projectId),
-      locationId:          Number(raw.locationId),
+      locationId:          this.isPriority ? Number(raw.locationId) : undefined,
+      state:               raw.stateSelect || undefined,
+      district:            raw.districtSelect || undefined,
+      block:               raw.blockSelect || undefined,
+      village:             raw.villageSelect || undefined,
       mobileNumber:        String(raw.mobileNumber).trim(),
       name:                String(raw.name).trim(),
       gender:              String(raw.gender),
-      guardianName:        String(raw.guardianName).trim(),
-      dateOfBirth:         new Date(raw.dateOfBirth).toISOString(),
+      guardianName:        this.isPriority ? String(raw.guardianName).trim() : undefined,
+      dateOfBirth:         this.isPriority 
+                             ? new Date(raw.dateOfBirth).toISOString()
+                             : new Date(new Date().getFullYear() - Number(raw.age || 0), 0, 1).toISOString(),
       maritalStatus:       raw.maritalStatus ? String(raw.maritalStatus) : undefined,
       dateOfMarriage:      married && raw.dateOfMarriage
                              ? new Date(raw.dateOfMarriage).toISOString() : undefined,
@@ -409,13 +485,13 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
                              ? Number(raw.womanAgeAtMarriage) : undefined,
       husbandAgeAtMarriage: married && raw.husbandAgeAtMarriage !== '' && raw.husbandAgeAtMarriage !== null
                              ? Number(raw.husbandAgeAtMarriage) : undefined,
-      qualification:       this.resolveOther(raw.qualification, raw.qualificationOther),
-      religion:            this.resolveOther(raw.religion, raw.religionOther),
-      caste:               this.resolveOther(raw.caste, raw.casteOther),
-      primaryIncomeSource: this.resolveOther(raw.primaryIncomeSource, raw.primaryIncomeSourceOther),
-      monthlyIncome:       Number(raw.monthlyIncome),
-      economicStatus:      String(raw.economicStatus),
-      employmentStatus:    String(raw.employmentStatus),
+      qualification:       this.isPriority ? this.resolveOther(raw.qualification, raw.qualificationOther) : undefined,
+      religion:            this.isPriority ? this.resolveOther(raw.religion, raw.religionOther) : undefined,
+      caste:               this.isPriority ? this.resolveOther(raw.caste, raw.casteOther) : undefined,
+      primaryIncomeSource: this.isPriority ? this.resolveOther(raw.primaryIncomeSource, raw.primaryIncomeSourceOther) : undefined,
+      monthlyIncome:       this.isPriority ? Number(raw.monthlyIncome) : undefined,
+      economicStatus:      this.isPriority ? String(raw.economicStatus) : undefined,
+      employmentStatus:    this.isPriority ? String(raw.employmentStatus) : undefined,
     };
 
     this.isSubmitting = true;
@@ -425,7 +501,9 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
         this.router.navigate(['/outreach/beneficiaries']);
       },
       error: (err) => {
-        toast.error(err?.error?.message || 'Failed to create beneficiary');
+        const msg = err?.error?.message;
+        const errorMsg = Array.isArray(msg) ? msg[0] : (msg || 'Failed to create beneficiary');
+        toast.error(errorMsg);
         this.isSubmitting = false;
       },
     });

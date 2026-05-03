@@ -25,7 +25,21 @@
         Make changes below. Only modified fields will be sent for manager approval.
       </p>
 
-      <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <form [formGroup]="form" class="space-y-8">
+        <z-form-field>
+          <label z-form-label zRequired>Beneficiary Type</label>
+          <z-form-control>
+            <z-combobox 
+              formControlName="beneficiaryType" 
+              [options]="beneficiaryTypeOptions"
+              [searchable]="false"
+              placeholder="Select type"
+              zWidth="full"
+            />
+          </z-form-control>
+        </z-form-field>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
         <z-form-field>
           <label z-form-label>Name</label>
@@ -50,17 +64,22 @@
           </z-form-control>
         </z-form-field>
 
-        <z-form-field>
+        <z-form-field *ngIf="isPriority">
           <label z-form-label>Date of Birth</label>
           <z-form-control><input z-input type="date" formControlName="dateOfBirth" /></z-form-control>
         </z-form-field>
 
-        <z-form-field class="md:col-span-2">
+        <z-form-field *ngIf="!isPriority">
+          <label z-form-label>Age</label>
+          <z-form-control><input z-input type="number" formControlName="age" placeholder="Enter age" /></z-form-control>
+        </z-form-field>
+
+        <z-form-field class="md:col-span-2" *ngIf="isPriority">
           <label z-form-label>Guardian Name</label>
           <z-form-control><input z-input formControlName="guardianName" /></z-form-control>
         </z-form-field>
 
-        <z-form-field>
+        <z-form-field *ngIf="isPriority">
           <label z-form-label>Qualification</label>
           <z-form-control>
             <z-combobox 
@@ -73,7 +92,7 @@
           </z-form-control>
         </z-form-field>
 
-        <z-form-field>
+        <z-form-field *ngIf="isPriority">
           <label z-form-label>Religion</label>
           <z-form-control>
             <z-combobox 
@@ -86,7 +105,7 @@
           </z-form-control>
         </z-form-field>
 
-        <z-form-field>
+        <z-form-field *ngIf="isPriority">
           <label z-form-label>Caste</label>
           <z-form-control>
             <z-combobox 
@@ -99,12 +118,12 @@
           </z-form-control>
         </z-form-field>
 
-        <z-form-field>
+        <z-form-field *ngIf="isPriority">
           <label z-form-label>Monthly Income</label>
           <z-form-control><input z-input type="number" formControlName="monthlyIncome" /></z-form-control>
         </z-form-field>
 
-        <z-form-field>
+        <z-form-field *ngIf="isPriority">
           <label z-form-label>Economic Status</label>
           <z-form-control>
             <z-combobox 
@@ -117,7 +136,7 @@
           </z-form-control>
         </z-form-field>
 
-        <z-form-field>
+        <z-form-field *ngIf="isPriority">
           <label z-form-label>Primary Income Source</label>
           <z-form-control>
             <z-combobox 
@@ -130,7 +149,7 @@
           </z-form-control>
         </z-form-field>
 
-        <z-form-field>
+        <z-form-field *ngIf="isPriority">
           <label z-form-label>Employment Status</label>
           <z-form-control>
             <z-combobox 
@@ -143,7 +162,7 @@
           </z-form-control>
         </z-form-field>
 
-        <z-form-field>
+        <z-form-field *ngIf="isPriority">
           <label z-form-label>Marital Status</label>
           <z-form-control>
             <z-combobox 
@@ -173,15 +192,16 @@
           </z-form-field>
         </ng-container>
 
-      </form>
+        </div> <!-- grid div close -->
 
-      <!-- Actions -->
-      <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
-        <button type="button" z-button zType="outline" (click)="goBack()">Cancel</button>
-        <button type="button" z-button (click)="submit()" [disabled]="isSubmitting || form.invalid">
-          {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
-        </button>
-      </div>
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+          <button type="button" z-button zType="outline" (click)="goBack()">Cancel</button>
+          <button type="button" z-button (click)="submit()" [disabled]="isSubmitting || form.invalid">
+            {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

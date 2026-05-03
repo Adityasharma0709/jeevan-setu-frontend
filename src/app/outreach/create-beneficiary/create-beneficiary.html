@@ -15,6 +15,19 @@
   <div class="max-w-4xl mx-auto px-6 py-8">
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
       <form [formGroup]="form" class="space-y-8">
+        
+        <z-form-field>
+          <label z-form-label zRequired>Beneficiary Type</label>
+          <z-form-control>
+            <z-combobox 
+              formControlName="beneficiaryType" 
+              [options]="beneficiaryTypeOptions"
+              [searchable]="false"
+              placeholder="Select type"
+              zWidth="full"
+            />
+          </z-form-control>
+        </z-form-field>
 
         <!-- ┌─ Assignment ──────────────────────────────────────────────────── -->
         <div>
@@ -84,7 +97,7 @@
               </z-form-control>
             </z-form-field>
 
-            <z-form-field>
+            <z-form-field *ngIf="isPriority">
               <label z-form-label zRequired>AWC</label>
               <z-form-control>
                 <z-combobox 
@@ -131,14 +144,21 @@
               </z-form-control>
             </z-form-field>
 
-            <z-form-field>
+            <z-form-field *ngIf="isPriority">
               <label z-form-label zRequired>Date of Birth</label>
               <z-form-control>
                 <input z-input type="date" formControlName="dateOfBirth" />
               </z-form-control>
             </z-form-field>
 
-            <z-form-field class="md:col-span-2">
+            <z-form-field *ngIf="!isPriority">
+              <label z-form-label zRequired>Age</label>
+              <z-form-control>
+                <input z-input type="number" formControlName="age" placeholder="Enter age" min="0" max="120" />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field class="md:col-span-2" *ngIf="isPriority">
               <label z-form-label zRequired>Guardian Name</label>
               <z-form-control>
                 <input z-input formControlName="guardianName" placeholder="Father / Husband name" />
@@ -148,7 +168,7 @@
         </div>
 
         <!-- ┌─ Marital Information ──────────────────────────────────────────── -->
-        <div>
+        <div *ngIf="isPriority">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Marital Information</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <z-form-field>
@@ -211,7 +231,7 @@
         </div>
 
         <!-- ┌─ Education & Background ───────────────────────────────────────── -->
-        <div>
+        <div *ngIf="isPriority">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Education &amp; Background</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <!-- Qualification -->
@@ -277,7 +297,7 @@
         </div>
 
         <!-- ┌─ Economic Information ─────────────────────────────────────────── -->
-        <div>
+        <div *ngIf="isPriority">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Economic Information</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <z-form-field>
