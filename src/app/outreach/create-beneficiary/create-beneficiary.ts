@@ -71,12 +71,12 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   readonly religionOptions = this.mapStringsToOptions(['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Other']);
   readonly casteOptions    = this.mapStringsToOptions(['General', 'OBC', 'SC', 'ST', 'Other']);
-  readonly economicStatusOptions = this.mapStringsToOptions(['APL', 'BPL']);
+  readonly economicStatusOptions = this.mapStringsToOptions(['AAY', 'PHH','Others']);
   readonly primaryIncomeSourceOptions = this.mapStringsToOptions([
     'Agriculture', 'Daily Labour', 'Small Business',
     'Government Service', 'Private Service', 'Pension / Remittance', 'Other',
   ]);
-  readonly employmentStatusOptions = this.mapStringsToOptions(['Employed', 'Unemployed', 'Self-Employed', 'Student']);
+  readonly employmentStatusOptions = this.mapStringsToOptions(['Working', 'Not-Working', 'Daily-Wage-Earner', 'Self-Employed']);
 
   readonly genderOptions: ZardComboboxOption[] = [
     { value: 'Male', label: 'Male' },
@@ -106,15 +106,15 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     blockSelect:                [''],
     villageSelect:              [''],
     locationId:                 ['', Validators.required],
-    beneficiaryType:            ['General', Validators.required],
+    beneficiaryType:            ['', Validators.required],
     name:                       ['', Validators.required],
     mobileNumber:               ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
     gender:                     ['', Validators.required],
-    dateOfBirth:                ['', Validators.required],
+    dateOfBirth:                ['', [Validators.required, Validators.pattern('^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/\\d{4}$')]],
     age:                        [''],
     guardianName:               ['', Validators.required],
     maritalStatus:              ['Single'],
-    dateOfMarriage:             [''],
+    dateOfMarriage:             ['', Validators.pattern('^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/\\d{4}$')],
     womanAgeAtMarriage:         [''],
     husbandAgeAtMarriage:       [''],
     qualification:              ['', Validators.required],
@@ -316,6 +316,73 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   // ── Private setup ─────────────────────────────────────────────────────────
 
+  private parseDateStr(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    if (dateStr.includes('/')) {
+      const p = dateStr.split('/');
+      if (p.length === 3) {
+        const day = Number(p[0]);
+        const month = Number(p[1]) - 1;
+        const year = Number(p[2]);
+        const d = new Date(year, month, day);
+        if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) {
+           return d;
+        }
+      }
+    } else {
+       const d = new Date(dateStr);
+       if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  }
+
+  formatDateInput(event: Event, controlName: string) {
+    const input = event.target as HTMLInputElement;
+    let val = input.value.replace(/\D/g, '');
+    if (val.length > 8) val = val.substring(0, 8);
+    
+    let formatted = val;
+    if (val.length > 4) {
+      formatted = val.substring(0, 2) + '/' + val.substring(2, 4) + '/' + val.substring(4, 8);
+    } else if (val.length > 2) {
+      formatted = val.substring(0, 2) + '/' + val.substring(2, 4);
+    }
+    
+    this.form.get(controlName)?.setValue(formatted, { emitEvent: false });
+  }
+
+  openPicker(picker: HTMLInputElement) {
+    try {
+      picker.showPicker();
+    } catch (e) {
+      picker.focus();
+    }
+  }
+
+  getNativeDateValue(controlName: string): string {
+    const val = this.form.get(controlName)?.value;
+    const d = this.parseDateStr(val);
+    if (d) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    return '';
+  }
+
+  onNativeDateChange(event: Event, controlName: string) {
+    const input = event.target as HTMLInputElement;
+    if (input.value) {
+      const parts = input.value.split('-');
+      if (parts.length === 3) {
+        const formatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        this.form.get(controlName)?.setValue(formatted);
+        this.form.get(controlName)?.markAsTouched();
+        this.form.get(controlName)?.updateValueAndValidity();
+      }
+    }
+  }
 
   private readonly otherPairs: [string, string][] = [
     ['qualification',       'qualificationOther'],
@@ -375,7 +442,7 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       const dobCtrl = this.form.get('dateOfBirth')!;
       const ageCtrl = this.form.get('age')!;
       if (isPriority) {
-        dobCtrl.setValidators(Validators.required);
+        dobCtrl.setValidators([Validators.required, Validators.pattern('^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/\\d{4}$')]);
         ageCtrl.clearValidators();
       } else {
         dobCtrl.clearValidators();
@@ -424,9 +491,9 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   private calculateAgeAtEvent(dobStr: string, eventDateStr: string): number | null {
     if (!dobStr || !eventDateStr) return null;
-    const dob   = new Date(dobStr);
-    const event = new Date(eventDateStr);
-    if (isNaN(dob.getTime()) || isNaN(event.getTime())) return null;
+    const dob   = this.parseDateStr(dobStr);
+    const event = this.parseDateStr(eventDateStr);
+    if (!dob || !event || isNaN(dob.getTime()) || isNaN(event.getTime())) return null;
     if (event < dob) return null;
     let age = event.getFullYear() - dob.getFullYear();
     const monthDiff = event.getMonth() - dob.getMonth();
@@ -454,10 +521,26 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     const raw     = this.form.getRawValue();
     const married = this.isMarried();
 
+    if (this.isPriority && raw.dateOfBirth) {
+       const dobDate = this.parseDateStr(raw.dateOfBirth);
+       if (!dobDate) {
+         toast.error('Invalid Date of Birth. Please enter a valid date (DD/MM/YYYY).');
+         return;
+       }
+    }
+    
+    if (married && raw.dateOfMarriage) {
+       const domDate = this.parseDateStr(raw.dateOfMarriage);
+       if (!domDate) {
+         toast.error('Invalid Date of Marriage. Please enter a valid date (DD/MM/YYYY).');
+         return;
+       }
+    }
+
     if (married && raw.dateOfMarriage && raw.dateOfBirth) {
-      const dobDate = new Date(raw.dateOfBirth);
-      const domDate = new Date(raw.dateOfMarriage);
-      if (domDate < dobDate) {
+      const dobDate = this.parseDateStr(raw.dateOfBirth);
+      const domDate = this.parseDateStr(raw.dateOfMarriage);
+      if (dobDate && domDate && domDate < dobDate) {
         toast.error('Date of Marriage cannot be before Date of Birth');
         return;
       }
@@ -475,12 +558,12 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       name:                String(raw.name).trim(),
       gender:              String(raw.gender),
       guardianName:        this.isPriority ? String(raw.guardianName).trim() : undefined,
-      dateOfBirth:         this.isPriority 
-                             ? new Date(raw.dateOfBirth).toISOString()
+      dateOfBirth:         this.isPriority && raw.dateOfBirth
+                             ? this.parseDateStr(raw.dateOfBirth)?.toISOString() || ''
                              : new Date(new Date().getFullYear() - Number(raw.age || 0), 0, 1).toISOString(),
       maritalStatus:       raw.maritalStatus ? String(raw.maritalStatus) : undefined,
       dateOfMarriage:      married && raw.dateOfMarriage
-                             ? new Date(raw.dateOfMarriage).toISOString() : undefined,
+                             ? this.parseDateStr(raw.dateOfMarriage)?.toISOString() : undefined,
       womanAgeAtMarriage:  married && raw.womanAgeAtMarriage !== '' && raw.womanAgeAtMarriage !== null
                              ? Number(raw.womanAgeAtMarriage) : undefined,
       husbandAgeAtMarriage: married && raw.husbandAgeAtMarriage !== '' && raw.husbandAgeAtMarriage !== null
