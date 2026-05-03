@@ -15,10 +15,11 @@ export interface OutreachLocation {
   id: number;
   projectId: number;
   locationCode: string;
-  state: string;
-  district: string;
-  block: string;
-  village: string;
+  awcName?: string;
+  state: any;
+  district: any;
+  block: any;
+  village: any;
   status?: string;
 }
 
@@ -175,13 +176,25 @@ export class OutreachService {
     );
   }
 
+  getProjectAssignments(projectId: number): Observable<{ states: any[], awcs: OutreachLocation[] }> {
+    return (this.api.get(`${this.endpoint}/assigned-locations/${projectId}`) as Observable<any>).pipe(
+      map((res) => {
+        if (Array.isArray(res)) return { states: [], awcs: res };
+        return {
+          states: res?.states || [],
+          awcs: res?.awcs || []
+        };
+      }),
+      catchError(() => of({ states: [], awcs: [] }))
+    );
+  }
+
   getLocationsByProject(projectId: number): Observable<OutreachLocation[]> {
-    return (this.api.get(`${this.endpoint}/assigned-locations/${projectId}`) as Observable<OutreachLocation[]>).pipe(
-      map((rows) =>
-        (rows || []).filter(
-          (l) => (l?.status ?? '').toString().toUpperCase() === 'ACTIVE',
-        ),
-      ),
+    return (this.api.get(`${this.endpoint}/assigned-locations/${projectId}`) as Observable<any>).pipe(
+      map((res) => {
+        const list = Array.isArray(res) ? res : (res?.awcs || res?.data || res?.locations || []);
+        return list.filter((l: any) => (l?.status ?? '').toString().toUpperCase() === 'ACTIVE' || !l?.status);
+      }),
       catchError(() => of([]))
     );
   }

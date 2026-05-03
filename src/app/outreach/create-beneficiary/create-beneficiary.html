@@ -20,7 +20,7 @@
         <div>
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Assignment</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <z-form-field>
+            <z-form-field class="md:col-span-2">
               <label z-form-label zRequired>Project</label>
               <z-form-control>
                 <z-combobox 
@@ -33,13 +33,65 @@
             </z-form-field>
 
             <z-form-field>
-              <label z-form-label zRequired>Location</label>
+              <label z-form-label zRequired>State</label>
+              <z-form-control>
+                <z-combobox 
+                  formControlName="stateSelect" 
+                  [options]="(assignmentStates$ | async) || []" 
+                  [zDisabled]="!form.get('projectId')?.value"
+                  placeholder="Select state"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>District</label>
+              <z-form-control>
+                <z-combobox 
+                  formControlName="districtSelect" 
+                  [options]="(assignmentDistricts$ | async) || []" 
+                  [zDisabled]="!form.get('stateSelect')?.value"
+                  placeholder="Select district"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Block</label>
+              <z-form-control>
+                <z-combobox 
+                  formControlName="blockSelect" 
+                  [options]="(assignmentBlocks$ | async) || []" 
+                  [zDisabled]="!form.get('districtSelect')?.value"
+                  placeholder="Select block"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>Village</label>
+              <z-form-control>
+                <z-combobox 
+                  formControlName="villageSelect" 
+                  [options]="(assignmentVillages$ | async) || []" 
+                  [zDisabled]="!form.get('blockSelect')?.value"
+                  placeholder="Select village"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label zRequired>AWC</label>
               <z-form-control>
                 <z-combobox 
                   formControlName="locationId" 
-                  [options]="(locations$ | async) || []" 
-                  [zDisabled]="!form.get('projectId')?.value"
-                  placeholder="Select location"
+                  [options]="(assignmentAwcs$ | async) || []" 
+                  [zDisabled]="!form.get('villageSelect')?.value"
+                  placeholder="Select AWC"
                   zWidth="full"
                 />
               </z-form-control>
@@ -47,44 +99,6 @@
           </div>
         </div>
 
-        <!-- ┌─ Beneficiary Address ──────────────────────────────────────────── -->
-        <div>
-          <div class="flex items-center gap-2 mb-4">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-0">Beneficiary Address</p>
-            <span class="text-[10px] text-indigo-500 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 font-medium">
-              Pre-filled from location · editable
-            </span>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <z-form-field>
-              <label z-form-label zRequired>State</label>
-              <z-form-control>
-                <input z-input formControlName="state" placeholder="e.g. Uttar Pradesh" />
-              </z-form-control>
-            </z-form-field>
-
-            <z-form-field>
-              <label z-form-label zRequired>District</label>
-              <z-form-control>
-                <input z-input formControlName="district" placeholder="e.g. Varanasi" />
-              </z-form-control>
-            </z-form-field>
-
-            <z-form-field>
-              <label z-form-label zRequired>Block</label>
-              <z-form-control>
-                <input z-input formControlName="block" placeholder="e.g. Cholapur" />
-              </z-form-control>
-            </z-form-field>
-
-            <z-form-field>
-              <label z-form-label zRequired>Village / City</label>
-              <z-form-control>
-                <input z-input formControlName="village" placeholder="e.g. Barhauna" />
-              </z-form-control>
-            </z-form-field>
-          </div>
-        </div>
 
         <!-- ┌─ Personal Information ─────────────────────────────────────────── -->
         <div>

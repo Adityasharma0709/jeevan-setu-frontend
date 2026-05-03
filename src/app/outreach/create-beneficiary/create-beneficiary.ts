@@ -6,6 +6,7 @@ import {
   combineLatest,
   map,
   of,
+  shareReplay,
   startWith,
   switchMap,
   tap,
@@ -94,11 +95,11 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   form: FormGroup = this.fb.group({
     projectId:                  ['', Validators.required],
+    stateSelect:                [''],
+    districtSelect:             [''],
+    blockSelect:                [''],
+    villageSelect:              [''],
     locationId:                 ['', Validators.required],
-    state:                      ['', Validators.required],
-    district:                   ['', Validators.required],
-    block:                      ['', Validators.required],
-    village:                    ['', Validators.required],
     name:                       ['', Validators.required],
     mobileNumber:               ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
     gender:                     ['', Validators.required],
@@ -128,20 +129,146 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     map(projects => projects.map(p => ({ value: p.id.toString(), label: p.name })))
   );
 
-  locations$ = this.form.get('projectId')!.valueChanges.pipe(
+  private extractName(item: any, field: string): string {
+    if (!item) return '';
+    // Check item directly, then in .location, then in .awc, then in .state (for state specifically)
+    let val = item[field];
+    if (!val && item.location) val = item.location[field];
+    if (!val && item.awc) val = item.awc[field];
+    
+    // Special case for state which is often an object itself
+    if (field === 'state' && !val && item.stateId) val = item.state;
+
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    return val.name || val.awcName || val.locationCode || '';
+  }
+
+  projectAssignments$ = this.form.get('projectId')!.valueChanges.pipe(
     startWith(this.form.get('projectId')!.value),
     switchMap((projectId) =>
-      projectId ? this.outreachService.getLocationsByProject(Number(projectId)) : of([])
+      projectId ? this.outreachService.getProjectAssignments(Number(projectId)) : of({ states: [], awcs: [] })
     ),
+    shareReplay(1)
+  );
+
+  locationsByProject$ = this.projectAssignments$.pipe(
+    map(res => res.awcs),
     tap((locations) => {
       this.cachedLocations = locations;
-      this.form.get('locationId')?.setValue('', { emitEvent: false });
-      this.form.patchValue({ state: '', district: '', block: '', village: '' }, { emitEvent: false });
+      // Reset all assignments when project changes
+      this.form.patchValue({ 
+        stateSelect: '', 
+        districtSelect: '', 
+        blockSelect: '', 
+        villageSelect: '', 
+        locationId: '' 
+      }, { emitEvent: true });
     }),
-    map(locs => locs.map(l => ({ 
-      value: l.id.toString(), 
-      label: `${l.village} (${l.locationCode})` 
-    })))
+    shareReplay(1)
+  );
+
+  assignmentStates$ = this.projectAssignments$.pipe(
+    map((res) => {
+      // Use explicit states from backend, or derive from AWCs if none explicitly listed
+      let states = res.states.map(s => this.extractName(s, 'name')).filter(Boolean);
+      if (states.length === 0) {
+        states = Array.from(new Set(res.awcs.map(l => this.extractName(l, 'state')).filter(Boolean)));
+      }
+      return states.sort().map(s => ({ value: s, label: s } as ZardComboboxOption));
+    })
+  );
+
+  assignmentDistricts$ = combineLatest([
+    this.locationsByProject$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value))
+  ]).pipe(
+    tap(([_, state]) => {
+      if (state !== undefined) {
+        this.form.patchValue({ districtSelect: '', blockSelect: '', villageSelect: '', locationId: '' }, { emitEvent: false });
+      }
+    }),
+    map(([locs, state]: [OutreachLocation[], string]): ZardComboboxOption[] => {
+      if (!state) return [] as ZardComboboxOption[];
+      const districts = Array.from(new Set(
+        locs.filter(l => this.extractName(l, 'state') === state)
+            .map(l => this.extractName(l, 'district'))
+            .filter(Boolean)
+      ));
+      return districts.sort().map(d => ({ value: d, label: d } as ZardComboboxOption));
+    })
+  );
+
+  assignmentBlocks$ = combineLatest([
+    this.locationsByProject$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value)),
+    this.form.get('districtSelect')!.valueChanges.pipe(startWith(this.form.get('districtSelect')!.value))
+  ]).pipe(
+    tap(([_, __, district]) => {
+      if (district !== undefined) {
+        this.form.patchValue({ blockSelect: '', villageSelect: '', locationId: '' }, { emitEvent: false });
+      }
+    }),
+    map(([locs, state, district]: [OutreachLocation[], string, string]): ZardComboboxOption[] => {
+      if (!state || !district) return [] as ZardComboboxOption[];
+      const blocks = Array.from(new Set(
+        locs.filter(l => this.extractName(l, 'state') === state && this.extractName(l, 'district') === district)
+            .map(l => this.extractName(l, 'block'))
+            .filter(Boolean)
+      ));
+      return blocks.sort().map(b => ({ value: b, label: b } as ZardComboboxOption));
+    })
+  );
+
+  assignmentVillages$ = combineLatest([
+    this.locationsByProject$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value)),
+    this.form.get('districtSelect')!.valueChanges.pipe(startWith(this.form.get('districtSelect')!.value)),
+    this.form.get('blockSelect')!.valueChanges.pipe(startWith(this.form.get('blockSelect')!.value))
+  ]).pipe(
+    tap(([_, __, ___, block]) => {
+      if (block !== undefined) {
+        this.form.patchValue({ villageSelect: '', locationId: '' }, { emitEvent: false });
+      }
+    }),
+    map(([locs, state, district, block]: [OutreachLocation[], string, string, string]): ZardComboboxOption[] => {
+      if (!state || !district || !block) return [] as ZardComboboxOption[];
+      const villages = Array.from(new Set(
+        locs.filter(l => this.extractName(l, 'state') === state && this.extractName(l, 'district') === district && this.extractName(l, 'block') === block)
+            .map(l => this.extractName(l, 'village'))
+            .filter(Boolean)
+      ));
+      return villages.sort().map(v => ({ value: v, label: v } as ZardComboboxOption));
+    })
+  );
+
+  assignmentAwcs$ = combineLatest([
+    this.locationsByProject$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value)),
+    this.form.get('districtSelect')!.valueChanges.pipe(startWith(this.form.get('districtSelect')!.value)),
+    this.form.get('blockSelect')!.valueChanges.pipe(startWith(this.form.get('blockSelect')!.value)),
+    this.form.get('villageSelect')!.valueChanges.pipe(startWith(this.form.get('villageSelect')!.value))
+  ]).pipe(
+    tap(([_, __, ___, ____, village]) => {
+      if (village !== undefined) {
+        this.form.patchValue({ locationId: '' }, { emitEvent: false });
+      }
+    }),
+    map(([locs, state, district, block, village]: [OutreachLocation[], string, string, string, string]): ZardComboboxOption[] => {
+      if (!state || !district || !block || !village) return [] as ZardComboboxOption[];
+      return locs
+        .filter(l => 
+          this.extractName(l, 'state') === state && 
+          this.extractName(l, 'district') === district && 
+          this.extractName(l, 'block') === block && 
+          this.extractName(l, 'village') === village
+        )
+        .map(l => {
+          const awcName = (l as any).awcName || '';
+          const label = awcName ? `${l.locationCode} - ${awcName}` : `${l.locationCode} - ${this.extractName(l, 'village')}`;
+          return { value: l.id.toString(), label } as ZardComboboxOption;
+        });
+    })
   );
 
   // ── Derived getters ───────────────────────────────────────────────────────
@@ -167,7 +294,6 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupAgeAutoCalculation();
-    this.setupLocationPrefill();
     this.setupOtherValidators();
   }
 
@@ -177,20 +303,6 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   // ── Private setup ─────────────────────────────────────────────────────────
 
-  private setupLocationPrefill(): void {
-    const sub = this.form.get('locationId')!.valueChanges.subscribe((locationId) => {
-      const loc = this.cachedLocations.find((l) => l.id === Number(locationId));
-      if (loc) {
-        this.form.patchValue({
-          state:    loc.state    || '',
-          district: loc.district || '',
-          block:    loc.block    || '',
-          village:  loc.village  || '',
-        }, { emitEvent: false });
-      }
-    });
-    this.subs.add(sub);
-  }
 
   private readonly otherPairs: [string, string][] = [
     ['qualification',       'qualificationOther'],
@@ -285,10 +397,6 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     const payload: CreateBeneficiaryPayload = {
       projectId:           Number(raw.projectId),
       locationId:          Number(raw.locationId),
-      state:               String(raw.state).trim()    || undefined,
-      district:            String(raw.district).trim() || undefined,
-      block:               String(raw.block).trim()    || undefined,
-      village:             String(raw.village).trim()  || undefined,
       mobileNumber:        String(raw.mobileNumber).trim(),
       name:                String(raw.name).trim(),
       gender:              String(raw.gender),
