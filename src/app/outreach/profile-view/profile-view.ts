@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { inject } from '@angular/core';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
-import { OutreachService, Beneficiary, BeneficiaryGroup, OutreachActivity, OutreachSession } from '../outreach.service';
+import { OutreachService, Beneficiary } from '../outreach.service';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
@@ -45,9 +45,6 @@ export class ProfileView implements OnInit, OnDestroy {
 
     // Data
     beneficiary: Beneficiary | null = null;
-    groups: BeneficiaryGroup[] = [];
-    activities: OutreachActivity[] = [];
-    sessions: OutreachSession[] = [];
     activityReports: any[] = [];
     reportsLoading = false;
 
@@ -58,10 +55,7 @@ export class ProfileView implements OnInit, OnDestroy {
     loading = true;
     activeTab: 'detail' | 'family' | 'history' = 'detail';
 
-    // Tagging selections (Combobox expects string | null)
-    selectedGroupId: string | null = null;
-    selectedActivityId: string | null = null;
-    selectedSessionId: string | null = null;
+
 
     // Family Member Modal
     showFamilyModal = false;
@@ -102,18 +96,7 @@ export class ProfileView implements OnInit, OnDestroy {
         return !!(this.beneficiary.guardianName || this.beneficiary.qualification || this.beneficiary.religion || this.beneficiary.caste);
     }
 
-    // Options mapping
-    get groupOptions(): ZardComboboxOption[] {
-        return this.groups.map(g => ({ value: g.id.toString(), label: g.name }));
-    }
 
-    get activityOptions(): ZardComboboxOption[] {
-        return this.activities.map(a => ({ value: a.id.toString(), label: a.name }));
-    }
-
-    get sessionOptions(): ZardComboboxOption[] {
-        return this.sessions.map(s => ({ value: s.id.toString(), label: s.name }));
-    }
 
     // Family Member Options
     relationshipOptions: ZardComboboxOption[] = [
@@ -177,19 +160,7 @@ export class ProfileView implements OnInit, OnDestroy {
             return;
         }
 
-        // Load tagging options in parallel
-        forkJoin({
-            groups: this.outreachService.getGroups(),
-            activities: this.outreachService.getOutreachActivities(),
-        })
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-            next: ({ groups, activities }) => {
-                this.groups = groups;
-                this.activities = activities;
-                this.cdr.markForCheck();
-            },
-        });
+
 
         // Use router state if navigated from list (avoid redundant API call)
         const stateData = history.state?.beneficiary;
@@ -226,17 +197,7 @@ export class ProfileView implements OnInit, OnDestroy {
         this.destroy$.complete();
     }
 
-    onActivityChange(activityId: string | null): void {
-        this.selectedActivityId = activityId;
-        this.selectedSessionId = null;
-        this.sessions = [];
 
-        if (this.selectedActivityId) {
-            this.outreachService.getSessions(Number(this.selectedActivityId))
-                .pipe(takeUntil(this.destroy$))
-                .subscribe({ next: (sessions) => (this.sessions = sessions) });
-        }
-    }
 
     onSchoolingStatusChange(status: string | null): void {
         if (status === 'Currently studying') {
@@ -244,25 +205,7 @@ export class ProfileView implements OnInit, OnDestroy {
         }
     }
 
-    saveGroupTag(): void {
-        if (!this.beneficiary || !this.selectedGroupId) return;
-        this.outreachService.tagBeneficiaryGroup(this.beneficiary.id, Number(this.selectedGroupId))
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-                next: () => toast.success('Group tagged successfully'),
-                error: () => toast.error('Failed to tag group'),
-            });
-    }
 
-    saveActivityTag(): void {
-        if (!this.beneficiary || !this.selectedActivityId || !this.selectedSessionId) return;
-        this.outreachService.tagBeneficiaryActivity(this.beneficiary.id, Number(this.selectedActivityId), Number(this.selectedSessionId))
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-                next: () => toast.success('Activity tagged successfully'),
-                error: () => toast.error('Failed to tag activity'),
-            });
-    }
 
     goToRequestUpdate(): void {
         if (!this.beneficiary) return;
