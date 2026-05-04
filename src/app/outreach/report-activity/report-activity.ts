@@ -60,6 +60,9 @@ export class ReportActivity {
       cervicalCancer: ['Negative'],
       breastCancer: ['Negative'],
     }),
+    pregnancyStatus: [''],
+    lmpDate: [''],
+    samMamStatus: [''],
   });
 
   beneficiarySearch$ = new BehaviorSubject<string>('');
@@ -115,6 +118,16 @@ export class ReportActivity {
     { value: 'Yes', label: 'Yes' }
   ];
 
+  pregnancyStatusOptions: ZardComboboxOption[] = [
+    { value: 'Yes', label: 'Yes' }
+  ];
+
+  samMamOptions: ZardComboboxOption[] = [
+    { value: 'SAM', label: 'SAM (Severe Acute Malnutrition)' },
+    { value: 'MAM', label: 'MAM (Moderate Acute Malnutrition)' },
+    { value: 'NONE', label: 'None' }
+  ];
+
   cancerResultOptions: ZardComboboxOption[] = [
     { value: 'Negative', label: 'Negative' },
     { value: 'Positive', label: 'Positive' }
@@ -129,6 +142,52 @@ export class ReportActivity {
     { id: 'cervicalCancer', label: 'Cervical Cancer' },
     { id: 'breastCancer', label: 'Breast Cancer' },
   ];
+
+  /** True when selected entity is female AND aged 14 or more */
+  get showPregnancy(): boolean {
+    const child = this.getSelectedChild();
+    if (child) {
+      return child.gender?.toLowerCase() === 'female' && this.calcAge(child.dateOfBirth) >= 14;
+    }
+    if (this.selectedBeneficiary) {
+      return this.selectedBeneficiary.gender?.toLowerCase() === 'female' &&
+        this.calcAge(this.selectedBeneficiary.dateOfBirth) >= 14;
+    }
+    return false;
+  }
+
+  /** True when selected entity (child or beneficiary) is aged 5 or under */
+  get showSamMam(): boolean {
+    const child = this.getSelectedChild();
+    if (child) {
+      return this.calcAge(child.dateOfBirth) <= 5;
+    }
+    if (this.selectedBeneficiary && !this.reportForm.get('childId')?.value) {
+      return this.calcAge(this.selectedBeneficiary.dateOfBirth) <= 5;
+    }
+    return false;
+  }
+
+  /** True when pregnancy status is Yes */
+  get showLmpDate(): boolean {
+    return this.reportForm.get('pregnancyStatus')?.value === 'Yes';
+  }
+
+  private calcAge(dob: any): number {
+    if (!dob) return 0;
+    const birth = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  }
+
+  private getSelectedChild(): any | null {
+    const childId = this.reportForm.get('childId')?.value;
+    if (!childId || !this.selectedBeneficiary?.children) return null;
+    return this.selectedBeneficiary.children.find((c: any) => c.id.toString() === childId.toString()) || null;
+  }
 
   get familyMemberOptions(): ZardComboboxOption[] {
     const options: ZardComboboxOption[] = [
@@ -197,6 +256,15 @@ export class ReportActivity {
     }
   }
 
+  onLmpPickerChange(event: any) {
+    const pickerDate = event.target.value; // yyyy-mm-dd
+    if (pickerDate) {
+      const parts = pickerDate.split('-');
+      const formatted = `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
+      this.reportForm.patchValue({ lmpDate: formatted });
+    }
+  }
+
   onSearchBeneficiary(event: any) {
     const value = event.target.value;
     this.beneficiarySearch$.next(value);
@@ -254,15 +322,30 @@ export class ReportActivity {
       if (selected.includes('breastCancer')) screeningDetails.breastCancer = raw.testValues.breastCancer;
     }
 
+    const reportData: any = {
+      screening: raw.screening,
+      screeningDetails: raw.screening === 'Yes' ? screeningDetails : null,
+    };
+
+    // Pregnancy status (optional, female 14+)
+    if (this.showPregnancy && raw.pregnancyStatus) {
+      reportData.pregnancyStatus = raw.pregnancyStatus;
+      if (raw.pregnancyStatus === 'Yes' && raw.lmpDate) {
+        reportData.lmpDate = raw.lmpDate; // stored as DD/MM/YYYY string
+      }
+    }
+
+    // SAM/MAM status (child ≤ 5 years)
+    if (this.showSamMam && raw.samMamStatus) {
+      reportData.samMamStatus = raw.samMamStatus;
+    }
+
     const payload: any = {
       beneficiaryId: Number(raw.beneficiaryId),
       activityId: Number(raw.activityId),
       sessionId: raw.sessionId ? Number(raw.sessionId) : 0,
       sessionDate: this.parseDateForApi(raw.sessionDate || ''),
-      reportData: {
-        screening: raw.screening,
-        screeningDetails: raw.screening === 'Yes' ? screeningDetails : null
-      },
+      reportData,
     };
 
     if (raw.childId) {
@@ -328,8 +411,13 @@ export class ReportActivity {
           sessionDate: this.formatDateForInput(report.date || report.sessionDate),
           screening: report.reportData?.screening || 'No',
           selectedTests: [],
-          testValues: {}
-        });if (screening === 'Yes') {
+          testValues: {},
+          pregnancyStatus: reportData.pregnancyStatus || '',
+          lmpDate: reportData.lmpDate || '',
+          samMamStatus: reportData.samMamStatus || '',
+        });
+
+        if (screening === 'Yes') {
           if (screeningDetails.height) { this.toggleTest('height'); this.reportForm.get('testValues.height')!.setValue(screeningDetails.height); }
           if (screeningDetails.weight) { this.toggleTest('weight'); this.reportForm.get('testValues.weight')!.setValue(screeningDetails.weight); }
           if (screeningDetails.hb) { this.toggleTest('hb'); this.reportForm.get('testValues.hb')!.setValue(screeningDetails.hb); }

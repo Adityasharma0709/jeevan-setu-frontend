@@ -125,52 +125,57 @@
                     </div>
 
                     <div class="p-6">
-                      <div *ngIf="report.reportData?.screening === 'Yes' && report.reportData?.screeningDetails; else noScreening" 
-                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-6">
+                      <div *ngIf="(report.reportData?.screening === 'Yes' && report.reportData?.screeningDetails) || report.reportData?.pregnancyStatus === 'Yes' || report.reportData?.samMamStatus; else noData" 
+                        class="space-y-6">
                         
-                        <div *ngIf="report.reportData.screeningDetails.height" class="flex flex-col">
-                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Height</span>
-                          <span class="text-xl font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.height }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">cm</span></span>
+                        <!-- Diagnostic Grid -->
+                        <div *ngIf="report.reportData?.screening === 'Yes' && report.reportData?.screeningDetails as sd" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                          <div *ngIf="sd.height" class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Height</span>
+                            <span class="text-xl font-black text-indigo-600 leading-none">{{ sd.height }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">cm</span></span>
+                          </div>
+
+                          <div *ngIf="sd.weight" class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Weight</span>
+                            <span class="text-xl font-black text-indigo-600 leading-none">{{ sd.weight }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">kg</span></span>
+                          </div>
+
+                          <div *ngIf="sd.hb" class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Hb Content</span>
+                            <span class="text-xl font-black text-rose-600 leading-none">{{ sd.hb }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">g/dL</span></span>
+                          </div>
+
+                          <div *ngIf="sd.bp" class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Blood Pressure</span>
+                            <span class="text-xl font-black text-indigo-600 leading-none">{{ sd.bp }}</span>
+                          </div>
+
+                          <div *ngIf="sd.sugar" class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Blood Sugar</span>
+                            <span class="text-xl font-black text-indigo-600 leading-none">{{ sd.sugar }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">mg/dL</span></span>
+                          </div>
                         </div>
 
-                        <div *ngIf="report.reportData.screeningDetails.weight" class="flex flex-col">
-                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Weight</span>
-                          <span class="text-xl font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.weight }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">kg</span></span>
-                        </div>
+                        <!-- Special Status Row -->
+                        <div *ngIf="report.reportData?.pregnancyStatus === 'Yes' || report.reportData?.samMamStatus" class="flex flex-wrap gap-8 pt-4 border-t border-indigo-50">
+                          <div *ngIf="report.reportData?.pregnancyStatus === 'Yes'" class="flex flex-col">
+                            <span class="text-[9px] text-pink-500 uppercase font-bold tracking-wider mb-1">Pregnancy Status</span>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="bg-pink-100 text-pink-700 px-3 py-1 rounded-lg text-xs font-black uppercase border border-pink-200 shadow-sm">Pregnant</span>
+                                <span *ngIf="report.reportData?.lmpDate" class="text-[11px] text-pink-600 font-bold bg-pink-50 px-2 py-1 rounded-lg border border-pink-100">LMP: {{ report.reportData.lmpDate }}</span>
+                            </div>
+                          </div>
 
-                        <div *ngIf="report.reportData.screeningDetails.hb" class="flex flex-col">
-                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Hb Content</span>
-                          <span class="text-xl font-black text-rose-600 leading-none">{{ report.reportData.screeningDetails.hb }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">g/dL</span></span>
-                        </div>
-
-                        <div *ngIf="report.reportData.screeningDetails.bp" class="flex flex-col">
-                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Blood Pressure</span>
-                          <span class="text-xl font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.bp }}</span>
-                        </div>
-
-                        <div *ngIf="report.reportData.screeningDetails.sugar" class="flex flex-col">
-                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Blood Sugar</span>
-                          <span class="text-xl font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.sugar }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">mg/dL</span></span>
-                        </div>
-
-                        <div *ngIf="report.reportData.screeningDetails.cervicalCancer" class="flex flex-col">
-                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Cervical</span>
-                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase mt-1 w-fit" 
-                            [class]="report.reportData.screeningDetails.cervicalCancer === 'Positive' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'">
-                            {{ report.reportData.screeningDetails.cervicalCancer }}
-                          </span>
-                        </div>
-
-                        <div *ngIf="report.reportData.screeningDetails.breastCancer" class="flex flex-col">
-                          <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Breast</span>
-                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase mt-1 w-fit" 
-                            [class]="report.reportData.screeningDetails.breastCancer === 'Positive' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'">
-                            {{ report.reportData.screeningDetails.breastCancer }}
-                          </span>
+                          <div *ngIf="report.reportData?.samMamStatus" class="flex flex-col">
+                            <span class="text-[9px] text-amber-500 uppercase font-bold tracking-wider mb-1">Nutritional Status (Child ≤ 5yrs)</span>
+                            <div class="mt-1">
+                                <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-lg text-xs font-black uppercase border border-amber-200 shadow-sm">{{ report.reportData.samMamStatus }}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <ng-template #noScreening>
+                      <ng-template #noData>
                         <div class="py-6 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 border border-dashed rounded-xl">
                           <z-icon zType="info" class="w-8 h-8 mb-2 opacity-20" />
                           <p class="text-xs font-bold uppercase tracking-widest text-gray-300">Basic participation report Only</p>
@@ -253,7 +258,7 @@
 
             <!-- Expanded Measurements (Mobile) -->
             <div *ngIf="expandedReportId === report.id" class="p-4 pt-0 border-t border-indigo-50 bg-white animate-in slide-in-from-top-2">
-                <div class="pt-4 grid grid-cols-3 gap-3">
+                <div *ngIf="report.reportData?.screening === 'Yes' && report.reportData?.screeningDetails" class="pt-4 grid grid-cols-3 gap-3 border-b border-gray-50 pb-3">
                     <div *ngIf="report.reportData?.screeningDetails?.height" class="flex flex-col">
                         <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">H (cm)</span>
                         <span class="text-sm font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.height }}</span>
@@ -275,7 +280,23 @@
                         <span class="text-sm font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.sugar }}</span>
                     </div>
                 </div>
-                <div *ngIf="report.reportData?.screening === 'No' || !report.reportData?.screeningDetails" class="py-4 text-center text-[10px] text-gray-400 italic">
+
+                <!-- Status Details (Mobile) -->
+                <div *ngIf="report.reportData?.pregnancyStatus === 'Yes' || report.reportData?.samMamStatus" class="pt-3 space-y-3">
+                    <div *ngIf="report.reportData?.pregnancyStatus === 'Yes'">
+                        <span class="text-[8px] text-pink-500 uppercase font-black tracking-widest block mb-1">Pregnancy</span>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-[10px] font-black uppercase border border-pink-200">Pregnant</span>
+                            <span *ngIf="report.reportData?.lmpDate" class="text-[10px] text-pink-600 font-bold italic">LMP: {{ report.reportData.lmpDate }}</span>
+                        </div>
+                    </div>
+                    <div *ngIf="report.reportData?.samMamStatus">
+                        <span class="text-[8px] text-amber-500 uppercase font-black tracking-widest block mb-1">Nutrition Status</span>
+                        <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[10px] font-black uppercase border border-amber-200">{{ report.reportData.samMamStatus }}</span>
+                    </div>
+                </div>
+
+                <div *ngIf="report.reportData?.screening === 'No' && !report.reportData?.pregnancyStatus && !report.reportData?.samMamStatus" class="py-4 text-center text-[10px] text-gray-400 italic">
                     No diagnostic data found for this session.
                 </div>
             </div>
