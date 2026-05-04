@@ -531,6 +531,9 @@
                                                  <span *ngIf="r.reportData?.pregnancyStatus === 'Yes'" class="bg-pink-50 text-pink-700 border-pink-200 px-2 py-0.5 rounded-full text-[10px] font-bold border">
                                                      Pregnant
                                                  </span>
+                                                 <span *ngIf="r.reportData?.samMamStatus" class="bg-amber-50 text-amber-700 border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                                                     {{ r.reportData.samMamStatus }}
+                                                 </span>
                                              </div>
                                          </div>
                                      </td>
@@ -583,6 +586,9 @@
                                     </span>
                                     <span *ngIf="r.reportData?.pregnancyStatus === 'Yes'" class="bg-pink-50 text-pink-700 border-pink-200 px-2 py-0.5 rounded-full text-[10px] font-bold border">
                                         Pregnant
+                                    </span>
+                                    <span *ngIf="r.reportData?.samMamStatus" class="bg-amber-50 text-amber-700 border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                                        {{ r.reportData.samMamStatus }}
                                     </span>
                                 </div>
                             </div>
