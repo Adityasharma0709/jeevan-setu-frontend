@@ -286,64 +286,6 @@
                             </div>
                         </div>
 
-                        <!-- Engagement & Tagging -->
-                        <div class="bg-gray-50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
-                            <div class="flex items-center gap-2 mb-5">
-                                <div class="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                    <z-icon zType="tag" size="15" class="text-indigo-600" />
-                                </div>
-                                <h2 class="text-xs font-bold text-indigo-700 uppercase tracking-widest">Engagement & Tagging</h2>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Group Tagging -->
-                                <div class="bg-white rounded-xl border border-indigo-100/60 p-4 space-y-3">
-                                    <label class="text-xs font-bold text-indigo-600 uppercase">Assign to Group</label>
-                                    <div class="flex gap-2">
-                                        <z-combobox
-                                            [(ngModel)]="selectedGroupId"
-                                            [options]="groupOptions"
-                                            placeholder="Select Group"
-                                            zWidth="full"
-                                            class="flex-1"
-                                        />
-                                        <button z-button zType="default" (click)="saveGroupTag()" [disabled]="!selectedGroupId">
-                                            Tag
-                                        </button>
-                                    </div>
-                                    <div *ngIf="beneficiary.groups?.length" class="flex flex-wrap gap-1.5 pt-1">
-                                        <span *ngFor="let g of beneficiary.groups"
-                                              class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-1 rounded-lg border border-indigo-200">
-                                            {{ g.group?.name }}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <!-- Activity Tagging -->
-                                <div class="bg-white rounded-xl border border-indigo-100/60 p-4 space-y-3">
-                                    <label class="text-xs font-bold text-indigo-600 uppercase">Log Participation</label>
-                                    <z-combobox
-                                        [(ngModel)]="selectedActivityId"
-                                        (zValueChange)="onActivityChange($event)"
-                                        [options]="activityOptions"
-                                        placeholder="Select Activity"
-                                        zWidth="full"
-                                    />
-                                    <div class="flex gap-2">
-                                        <z-combobox
-                                            [(ngModel)]="selectedSessionId"
-                                            [zDisabled]="!selectedActivityId"
-                                            [options]="sessionOptions"
-                                            placeholder="Select Session"
-                                            zWidth="full"
-                                            class="flex-1"
-                                        />
-                                        <button z-button zType="default" (click)="saveActivityTag()" [disabled]="!selectedSessionId">
-                                            Log
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                 </div>
             </div>
