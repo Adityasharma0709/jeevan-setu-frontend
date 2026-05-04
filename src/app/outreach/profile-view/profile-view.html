@@ -522,28 +522,31 @@
                                         {{ (r.date || r.createdAt) | date:'dd-MM-yyyy' }}
                                     </td>
                                     <td class="px-5 py-4">
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase"
-                                              [ngClass]="getScreeningBadge(r) === 'Yes'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-gray-100 text-gray-400'">
-                                            <span class="w-1.5 h-1.5 rounded-full inline-block"
-                                                  [ngClass]="getScreeningBadge(r) === 'Yes' ? 'bg-green-500' : 'bg-gray-300'"></span>
-                                            {{ getScreeningBadge(r) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <ng-container *ngIf="r.reportData?.screening === 'Yes' && r.reportData?.screeningDetails as sd">
-                                            <div class="flex flex-wrap gap-1">
-                                                <span *ngIf="sd.height" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Ht: {{sd.height}}</span>
-                                                <span *ngIf="sd.weight" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Wt: {{sd.weight}}</span>
-                                                <span *ngIf="sd.hb" class="bg-red-50 text-red-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Hb: {{sd.hb}}</span>
-                                                <span *ngIf="sd.bp" class="bg-orange-50 text-orange-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">BP: {{sd.bp}}</span>
-                                                <span *ngIf="sd.sugar" class="bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Sugar: {{sd.sugar}}</span>
-                                                <span *ngIf="sd.cervicalCancer" class="bg-pink-50 text-pink-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">CC: {{sd.cervicalCancer}}</span>
-                                                <span *ngIf="sd.breastCancer" class="bg-pink-50 text-pink-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">BC: {{sd.breastCancer}}</span>
-                                            </div>
-                                        </ng-container>
-                                        <span *ngIf="r.reportData?.screening !== 'Yes'" class="text-gray-300 text-xs italic">—</span>
+                                         <div class="flex flex-col gap-2">
+                                             <div class="flex items-center gap-2">
+                                                 <span [class]="r.reportData?.screening === 'Yes' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-100'" 
+                                                       class="px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                                                     {{ r.reportData?.screening === 'Yes' ? 'Done' : 'Not Done' }}
+                                                 </span>
+                                                 <span *ngIf="r.reportData?.pregnancyStatus === 'Yes'" class="bg-pink-50 text-pink-700 border-pink-200 px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                                                     Pregnant
+                                                 </span>
+                                             </div>
+                                         </div>
+                                     </td>
+                                     <td class="px-5 py-4">
+                                         <ng-container *ngIf="r.reportData?.screening === 'Yes' && r.reportData?.screeningDetails as sd">
+                                             <div class="flex flex-wrap gap-1">
+                                                 <span *ngIf="sd.height" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Ht: {{sd.height}}</span>
+                                                 <span *ngIf="sd.weight" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Wt: {{sd.weight}}</span>
+                                                 <span *ngIf="sd.hb" class="bg-red-50 text-red-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Hb: {{sd.hb}}</span>
+                                                 <span *ngIf="sd.bp" class="bg-orange-50 text-orange-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">BP: {{sd.bp}}</span>
+                                                 <span *ngIf="sd.sugar" class="bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">Sugar: {{sd.sugar}}</span>
+                                                 <span *ngIf="sd.cervicalCancer" class="bg-pink-50 text-pink-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">CC: {{sd.cervicalCancer}}</span>
+                                                 <span *ngIf="sd.breastCancer" class="bg-pink-50 text-pink-600 px-2 py-0.5 rounded-md text-[10px] font-semibold">BC: {{sd.breastCancer}}</span>
+                                             </div>
+                                         </ng-container>
+                                         <span *ngIf="r.reportData?.screening !== 'Yes'" class="text-gray-300 text-xs italic">—</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -571,16 +574,17 @@
                                 </span>
                             </div>
 
-                            <div class="flex items-center justify-between border-t border-gray-100 pt-3 mt-3">
-                                <span class="text-xs text-gray-500 font-medium">Screening</span>
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm border border-transparent"
-                                      [ngClass]="getScreeningBadge(r) === 'Yes'
-                                        ? 'bg-green-50 text-green-700 border-green-200'
-                                        : 'bg-gray-100 text-gray-500 border-gray-200'">
-                                    <span class="w-1.5 h-1.5 rounded-full inline-block"
-                                          [ngClass]="getScreeningBadge(r) === 'Yes' ? 'bg-green-500' : 'bg-gray-400'"></span>
-                                    {{ getScreeningBadge(r) }}
-                                </span>
+                            <div class="flex items-center justify-between">
+                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Screening</div>
+                                <div class="flex items-center gap-2">
+                                    <span [class]="r.reportData?.screening === 'Yes' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-100'" 
+                                          class="px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                                        {{ r.reportData?.screening === 'Yes' ? 'Done' : 'Not Done' }}
+                                    </span>
+                                    <span *ngIf="r.reportData?.pregnancyStatus === 'Yes'" class="bg-pink-50 text-pink-700 border-pink-200 px-2 py-0.5 rounded-full text-[10px] font-bold border">
+                                        Pregnant
+                                    </span>
+                                </div>
                             </div>
 
                             <div *ngIf="r.reportData?.screening === 'Yes' && r.reportData?.screeningDetails as sd" class="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
@@ -630,7 +634,15 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Date of Birth</label>
-                    <input type="date" [(ngModel)]="familyForm.dateOfBirth" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm">
+                    <div class="relative flex items-center">
+                        <input type="text" [(ngModel)]="familyForm.dateOfBirth" (input)="formatDateInput($event, 'dateOfBirth')" maxlength="10" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm pr-10" placeholder="DD/MM/YYYY">
+                        
+                        <input #dobPicker type="date" class="absolute opacity-0 w-1 h-1 pointer-events-none" style="right: 20px; top: 20px;" (change)="onNativeDateChange($event, 'dateOfBirth')" [value]="getNativeDateValue('dateOfBirth')" />
+                        
+                        <button type="button" class="absolute right-3 text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none" (click)="openPicker(dobPicker)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Gender</label>
@@ -642,7 +654,7 @@
                 <p class="text-xs text-indigo-700 font-medium">Calculated Age: <span class="font-bold">{{ familyAge }} years</span></p>
             </div>
 
-            <div *ngIf="familyAge <= 19 && familyAge > 3">
+            <div *ngIf="familyAge <= 19 && familyAge >= 3">
                 <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Schooling Status</label>
                 <z-combobox [options]="schoolingOptions" [(ngModel)]="familyForm.schoolingStatus" (ngModelChange)="onSchoolingStatusChange($event)" placeholder="Select Status" [searchable]="false" />
             </div>
@@ -656,7 +668,7 @@
                 <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Employment Status</label>
                 <z-combobox [options]="filteredEmploymentOptions" [(ngModel)]="familyForm.employmentStatus" placeholder="Select Status" [searchable]="false" />
             </div>
-             <div *ngIf="familyAge > 6">
+             <div *ngIf="familyAge > 6 && familyForm.schoolingStatus !== 'Currently studying'">
                 <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qualification</label>
                 <z-combobox [options]="qualificationOptions" [(ngModel)]="familyForm.qualification" placeholder="Select Status" [searchable]="false" />
             </div>

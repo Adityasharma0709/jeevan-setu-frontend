@@ -77,8 +77,8 @@ export class ProfileView implements OnInit, OnDestroy {
     };
 
     get familyAge(): number {
-        if (!this.familyForm.dateOfBirth) return 0;
-        const dob = new Date(this.familyForm.dateOfBirth);
+        const dob = this.parseDateStr(this.familyForm.dateOfBirth);
+        if (!dob) return 0;
         const today = new Date();
         let age = today.getFullYear() - dob.getFullYear();
         const m = today.getMonth() - dob.getMonth();
@@ -309,7 +309,7 @@ export class ProfileView implements OnInit, OnDestroy {
         }
 
         const age = this.familyAge;
-        if (age <= 14 && !this.familyForm.schoolingStatus) {
+        if (age >= 3 && age <= 14 && !this.familyForm.schoolingStatus) {
             toast.error('Schooling status is required for children');
             return;
         }
@@ -384,6 +384,76 @@ export class ProfileView implements OnInit, OnDestroy {
     getLocationPart(val: any): string {
         if (!val) return '—';
         return (val?.name || val).toString();
+    }
+
+    // ── Date Helpers ─────────────────────────────────────────────────────────
+
+    private parseDateStr(dateStr: string): Date | null {
+        if (!dateStr) return null;
+        if (dateStr.includes('/')) {
+            const p = dateStr.split('/');
+            if (p.length === 3) {
+                const day = Number(p[0]);
+                const month = Number(p[1]) - 1;
+                const year = Number(p[2]);
+                const d = new Date(year, month, day);
+                if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) {
+                    return d;
+                }
+            }
+        } else {
+            const d = new Date(dateStr);
+            if (!isNaN(d.getTime())) return d;
+        }
+        return null;
+    }
+
+    formatDateInput(event: Event, controlName: string) {
+        const input = event.target as HTMLInputElement;
+        let val = input.value.replace(/\D/g, '');
+        if (val.length > 8) val = val.substring(0, 8);
+
+        let formatted = val;
+        if (val.length > 4) {
+            formatted = val.substring(0, 2) + '/' + val.substring(2, 4) + '/' + val.substring(4, 8);
+        } else if (val.length > 2) {
+            formatted = val.substring(0, 2) + '/' + val.substring(2, 4);
+        }
+
+        (this.familyForm as any)[controlName] = formatted;
+        this.cdr.markForCheck();
+    }
+
+    openPicker(picker: HTMLInputElement) {
+        try {
+            picker.showPicker();
+        } catch (e) {
+            picker.focus();
+        }
+    }
+
+    getNativeDateValue(controlName: string): string {
+        const val = (this.familyForm as any)[controlName];
+        const d = this.parseDateStr(val);
+        if (d) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        return '';
+    }
+
+    onNativeDateChange(event: Event, controlName: string) {
+        const input = event.target as HTMLInputElement;
+        if (input.value) {
+            const parts = input.value.split('-');
+            if (parts.length === 3) {
+                const formatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                (this.familyForm as any)[controlName] = formatted;
+                this.cdr.markForCheck();
+            }
+        }
     }
 
     goBack(): void {

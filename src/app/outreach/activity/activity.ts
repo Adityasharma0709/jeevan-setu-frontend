@@ -115,18 +115,31 @@ export class Activity {
 
   getScreeningSummary(report: any): string {
     const data = report?.reportData;
-    if (!data || data.screening === 'No') return 'No';
+    if (!data) return '—';
     
-    const details = data.screeningDetails;
-    if (!details) return 'Yes (No details)';
-
     const parts: string[] = [];
-    if (details.height) parts.push(`H: ${details.height}cm`);
-    if (details.weight) parts.push(`W: ${details.weight}kg`);
-    if (details.bp) parts.push(`BP: ${details.bp}`);
-    if (details.hb) parts.push(`Hb: ${details.hb}`);
-    if (details.sugar) parts.push(`Sugar: ${details.sugar}`);
+
+    // Screening Details
+    if (data.screening === 'Yes' && data.screeningDetails) {
+      const sd = data.screeningDetails;
+      if (sd.height) parts.push(`H: ${sd.height}cm`);
+      if (sd.weight) parts.push(`W: ${sd.weight}kg`);
+      if (sd.bp) parts.push(`BP: ${sd.bp}`);
+      if (sd.hb) parts.push(`Hb: ${sd.hb}`);
+      if (sd.sugar) parts.push(`Sugar: ${sd.sugar}`);
+    }
+
+    // Pregnancy Status
+    if (data.pregnancyStatus === 'Yes') {
+      parts.push('Pregnant');
+    }
+
+    // Nutrition Status
+    if (data.samMamStatus) {
+      parts.push(`Status: ${data.samMamStatus}`);
+    }
     
-    return `Yes (${parts.join(', ')})`;
+    if (parts.length === 0) return data.screening || 'No';
+    return parts.join(', ');
   }
 }
