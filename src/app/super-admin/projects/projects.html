@@ -282,59 +282,70 @@
 
 <!-- ================= PAGE HEADER ================= -->
 
-<div class="flex items-center justify-between gap-3 mb-4">
-  <div class="flex items-center gap-4">
-    <h2 class="text-xl font-bold">Projects</h2>
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div class="flex items-center gap-3">
+    <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Projects</h2>
+    <span class="hidden sm:inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 uppercase tracking-widest">
+      Management
+    </span>
   </div>
 
-  <button z-button (click)="openCreateDialog()">Create Project</button>
+  <button z-button (click)="openCreateDialog()" class="shadow-sm">
+    <z-icon zType="plus" class="mr-2" />
+    <span class="whitespace-nowrap">Create Project</span>
+  </button>
 </div>
 
-<!-- ================= SEARCH PROJECTS ================= -->
-<div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-  <div class="w-full sm:w-[300px]">
+<!-- ================= SEARCH & FILTERS ================= -->
+<div class="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
+  <div class="relative flex-1 min-w-0 max-w-full lg:max-w-md">
     <input
       z-input
       [formControl]="projectSearch"
       placeholder="Search projects by name or code..."
-      class="w-full"
+      class="w-full pl-10 shadow-sm"
     />
+    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <z-icon zType="search" class="h-4 w-4 text-gray-400" />
+    </div>
   </div>
 
-  <z-combobox
-    [formControl]="statusFilter"
-    [options]="statusOptions"
-    [searchable]="false"
-    class="w-full md:w-[200px]"
-    placeholder="Filter by status"
-  ></z-combobox>
+  <div class="w-full lg:w-64">
+    <z-combobox
+      [formControl]="statusFilter"
+      [options]="statusOptions"
+      [searchable]="false"
+      class="w-full"
+      placeholder="Filter by status"
+    ></z-combobox>
+  </div>
 </div>
 
 <!-- ================= DESKTOP TABLE ================= -->
 
 <ng-container *ngIf="pager$ | async as pager; else pageLoader" class="fade-in">
-  <div class="hidden md:block overflow-x-auto border rounded-lg">
-    <table z-table class="w-full min-w-175">
-      <thead z-table-header>
+  <div class="hidden md:block overflow-x-auto border border-gray-200 rounded-xl bg-white shadow-sm">
+    <table z-table class="w-full min-w-175 border-collapse">
+      <thead z-table-header class="bg-gray-50/50">
         <tr z-table-row>
-          <th z-table-head>Code</th>
-          <th z-table-head>Name</th>
-          <th z-table-head>Status</th>
-          <th z-table-head>Action</th>
+          <th z-table-head class="font-bold text-gray-900">Code</th>
+          <th z-table-head class="font-bold text-gray-900">Name</th>
+          <th z-table-head class="font-bold text-gray-900">Status</th>
+          <th z-table-head class="font-bold text-gray-900 text-right pr-6">Action</th>
         </tr>
       </thead>
 
-      <tbody z-table-body>
-        <tr z-table-row *ngFor="let p of pager.items">
-          <td z-table-cell>{{ p.projectCode }}</td>
+      <tbody z-table-body class="divide-y divide-gray-100">
+        <tr z-table-row *ngFor="let p of pager.items" class="hover:bg-gray-50/50 transition-colors">
+          <td z-table-cell class="font-mono text-xs font-semibold text-gray-600">{{ p.projectCode }}</td>
 
-          <td z-table-cell class="break-all max-w-[220px]">{{ p.name }}</td>
+          <td z-table-cell class="break-all max-w-[300px] font-medium text-gray-900">{{ p.name }}</td>
 
           <td z-table-cell>
             <span
-              class="px-2 py-1 rounded text-xs font-medium"
+              class="inline-flex items-center rounded-full px-2 py-1 text-xs font-bold uppercase tracking-wider"
               [ngClass]="
-                p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                p.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' : 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20'
               "
             >
               {{ p.status }}
@@ -342,45 +353,42 @@
           </td>
 
           <td z-table-cell>
-            <div class="flex items-center gap-2">
-            <button z-button zSize="sm" zType="secondary" (click)="openProjectDetails(p)">
-              <z-icon zType="eye" />
-              <span class="sr-only">View Details</span>
-            </button>
+            <div class="flex items-center justify-end gap-2 pr-2">
+              <button z-button zSize="sm" zType="secondary" (click)="openProjectDetails(p)" title="View Details">
+                <z-icon zType="eye" />
+              </button>
 
-            <!-- EDIT BUTTON -->
-            <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(p)">
-              <z-icon zType="edit" />
-              <span class="sr-only">Edit</span>
-            </button>
+              <button z-button zSize="sm" zType="secondary" (click)="openEditDialog(p)" title="Edit Project">
+                <z-icon zType="edit" />
+              </button>
 
-            <!-- ASSIGN ADMIN BUTTON -->
-            <button *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'" z-button zSize="sm" zType="default" (click)="openAssignAdminDialog(p)">
-              Assign Admin
-            </button>
+              <button *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'" z-button zSize="sm" zType="default" (click)="openAssignAdminDialog(p)">
+                Assign Admin
+              </button>
 
-            <!-- ASSIGN STATE BUTTON -->
-            <button *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'" z-button zSize="sm" zType="outline" (click)="openCreateLocationDialog(p)">
-              Assign State
-            </button>
+              <button *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'" z-button zSize="sm" zType="outline" (click)="openCreateLocationDialog(p)">
+                Assign State
+              </button>
 
-            <!-- STATUS SWITCH -->
-            <z-switch
-              [zChecked]="p.status === 'ACTIVE'"
-              [zDisabled]="isProjectStatusLoading(p.id)"
-              (zCheckedChange)="toggleProjectStatus(p)"
-            >
-              <span class="sr-only">Toggle project status</span>
-            </z-switch>
-
-            <!-- DISABLE BUTTON -->
+              <div class="ml-2 pl-2 border-l border-gray-100 flex items-center">
+                <z-switch
+                  [zChecked]="p.status === 'ACTIVE'"
+                  [zDisabled]="isProjectStatusLoading(p.id)"
+                  (zCheckedChange)="toggleProjectStatus(p)"
+                >
+                  <span class="sr-only">Toggle status</span>
+                </z-switch>
+              </div>
             </div>
           </td>
         </tr>
 
         <tr z-table-row *ngIf="!pager.items.length">
-          <td z-table-cell colspan="4" class="text-gray-500 text-sm py-6 text-center">
-            No projects found
+          <td z-table-cell colspan="4" class="text-gray-500 text-sm py-12 text-center bg-gray-50/30">
+            <div class="flex flex-col items-center gap-2">
+              <z-icon zType="layers" class="h-8 w-8 text-gray-300" />
+              <p>No projects found matching your criteria</p>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -388,71 +396,75 @@
   </div>
 
   <!-- ================= MOBILE CARDS ================= -->
-  <div class="md:hidden space-y-3">
-    <div *ngFor="let p of pager.items" class="border rounded-lg p-4 bg-white shadow-sm">
+  <div class="md:hidden grid grid-cols-1 gap-4">
+    <div *ngFor="let p of pager.items" class="border border-gray-200 rounded-xl p-5 bg-white shadow-sm hover:border-indigo-100 transition-colors">
       <!-- Name + Status row -->
-      <div class="flex items-start gap-2 min-w-0">
-        <div class="min-w-0 flex-1">
-          <h3 class="font-semibold break-all">{{ p.name }}</h3>
-          <p class="text-sm text-gray-500 mt-0.5">Code: {{ p.projectCode }}</p>
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div class="min-w-0">
+          <h3 class="font-bold text-gray-900 leading-snug break-words">{{ p.name }}</h3>
+          <p class="text-xs font-mono font-bold text-gray-400 mt-1 uppercase tracking-wider">{{ p.projectCode }}</p>
         </div>
         <span
-          class="shrink-0 px-2 py-1 rounded text-xs font-medium mt-0.5"
-          [ngClass]="p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+          class="shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest"
+          [ngClass]="p.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' : 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20'"
         >
           {{ p.status }}
         </span>
       </div>
 
-      <!-- Row 1: View + Edit -->
-      <div class="flex gap-2 mt-3">
-        <button z-button zType="secondary" class="flex-1" (click)="openProjectDetails(p)">
-          <z-icon zType="eye" />
-          <span class="sr-only">View Details</span>
-        </button>
-        <button z-button zType="secondary" class="flex-1" (click)="openEditDialog(p)">
-          <z-icon zType="edit" />
-          <span class="sr-only">Edit</span>
-        </button>
-      </div>
+      <!-- Action Grid -->
+      <div class="space-y-3">
+        <!-- Row 1: View + Edit (Compact) -->
+        <div class="flex gap-2">
+          <button z-button zType="secondary" class="flex-1 h-11" (click)="openProjectDetails(p)">
+            <z-icon zType="eye" class="mr-2" /> View
+          </button>
+          <button z-button zType="secondary" class="flex-1 h-11" (click)="openEditDialog(p)">
+            <z-icon zType="edit" class="mr-2" /> Edit
+          </button>
+        </div>
 
-      <!-- Row 2: Assign Admin + Status switch -->
-      <div class="flex gap-2 mt-2">
-        <button
-          *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'"
-          z-button
-          zType="default"
-          class="flex-1"
-          (click)="openAssignAdminDialog(p)"
-        >
-          Assign Admin
-        </button>
+        <!-- Row 2: Management Actions -->
+        <div class="flex flex-col gap-2" *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'">
+          <button
+            z-button
+            zType="default"
+            class="w-full h-11 justify-center"
+            (click)="openAssignAdminDialog(p)"
+          >
+            <z-icon zType="user-plus" class="mr-2" /> Assign Admin
+          </button>
 
-        <button
-          *ngIf="(p.status || '').toUpperCase() === 'ACTIVE'"
-          z-button
-          zType="outline"
-          class="flex-1"
-          (click)="openCreateLocationDialog(p)"
-        >
-          Assign State
-        </button>
+          <button
+            z-button
+            zType="outline"
+            class="w-full h-11 justify-center"
+            (click)="openCreateLocationDialog(p)"
+          >
+            <z-icon zType="map-pin" class="mr-2" /> Assign State
+          </button>
+        </div>
 
-        <div class="flex-1 flex items-center justify-between rounded-md border px-3 py-2">
-          <span class="text-xs text-gray-500">Status</span>
+        <!-- Row 3: Status Toggle -->
+        <div class="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-3">
+          <div class="flex items-center gap-2">
+            <z-icon zType="zap" class="h-4 w-4 text-gray-400" />
+            <span class="text-xs font-bold text-gray-600 uppercase tracking-wider">Project Status</span>
+          </div>
           <z-switch
             [zChecked]="p.status === 'ACTIVE'"
             [zDisabled]="isProjectStatusLoading(p.id)"
             (zCheckedChange)="toggleProjectStatus(p)"
           >
-            <span class="sr-only">Toggle project status</span>
+            <span class="sr-only">Toggle status</span>
           </z-switch>
         </div>
       </div>
     </div>
 
-    <div *ngIf="!pager.items.length" class="text-gray-500 text-sm py-4 text-center">
-      No projects found
+    <div *ngIf="!pager.items.length" class="text-gray-400 text-sm py-12 text-center bg-gray-50/30 rounded-xl border border-dashed border-gray-200">
+      <z-icon zType="layers" class="h-10 w-10 text-gray-200 mx-auto mb-3" />
+      <p>No projects found</p>
     </div>
   </div>
 
