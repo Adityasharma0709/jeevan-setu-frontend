@@ -245,7 +245,6 @@ export class Sessions {
     this.sessionForm = this.fb.group({
       name: ['', [Validators.required, Validators.pattern(/^[a-zA-Z\s]*$/), Validators.maxLength(50)]],
       activityId: ['', Validators.required],
-      sessionDate: [new Date().toISOString().split('T')[0], Validators.required],
     });
   }
 
@@ -276,7 +275,6 @@ export class Sessions {
     this.sessionForm.patchValue({
       name: session.name,
       activityId: (session as any)?.activityId ?? '',
-      sessionDate: session.sessionDate ? new Date(session.sessionDate).toISOString().split('T')[0] : '',
     });
 
     this.dialogRef = this.dialog.create({

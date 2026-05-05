@@ -41,7 +41,6 @@
         <tr z-table-row>
           <th z-table-head class="text-center">Name</th>
           <th z-table-head class="text-center">Activity</th>
-          <th z-table-head class="text-center">Date</th>
           <th z-table-head class="text-center">Status</th>
           <th z-table-head class="text-center">Actions</th>
         </tr>
@@ -53,9 +52,6 @@
           </td>
           <td z-table-cell class="text-gray-600 max-w-[200px] break-words whitespace-normal text-center" [title]="session.activity?.name || ''">
             {{ session.activity?.name || '-' }}
-          </td>
-          <td z-table-cell class="text-center text-gray-500 text-sm">
-            {{ session.sessionDate | date:'mediumDate' }}
           </td>
           <td z-table-cell class="text-center">
             <span
@@ -202,13 +198,6 @@
           placeholder="Select an activity"
           zWidth="full"
         />
-      </z-form-control>
-    </z-form-field>
-
-    <z-form-field>
-      <label z-form-label zRequired>Session Date</label>
-      <z-form-control>
-        <input z-input type="date" formControlName="sessionDate" />
       </z-form-control>
     </z-form-field>
   </form>
