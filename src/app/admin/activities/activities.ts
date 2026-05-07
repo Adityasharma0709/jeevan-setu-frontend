@@ -214,7 +214,7 @@ export class Activities implements OnInit {
 
   private initForm() {
     this.activityForm = this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(/^[a-zA-Z\s]*$/), Validators.maxLength(50)]],
+      name: ['', [Validators.required, Validators.maxLength(50)]],
       description: [''],
       projectId: ['', Validators.required]
     });
@@ -405,7 +405,6 @@ export class Activities implements OnInit {
       const fieldName = (fallback || '').toString().toLowerCase();
       if (err.hasError('required')) return `${fallback} is required`;
       if (err.hasError('pattern')) {
-        if (fieldName.includes('name')) return 'Only letters and spaces are allowed';
         return `Invalid ${fallback} format`;
       }
       if (err.hasError('maxlength')) {
