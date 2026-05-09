@@ -26,7 +26,7 @@
             Health Tracking
           </span>
         </h1>
-        <p class="text-gray-500 mt-1">Review all health screening records and participant activity history.</p>
+        <p class="text-gray-500 mt-1">Review all health screening/service records and participant activity history.</p>
       </div>
 
       <button z-button (click)="addReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100 transition-all hover:-translate-y-0.5">
@@ -46,7 +46,7 @@
           <tr z-table-row>
             <th z-table-head class="pl-6 py-4 border-r border-gray-100"><div class="flex items-center gap-2"><z-icon zType="user" class="w-3.5 h-3.5" /> Beneficiary</div></th>
             <th z-table-head class="border-r border-gray-100"><div class="flex items-center gap-2"><z-icon zType="activity" class="w-3.5 h-3.5" /> Activity & Session</div></th>
-            <th z-table-head class="border-r border-gray-100"><div class="flex items-center gap-2"><z-icon zType="shield" class="w-3.5 h-3.5" /> Screening</div></th>
+            <th z-table-head class="border-r border-gray-100"><div class="flex items-center gap-2"><z-icon zType="shield" class="w-3.5 h-3.5" /> Screening/Services</div></th>
             <th z-table-head class="border-r border-gray-100"><div class="flex items-center gap-2"><z-icon zType="calendar" class="w-3.5 h-3.5" /> Date</div></th>
             <th z-table-head class="text-right pr-6"></th>
           </tr>
@@ -154,6 +154,12 @@
                             <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Blood Sugar</span>
                             <span class="text-xl font-black text-indigo-600 leading-none">{{ sd.sugar }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">mg/dL</span></span>
                           </div>
+
+                          <!-- Pads -->
+                          <div *ngIf="sd.pads" class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Pads Distributed</span>
+                            <span class="text-xl font-black text-indigo-600 leading-none">{{ sd.pads }}<span class="text-[10px] ml-0.5 text-gray-400 font-medium">units</span></span>
+                          </div>
                         </div>
 
                         <!-- Special Status Row -->
@@ -197,7 +203,7 @@
                   <z-icon zType="file-text" class="w-10 h-10 text-indigo-300" />
                 </div>
                 <h3 class="text-gray-900 font-black text-xl mb-2 tracking-tight">No activity logs yet</h3>
-                <p class="text-gray-500 text-sm mb-8 px-6 leading-relaxed lowercase first-letter:uppercase">start documenting your impact by submitting your first health screening report.</p>
+                <p class="text-gray-500 text-sm mb-8 px-6 leading-relaxed lowercase first-letter:uppercase">start documenting your impact by submitting your first health screening/service report.</p>
                 <button z-button (click)="addReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 shadow-lg shadow-indigo-200">
                   Begin First Submission
                 </button>
@@ -278,6 +284,10 @@
                     <div *ngIf="report.reportData?.screeningDetails?.sugar" class="flex flex-col">
                         <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">Sugar</span>
                         <span class="text-sm font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.sugar }}</span>
+                    </div>
+                    <div *ngIf="report.reportData?.screeningDetails?.pads" class="flex flex-col">
+                        <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">Pads</span>
+                        <span class="text-sm font-black text-indigo-600 leading-none">{{ report.reportData.screeningDetails.pads }}</span>
                     </div>
                 </div>
 

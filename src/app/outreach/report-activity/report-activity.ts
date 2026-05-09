@@ -59,6 +59,7 @@ export class ReportActivity {
       sugar: [''],
       cervicalCancer: ['Negative'],
       breastCancer: ['Negative'],
+      pads: [''],
     }),
     pregnancyStatus: [''],
     lmpDate: [''],
@@ -141,6 +142,7 @@ export class ReportActivity {
     { id: 'sugar', label: 'Sugar' },
     { id: 'cervicalCancer', label: 'Cervical Cancer' },
     { id: 'breastCancer', label: 'Breast Cancer' },
+    { id: 'pads', label: 'Pads' },
   ];
 
   /** True when selected entity is female AND aged 14 or more */
@@ -320,6 +322,7 @@ export class ReportActivity {
       }
       if (selected.includes('cervicalCancer')) screeningDetails.cervicalCancer = raw.testValues.cervicalCancer;
       if (selected.includes('breastCancer')) screeningDetails.breastCancer = raw.testValues.breastCancer;
+      if (selected.includes('pads')) screeningDetails.pads = Number(raw.testValues.pads);
     }
 
     const reportData: any = {
@@ -430,6 +433,7 @@ export class ReportActivity {
           }
           if (screeningDetails.cervicalCancer) { this.toggleTest('cervicalCancer'); this.reportForm.get('testValues.cervicalCancer')!.setValue(screeningDetails.cervicalCancer); }
           if (screeningDetails.breastCancer) { this.toggleTest('breastCancer'); this.reportForm.get('testValues.breastCancer')!.setValue(screeningDetails.breastCancer); }
+          if (screeningDetails.pads) { this.toggleTest('pads'); this.reportForm.get('testValues.pads')!.setValue(screeningDetails.pads); }
         }
       },
       error: () => toast.error('Failed to load report for editing')

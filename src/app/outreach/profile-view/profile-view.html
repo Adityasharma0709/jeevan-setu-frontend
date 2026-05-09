@@ -442,7 +442,7 @@
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Session</th>
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Member</th>
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Date</th>
-                                    <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Screening</th>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Screening/Services</th>
                                     <th class="px-5 py-3.5 font-semibold text-gray-400 text-xs uppercase">Details</th>
                                 </tr>
                             </thead>
@@ -520,7 +520,7 @@
                             </div>
 
                             <div class="flex items-center justify-between">
-                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Screening</div>
+                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Screening/Services</div>
                                 <div class="flex items-center gap-2">
                                     <span [class]="r.reportData?.screening === 'Yes' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-100'" 
                                           class="px-2 py-0.5 rounded-full text-[10px] font-bold border">
@@ -536,7 +536,7 @@
                             </div>
 
                             <div *ngIf="r.reportData?.screening === 'Yes' && r.reportData?.screeningDetails as sd" class="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
-                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Screening Results</div>
+                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Screening/Service Results</div>
                                 <div class="flex flex-wrap gap-1.5">
                                     <span *ngIf="sd.height" class="bg-blue-50/80 text-blue-700 border border-blue-100 px-2 py-1 rounded-md text-[10px] font-bold">Ht: {{sd.height}}</span>
                                     <span *ngIf="sd.weight" class="bg-blue-50/80 text-blue-700 border border-blue-100 px-2 py-1 rounded-md text-[10px] font-bold">Wt: {{sd.weight}}</span>

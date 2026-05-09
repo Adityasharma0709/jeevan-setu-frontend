@@ -232,7 +232,7 @@ export class OutreachService {
 
 
   getActiveActivities(): Observable<OutreachActivity[]> {
-    return (this.api.get('admin/activities/active') as Observable<OutreachActivity[]>).pipe(
+    return (this.api.get(`${this.endpoint}/activities`) as Observable<OutreachActivity[]>).pipe(
       map((rows) => rows || []),
       catchError(() => of([]))
     );
