@@ -127,6 +127,7 @@ export class Activity {
       if (sd.bp) parts.push(`BP: ${sd.bp}`);
       if (sd.hb) parts.push(`Hb: ${sd.hb}`);
       if (sd.sugar) parts.push(`Sugar: ${sd.sugar}`);
+      if (sd.pads) parts.push(`Pads: ${sd.pads}`);
     }
 
     // Pregnancy Status
