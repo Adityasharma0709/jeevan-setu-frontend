@@ -60,6 +60,7 @@ export class ProfileView implements OnInit, OnDestroy {
     // Family Member Modal
     showFamilyModal = false;
     savingFamily = false;
+    editingFamilyMemberId: number | null = null;
     familyForm = {
         name: '',
         relationship: '',
@@ -215,19 +216,41 @@ export class ProfileView implements OnInit, OnDestroy {
         );
     }
 
-    openFamilyModal(): void {
-        this.familyForm = {
-            name: '',
-            relationship: '',
-            dateOfBirth: '',
-            gender: 'Female',
-            schoolingStatus: '',
-            employmentStatus: '',
-            qualification: ''
-        };
+    openFamilyModal(member?: any): void {
+        this.editingFamilyMemberId = member ? member.id : null;
+        
+        if (member) {
+            // Convert ISO date from DB to DD/MM/YYYY for the form
+            let dob = '';
+            if (member.dateOfBirth) {
+                const d = new Date(member.dateOfBirth);
+                if (!isNaN(d.getTime())) {
+                    dob = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                }
+            }
+            this.familyForm = {
+                name: member.name || '',
+                relationship: member.relationship || '',
+                dateOfBirth: dob,
+                gender: member.gender || 'Female',
+                schoolingStatus: member.schoolingStatus || '',
+                employmentStatus: member.employmentStatus || '',
+                qualification: member.qualification || ''
+            };
+        } else {
+            this.familyForm = {
+                name: '',
+                relationship: '',
+                dateOfBirth: '',
+                gender: 'Female',
+                schoolingStatus: '',
+                employmentStatus: '',
+                qualification: ''
+            };
+        }
         
         this.dialogRef = this.dialog.create({
-            zTitle: 'Add Family Member',
+            zTitle: member ? 'Edit Family Member' : 'Add Family Member',
             zContent: this.familyModalTemplate,
             zWidth: '500px',
             zViewContainerRef: this.viewContainerRef,
@@ -266,24 +289,52 @@ export class ProfileView implements OnInit, OnDestroy {
         }
 
         this.savingFamily = true;
-        this.outreachService.addFamilyMember(this.beneficiary.id, this.familyForm)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-                next: () => {
-                    toast.success('Family member added successfully');
 
-                    this.loadFamilyMembers(this.beneficiary!.id, () => {
-                        this.closeFamilyModal();
+        if (this.editingFamilyMemberId) {
+            // Edit existing member
+            // Only send fields that actually changed or exist
+            const payload: any = { ...this.familyForm };
+            
+            this.outreachService.updateFamilyMember(this.editingFamilyMemberId, payload)
+                .pipe(takeUntil(this.destroy$))
+                .subscribe({
+                    next: () => {
+                        toast.success('Family member updated successfully');
+                        this.loadFamilyMembers(this.beneficiary!.id, () => {
+                            this.closeFamilyModal();
+                            this.savingFamily = false;
+                            this.cdr.markForCheck();
+                        });
+                    },
+                    error: (err) => {
+                        const msg = err.error?.message || 'Failed to update family member';
+                        setTimeout(() => toast.error(msg), 0);
                         this.savingFamily = false;
                         this.cdr.markForCheck();
-                    });
-                },
-                error: (err) => {
-                    toast.error(err.error?.message || 'Failed to add family member');
-                    this.savingFamily = false;
-                    this.cdr.markForCheck();
-                }
-            });
+                    }
+                });
+        } else {
+            // Add new member
+            this.outreachService.addFamilyMember(this.beneficiary.id, this.familyForm)
+                .pipe(takeUntil(this.destroy$))
+                .subscribe({
+                    next: () => {
+                        toast.success('Family member added successfully');
+
+                        this.loadFamilyMembers(this.beneficiary!.id, () => {
+                            this.closeFamilyModal();
+                            this.savingFamily = false;
+                            this.cdr.markForCheck();
+                        });
+                    },
+                    error: (err) => {
+                        const msg = err.error?.message || 'Failed to add family member';
+                        setTimeout(() => toast.error(msg), 0);
+                        this.savingFamily = false;
+                        this.cdr.markForCheck();
+                    }
+                });
+        }
     }
 
     private loadFamilyMembers(beneficiaryId: number, onDone?: () => void): void {

@@ -368,4 +368,8 @@ export class OutreachService {
   addFamilyMember(beneficiaryId: number, payload: AddFamilyMemberPayload): Observable<FamilyMember> {
     return this.api.post(`${this.endpoint}/beneficiary/${beneficiaryId}/family-member`, payload) as Observable<FamilyMember>;
   }
+
+  updateFamilyMember(memberId: number, payload: any): Observable<FamilyMember> {
+    return this.api.patch(`${this.endpoint}/family-member/${memberId}`, payload) as Observable<FamilyMember>;
+  }
 }
