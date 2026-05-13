@@ -322,6 +322,7 @@
                                     <th class="px-6 py-3 font-semibold">Date of Birth</th>
                                     <th class="px-6 py-3 font-semibold">Gender</th>
                                     <th class="px-6 py-3 font-semibold">Status</th>
+                                    <th class="px-6 py-3 font-semibold text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
@@ -347,6 +348,11 @@
                                             <z-icon zType="book-open" size="12" /> {{ child.qualification }}
                                         </span>
                                     </td>
+                                    <td class="px-6 py-3.5 text-right">
+                                        <button (click)="openFamilyModal(child)" class="text-indigo-600 hover:text-indigo-800 transition-colors p-1 rounded hover:bg-indigo-50">
+                                            <z-icon zType="edit" size="14" />
+                                        </button>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -360,10 +366,15 @@
                                     <p class="font-bold text-gray-900 capitalize">{{ child.name }}</p>
                                     <span class="text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 text-gray-600">{{ child.uid }}</span>
                                 </div>
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
-                                      [ngClass]="child.gender === 'Female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'">
-                                    {{ child.gender }}
-                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
+                                          [ngClass]="child.gender === 'Female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'">
+                                        {{ child.gender }}
+                                    </span>
+                                    <button (click)="openFamilyModal(child)" class="text-indigo-600 hover:text-indigo-800 transition-colors p-1 rounded hover:bg-indigo-50">
+                                        <z-icon zType="edit" size="14" />
+                                    </button>
+                                </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4 text-xs">
                                 <div>
@@ -625,7 +636,7 @@
             <div class="flex gap-3 pt-4">
                 <button z-button zType="secondary" class="flex-1" (click)="closeFamilyModal()" [disabled]="savingFamily">Cancel</button>
                 <button z-button zType="default" class="flex-1" (click)="saveFamilyMember()" [disabled]="savingFamily">
-                    {{ savingFamily ? 'Saving...' : 'Add Member' }}
+                    {{ savingFamily ? 'Saving...' : (editingFamilyMemberId ? 'Update Member' : 'Add Member') }}
                 </button>
             </div>
         </div>

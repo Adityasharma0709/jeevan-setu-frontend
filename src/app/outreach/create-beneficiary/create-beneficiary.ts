@@ -584,10 +584,15 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
         this.router.navigate(['/outreach/beneficiaries']);
       },
       error: (err) => {
-        const msg = err?.error?.message;
-        const errorMsg = Array.isArray(msg) ? msg[0] : (msg || 'Failed to create beneficiary');
-        toast.error(errorMsg);
-        this.isSubmitting = false;
+        // Defer to avoid NG0100 (ExpressionChangedAfterChecked) and the
+        // ngx-sonner createComponent assertion that fires when toast is
+        // called synchronously inside Angular's HTTP error-handling cycle.
+        setTimeout(() => {
+          const msg = err?.error?.message;
+          const errorMsg = Array.isArray(msg) ? msg[0] : (msg || 'Failed to create beneficiary');
+          toast.error(errorMsg);
+          this.isSubmitting = false;
+        }, 0);
       },
     });
   }

@@ -76,11 +76,11 @@ export class RequestUpdate implements OnInit {
 
   readonly religionOptions = this.mapStringsToOptions(['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Other']);
   readonly casteOptions    = this.mapStringsToOptions(['General', 'OBC', 'SC', 'ST', 'Other']);
-  readonly economicStatusOptions = this.mapStringsToOptions(['APL', 'BPL']);
+  readonly economicStatusOptions = this.mapStringsToOptions(['AAY', 'PHH', 'Others']);
   readonly primaryIncomeSourceOptions = this.mapStringsToOptions([
     'Agriculture', 'Daily Labour', 'Small Business', 'Government Service', 'Private Service', 'Pension / Remittance', 'Other',
   ]);
-  readonly employmentStatusOptions = this.mapStringsToOptions(['Employed', 'Unemployed', 'Self-Employed', 'Student']);
+  readonly employmentStatusOptions = this.mapStringsToOptions(['Working', 'Not-Working', 'Daily-Wage-Earner', 'Self-Employed']);
 
   readonly beneficiaryTypeOptions: ZardComboboxOption[] = [
     { value: 'Priority', label: 'Priority' },
@@ -126,9 +126,25 @@ export class RequestUpdate implements OnInit {
     return this.form.get('beneficiaryType')?.value === 'Priority';
   }
 
+  private parseDateStr(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    if (dateStr.includes('/')) {
+      const p = dateStr.split('/');
+      if (p.length === 3) {
+        const day = Number(p[0]), month = Number(p[1]) - 1, year = Number(p[2]);
+        const d = new Date(year, month, day);
+        if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) return d;
+      }
+    } else {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  }
+
   private calculateAge(dobStr: string): number {
     if (!dobStr) return 0;
-    const dob = new Date(dobStr);
+    const dob = this.parseDateStr(dobStr) || new Date(dobStr);
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
     const m = today.getMonth() - dob.getMonth();
@@ -136,12 +152,52 @@ export class RequestUpdate implements OnInit {
     return age;
   }
 
-  private toInputDate(value: string) {
-    try { return new Date(value).toISOString().split('T')[0]; } catch { return ''; }
+  /** Convert an ISO date string from DB to DD/MM/YYYY for display */
+  private toDDMMYYYY(value: string): string {
+    try {
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return '';
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      return `${dd}/${mm}/${d.getFullYear()}`;
+    } catch { return ''; }
+  }
+
+  formatDateInput(event: Event, controlName: string) {
+    const input = event.target as HTMLInputElement;
+    let val = input.value.replace(/\D/g, '');
+    if (val.length > 8) val = val.substring(0, 8);
+    let formatted = val;
+    if (val.length > 4) formatted = val.substring(0, 2) + '/' + val.substring(2, 4) + '/' + val.substring(4, 8);
+    else if (val.length > 2) formatted = val.substring(0, 2) + '/' + val.substring(2, 4);
+    this.form.get(controlName)?.setValue(formatted, { emitEvent: false });
+  }
+
+  openPicker(picker: HTMLInputElement) {
+    try { picker.showPicker(); } catch { picker.focus(); }
+  }
+
+  getNativeDateValue(controlName: string): string {
+    const val = this.form.get(controlName)?.value;
+    const d = this.parseDateStr(val);
+    if (d) {
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    return '';
+  }
+
+  onNativeDateChange(event: Event, controlName: string) {
+    const input = event.target as HTMLInputElement;
+    if (input.value) {
+      const parts = input.value.split('-');
+      if (parts.length === 3) {
+        this.form.get(controlName)?.setValue(`${parts[2]}/${parts[1]}/${parts[0]}`);
+        this.form.get(controlName)?.markAsTouched();
+      }
+    }
   }
 
   private patchForm(b: Beneficiary) {
-    // Try to guess type based on data presence
     const hasPriorityData = !!(b.guardianName || b.qualification || b.religion || b.caste);
     const type = hasPriorityData ? 'Priority' : 'General';
 
@@ -151,10 +207,11 @@ export class RequestUpdate implements OnInit {
       mobileNumber: b.mobileNumber || '',
       gender: b.gender || '',
       guardianName: b.guardianName || '',
-      dateOfBirth: b.dateOfBirth ? this.toInputDate(b.dateOfBirth) : '',
+      // Convert ISO DB date → DD/MM/YYYY for the custom date picker
+      dateOfBirth: b.dateOfBirth ? this.toDDMMYYYY(b.dateOfBirth) : '',
       age: b.dateOfBirth ? this.calculateAge(b.dateOfBirth) : '',
       maritalStatus: b.maritalStatus || '',
-      dateOfMarriage: b.dateOfMarriage ? this.toInputDate(b.dateOfMarriage) : '',
+      dateOfMarriage: b.dateOfMarriage ? this.toDDMMYYYY(b.dateOfMarriage) : '',
       womanAgeAtMarriage: b.womanAgeAtMarriage ?? '',
       husbandAgeAtMarriage: b.husbandAgeAtMarriage ?? '',
       qualification: b.qualification || '',
@@ -179,14 +236,15 @@ export class RequestUpdate implements OnInit {
     if (raw.mobileNumber && raw.mobileNumber !== b.mobileNumber) changes['mobileNumber'] = String(raw.mobileNumber);
     if (raw.gender && raw.gender !== b.gender) changes['gender'] = String(raw.gender);
     
-    // DOB / Age handling
+    // DOB / Age handling — send DD/MM/YYYY directly (backend @Transform handles it)
     if (this.isPriority) {
-      const dob = b.dateOfBirth ? this.toInputDate(b.dateOfBirth) : '';
-      if (raw.dateOfBirth && raw.dateOfBirth !== dob) changes['dateOfBirth'] = new Date(raw.dateOfBirth).toISOString();
+      const currentDob = b.dateOfBirth ? this.toDDMMYYYY(b.dateOfBirth) : '';
+      if (raw.dateOfBirth && raw.dateOfBirth !== currentDob) changes['dateOfBirth'] = raw.dateOfBirth;
     } else if (raw.age !== '') {
       const currentAge = b.dateOfBirth ? this.calculateAge(b.dateOfBirth) : -1;
       if (Number(raw.age) !== currentAge) {
-        changes['dateOfBirth'] = new Date(new Date().getFullYear() - Number(raw.age), 0, 1).toISOString();
+        const y = new Date().getFullYear() - Number(raw.age);
+        changes['dateOfBirth'] = `01/01/${y}`;
       }
     }
 
@@ -202,8 +260,8 @@ export class RequestUpdate implements OnInit {
       if (raw.maritalStatus && raw.maritalStatus !== b.maritalStatus) changes['maritalStatus'] = String(raw.maritalStatus);
 
       if (this.isMarried()) {
-        const dom = b.dateOfMarriage ? this.toInputDate(b.dateOfMarriage) : '';
-        if (raw.dateOfMarriage && raw.dateOfMarriage !== dom) changes['dateOfMarriage'] = new Date(raw.dateOfMarriage).toISOString();
+        const currentDom = b.dateOfMarriage ? this.toDDMMYYYY(b.dateOfMarriage) : '';
+        if (raw.dateOfMarriage && raw.dateOfMarriage !== currentDom) changes['dateOfMarriage'] = raw.dateOfMarriage;
         if (raw.womanAgeAtMarriage !== '' && Number(raw.womanAgeAtMarriage) !== Number(b.womanAgeAtMarriage)) changes['womanAgeAtMarriage'] = Number(raw.womanAgeAtMarriage);
         if (raw.husbandAgeAtMarriage !== '' && Number(raw.husbandAgeAtMarriage) !== Number(b.husbandAgeAtMarriage)) changes['husbandAgeAtMarriage'] = Number(raw.husbandAgeAtMarriage);
       }
@@ -221,10 +279,12 @@ export class RequestUpdate implements OnInit {
         this.router.navigate(['/outreach/beneficiary', this.beneficiary!.id]);
       },
       error: (err: any) => {
-        const msg = err?.error?.message;
-        const errorMsg = Array.isArray(msg) ? msg[0] : (msg || 'Failed to submit update');
-        toast.error(errorMsg);
-        this.isSubmitting = false;
+        setTimeout(() => {
+          const msg = err?.error?.message;
+          const errorMsg = Array.isArray(msg) ? msg[0] : (msg || 'Failed to submit update');
+          toast.error(errorMsg);
+          this.isSubmitting = false;
+        }, 0);
       },
     });
   }

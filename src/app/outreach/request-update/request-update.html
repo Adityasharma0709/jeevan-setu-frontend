@@ -66,7 +66,17 @@
 
         <z-form-field *ngIf="isPriority">
           <label z-form-label>Date of Birth</label>
-          <z-form-control><input z-input type="date" formControlName="dateOfBirth" /></z-form-control>
+          <z-form-control>
+            <div style="position:relative;display:flex;align-items:center;">
+              <input z-input formControlName="dateOfBirth" placeholder="DD/MM/YYYY" maxlength="10"
+                (input)="formatDateInput($event, 'dateOfBirth')" style="padding-right:2.5rem;" />
+              <input #dobPicker type="date" [value]="getNativeDateValue('dateOfBirth')"
+                (change)="onNativeDateChange($event, 'dateOfBirth')" style="position:absolute;opacity:0;width:1px;height:1px;" />
+              <button type="button" (click)="openPicker(dobPicker)" style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;color:#6b7280;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/></svg>
+              </button>
+            </div>
+          </z-form-control>
         </z-form-field>
 
         <z-form-field *ngIf="!isPriority">
@@ -178,7 +188,17 @@
         <ng-container *ngIf="isMarried()">
           <z-form-field>
             <label z-form-label>Date of Marriage</label>
-            <z-form-control><input z-input type="date" formControlName="dateOfMarriage" /></z-form-control>
+            <z-form-control>
+              <div style="position:relative;display:flex;align-items:center;">
+                <input z-input formControlName="dateOfMarriage" placeholder="DD/MM/YYYY" maxlength="10"
+                  (input)="formatDateInput($event, 'dateOfMarriage')" style="padding-right:2.5rem;" />
+                <input #domPicker type="date" [value]="getNativeDateValue('dateOfMarriage')"
+                  (change)="onNativeDateChange($event, 'dateOfMarriage')" style="position:absolute;opacity:0;width:1px;height:1px;" />
+                <button type="button" (click)="openPicker(domPicker)" style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;color:#6b7280;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/></svg>
+                </button>
+              </div>
+            </z-form-control>
           </z-form-field>
 
           <z-form-field>
