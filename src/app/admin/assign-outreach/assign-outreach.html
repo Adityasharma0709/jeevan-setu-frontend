@@ -11,12 +11,29 @@
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="loading()" class="flex items-center justify-center p-12 w-full min-h-[400px]">
-    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  <!-- Search Section -->
+  <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+    <div class="w-full sm:w-[350px]">
+      <div class="relative">
+        <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></z-icon>
+        <input
+          z-input
+          [formControl]="searchControl"
+          placeholder="Search by name, email, code, or manager..."
+          class="w-full pl-10"
+        />
+      </div>
+    </div>
   </div>
 
-  <ng-container *ngIf="!loading()">
+  <!-- Loading State -->
+  <ng-container *ngIf="loading(); else content">
+    <div class="flex items-center justify-center p-12 w-full min-h-[400px]">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  </ng-container>
+
+  <ng-template #content>
     <!-- ================= DESKTOP TABLE VIEW ================= -->
     <div class="hidden md:block bg-white border rounded-lg overflow-hidden shadow-sm">
       <table z-table zType="grid" class="w-full">
@@ -28,28 +45,28 @@
             <th z-table-head class="text-center">Actions</th>
           </tr>
         </thead>
-        
+
         <tbody z-table-body>
-          <ng-container *ngIf="outreachWorkers.length > 0; else noData">
-            <tr z-table-row *ngFor="let worker of outreachWorkers" class="hover:bg-gray-50 transition-colors">
+          <ng-container *ngIf="pagedWorkers.length > 0; else noData">
+            <tr z-table-row *ngFor="let worker of pagedWorkers" class="hover:bg-gray-50 transition-colors">
               <td z-table-cell class="text-center">
                 <div class="flex flex-col items-center">
                   <span class="font-bold text-gray-900">{{ worker.name }}</span>
                   <span class="text-[10px] text-gray-400 uppercase font-medium mt-1">{{ worker.usercode || 'No Code' }}</span>
                 </div>
               </td>
-              
+
               <td z-table-cell class="text-center">
                 <span class="text-sm text-gray-600">{{ worker.email }}</span>
               </td>
-              
+
               <td z-table-cell class="text-center">
                 <span class="inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold uppercase ring-1 ring-inset"
                   [ngClass]="worker.createdByAdmin ? 'bg-blue-50 text-blue-700 ring-blue-600/20' : 'bg-gray-50 text-gray-600 ring-gray-500/10'">
                   {{ getManagerName(worker) }}
                 </span>
               </td>
-              
+
               <td z-table-cell class="text-center">
                 <div class="flex justify-center items-center gap-3">
                   <button z-button zType="secondary" zSize="sm" (click)="openAssignDialog(worker)" title="Assign Manager">
@@ -60,13 +77,13 @@
               </td>
             </tr>
           </ng-container>
-          
+
           <ng-template #noData>
             <tr z-table-row>
               <td z-table-cell colspan="4" class="py-12 text-center text-gray-400">
                 <div class="flex flex-col items-center justify-center">
                   <z-icon zType="inbox" class="w-12 h-12 mb-2 opacity-20"></z-icon>
-                  <p>No Outreach workers found.</p>
+                  <p>No Outreach workers found matching your search.</p>
                 </div>
               </td>
             </tr>
@@ -77,15 +94,14 @@
 
     <!-- ================= MOBILE CARD VIEW ================= -->
     <div class="grid grid-cols-1 gap-4 md:hidden">
-      <div *ngFor="let worker of outreachWorkers" class="bg-white border rounded-lg p-4 shadow-sm space-y-3">
+      <div *ngFor="let worker of pagedWorkers" class="bg-white border rounded-lg p-4 shadow-sm space-y-3">
         <div class="flex items-start justify-between gap-2 min-w-0">
           <div class="min-w-0 flex-1">
             <p class="font-bold text-gray-900 break-words">{{ worker.name }}</p>
             <p class="text-[10px] text-gray-400 uppercase font-medium mt-0.5">{{ worker.usercode || 'No Code' }}</p>
           </div>
-          <span class="px-2 py-1 rounded text-[10px] font-bold uppercase shrink-0 mt-0.5" [ngClass]="
-            worker.createdByAdmin ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'
-          ">
+          <span class="px-2 py-1 rounded text-[10px] font-bold uppercase shrink-0 mt-0.5"
+            [ngClass]="worker.createdByAdmin ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'">
             {{ getManagerName(worker) }}
           </span>
         </div>
@@ -112,24 +128,59 @@
         </div>
       </div>
 
-      <div *ngIf="outreachWorkers.length === 0" class="text-center py-10 bg-white border rounded-lg text-gray-500">
+      <div *ngIf="pagedWorkers.length === 0" class="text-center py-10 bg-white border rounded-lg text-gray-500">
         <div class="flex flex-col items-center justify-center opacity-40">
           <z-icon zType="inbox" class="w-10 h-10 mb-2"></z-icon>
           <p>No Outreach workers found.</p>
         </div>
       </div>
     </div>
-  </ng-container>
+
+    <!-- ================= PAGINATION ================= -->
+    <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm font-medium text-gray-500">
+        Showing
+        <span class="font-bold text-gray-700">{{ fromItem }}</span>
+        -
+        <span class="font-bold text-gray-700">{{ toItem }}</span>
+        of <span class="font-bold text-gray-700">{{ totalWorkers }}</span>
+      </p>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="currentPage <= 1"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
+        </button>
+
+        <span class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap">
+          {{ currentPage }} / {{ totalPages }}
+        </span>
+
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="currentPage >= totalPages"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
+        </button>
+      </div>
+    </div>
+  </ng-template>
 </div>
 
 <!-- Assign Manager Dialog Template -->
 <ng-template #assignDialog>
   <form [formGroup]="assignForm" class="space-y-4 py-2">
     <div class="bg-gray-50 p-3 rounded-md mb-4 border border-gray-100">
-      <div class="text-sm text-gray-500 uppercase tracking-wider text-[10px] font-bold">Target Outreach Worker</div>
+      <div class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Target Outreach Worker</div>
       <div class="font-medium text-gray-900 mt-1">{{ targetWorker?.name }} ({{ targetWorker?.usercode || '-' }})</div>
     </div>
-    
+
     <z-form-field>
       <label z-form-label zRequired>Select Manager</label>
       <z-form-control>
