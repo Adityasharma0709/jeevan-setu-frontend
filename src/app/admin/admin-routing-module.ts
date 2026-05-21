@@ -11,6 +11,7 @@ import { Sessions } from './sessions/sessions';
 import { Profile } from './profile/profile';
 import { Requests } from './requests/requests';
 import { CreateAwcComponent } from './create-awc/create-awc';
+import { AssignOutreachComponent } from './assign-outreach/assign-outreach';
 
 const routes: Routes = [
   {
@@ -75,6 +76,13 @@ const routes: Routes = [
         path: 'awcs',
         component: CreateAwcComponent,
         data: { pageTitle: 'AWC Management' },
+      },
+
+      // Assign Outreach
+      {
+        path: 'assign-outreach',
+        component: AssignOutreachComponent,
+        data: { pageTitle: 'Assign Outreach' },
       }
 
     ]
