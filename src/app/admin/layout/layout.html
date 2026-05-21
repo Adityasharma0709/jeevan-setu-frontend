@@ -66,7 +66,7 @@
           <!-- Assign Outreach -->
           <a routerLink="/admin/assign-outreach" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Assign Outreach' : ''" zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="user-check" [class]="sidebarCollapsed ? '' : 'mr-3 text-red-500'" />
+            <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-3 text-red-500'" />
             @if (!sidebarCollapsed) { <span class="flex-1">Assign Outreach</span> }
           </a>
 

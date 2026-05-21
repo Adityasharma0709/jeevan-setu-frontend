@@ -1,77 +1,139 @@
-<div class="flex flex-col h-full bg-white rounded-lg shadow-sm">
-  <div class="flex items-center justify-between p-4 border-b border-gray-100">
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
     <div>
-      <h2 class="text-lg font-semibold text-gray-900">Assign Outreach</h2>
-      <p class="text-sm text-gray-500 mt-1">Assign Outreach workers to Managers.</p>
+      <z-breadcrumb>
+        <z-breadcrumb-item href="/admin">Dashboard</z-breadcrumb-item>
+        <z-breadcrumb-item>Assign Outreach</z-breadcrumb-item>
+      </z-breadcrumb>
+      <h1 class="text-3xl font-bold mt-2 text-gray-900">Assign Outreach</h1>
+      <p class="text-gray-500 mt-1">Reassign outreach workers to different managers.</p>
     </div>
   </div>
 
-  <div class="flex-1 overflow-auto p-4 relative">
-    <div *ngIf="loading()" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center">
-      <div class="text-gray-500">Loading...</div>
-    </div>
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="flex items-center justify-center p-12 w-full min-h-[400px]">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  </div>
 
-    <z-table class="w-full">
-      <z-table-header class="sticky top-0 z-10 bg-gray-50 shadow-sm border-b">
-        <z-table-row class="border-none hover:bg-transparent">
-          <z-table-head class="font-medium text-gray-600">User Code</z-table-head>
-          <z-table-head class="font-medium text-gray-600">Name</z-table-head>
-          <z-table-head class="font-medium text-gray-600">Email</z-table-head>
-          <z-table-head class="font-medium text-gray-600">Current Manager</z-table-head>
-          <z-table-head class="font-medium text-gray-600 text-right">Actions</z-table-head>
-        </z-table-row>
-      </z-table-header>
-      
-      <z-table-body>
-        <ng-container *ngIf="outreachWorkers.length > 0; else noData">
-          <z-table-row *ngFor="let worker of outreachWorkers" class="group hover:bg-gray-50/50 transition-colors">
-            <z-table-cell class="font-medium text-gray-900">
-              {{ worker.usercode || '-' }}
-            </z-table-cell>
-            <z-table-cell>
-              <div class="font-medium text-gray-900">{{ worker.name }}</div>
-            </z-table-cell>
-            <z-table-cell class="text-gray-500">
-              {{ worker.email }}
-            </z-table-cell>
-            <z-table-cell>
-              <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
-                [ngClass]="worker.createdByAdmin ? 'bg-blue-50 text-blue-700 ring-blue-600/20' : 'bg-gray-50 text-gray-600 ring-gray-500/10'">
-                {{ getManagerName(worker) }}
-              </span>
-            </z-table-cell>
-            <z-table-cell class="text-right">
-              <button z-button zType="outline" zSize="sm" (click)="openAssignDialog(worker)">
-                <z-icon zType="user-check" class="mr-2 h-4 w-4"></z-icon>
-                Assign Manager
-              </button>
-            </z-table-cell>
-          </z-table-row>
-        </ng-container>
+  <ng-container *ngIf="!loading()">
+    <!-- ================= DESKTOP TABLE VIEW ================= -->
+    <div class="hidden md:block bg-white border rounded-lg overflow-hidden shadow-sm">
+      <table z-table zType="grid" class="w-full">
+        <thead z-table-header>
+          <tr z-table-row>
+            <th z-table-head class="text-center">Worker Details</th>
+            <th z-table-head class="text-center">Contact</th>
+            <th z-table-head class="text-center">Current Manager</th>
+            <th z-table-head class="text-center">Actions</th>
+          </tr>
+        </thead>
         
-        <ng-template #noData>
-          <z-table-row *ngIf="!loading()">
-            <z-table-cell colspan="5" class="h-32 text-center text-gray-500">
-              No Outreach workers found.
-            </z-table-cell>
-          </z-table-row>
-        </ng-template>
-      </z-table-body>
-    </z-table>
-  </div>
+        <tbody z-table-body>
+          <ng-container *ngIf="outreachWorkers.length > 0; else noData">
+            <tr z-table-row *ngFor="let worker of outreachWorkers" class="hover:bg-gray-50 transition-colors">
+              <td z-table-cell class="text-center">
+                <div class="flex flex-col items-center">
+                  <span class="font-bold text-gray-900">{{ worker.name }}</span>
+                  <span class="text-[10px] text-gray-400 uppercase font-medium mt-1">{{ worker.usercode || 'No Code' }}</span>
+                </div>
+              </td>
+              
+              <td z-table-cell class="text-center">
+                <span class="text-sm text-gray-600">{{ worker.email }}</span>
+              </td>
+              
+              <td z-table-cell class="text-center">
+                <span class="inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold uppercase ring-1 ring-inset"
+                  [ngClass]="worker.createdByAdmin ? 'bg-blue-50 text-blue-700 ring-blue-600/20' : 'bg-gray-50 text-gray-600 ring-gray-500/10'">
+                  {{ getManagerName(worker) }}
+                </span>
+              </td>
+              
+              <td z-table-cell class="text-center">
+                <div class="flex justify-center items-center gap-3">
+                  <button z-button zType="secondary" zSize="sm" (click)="openAssignDialog(worker)" title="Assign Manager">
+                    <z-icon zType="user" class="w-4 h-4"></z-icon>
+                    <span class="ml-2">Assign Manager</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+          
+          <ng-template #noData>
+            <tr z-table-row>
+              <td z-table-cell colspan="4" class="py-12 text-center text-gray-400">
+                <div class="flex flex-col items-center justify-center">
+                  <z-icon zType="inbox" class="w-12 h-12 mb-2 opacity-20"></z-icon>
+                  <p>No Outreach workers found.</p>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ================= MOBILE CARD VIEW ================= -->
+    <div class="grid grid-cols-1 gap-4 md:hidden">
+      <div *ngFor="let worker of outreachWorkers" class="bg-white border rounded-lg p-4 shadow-sm space-y-3">
+        <div class="flex items-start justify-between gap-2 min-w-0">
+          <div class="min-w-0 flex-1">
+            <p class="font-bold text-gray-900 break-words">{{ worker.name }}</p>
+            <p class="text-[10px] text-gray-400 uppercase font-medium mt-0.5">{{ worker.usercode || 'No Code' }}</p>
+          </div>
+          <span class="px-2 py-1 rounded text-[10px] font-bold uppercase shrink-0 mt-0.5" [ngClass]="
+            worker.createdByAdmin ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'
+          ">
+            {{ getManagerName(worker) }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-y-2 text-sm pt-2 border-t">
+          <div>
+            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Email</p>
+            <p class="text-gray-700 font-medium truncate">{{ worker.email }}</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2 mt-3 pt-3 border-t">
+          <button
+            z-button
+            zType="secondary"
+            zSize="sm"
+            class="flex-1"
+            (click)="openAssignDialog(worker)"
+            title="Assign Manager"
+          >
+            <z-icon zType="user" />
+            <span class="ml-2">Assign Manager</span>
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="outreachWorkers.length === 0" class="text-center py-10 bg-white border rounded-lg text-gray-500">
+        <div class="flex flex-col items-center justify-center opacity-40">
+          <z-icon zType="inbox" class="w-10 h-10 mb-2"></z-icon>
+          <p>No Outreach workers found.</p>
+        </div>
+      </div>
+    </div>
+  </ng-container>
 </div>
 
+<!-- Assign Manager Dialog Template -->
 <ng-template #assignDialog>
-  <form [formGroup]="assignForm" class="space-y-4">
+  <form [formGroup]="assignForm" class="space-y-4 py-2">
     <div class="bg-gray-50 p-3 rounded-md mb-4 border border-gray-100">
-      <div class="text-sm text-gray-500">Target Outreach Worker</div>
-      <div class="font-medium text-gray-900">{{ targetWorker?.name }} ({{ targetWorker?.usercode || '-' }})</div>
+      <div class="text-sm text-gray-500 uppercase tracking-wider text-[10px] font-bold">Target Outreach Worker</div>
+      <div class="font-medium text-gray-900 mt-1">{{ targetWorker?.name }} ({{ targetWorker?.usercode || '-' }})</div>
     </div>
     
     <z-form-field>
-      <z-form-label>Select Manager</z-form-label>
+      <label z-form-label zRequired>Select Manager</label>
       <z-form-control>
-        <z-combobox formControlName="managerId" [options]="managerOptions" placeholder="Search Manager...">
+        <z-combobox formControlName="managerId" [options]="managerOptions" placeholder="Search Manager..." zWidth="full">
         </z-combobox>
       </z-form-control>
     </z-form-field>
