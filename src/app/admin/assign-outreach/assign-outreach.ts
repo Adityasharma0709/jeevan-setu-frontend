@@ -22,7 +22,7 @@ import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/compo
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
 import { ZardDropdownImports } from '@/shared/components/dropdown/dropdown.imports';
-import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
+// import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
 
 @Component({
   selector: 'app-assign-outreach',
@@ -43,8 +43,8 @@ import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/c
     ZardFormFieldComponent,
     ZardIconComponent,
     ZardComboboxComponent,
-    ZardBreadcrumbComponent,
-    ZardBreadcrumbItemComponent,
+    // ZardBreadcrumbComponent,
+    // ZardBreadcrumbItemComponent,
     ...ZardDropdownImports,
   ],
   templateUrl: './assign-outreach.html',

@@ -15,7 +15,7 @@ import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardFormFieldComponent, ZardFormControlComponent } from '@/shared/components/form';
 import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
-import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
+// import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
 import { 
   ZardTableComponent, 
   ZardTableHeaderComponent, 
@@ -88,8 +88,8 @@ interface VillageModel {
     ZardFormFieldComponent,
     ZardFormControlComponent,
     ZardComboboxComponent,
-    ZardBreadcrumbComponent,
-    ZardBreadcrumbItemComponent,
+    // ZardBreadcrumbComponent,
+    // ZardBreadcrumbItemComponent,
     ZardTableComponent,
     ZardTableHeaderComponent,
     ZardTableBodyComponent,

@@ -101,9 +101,26 @@ export class Dashboard implements OnInit {
       shareReplay(1),
     );
 
-    const assignedProjects$ = this.adminService.getAssignedProjects(currentUserId).pipe(
+    const states$ = this.adminService.getStates().pipe(
       map((rows) => (Array.isArray(rows) ? rows : [])),
-      shareReplay(1)
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+
+    const assignedProjects$ = combineLatest([
+      this.adminService.getAssignedProjects(currentUserId).pipe(
+        map((rows) => (Array.isArray(rows) ? rows : [])),
+        catchError(() => of([])),
+      ),
+      states$,
+    ]).pipe(
+      map(([projects, states]) => {
+        const stateMap = new Map<number, any>(
+          (states || []).map((s: any) => [Number(s?.id), s]),
+        );
+        return (projects || []).map((p) => this.normalizeAssignedProject(p, stateMap));
+      }),
+      shareReplay(1),
     );
 
     const status$ = this.projectStatusFilter.valueChanges.pipe(
@@ -212,6 +229,91 @@ export class Dashboard implements OnInit {
       }),
       shareReplay(1)
     );
+  }
+
+  private normalizeAssignedProject(project: any, stateMap?: Map<number, any>): any {
+    const candidates = [
+      project?.locations,
+      project?.awcs,
+      project?.userProjectLocations,
+      project?.projectLocations,
+      project?.assignedLocations,
+    ];
+
+    let rawLocations: any[] = [];
+    for (const c of candidates) {
+      if (Array.isArray(c)) {
+        rawLocations = c;
+        break;
+      }
+    }
+
+    const locations = rawLocations
+      .map((item: any) => item?.awc ?? item?.location ?? item?.state ?? item)
+      .filter(Boolean)
+      .filter((loc: any) => {
+        const status = (loc?.status ?? 'ACTIVE').toString().toUpperCase();
+        return status === 'ACTIVE';
+      });
+
+    // Dashboard should show assigned *states* only (not AWC list).
+    const states = locations.map((loc: any) => this.toAssignedStateVm(loc, stateMap)).filter(Boolean);
+
+    // De-dupe by state id/code/name
+    const seen = new Set<string>();
+    const dedupedStates = states.filter((s: any, index: number) => {
+      const keyCandidate = s?.id ?? s?.locationCode ?? s?.name;
+      const key = keyCandidate === null || keyCandidate === undefined || String(keyCandidate).trim() === ''
+        ? `idx:${index}`
+        : String(keyCandidate).toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    const normalizedStatus = (project?.status ?? '').toString().toUpperCase();
+
+    return {
+      ...project,
+      status: normalizedStatus || project?.status,
+      locations: dedupedStates,
+    };
+  }
+
+  private toAssignedStateVm(
+    loc: any,
+    stateMap?: Map<number, any>,
+  ): { id?: number; name?: string; locationCode?: string } | null {
+    if (!loc) return null;
+
+    const stateObj = loc?.state && typeof loc.state === 'object' ? loc.state : null;
+    const stateIdRaw = stateObj?.id ?? loc?.stateId ?? loc?.state_id;
+    const stateId = Number(stateIdRaw);
+    const stateFromMap = Number.isFinite(stateId) ? (stateMap?.get(stateId) ?? null) : null;
+
+    const name =
+      (typeof loc?.state === 'string' ? loc.state : null) ||
+      (typeof loc?.stateName === 'string' ? loc.stateName : null) ||
+      (typeof stateObj?.name === 'string' ? stateObj.name : null) ||
+      (typeof stateFromMap?.name === 'string' ? stateFromMap.name : null) ||
+      (typeof loc?.name === 'string' ? loc.name : null) ||
+      (typeof loc?.awcName === 'string' ? loc.awcName : null) ||
+      (typeof loc?.label === 'string' ? loc.label : null) ||
+      undefined;
+
+    const id = Number.isFinite(stateId) ? stateId : undefined;
+
+    const locationCode =
+      (typeof stateObj?.locationCode === 'string' ? stateObj.locationCode : null) ||
+      (typeof stateObj?.code === 'string' ? stateObj.code : null) ||
+      (typeof stateFromMap?.locationCode === 'string' ? stateFromMap.locationCode : null) ||
+      (typeof stateFromMap?.code === 'string' ? stateFromMap.code : null) ||
+      (typeof loc?.stateCode === 'string' ? loc.stateCode : null) ||
+      (typeof loc?.locationCode === 'string' ? loc.locationCode : null) ||
+      undefined;
+
+    if (!name && !locationCode) return null;
+    return { id, name, locationCode };
   }
 
   private createRecentCardVm$<T extends { status?: string; createdAt?: string; id?: number }>(
