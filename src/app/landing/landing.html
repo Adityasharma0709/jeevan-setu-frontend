@@ -3,75 +3,79 @@
   <div class="landing-container animate-fade-in">
     <!-- Visual Pane: Left Side (Desktop) / Background Overlay (Mobile) -->
     <div class="visual-grid-pane">
-      <div class="tilted-cards-grid">
-        
-        <!-- Card 1: Doctor/Healthcare Illustration (Using existing asset) -->
-        <div class="grid-card-wrap wrap-1">
-          <app-landing-card bgImage="illustration-of-medical.jpg" [showGlow]="true">
-            <div class="doctor-overlay"></div>
+      <!-- Decorative tilted card mosaic (3 columns) -->
+      <div class="tilted-cards-grid" aria-hidden="true">
+        <div
+          class="tilted-cards-cell"
+          *ngFor="let card of backgroundCards; index as i; trackBy: trackByIndex"
+        >
+          <app-landing-card [bgImage]="card.bgImage" [showGlow]="true">
+            <ng-container [ngSwitch]="card.kind">
+              <div *ngSwitchCase="'image'" class="doctor-overlay"></div>
+
+              <div *ngSwitchCase="'sphere'" class="tech-sphere-graphic">
+                <div class="core-glow"></div>
+                <div class="ring-pulse"></div>
+                <div class="grid-overlay"></div>
+              </div>
+
+              <div *ngSwitchCase="'circle'" class="tech-circle-graphic">
+                <div class="rotating-ring ring-outer"></div>
+                <div class="rotating-ring ring-inner"></div>
+                <div class="crosshairs"></div>
+              </div>
+
+              <div *ngSwitchCase="'leaf'" class="nature-leaf-graphic">
+                <div class="leaf-glow"></div>
+                <svg
+                  class="leaf-vector"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path
+                    d="M12 2C6.5 2 2 6.5 2 12c0 4.4 2.8 8.1 7 9.4V14H6v-3h3V8.5C9 6 10.5 4.5 12.8 4.5c1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.7.8-1.7 1.6V11h3l-0.5 3h-2.5v7.4c4.2-1.3 7-5 7-9.4 0-5.5-4.5-10-10-10z"
+                  />
+                </svg>
+              </div>
+
+              <div *ngSwitchCase="'network'" class="network-graphic">
+                <div class="pulse-dot dot-1"></div>
+                <div class="pulse-dot dot-2"></div>
+                <div class="pulse-dot dot-3"></div>
+                <svg class="network-lines" viewBox="0 0 100 100">
+                  <line
+                    x1="20"
+                    y1="30"
+                    x2="50"
+                    y2="70"
+                    stroke="rgba(255,255,255,0.2)"
+                    stroke-width="1.5"
+                  />
+                  <line
+                    x1="50"
+                    y1="70"
+                    x2="80"
+                    y2="40"
+                    stroke="rgba(255,255,255,0.2)"
+                    stroke-width="1.5"
+                  />
+                  <line
+                    x1="20"
+                    y1="30"
+                    x2="80"
+                    y2="40"
+                    stroke="rgba(255,255,255,0.1)"
+                    stroke-width="1"
+                  />
+                </svg>
+              </div>
+
+              <div *ngSwitchDefault class="mosaic-blank"></div>
+            </ng-container>
           </app-landing-card>
         </div>
-
-        <!-- Card 2: Tech Globe Sphere (Using pure CSS glowing digital sphere) -->
-        <div class="grid-card-wrap wrap-2">
-          <app-landing-card [showGlow]="true">
-            <div class="tech-sphere-graphic">
-              <div class="core-glow"></div>
-              <div class="ring-pulse"></div>
-              <div class="grid-overlay"></div>
-            </div>
-          </app-landing-card>
-        </div>
-
-        <!-- Card 3: Futuristic Diagnostic Circle -->
-        <div class="grid-card-wrap wrap-3">
-          <app-landing-card [showGlow]="true">
-            <div class="tech-circle-graphic">
-              <div class="rotating-ring ring-outer"></div>
-              <div class="rotating-ring ring-inner"></div>
-              <div class="crosshairs"></div>
-            </div>
-          </app-landing-card>
-        </div>
-
-        <!-- Card 4: Botanical / Herbal Health Leaf -->
-        <div class="grid-card-wrap wrap-4">
-          <app-landing-card [showGlow]="true">
-            <div class="nature-leaf-graphic">
-              <div class="leaf-glow"></div>
-              <svg class="leaf-vector" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M12 2C6.5 2 2 6.5 2 12c0 4.4 2.8 8.1 7 9.4V14H6v-3h3V8.5C9 6 10.5 4.5 12.8 4.5c1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.7.8-1.7 1.6V11h3l-0.5 3h-2.5v7.4c4.2-1.3 7-5 7-9.4 0-5.5-4.5-10-10-10z"/>
-              </svg>
-            </div>
-          </app-landing-card>
-        </div>
-
-        <!-- Card 5: Empty Glass Card (Ready for custom images later) -->
-        <div class="grid-card-wrap wrap-5">
-          <app-landing-card [showGlow]="true">
-            <div class="placeholder-card-content">
-              <span class="plus-icon">+</span>
-              <span class="placeholder-label">Add custom asset</span>
-            </div>
-          </app-landing-card>
-        </div>
-
-        <!-- Card 6: Network Connections -->
-        <div class="grid-card-wrap wrap-6">
-          <app-landing-card [showGlow]="true">
-            <div class="network-graphic">
-              <div class="pulse-dot dot-1"></div>
-              <div class="pulse-dot dot-2"></div>
-              <div class="pulse-dot dot-3"></div>
-              <svg class="network-lines" viewBox="0 0 100 100">
-                <line x1="20" y1="30" x2="50" y2="70" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
-                <line x1="50" y1="70" x2="80" y2="40" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
-                <line x1="20" y1="30" x2="80" y2="40" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-              </svg>
-            </div>
-          </app-landing-card>
-        </div>
-
       </div>
     </div>
 

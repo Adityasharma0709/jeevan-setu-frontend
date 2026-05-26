@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
     <div 
       class="landing-card" 
       [class.has-image]="bgImage" 
-      [style.backgroundImage]="bgImage ? 'url(' + bgImage + ')' : ''"
+      [style.backgroundImage]="bgImage ? 'url(' + resolvedBgImage + ')' : ''"
     >
       <!-- Glass Overlay and Inner Content -->
       <div class="card-glow-overlay" *ngIf="showGlow"></div>
@@ -82,4 +82,11 @@ import { CommonModule } from '@angular/common';
 export class LandingCardComponent {
   @Input() bgImage?: string;
   @Input() showGlow: boolean = true;
+
+  get resolvedBgImage(): string {
+    if (!this.bgImage) return '';
+    if (this.bgImage.startsWith('http://') || this.bgImage.startsWith('https://')) return this.bgImage;
+    if (this.bgImage.startsWith('/')) return this.bgImage;
+    return `/${this.bgImage}`;
+  }
 }

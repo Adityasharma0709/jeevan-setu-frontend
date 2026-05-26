@@ -99,68 +99,39 @@
 /* Gorgeous Tilted Mosaic Cards Layout */
 .tilted-cards-grid {
   position: absolute;
-  width: 130%;
-  height: 130%;
-  top: -15%;
-  left: -15%;
+  inset: -22%;
+  --mosaic-card: clamp(130px, 15vw, 220px);
+  --mosaic-gap: clamp(18px, 2vw, 28px);
+  display: grid;
+  grid-template-columns: repeat(3, var(--mosaic-card));
+  grid-auto-rows: var(--mosaic-card);
+  gap: var(--mosaic-gap);
+  place-content: center;
   transform: rotate(-18deg);
-  pointer-events: auto;
+  pointer-events: none;
 }
 
-.grid-card-wrap {
-  position: absolute;
+.tilted-cards-cell {
+  width: var(--mosaic-card);
+  height: var(--mosaic-card);
   transition: transform 0.3s ease;
-  animation: slowFloat 6s ease-in-out infinite;
+  animation: slowFloat 7s ease-in-out infinite;
+  will-change: transform;
 }
 
-/* Alternate float animations to give layered dynamic movement */
-.wrap-1 {
-  top: 42%;
-  left: -2%;
-  width: 220px;
-  height: 290px;
-  animation-delay: 0s;
+/* Stagger the columns like the reference (3-column pattern) */
+.tilted-cards-cell:nth-child(3n + 2) {
+  transform: translateY(34px);
+  animation-delay: 0.6s;
 }
 
-.wrap-2 {
-  top: 15%;
-  left: 24%;
-  width: 240px;
-  height: 240px;
-  animation-delay: 1.5s;
-}
-
-.wrap-3 {
-  top: -10%;
-  left: 0%;
-  width: 225px;
-  height: 260px;
-  animation-delay: 0.8s;
-}
-
-.wrap-4 {
-  top: -15%;
-  left: 54%;
-  width: 240px;
-  height: 265px;
-  animation-delay: 2.2s;
-}
-
-.wrap-5 {
-  top: 45%;
-  left: 54%;
-  width: 235px;
-  height: 310px;
-  animation-delay: 3s;
-}
-
-.wrap-6 {
-  top: 25%;
-  left: 83%;
-  width: 220px;
-  height: 240px;
+.tilted-cards-cell:nth-child(3n) {
+  transform: translateY(68px);
   animation-delay: 1.2s;
 }
+
+.tilted-cards-cell:nth-child(6n + 1) { animation-delay: 0.2s; }
+.tilted-cards-cell:nth-child(6n + 4) { animation-delay: 1.6s; }
 
 /* Graphic Overlay effects inside cards */
 .doctor-overlay {
@@ -170,6 +141,13 @@
   position: absolute;
   top: 0;
   left: 0;
+}
+
+.mosaic-blank {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%);
+  opacity: 0.9;
 }
 
 /* Dynamic CSS sphere */
@@ -531,10 +509,9 @@
   }
 
   .tilted-cards-grid {
-    width: 140%;
-    height: 140%;
-    top: -10%;
-    left: -15%;
+    inset: -30%;
+    --mosaic-card: clamp(120px, 34vw, 190px);
+    --mosaic-gap: clamp(16px, 4vw, 24px);
   }
 
   .content-pane {
