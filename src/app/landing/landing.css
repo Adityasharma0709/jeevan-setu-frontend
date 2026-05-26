@@ -1,0 +1,587 @@
+:host {
+  display: block;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Base keyframe animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spinClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinCounterClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes slowFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Page Frame */
+.landing-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top left, #f3faf9 0%, #e0f0ed 60%, #cfe3df 100%);
+  padding: 24px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+/* App Desktop Container */
+.landing-container {
+  width: 100%;
+  max-width: 1200px;
+  height: 85vh;
+  max-height: 850px;
+  min-height: 640px;
+  border-radius: 40px;
+  box-shadow: 0 25px 60px rgba(3, 72, 60, 0.08);
+  overflow: hidden;
+  display: flex;
+  background: #f4faf9;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  position: relative;
+  transition: all 0.4s ease;
+}
+
+/* Left Pane: Visual Immersive Cards */
+.visual-grid-pane {
+  flex: 1.2;
+  position: relative;
+  background: linear-gradient(135deg, #e3f3f0 0%, #b2ded6 50%, #7dbfb2 100%);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Gorgeous Tilted Mosaic Cards Layout */
+.tilted-cards-grid {
+  position: absolute;
+  width: 130%;
+  height: 130%;
+  top: -15%;
+  left: -15%;
+  transform: rotate(-18deg);
+  pointer-events: auto;
+}
+
+.grid-card-wrap {
+  position: absolute;
+  transition: transform 0.3s ease;
+  animation: slowFloat 6s ease-in-out infinite;
+}
+
+/* Alternate float animations to give layered dynamic movement */
+.wrap-1 {
+  top: 42%;
+  left: -2%;
+  width: 220px;
+  height: 290px;
+  animation-delay: 0s;
+}
+
+.wrap-2 {
+  top: 15%;
+  left: 24%;
+  width: 240px;
+  height: 240px;
+  animation-delay: 1.5s;
+}
+
+.wrap-3 {
+  top: -10%;
+  left: 0%;
+  width: 225px;
+  height: 260px;
+  animation-delay: 0.8s;
+}
+
+.wrap-4 {
+  top: -15%;
+  left: 54%;
+  width: 240px;
+  height: 265px;
+  animation-delay: 2.2s;
+}
+
+.wrap-5 {
+  top: 45%;
+  left: 54%;
+  width: 235px;
+  height: 310px;
+  animation-delay: 3s;
+}
+
+.wrap-6 {
+  top: 25%;
+  left: 83%;
+  width: 220px;
+  height: 240px;
+  animation-delay: 1.2s;
+}
+
+/* Graphic Overlay effects inside cards */
+.doctor-overlay {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(8, 112, 95, 0.25) 0%, rgba(255, 255, 255, 0) 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Dynamic CSS sphere */
+.tech-sphere-graphic {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #8dd5c8 0%, #1e8774 45%, #054f43 90%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.core-glow {
+  width: 90px;
+  height: 90px;
+  background: #ffffff;
+  border-radius: 50%;
+  filter: blur(24px);
+  animation: pulseGlow 4s infinite ease-in-out;
+}
+
+.ring-pulse {
+  width: 140px;
+  height: 140px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  position: absolute;
+  animation: spinClockwise 15s linear infinite;
+}
+
+.grid-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 16px 16px;
+  background-position: center;
+}
+
+/* Tech Circle Graphic */
+.tech-circle-graphic {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #2e4348 0%, #131a1b 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rotating-ring {
+  border-radius: 50%;
+  position: absolute;
+  border: 1.5px solid transparent;
+}
+
+.ring-outer {
+  width: 130px;
+  height: 130px;
+  border-top-color: #8be0cf;
+  border-bottom-color: #8be0cf;
+  animation: spinClockwise 6s linear infinite;
+}
+
+.ring-inner {
+  width: 95px;
+  height: 95px;
+  border-left-color: rgba(255, 255, 255, 0.25);
+  border-right-color: rgba(255, 255, 255, 0.25);
+  animation: spinCounterClockwise 4s linear infinite;
+}
+
+.crosshairs {
+  width: 16px;
+  height: 16px;
+  position: relative;
+}
+
+.crosshairs::before, .crosshairs::after {
+  content: '';
+  background-color: #8be0cf;
+  position: absolute;
+}
+
+.crosshairs::before {
+  width: 100%;
+  height: 1.5px;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.crosshairs::after {
+  height: 100%;
+  width: 1.5px;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+}
+
+/* Botanical Leaf Shield Graphic */
+.nature-leaf-graphic {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #107e6c 0%, #033c32 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.leaf-glow {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background-color: #8be0cf;
+  filter: blur(35px);
+  opacity: 0.3;
+}
+
+.leaf-vector {
+  width: 75px;
+  height: 75px;
+  color: #8be0cf;
+  filter: drop-shadow(0 4px 10px rgba(139, 224, 207, 0.25));
+}
+
+/* Reusable placeholder empty card styles */
+.placeholder-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: rgba(3, 72, 60, 0.5);
+  padding: 20px;
+  text-align: center;
+}
+
+.plus-icon {
+  font-size: 2.2rem;
+  font-weight: 300;
+}
+
+.placeholder-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+
+/* Network Connection Graphics */
+.network-graphic {
+  width: 100%;
+  height: 100%;
+  background: #18282f;
+  position: relative;
+  overflow: hidden;
+}
+
+.pulse-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #8be0cf;
+  border-radius: 50%;
+  box-shadow: 0 0 12px #8be0cf;
+}
+
+.dot-1 {
+  top: 30%;
+  left: 20%;
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.dot-2 {
+  top: 70%;
+  left: 50%;
+  animation: pulseGlow 2.5s infinite ease-in-out 0.5s;
+}
+
+.dot-3 {
+  top: 40%;
+  left: 80%;
+  animation: pulseGlow 3s infinite ease-in-out 1s;
+}
+
+.network-lines {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+}
+
+/* Right Pane: Controls/Branding Content */
+.content-pane {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 48px;
+  position: relative;
+}
+
+.content-inner {
+  max-width: 380px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+/* Brand Logo Layout */
+.brand-logo-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.logo-wrapper {
+  max-width: 250px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.logo-wrapper:hover {
+  transform: scale(1.02);
+}
+
+.logo-image {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Headings */
+.branding-header {
+  text-align: center;
+  margin: 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.welcome-title {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #03483c;
+  letter-spacing: -0.6px;
+  line-height: 1.25;
+}
+
+.welcome-subtitle {
+  font-size: 0.96rem;
+  color: #4b5563;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+/* Action CTAs Stack */
+.action-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  align-items: center;
+}
+
+.action-btn {
+  width: 100%;
+  padding: 15px 20px;
+  border-radius: 14px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s, border-color 0.2s;
+}
+
+/* Button 1: Solid Teal Login */
+.btn-login {
+  background-color: #08705f;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(8, 112, 95, 0.2);
+}
+
+.btn-login:hover {
+  background-color: #065b4c;
+  box-shadow: 0 6px 22px rgba(8, 112, 95, 0.3);
+}
+
+.btn-login:active {
+  transform: scale(0.985);
+}
+
+/* Button 2: Bordered Transparent Create Account */
+.btn-register {
+  background-color: rgba(8, 112, 95, 0.03);
+  color: #08705f;
+  border: 1.5px solid rgba(8, 112, 95, 0.25);
+}
+
+.btn-register:hover {
+  background-color: rgba(8, 112, 95, 0.08);
+  border-color: #08705f;
+  box-shadow: 0 4px 12px rgba(8, 112, 95, 0.04);
+}
+
+.btn-register:active {
+  transform: scale(0.985);
+}
+
+/* Footer labeling text */
+.platform-text {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-top: 10px;
+  letter-spacing: 0.1px;
+}
+
+/* Responsive breakpoint transitions */
+@media (max-width: 960px) {
+  .landing-page {
+    padding: 0;
+    background-color: #ffffff;
+  }
+
+  .landing-container {
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Grid slides beneath content */
+  .visual-grid-pane {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    opacity: 0.25; /* Translucent grid overlay behind card contents */
+    pointer-events: none;
+  }
+
+  .tilted-cards-grid {
+    width: 140%;
+    height: 140%;
+    top: -10%;
+    left: -15%;
+  }
+
+  .content-pane {
+    position: relative;
+    z-index: 10;
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-left: none;
+    padding: 64px 28px 40px;
+  }
+
+  .content-inner {
+    max-width: 400px;
+  }
+
+  .welcome-title {
+    font-size: 1.8rem;
+  }
+
+  .welcome-subtitle {
+    font-size: 0.94rem;
+  }
+
+  .lang-selector-container {
+    top: 32px;
+    right: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-pane {
+    padding: 60px 20px 32px;
+  }
+
+  .branding-header {
+    margin: 24px 0;
+  }
+
+  .welcome-title {
+    font-size: 1.7rem;
+  }
+
+  .action-btn {
+    padding: 14px 18px;
+  }
+}

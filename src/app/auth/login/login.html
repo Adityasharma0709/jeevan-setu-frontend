@@ -1,60 +1,187 @@
 <main class="login-page">
-  <div class="login-card-split">
-    <!-- Left Side: Form -->
-    <div class="login-form-side">
+  <div class="login-outer animate-fade-in">
 
-      <div class="form-header">
-        <h1>JEEVAN SETU</h1>
-        <p>Hey, welcome back to your special place</p>
+    <!-- LEFT BRAND PANE (Desktop Only) -->
+    <aside class="brand-pane">
+      <!-- Decorative Glass Shapes -->
+      <div class="brand-glass-shapes">
+        <div class="brand-shape bs-1"></div>
+        <div class="brand-shape bs-2"></div>
+        <div class="brand-shape bs-3"></div>
+        <div class="brand-shape bs-4"></div>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="submit()" class="login-form" novalidate>
-        <div class="input-wrap">
-          <input id="email" type="email" placeholder="stanley@gmail.com" formControlName="email" />
+      <div class="brand-pane-inner">
+        <!-- Logo -->
+        <div class="brand-logo-wrap">
+          <img src="Landing.png" alt="Jeevan Setu Logo" class="brand-logo" />
         </div>
 
-        <div class="input-wrap password-wrap">
-          <input
-            id="password"
-            [type]="showPassword ? 'text' : 'password'"
-            placeholder="••••••••••••"
-            formControlName="password"
-          />
-          <button
-            class="toggle-password"
-            type="button"
-            (click)="togglePasswordVisibility()"
-            [attr.aria-pressed]="showPassword"
-            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
-          >
-            {{ showPassword ? 'Hide' : 'Show' }}
-          </button>
+        <!-- Tagline -->
+        <div class="brand-tagline">
+          <h2 class="brand-title">Empowering Communities Through Healthcare</h2>
+          <p class="brand-subtitle">A centralized platform to manage beneficiaries, track outreach, and strengthen social welfare programs across India.</p>
         </div>
 
-        <div class="form-actions-row">
-          <label class="remember-me">
-            <input type="checkbox" />
-            <span class="checkmark"></span>
-            Remember me
-          </label>
-          <!-- <a href="#" class="forgot-pwd">Forgot Password?</a> -->
+        <!-- Feature Highlights -->
+        <ul class="brand-features">
+          <li class="feature-item">
+            <span class="feature-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+              </svg>
+            </span>
+            <span>Beneficiary Management</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </span>
+            <span>Secure Role-Based Access</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+            </span>
+            <span>Real-time Outreach Tracking</span>
+          </li>
+        </ul>
+
+        <!-- Bottom brand badge -->
+        <div class="brand-badge">
+          <span class="badge-dot"></span>
+          Community Healthcare Platform
         </div>
+      </div>
+    </aside>
 
-        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
-
-        <button class="login-btn" type="submit" [disabled]="isSubmitting">
-          {{ isSubmitting ? 'Signing In...' : 'Sign In' }}
+    <!-- RIGHT FORM PANE -->
+    <div class="login-container">
+      <!-- Mobile Header (hidden on desktop) -->
+      <header class="login-header">
+        <button class="back-btn" type="button" (click)="goBack()" aria-label="Go back">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="icon-back">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
         </button>
-      </form>
+
+        <div class="welcome-box">
+          <div class="welcome-title-row">
+            <svg class="icon-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+            </svg>
+            <h1>Welcome Back</h1>
+          </div>
+          <p>Login to continue your healthcare journey</p>
+        </div>
+      </header>
+
+      <!-- Form Section -->
+      <section class="form-section">
+        <!-- Desktop-only heading (hidden on mobile) -->
+        <div class="desktop-form-header">
+          <h1 class="desktop-form-title">Welcome Back</h1>
+          <p class="desktop-form-subtitle">Login to continue your healthcare journey</p>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="login-form" novalidate>
+
+          <!-- Mobile/Email Field -->
+          <div class="form-group">
+            <label for="email">Mobile Number / Email</label>
+            <div class="input-wrap">
+              <span class="input-icon-left">
+                <svg class="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </span>
+              <input
+                id="email"
+                type="text"
+                placeholder="Enter your mobile or email"
+                formControlName="email"
+                autocomplete="username"
+              />
+            </div>
+          </div>
+
+          <!-- Password Field -->
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrap">
+              <span class="input-icon-left">
+                <svg class="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </span>
+              <input
+                id="password"
+                [type]="showPassword ? 'text' : 'password'"
+                placeholder="••••••••"
+                formControlName="password"
+                autocomplete="current-password"
+              />
+              <button
+                class="toggle-password-btn"
+                type="button"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-pressed]="showPassword"
+                [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              >
+                <ng-container *ngIf="showPassword; else eyeOffTpl">
+                  <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </ng-container>
+                <ng-template #eyeOffTpl>
+                  <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                </ng-template>
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember Me & Forgot Password Row -->
+          <div class="form-actions-row">
+            <label class="remember-me-container">
+              <input type="checkbox" />
+              <span class="checkbox-custom"></span>
+              Remember me
+            </label>
+            <a href="#" class="forgot-pwd-link">Forgot Password?</a>
+          </div>
+
+          <!-- Error Message -->
+          <p class="error-msg" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+          <!-- Submit Button -->
+          <button class="submit-btn" type="submit" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Logging in...' : 'Login' }}
+          </button>
+
+          <!-- Back to landing link (desktop only) -->
+          <div class="back-to-landing">
+            <button type="button" class="back-link-btn" (click)="goBack()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+              </svg>
+              Back to Home
+            </button>
+          </div>
+        </form>
+      </section>
     </div>
 
-    <!-- Right Side: Illustration -->
-    <div class="login-image-side">
-      <img
-        class="login-illustration"
-        src="/illustration-of-medical.jpg"
-        alt="Medical illustration"
-      />
-    </div>
   </div>
 </main>

@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { toast } from 'ngx-sonner';
@@ -26,11 +26,16 @@ export class LoginComponent {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private userProfile: UserProfileService,
+    private location: Location,
   ) {
     this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', Validators.required],
       password: ['', Validators.required],
     });
+  }
+
+  goBack() {
+    this.location.back();
   }
 
   togglePasswordVisibility() {
