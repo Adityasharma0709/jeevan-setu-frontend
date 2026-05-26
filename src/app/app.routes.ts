@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './auth/login/login';
+import { LandingComponent } from './landing/landing';
 
 export const routes: Routes = [
   {
@@ -40,6 +41,9 @@ export const routes: Routes = [
       ),
   },
 
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  {
+    path: '',
+    component: LandingComponent,
+    data: { pageTitle: 'Welcome to Jeevan Setu' },
+  },
 ];
-
