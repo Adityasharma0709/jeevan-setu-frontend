@@ -58,6 +58,11 @@ export class Layout {
     }
   }
 
+  isActiveRoute(prefixes: string[]): boolean {
+    const currentUrl = this.router.url.split('?')[0];
+    return prefixes.some(prefix => currentUrl === prefix || currentUrl.startsWith(`${prefix}/`));
+  }
+
   logout() {
     this.api.clearCache();
     localStorage.clear();

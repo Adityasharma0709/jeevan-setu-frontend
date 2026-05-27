@@ -1,7 +1,7 @@
-<div class="flex flex-col h-dvh overflow-hidden w-full bg-[#f4f7fe]">
+<div class="flex flex-col h-dvh overflow-hidden w-full bg-[#f8fafc] md:bg-[#f4f7fe]">
   <!-- ================= TOPBAR ================= -->
   <header
-    class="flex items-center justify-between px-4 py-2.5 bg-[#f0f4f9] border-b border-gray-200 shrink-0 select-none">
+    class="hidden md:flex items-center justify-between px-4 py-2.5 bg-[#f0f4f9] border-b border-gray-200 shrink-0 select-none">
     <div class="flex items-center gap-3">
       <div
         class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
@@ -25,6 +25,15 @@
       <div class="hidden sm:flex items-center gap-4 text-blue-800 text-sm font-medium"></div>
     </div>
   </header>
+
+  <button
+    type="button"
+    class="fixed right-4 top-3 z-[70] flex h-11 w-11 items-center justify-center rounded-xl border border-white/70 bg-white/75 text-slate-800 shadow-[0_8px_24px_rgba(15,23,42,0.10)] backdrop-blur-2xl transition active:bg-[#CCFBF1] md:hidden"
+    (click)="toggleSidebar()"
+    [attr.aria-label]="sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'"
+  >
+    <z-icon [zType]="sidebarCollapsed ? 'menu' : 'x'" class="h-6 w-6"></z-icon>
+  </button>
 
   <!-- ================= LAYOUT ================= -->
   <z-layout class="flex-1 overflow-hidden flex border-none bg-transparent">
@@ -109,11 +118,31 @@
     </div>
 
     <!-- ================= MAIN CONTENT ================= -->
-    <div class="flex flex-col flex-1 min-h-0 min-w-0 bg-[#f4f7fe]">
-      <z-content class="flex-1 min-h-0 min-w-0 overflow-y-auto p-0 sm:p-4 md:p-6 lg:p-8 bg-transparent">
+    <div class="flex flex-col flex-1 min-h-0 min-w-0 bg-[#f8fafc] md:bg-[#f4f7fe]">
+      <z-content class="flex-1 min-h-0 min-w-0 overflow-y-auto p-0 pb-24 sm:p-4 md:p-6 lg:p-8 md:pb-6 bg-transparent">
         <router-outlet></router-outlet>
       </z-content>
     </div>
 
   </z-layout>
+
+  <nav *ngIf="sidebarCollapsed" class="mobile-bottom-nav md:hidden" aria-label="Outreach mobile navigation">
+    <a routerLink="/outreach/activity" class="mobile-tab"
+      [class.mobile-tab-active]="isActiveRoute(['/outreach/activity', '/outreach/report-activity'])">
+      <z-icon zType="file-text" class="mobile-tab-icon"></z-icon>
+      <span>Reports</span>
+    </a>
+
+    <a routerLink="/outreach/beneficiaries" class="mobile-tab"
+      [class.mobile-tab-active]="isActiveRoute(['/outreach/beneficiaries', '/outreach/beneficiary'])">
+      <z-icon zType="users" class="mobile-tab-icon"></z-icon>
+      <span>Beneficiaries</span>
+    </a>
+
+    <a routerLink="/outreach/requests" class="mobile-tab"
+      [class.mobile-tab-active]="isActiveRoute(['/outreach/requests'])">
+      <z-icon zType="calendar" class="mobile-tab-icon"></z-icon>
+      <span>requests</span>
+    </a>
+  </nav>
 </div>

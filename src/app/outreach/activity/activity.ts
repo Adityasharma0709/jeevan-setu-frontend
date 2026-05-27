@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { BehaviorSubject, startWith, switchMap, map, shareReplay, combineLatest } from 'rxjs';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardTableComponent, ZardTableHeaderComponent, ZardTableBodyComponent, ZardTableRowComponent, ZardTableHeadComponent, ZardTableCellComponent } from '@/shared/components/table';
+import { UserProfileService } from '../../core/services/user-profile.service';
 
 import { OutreachService } from '../outreach.service';
 
@@ -15,6 +17,8 @@ import { OutreachService } from '../outreach.service';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
+    RouterLink,
     ZardButtonComponent,
     ZardIconComponent,
     ZardTableComponent,
@@ -30,17 +34,23 @@ import { OutreachService } from '../outreach.service';
 export class Activity {
   private outreachService = inject(OutreachService);
   private router = inject(Router);
+  private userProfile = inject(UserProfileService);
 
   options: AnimationOptions = { path: '/loading.json' };
+  profile$ = this.userProfile.profile$;
 
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
   readonly pageSize = 10;
   private readonly page$ = new BehaviorSubject<number>(1);
+  private readonly search$ = new BehaviorSubject<string>('');
+  private readonly screeningFilter$ = new BehaviorSubject<'ALL' | 'YES' | 'NO'>('ALL');
   private lastPage = 1;
   private lastPageCount = 1;
 
   isLoading = true;
   expandedReportId: number | null = null;
+  searchTerm = '';
+  screeningFilter: 'ALL' | 'YES' | 'NO' = 'ALL';
 
   reports$ = this.refresh$.pipe(
     startWith(undefined),
@@ -59,9 +69,33 @@ export class Activity {
   vm$ = combineLatest([
     this.reports$,
     this.page$.asObservable(),
+    this.search$.asObservable(),
+    this.screeningFilter$.asObservable(),
   ]).pipe(
-    map(([reports, page]) => {
-      const total = reports.length;
+    map(([reports, page, search, screeningFilter]) => {
+      const normalizedSearch = search.trim().toLowerCase();
+      const filteredReports = reports.filter(report => {
+        const screening = String(report?.reportData?.screening || 'No').toUpperCase();
+        const passesScreening = screeningFilter === 'ALL' || screening === screeningFilter;
+
+        if (!passesScreening) return false;
+        if (!normalizedSearch) return true;
+
+        const searchableText = [
+          report.child?.name,
+          report.beneficiary?.name,
+          report.child?.uid,
+          report.beneficiary?.uid,
+          report.activity?.name,
+          report.session?.name,
+          report.date,
+          this.getScreeningSummary(report),
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        return searchableText.includes(normalizedSearch);
+      });
+
+      const total = filteredReports.length;
       const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
       const safePage = Math.min(Math.max(1, page), pageCount);
       const startIndex = (safePage - 1) * this.pageSize;
@@ -70,7 +104,7 @@ export class Activity {
       this.lastPageCount = pageCount;
 
       return {
-        items: reports.slice(startIndex, startIndex + this.pageSize),
+        items: filteredReports.slice(startIndex, startIndex + this.pageSize),
         total,
         page: safePage,
         pageCount,
@@ -91,6 +125,26 @@ export class Activity {
 
   reload() {
     this.refresh$.next();
+  }
+
+  onSearchChange(value: string): void {
+    this.searchTerm = value;
+    this.page$.next(1);
+    this.search$.next(value);
+  }
+
+  cycleScreeningFilter(): void {
+    this.screeningFilter = this.screeningFilter === 'ALL'
+      ? 'YES'
+      : this.screeningFilter === 'YES'
+        ? 'NO'
+        : 'ALL';
+    this.page$.next(1);
+    this.screeningFilter$.next(this.screeningFilter);
+  }
+
+  get screeningFilterLabel(): string {
+    return this.screeningFilter === 'ALL' ? 'All' : this.screeningFilter;
   }
 
   nextPage(): void {
