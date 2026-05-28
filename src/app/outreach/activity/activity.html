@@ -19,8 +19,7 @@
         ></z-icon>
         <input
           type="search"
-          [ngModel]="searchTerm"
-          (ngModelChange)="onSearchChange($event)"
+          [formControl]="searchControl"
           placeholder="Search by UID, name, or activity..."
           class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
         />
@@ -70,8 +69,7 @@
           ></z-icon>
           <input
             type="search"
-            [ngModel]="searchTerm"
-            (ngModelChange)="onSearchChange($event)"
+            [formControl]="searchControl"
             placeholder="Search by UID, name, or activity..."
             class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           />
@@ -117,9 +115,7 @@
         </button>
       </div> -->
 
-   <table
-        class=" w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
-      >
+      <table class="w-full table-fixed border-collapse text-left text-[13px] text-slate-900">
         <thead class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr>
             <td colspan="8" class="p-3 text-right">

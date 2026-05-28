@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormsModule,ReactiveFormsModule  } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { BehaviorSubject, startWith, switchMap, map, shareReplay, combineLatest } from 'rxjs';
+import { BehaviorSubject, startWith, switchMap, map, shareReplay, combineLatest, debounceTime, distinctUntilChanged } from 'rxjs';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -17,7 +17,6 @@ import {
   ZardTableCellComponent,
 } from '@/shared/components/table';
 import { UserProfileService } from '../../core/services/user-profile.service';
-
 import { OutreachService } from '../outreach.service';
 
 @Component({
@@ -26,16 +25,18 @@ import { OutreachService } from '../outreach.service';
   imports: [
     CommonModule,
     FormsModule,
-    // RouterLink,
+    ReactiveFormsModule ,
     ZardButtonComponent,
     ZardIconComponent,
-    ZardTableComponent,
-    ZardTableHeaderComponent,
-    ZardTableBodyComponent,
-    ZardTableRowComponent,
-    ZardTableHeadComponent,
-    ZardTableCellComponent,
     LottieComponent,
+    // RouterLink,
+    // ZardTableComponent,
+    // ZardTableHeaderComponent,
+    // ZardTableBodyComponent,
+    // ZardTableRowComponent,
+    // ZardTableHeadComponent,
+    // ZardTableCellComponent,
+    
   ],
   templateUrl: './activity.html',
 })
@@ -46,18 +47,16 @@ export class Activity {
 
   options: AnimationOptions = { path: '/loading.json' };
   profile$ = this.userProfile.profile$;
-
+  searchControl = new FormControl('');
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
   readonly pageSize = 10;
   private readonly page$ = new BehaviorSubject<number>(1);
-  private readonly search$ = new BehaviorSubject<string>('');
   private readonly screeningFilter$ = new BehaviorSubject<'ALL' | 'YES' | 'NO'>('ALL');
   private lastPage = 1;
   private lastPageCount = 1;
 
   isLoading = true;
   expandedReportId: number | null = null;
-  searchTerm = '';
   screeningFilter: 'ALL' | 'YES' | 'NO' = 'ALL';
   mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
 
@@ -72,73 +71,160 @@ export class Activity {
     details: true,
   };
 
-  reports$ = this.refresh$.pipe(
-    startWith(undefined),
-    switchMap(() => {
-      this.isLoading = true;
-      this.page$.next(1); // Reset page on refresh
-      return this.outreachService.getMyReports();
-    }),
-    map((reports) => {
-      this.isLoading = false;
-      return reports.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-    }),
-    shareReplay(1),
-  );
+reports$ = combineLatest([
+  this.refresh$.pipe(startWith(undefined)),
 
-  vm$ = combineLatest([
-    this.reports$,
-    this.page$.asObservable(),
-    this.search$.asObservable(),
-    this.screeningFilter$.asObservable(),
-  ]).pipe(
-    map(([reports, page, search, screeningFilter]) => {
-      const normalizedSearch = search.trim().toLowerCase();
-      const filteredReports = reports.filter((report) => {
-        const screening = String(report?.reportData?.screening || 'No').toUpperCase();
-        const passesScreening = screeningFilter === 'ALL' || screening === screeningFilter;
+  this.searchControl.valueChanges.pipe(
+    startWith(''),
+    debounceTime(300),
+    distinctUntilChanged(),
+    map(value => {
+      this.page$.next(1);
+      return (value || '').trim().toLowerCase();
+    })
+  ),
 
-        if (!passesScreening) return false;
-        if (!normalizedSearch) return true;
+  this.screeningFilter$.asObservable()
+]).pipe(
 
-        const searchableText = [
-          report.child?.name,
-          report.beneficiary?.name,
-          report.child?.uid,
-          report.beneficiary?.uid,
-          report.activity?.name,
-          report.session?.name,
-          report.date,
-          this.getScreeningSummary(report),
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
+  switchMap(([_, search, screeningFilter]) => {
 
-        return searchableText.includes(normalizedSearch);
-      });
+    this.isLoading = true;
 
-      const total = filteredReports.length;
-      const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
-      const safePage = Math.min(Math.max(1, page), pageCount);
-      const startIndex = (safePage - 1) * this.pageSize;
+    return this.outreachService.getMyReports().pipe(
 
-      this.lastPage = safePage;
-      this.lastPageCount = pageCount;
+      map((reports) => {
 
-      return {
-        items: filteredReports.slice(startIndex, startIndex + this.pageSize),
-        total,
-        page: safePage,
-        pageCount,
-        pageSize: this.pageSize,
+        const filteredReports = reports.filter((report) => {
+
+          const screening =
+            String(report?.reportData?.screening || 'No')
+              .toUpperCase();
+
+          const passesScreening =
+            screeningFilter === 'ALL' ||
+            screening === screeningFilter;
+
+          if (!passesScreening) return false;
+
+          if (!search) return true;
+
+          const searchableText = [
+            report.child?.name,
+            report.beneficiary?.name,
+            report.child?.uid,
+            report.beneficiary?.uid,
+            report.activity?.name,
+            report.session?.name,
+            report.date,
+            this.getScreeningSummary(report),
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+
+          return searchableText.includes(search);
+        });
+
+        return filteredReports.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+        );
+      })
+    );
+  }),
+
+  map((reports) => {
+    this.isLoading = false;
+    return reports;
+  }),
+
+  shareReplay(1)
+);
+
+vm$ = combineLatest([
+  this.reports$,
+  this.page$.asObservable(),
+  this.searchControl.valueChanges.pipe(
+    startWith(''),
+    debounceTime(300),
+    distinctUntilChanged(),
+    map(value => (value || '').trim().toLowerCase())
+  ),
+  this.screeningFilter$.asObservable(),
+]).pipe(
+
+  map(([reports, page, search, screeningFilter]) => {
+
+    const filteredReports = reports.filter((report) => {
+
+      const screening =
+        String(report?.reportData?.screening || 'No')
+          .toUpperCase();
+
+      const passesScreening =
+        screeningFilter === 'ALL' ||
+        screening === screeningFilter;
+
+      if (!passesScreening) return false;
+
+      if (!search) return true;
+
+      const searchableText = [
+        report.child?.name,
+        report.beneficiary?.name,
+        report.child?.uid,
+        report.beneficiary?.uid,
+        report.activity?.name,
+        report.session?.name,
+        report.date,
+        this.getScreeningSummary(report),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return searchableText.includes(search);
+    });
+
+    const total = filteredReports.length;
+
+    const pageCount = Math.max(
+      1,
+      Math.ceil(total / this.pageSize)
+    );
+
+    const safePage = Math.min(
+      Math.max(1, page),
+      pageCount
+    );
+
+    const startIndex =
+      (safePage - 1) * this.pageSize;
+
+    this.lastPage = safePage;
+    this.lastPageCount = pageCount;
+
+    return {
+      items: filteredReports.slice(
         startIndex,
-        endIndex: Math.min(startIndex + this.pageSize, total),
-      };
-    }),
-  );
+        startIndex + this.pageSize
+      ),
+
+      total,
+      page: safePage,
+      pageCount,
+      pageSize: this.pageSize,
+      startIndex,
+
+      endIndex: Math.min(
+        startIndex + this.pageSize,
+        total
+      ),
+    };
+  }),
+);
 
   addReport() {
     this.router.navigate(['/outreach/report-activity']);
@@ -150,12 +236,6 @@ export class Activity {
 
   reload() {
     this.refresh$.next();
-  }
-
-  onSearchChange(value: string): void {
-    this.searchTerm = value;
-    this.page$.next(1);
-    this.search$.next(value);
   }
 
   cycleScreeningFilter(): void {
