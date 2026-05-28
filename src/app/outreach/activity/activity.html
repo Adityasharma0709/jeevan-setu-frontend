@@ -98,7 +98,7 @@
   </div>
 
   <h1 class="md:hidden text-[36px] font-extrabold leading-none tracking-normal text-slate-900">
-    Activity Reports
+    Activity Repoorts
   </h1>
 
   <!-- Reports Content -->
@@ -107,13 +107,33 @@
     <div
       class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm"
     >
-      <table
-        z-table
-        class="min-w-225 w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
+      <!-- <div class="flex justify-end mb-2">
+        <button (click)="exportToExcel()">
+          <img
+            src="excel.png"
+            alt="excel download button"
+            class="w-10 h-10 object-contain cursor-pointer hover:scale-110 transition"
+          />
+        </button>
+      </div> -->
+
+   <table
+        class=" w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
       >
-        <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
-          <tr z-table-row>
-            <th z-table-head class="w-12 border-b border-slate-300 px-2 py-1.5">
+        <thead class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
+          <tr>
+            <td colspan="8" class="p-3 text-right">
+              <button (click)="exportToExcel()">
+                <img
+                  src="excel.png"
+                  alt="excel download button"
+                  class="w-8 h-8 object-contain cursor-pointer inline-block"
+                />
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <th class="w-12 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>#</span>
 
@@ -125,188 +145,160 @@
               </div>
             </th>
 
-            <th z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">
+            <th class="w-28 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>Beneficiary<br />id</span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.beneficiaryId"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>Beneficiary<br />name</span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.beneficiaryName"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>Activity</span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.activity"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5">
+            <th class="w-32 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>Session</span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.session"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th z-table-head class="w-44 border-b border-slate-300 px-2 py-1.5">
+            <th class="w-44 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>Screening /<br />Services</span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.screening"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">
+            <th class="w-28 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>Date</span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.date"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5">
+            <th class="w-24 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>Details</span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.details"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
-              </div>
-            </th>
-
-            <th z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5">
-              <div class="flex flex-col items-center justify-center gap-1">
-                <span>Actions</span>
               </div>
             </th>
           </tr>
         </thead>
 
-        <tbody z-table-body class="divide-y divide-slate-100 text-[13px]">
-          <ng-container *ngFor="let report of vm.items; let i = index">
-            <!-- Main Row -->
-            <tr
-              z-table-row
-              class="align-top group transition-colors border-b last:border-0"
-              [class.bg-indigo-50/30]="expandedReportId === report.id"
-              [class.hover:bg-indigo-50/50]="expandedReportId === report.id"
-              [class.hover:bg-gray-50]="expandedReportId !== report.id"
-            >
-              <td z-table-cell class="px-2 py-3 text-center font-semibold">
-                {{ vm.startIndex + i + 1 }}
-              </td>
+        <tbody class="divide-y divide-slate-100 text-[13px]">
+          <tr *ngFor="let report of vm.items; let i = index" class="align-top">
+            <!-- FIXED: removed extra empty td -->
 
-              <td z-table-cell class="px-2 py-3 font-mono text-[12px] text-slate-600">
-                {{ report.child?.uid || report.beneficiary?.uid || '-' }}
-              </td>
+            <td class="px-2 py-3 text-center font-semibold">
+              {{ vm.startIndex + i + 1 }}
+            </td>
 
-              <td z-table-cell class="px-2 py-3">
-                <span class="block font-semibold text-slate-900">
-                  {{ report.child?.name || report.beneficiary?.name || 'Unknown' }}
-                </span>
+            <td class="px-2 py-3 font-mono text-[12px] text-slate-600">
+              {{ report.child?.uid || report.beneficiary?.uid || '-' }}
+            </td>
 
-                <span *ngIf="report.child" class="block text-[11px] italic text-slate-500">
-                  Child of {{ report.beneficiary?.name }}
-                </span>
-              </td>
+            <td class="px-2 py-3">
+              <span class="block font-semibold text-slate-900">
+                {{ report.child?.name || report.beneficiary?.name || 'Unknown' }}
+              </span>
 
-              <td z-table-cell class="px-2 py-3">
-                {{ report.activity?.name || '-' }}
-              </td>
+              <span *ngIf="report.child" class="block text-[11px] italic text-slate-500">
+                Child of {{ report.beneficiary?.name }}
+              </span>
+            </td>
 
-              <td z-table-cell class="px-2 py-3">
-                {{ report.session?.name || '-' }}
-              </td>
+            <td class="px-2 py-3">
+              {{ report.activity?.name || '-' }}
+            </td>
 
-              <td z-table-cell class="px-2 py-3">
-                <span
-                  [class]="
-                    report.reportData?.screening === 'Yes'
-                      ? 'bg-green-100 text-green-700 border-green-200'
-                      : 'bg-slate-100 text-slate-600 border-slate-200'
-                  "
-                  class="mb-1 inline-flex rounded border px-2 py-0.5 text-[10px] font-bold uppercase"
-                >
-                  {{ report.reportData?.screening || 'No' }}
-                </span>
+            <td class="px-2 py-3">
+              {{ report.session?.name || '-' }}
+            </td>
 
-                <span
-                  class="block text-[11px] leading-snug text-slate-500"
-                  [innerHTML]="getScreeningSummary(report)"
-                ></span>
-              </td>
+            <td class="px-2 py-3">
+              <span
+                [class]="
+                  report.reportData?.screening === 'Yes'
+                    ? 'bg-green-100 text-green-700 border-green-200'
+                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                "
+                class="mb-1 inline-flex rounded border px-2 py-0.5 text-[10px] font-bold uppercase"
+              >
+                {{ report.reportData?.screening || 'No' }}
+              </span>
 
-              <td z-table-cell class="px-2 py-3 whitespace-nowrap">
-                {{ report.date | date: 'dd-MM-yyyy' }}
-              </td>
+              <span class="block text-[11px] leading-snug text-slate-500"></span>
+            </td>
 
-              <td z-table-cell class="px-2 py-3">
-                <span
-                  class="block text-[11px] leading-snug text-slate-500"
-                  [innerHTML]="getScreeningSummary2(report)"
-                >
-                </span>
-              </td>
+            <td class="px-2 py-3 whitespace-nowrap">
+              {{ report.date | date: 'dd-MM-yyyy' }}
+            </td>
 
-              <td z-table-cell class="px-2 py-3">
-                <div class="flex items-center justify-center gap-2">
-                  <button
-                    z-button
-                    zType="outline"
-                    zSize="sm"
-                    (click)="editReport(report.id)"
-                    class="bg-white text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors p-2 flex items-center justify-center shadow-sm rounded-lg border-gray-200"
-                    title="Edit Report"
-                  >
-                    <z-icon zType="edit" class="w-4 h-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
+            <td class="px-2 py-3">
+              <span
+                class="block text-[11px] leading-snug text-slate-500"
+                [innerHTML]="getScreeningSummary(report)"
+              >
+              </span>
+            </td>
+          </tr>
 
-            <!-- Expanded Row -->
-          </ng-container>
-
-          <!-- Empty State -->
-          <tr z-table-row *ngIf="vm.items.length === 0">
+          <tr *ngIf="vm.items.length === 0">
             <td
-              z-table-cell
-              colspan="9"
+              colspan="8"
               class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500"
             >
               No activity reports recorded yet.
@@ -521,20 +513,34 @@
       *ngIf="mobileViewMode === 'table'"
       class="md:hidden overflow-x-auto rounded-md border-b-4 border-blue-500 bg-white shadow-sm"
     >
+      <div class="flex justify-start mb-2 p-2">
+        <button (click)="exportToExcel()">
+          <img
+            src="excel.png"
+            alt="excel download button"
+            class="w-10 h-10 object-contain cursor-pointer hover:scale-110 transition"
+          />
+        </button>
+      </div>
       <table
         class="min-w-225 w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
       >
         <thead class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
+          <!-- <tr>
+            <td colspan="8" class="p-3 text-right">
+              <button (click)="exportToExcel()">
+                <img
+                  src="excel.png"
+                  alt="excel download button"
+                  class="w-8 h-8 object-contain cursor-pointer inline-block"
+                />
+              </button>
+            </td>
+          </tr> -->
           <tr>
             <th class="w-12 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>#</span>
-
-                <input
-                  type="checkbox"
-                  aria-label="Select visible reports"
-                  class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
               </div>
             </th>
 
@@ -545,6 +551,7 @@
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.beneficiaryId"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -557,6 +564,7 @@
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.beneficiaryName"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -569,6 +577,7 @@
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.activity"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -581,6 +590,7 @@
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.session"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -593,6 +603,7 @@
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.screening"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -605,6 +616,7 @@
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.date"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -617,6 +629,7 @@
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
+                  [(ngModel)]="selectedColumns.details"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -666,10 +679,7 @@
                 {{ report.reportData?.screening || 'No' }}
               </span>
 
-              <span
-                class="block text-[11px] leading-snug text-slate-500"
-                [innerHTML]="getScreeningSummary(report)"
-              ></span>
+              <span class="block text-[11px] leading-snug text-slate-500"></span>
             </td>
 
             <td class="px-2 py-3 whitespace-nowrap">
@@ -679,7 +689,7 @@
             <td class="px-2 py-3">
               <span
                 class="block text-[11px] leading-snug text-slate-500"
-                [innerHTML]="getScreeningSummary2(report)"
+                [innerHTML]="getScreeningSummary(report)"
               >
               </span>
             </td>

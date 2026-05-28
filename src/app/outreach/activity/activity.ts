@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { BehaviorSubject, startWith, switchMap, map, shareReplay, combineLatest } from 'rxjs';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
-
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
 import {
@@ -59,6 +60,17 @@ export class Activity {
   searchTerm = '';
   screeningFilter: 'ALL' | 'YES' | 'NO' = 'ALL';
   mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
+
+  selectedColumns = {
+    index: true,
+    beneficiaryId: true,
+    beneficiaryName: true,
+    activity: true,
+    session: true,
+    screening: true,
+    date: true,
+    details: true,
+  };
 
   reports$ = this.refresh$.pipe(
     startWith(undefined),
@@ -190,11 +202,11 @@ export class Activity {
     // Screening Details
     if (data.screening === 'Yes' && data.screeningDetails) {
       const sd = data.screeningDetails;
-      // if (sd.height) parts.push(`H: ${sd.height}cm`);
-      // if (sd.weight) parts.push(`W: ${sd.weight}kg`);
-      // if (sd.bp) parts.push(`BP: ${sd.bp}`);
-      // if (sd.hb) parts.push(`Hb: ${sd.hb}`);
-      // if (sd.sugar) parts.push(`Sugar: ${sd.sugar}`);
+      if (sd.height) parts.push(`H: ${sd.height}cm`);
+      if (sd.weight) parts.push(`W: ${sd.weight}kg`);
+      if (sd.bp) parts.push(`BP: ${sd.bp}`);
+      if (sd.hb) parts.push(`Hb: ${sd.hb}`);
+      if (sd.sugar) parts.push(`Sugar: ${sd.sugar}`);
       if (sd.pads) parts.push(`Pads: ${sd.pads}`);
     }
 
@@ -212,28 +224,102 @@ export class Activity {
     if (parts.length === 0) return data.screening || 'No';
     return parts.join('<br>');
   }
-  getScreeningSummary2(report: any): string {
-    const data = report?.reportData;
+  // getScreeningSummary2(report: any): string {
+  //   const data = report?.reportData;
 
-    if (!data) return '—';
+  //   if (!data) return '—';
 
-    const parts: string[] = [];
+  //   const parts: string[] = [];
 
-    // Screening Details
-    if (data.screening === 'Yes' && data.screeningDetails) {
-      const sd = data.screeningDetails;
+  //   // Screening Details
+  //   if (data.screening === 'Yes' && data.screeningDetails) {
+  //     const sd = data.screeningDetails;
 
-      if (sd.height) parts.push(`H: ${sd.height}cm`);
-      if (sd.weight) parts.push(`W: ${sd.weight}kg`);
-      if (sd.bp) parts.push(`BP: ${sd.bp}`);
-      if (sd.hb) parts.push(`Hb: ${sd.hb}`);
-      if (sd.sugar) parts.push(`Sugar: ${sd.sugar}`);
+  //     if (sd.height) parts.push(`H: ${sd.height}cm`);
+  //     if (sd.weight) parts.push(`W: ${sd.weight}kg`);
+  //     if (sd.bp) parts.push(`BP: ${sd.bp}`);
+  //     if (sd.hb) parts.push(`Hb: ${sd.hb}`);
+  //     if (sd.sugar) parts.push(`Sugar: ${sd.sugar}`);
 
-      // data.lmpDate ? parts.push(`LMP Date: ${data.lmpDate}`) : null;
-    }
+  //     // data.lmpDate ? parts.push(`LMP Date: ${data.lmpDate}`) : null;
+  //     if (sd.pads) parts.push(`Pads: ${sd.pads}`);
+  //   }
 
-    if (parts.length === 0) return data.screening || 'No';
+  //   // Pregnancy Status
+  //   if (data.pregnancyStatus === 'Yes') {
+  //     parts.push('Pregnant');
+  //     data.lmpDate ? parts.push(`lmpDate:${data.lmpDate}`) : '';
+  //   }
 
-    return parts.join('<br>');
+  //   // Nutrition Status
+  //   if (data.samMamStatus) {
+  //     parts.push(`Status: ${data.samMamStatus}`);
+  //   }
+
+  //   if (parts.length === 0) return data.screening || 'No';
+
+  //   return parts.join('<br>');
+  // }
+
+  //==================================================//
+  exportToExcel(): void {
+    this.reports$.subscribe((reports) => {
+      const data = reports.map((report: any, index: number) => {
+        const row: any = {};
+
+        if (this.selectedColumns.index) {
+          row['#'] = index + 1;
+        }
+
+        if (this.selectedColumns.beneficiaryId) {
+          row['Beneficiary ID'] = report.child?.uid || report.beneficiary?.uid || '-';
+        }
+
+        if (this.selectedColumns.beneficiaryName) {
+          row['Beneficiary Name'] = report.child?.name || report.beneficiary?.name || 'Unknown';
+        }
+
+        if (this.selectedColumns.activity) {
+          row['Activity'] = report.activity?.name || '-';
+        }
+
+        if (this.selectedColumns.session) {
+          row['Session'] = report.session?.name || '-';
+        }
+
+        if (this.selectedColumns.screening) {
+          row['Screening'] = report.reportData?.screening || 'No';
+        }
+
+        if (this.selectedColumns.details) {
+          row['Details'] = this.getScreeningSummary(report)?.replace(/<br>/g, '\n') || '';
+        }
+
+        if (this.selectedColumns.date) {
+          row['Date'] = report.date;
+        }
+
+        return row;
+      });
+
+      const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+
+      const workbook: XLSX.WorkBook = {
+        Sheets: { Reports: worksheet },
+        SheetNames: ['Reports'],
+      };
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'array',
+      });
+
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+      });
+
+      saveAs(blob, 'activity-reports.xlsx');
+    });
   }
+  //==================================================//
 }
