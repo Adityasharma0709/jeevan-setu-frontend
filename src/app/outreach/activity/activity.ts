@@ -7,7 +7,14 @@ import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
-import { ZardTableComponent, ZardTableHeaderComponent, ZardTableBodyComponent, ZardTableRowComponent, ZardTableHeadComponent, ZardTableCellComponent } from '@/shared/components/table';
+import {
+  ZardTableComponent,
+  ZardTableHeaderComponent,
+  ZardTableBodyComponent,
+  ZardTableRowComponent,
+  ZardTableHeadComponent,
+  ZardTableCellComponent,
+} from '@/shared/components/table';
 import { UserProfileService } from '../../core/services/user-profile.service';
 
 import { OutreachService } from '../outreach.service';
@@ -18,7 +25,7 @@ import { OutreachService } from '../outreach.service';
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
+    // RouterLink,
     ZardButtonComponent,
     ZardIconComponent,
     ZardTableComponent,
@@ -51,6 +58,7 @@ export class Activity {
   expandedReportId: number | null = null;
   searchTerm = '';
   screeningFilter: 'ALL' | 'YES' | 'NO' = 'ALL';
+  mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
 
   reports$ = this.refresh$.pipe(
     startWith(undefined),
@@ -59,11 +67,13 @@ export class Activity {
       this.page$.next(1); // Reset page on refresh
       return this.outreachService.getMyReports();
     }),
-    map(reports => {
+    map((reports) => {
       this.isLoading = false;
-      return reports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      return reports.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
     }),
-    shareReplay(1)
+    shareReplay(1),
   );
 
   vm$ = combineLatest([
@@ -74,7 +84,7 @@ export class Activity {
   ]).pipe(
     map(([reports, page, search, screeningFilter]) => {
       const normalizedSearch = search.trim().toLowerCase();
-      const filteredReports = reports.filter(report => {
+      const filteredReports = reports.filter((report) => {
         const screening = String(report?.reportData?.screening || 'No').toUpperCase();
         const passesScreening = screeningFilter === 'ALL' || screening === screeningFilter;
 
@@ -90,7 +100,10 @@ export class Activity {
           report.session?.name,
           report.date,
           this.getScreeningSummary(report),
-        ].filter(Boolean).join(' ').toLowerCase();
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
 
         return searchableText.includes(normalizedSearch);
       });
@@ -110,9 +123,9 @@ export class Activity {
         pageCount,
         pageSize: this.pageSize,
         startIndex,
-        endIndex: Math.min(startIndex + this.pageSize, total)
+        endIndex: Math.min(startIndex + this.pageSize, total),
       };
-    })
+    }),
   );
 
   addReport() {
@@ -134,17 +147,18 @@ export class Activity {
   }
 
   cycleScreeningFilter(): void {
-    this.screeningFilter = this.screeningFilter === 'ALL'
-      ? 'YES'
-      : this.screeningFilter === 'YES'
-        ? 'NO'
-        : 'ALL';
+    this.screeningFilter =
+      this.screeningFilter === 'ALL' ? 'YES' : this.screeningFilter === 'YES' ? 'NO' : 'ALL';
     this.page$.next(1);
     this.screeningFilter$.next(this.screeningFilter);
   }
 
   get screeningFilterLabel(): string {
     return this.screeningFilter === 'ALL' ? 'All' : this.screeningFilter;
+  }
+
+  setMobileViewMode(mode: 'quickAccess' | 'table'): void {
+    this.mobileViewMode = mode;
   }
 
   nextPage(): void {
@@ -170,31 +184,56 @@ export class Activity {
   getScreeningSummary(report: any): string {
     const data = report?.reportData;
     if (!data) return '—';
-    
+
     const parts: string[] = [];
 
     // Screening Details
     if (data.screening === 'Yes' && data.screeningDetails) {
       const sd = data.screeningDetails;
-      if (sd.height) parts.push(`H: ${sd.height}cm`);
-      if (sd.weight) parts.push(`W: ${sd.weight}kg`);
-      if (sd.bp) parts.push(`BP: ${sd.bp}`);
-      if (sd.hb) parts.push(`Hb: ${sd.hb}`);
-      if (sd.sugar) parts.push(`Sugar: ${sd.sugar}`);
+      // if (sd.height) parts.push(`H: ${sd.height}cm`);
+      // if (sd.weight) parts.push(`W: ${sd.weight}kg`);
+      // if (sd.bp) parts.push(`BP: ${sd.bp}`);
+      // if (sd.hb) parts.push(`Hb: ${sd.hb}`);
+      // if (sd.sugar) parts.push(`Sugar: ${sd.sugar}`);
       if (sd.pads) parts.push(`Pads: ${sd.pads}`);
     }
 
     // Pregnancy Status
     if (data.pregnancyStatus === 'Yes') {
       parts.push('Pregnant');
+      data.lmpDate ? parts.push(`lmpDate:${data.lmpDate}`) : '';
     }
 
     // Nutrition Status
     if (data.samMamStatus) {
       parts.push(`Status: ${data.samMamStatus}`);
     }
-    
+
     if (parts.length === 0) return data.screening || 'No';
-    return parts.join(', ');
+    return parts.join('<br>');
+  }
+  getScreeningSummary2(report: any): string {
+    const data = report?.reportData;
+
+    if (!data) return '—';
+
+    const parts: string[] = [];
+
+    // Screening Details
+    if (data.screening === 'Yes' && data.screeningDetails) {
+      const sd = data.screeningDetails;
+
+      if (sd.height) parts.push(`H: ${sd.height}cm`);
+      if (sd.weight) parts.push(`W: ${sd.weight}kg`);
+      if (sd.bp) parts.push(`BP: ${sd.bp}`);
+      if (sd.hb) parts.push(`Hb: ${sd.hb}`);
+      if (sd.sugar) parts.push(`Sugar: ${sd.sugar}`);
+
+      // data.lmpDate ? parts.push(`LMP Date: ${data.lmpDate}`) : null;
+    }
+
+    if (parts.length === 0) return data.screening || 'No';
+
+    return parts.join('<br>');
   }
 }
