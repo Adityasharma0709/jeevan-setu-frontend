@@ -16,10 +16,6 @@
           {{ (profile$ | async)?.usercode || (profile$ | async)?.id || '-' }}
         </span>
       </div>
-      <button type="button" z-button zType="ghost" (click)="toggleSidebar()"
-        class="ml-4 text-gray-500 hover:text-gray-800">
-        <z-icon zType="panel-left"></z-icon>
-      </button>
     </div>
     <div class="flex items-center gap-5">
       <div class="hidden sm:flex items-center gap-4 text-blue-800 text-sm font-medium"></div>
@@ -84,8 +80,8 @@
           <!-- Activity -->
           <a routerLink="/outreach/activity" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Activity' : ''" zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="clipboard" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Activity</span> }
+            <z-icon zType="file-text" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
+            @if (!sidebarCollapsed) { <span class="flex-1">Report</span> }
           </a>
 
         </z-sidebar-group>

@@ -1,17 +1,25 @@
-<div class="p-6 max-w-5xl mx-auto space-y-6">
+<div class="space-y-6 max-w-7xl mx-auto p-5 md:p-6 pb-28 md:pb-20">
   <!-- Header -->
-  <header class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">{{ isEditing ? 'Update Activity Report' : 'Activity Report Submission' }}</h1>
-      <p class="text-sm text-gray-500 mt-1">
-        {{ isEditing ? 'Modify health parameters and data for this report.' : 'Redirection from Activity list to submit a new report.' }}
+  <div
+    class="sticky top-0 z-40 -mx-5 -mt-5 space-y-5 rounded-b-3xl border-x border-b border-white/70 bg-white/70 px-5 py-4 shadow-[0_10px_32px_rgba(15,23,42,0.08)] backdrop-blur-2xl ring-1 ring-slate-200/40 md:hidden"
+  >
+    <div class="pt-0.5">
+      <h2 class="text-[18px] font-bold leading-tight text-slate-900">
+        {{ isEditing ? 'Update Activity Report' : 'Activity Report Submission' }}
+      </h2>
+      <p class="text-[14px] text-slate-500">
+        {{
+          isEditing
+            ? 'Modify health parameters and data for this report.'
+            : 'Redirection from Activity list to submit a new report.'
+        }}
       </p>
     </div>
-    <button z-button variant="outline" (click)="cancel()">
+  </div>
+  <!-- <button z-button variant="outline" (click)="cancel()">
       <z-icon zType="x" class="mr-2" />
       Cancel
-    </button>
-  </header>
+    </button> -->
 
   <section class="bg-white border rounded-xl p-6 shadow-sm">
     <form [formGroup]="reportForm" class="space-y-6">
@@ -20,9 +28,9 @@
         <z-form-field>
           <label z-form-label zRequired>Activity</label>
           <z-form-control>
-            <z-combobox 
-              formControlName="activityId" 
-              [options]="(activities$ | async) || []" 
+            <z-combobox
+              formControlName="activityId"
+              [options]="(activities$ | async) || []"
               placeholder="Select activity"
               zWidth="full"
             />
@@ -33,8 +41,8 @@
         <z-form-field>
           <label z-form-label zRequired>Session</label>
           <z-form-control>
-            <z-combobox 
-              formControlName="sessionId" 
+            <z-combobox
+              formControlName="sessionId"
               [options]="(sessions$ | async) || []"
               [zDisabled]="!reportForm.get('activityId')?.value"
               placeholder="Select session"
@@ -47,10 +55,21 @@
         <z-form-field>
           <label z-form-label zRequired>Reporting Date</label>
           <z-form-control class="relative">
-            <input z-input type="text" formControlName="sessionDate" placeholder="DD-MM-YYYY" maxlength="10" class="pr-10" />
+            <input
+              z-input
+              type="text"
+              formControlName="sessionDate"
+              placeholder="DD-MM-YYYY"
+              maxlength="10"
+              class="pr-10"
+            />
             <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
               <z-icon zType="calendar" class="w-4 h-4 text-gray-400 pointer-events-none" />
-              <input type="date" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" (change)="onPickerChange($event)" />
+              <input
+                type="date"
+                class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                (change)="onPickerChange($event)"
+              />
             </div>
           </z-form-control>
         </z-form-field>
@@ -59,16 +78,38 @@
         <z-form-field class="relative">
           <label z-form-label zRequired>Beneficiary</label>
           <z-form-control>
-            <input z-input type="text" placeholder="Search by name, UID or mobile..." (input)="onSearchBeneficiary($event)" [value]="beneficiarySearch$.value" />
-            <div *ngIf="beneficiarySearch$.value && !reportForm.get('beneficiaryId')?.value" class="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-              <div *ngFor="let ben of beneficiaries$ | async" (click)="onSelectBeneficiary(ben)" class="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-sm">
+            <input
+              z-input
+              type="text"
+              placeholder="Search by name, UID or mobile..."
+              (input)="onSearchBeneficiary($event)"
+              [value]="beneficiarySearch$.value"
+            />
+            <div
+              *ngIf="beneficiarySearch$.value && !reportForm.get('beneficiaryId')?.value"
+              class="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto"
+            >
+              <div
+                *ngFor="let ben of beneficiaries$ | async"
+                (click)="onSelectBeneficiary(ben)"
+                class="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-sm"
+              >
                 <div class="flex items-center justify-between">
                   <div class="font-medium">{{ ben.name }}</div>
-                  <div *ngIf="ben.isChild" class="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full font-bold uppercase">Family</div>
+                  <div
+                    *ngIf="ben.isChild"
+                    class="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full font-bold uppercase"
+                  >
+                    Family
+                  </div>
                 </div>
                 <div class="text-[10px] text-gray-500">
-                  <ng-container *ngIf="!ben.isChild">{{ ben.uid }} · {{ ben.mobileNumber }}</ng-container>
-                  <ng-container *ngIf="ben.isChild">Child of {{ ben.parentName }} · {{ ben.uid }}</ng-container>
+                  <ng-container *ngIf="!ben.isChild"
+                    >{{ ben.uid }} · {{ ben.mobileNumber }}</ng-container
+                  >
+                  <ng-container *ngIf="ben.isChild"
+                    >Child of {{ ben.parentName }} · {{ ben.uid }}</ng-container
+                  >
                 </div>
               </div>
             </div>
@@ -76,11 +117,17 @@
         </z-form-field>
 
         <!-- Family Member Selection (Conditional) -->
-        <z-form-field *ngIf="selectedBeneficiary && selectedBeneficiary.children && selectedBeneficiary.children.length > 0">
+        <z-form-field
+          *ngIf="
+            selectedBeneficiary &&
+            selectedBeneficiary.children &&
+            selectedBeneficiary.children.length > 0
+          "
+        >
           <label z-form-label>Target Person (Family Member)</label>
           <z-form-control>
-            <z-combobox 
-              formControlName="childId" 
+            <z-combobox
+              formControlName="childId"
               [options]="familyMemberOptions"
               [searchable]="false"
               placeholder="Select person"
@@ -95,8 +142,8 @@
         <z-form-field>
           <label z-form-label zRequired>Screening/Services</label>
           <z-form-control>
-            <z-combobox 
-              formControlName="screening" 
+            <z-combobox
+              formControlName="screening"
               [options]="screeningOptions"
               [searchable]="false"
               zWidth="full"
@@ -108,7 +155,10 @@
         <z-form-field *ngIf="showPregnancy">
           <label z-form-label>
             Pregnancy Status
-            <span class="ml-1 text-xs font-normal text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-full">Female 14+</span>
+            <span
+              class="ml-1 text-xs font-normal text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-full"
+              >Female 14+</span
+            >
           </label>
           <z-form-control>
             <z-combobox
@@ -128,10 +178,21 @@
             <span class="ml-1 text-xs font-normal text-gray-400">(DD/MM/YYYY)</span>
           </label>
           <z-form-control class="relative">
-            <input z-input type="text" formControlName="lmpDate" placeholder="DD/MM/YYYY" maxlength="10" class="pr-10" />
+            <input
+              z-input
+              type="text"
+              formControlName="lmpDate"
+              placeholder="DD/MM/YYYY"
+              maxlength="10"
+              class="pr-10"
+            />
             <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
               <z-icon zType="calendar" class="w-4 h-4 text-gray-400 pointer-events-none" />
-              <input type="date" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" (change)="onLmpPickerChange($event)" />
+              <input
+                type="date"
+                class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                (change)="onLmpPickerChange($event)"
+              />
             </div>
           </z-form-control>
         </z-form-field>
@@ -140,7 +201,10 @@
         <z-form-field *ngIf="showSamMam">
           <label z-form-label>
             Nutritional Status
-            <span class="ml-1 text-xs font-normal text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">Child ≤ 5 yrs</span>
+            <span
+              class="ml-1 text-xs font-normal text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full"
+              >Child ≤ 5 yrs</span
+            >
           </label>
           <z-form-control>
             <z-combobox
@@ -155,20 +219,36 @@
       </div>
 
       <!-- Tests Selection (Conditional) -->
-      <div *ngIf="reportForm.get('screening')?.value === 'Yes'" class="space-y-4 animate-in fade-in slide-in-from-top-2">
+      <div
+        *ngIf="reportForm.get('screening')?.value === 'Yes'"
+        class="space-y-4 animate-in fade-in slide-in-from-top-2"
+      >
         <div>
-          <label class="text-sm font-medium text-gray-700 mb-2 block">Select Tests/Services Conducted</label>
+          <label class="text-sm font-medium text-gray-700 mb-2 block"
+            >Select Tests/Services Conducted</label
+          >
           <div class="flex flex-wrap gap-2">
-            <button *ngFor="let test of availableTests" type="button" (click)="toggleTest(test.id)"
-              [class]="isTestSelected(test.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-200'"
-              class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors hover:border-indigo-400">
+            <button
+              *ngFor="let test of availableTests"
+              type="button"
+              (click)="toggleTest(test.id)"
+              [class]="
+                isTestSelected(test.id)
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-white text-gray-700 border-gray-200'
+              "
+              class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors hover:border-indigo-400"
+            >
               {{ test.label }}
             </button>
           </div>
         </div>
 
         <!-- Test Results Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4" [formGroup]="$any(reportForm.get('testValues'))">
+        <div
+          class="grid grid-cols-1 md:grid-cols-3 gap-4"
+          [formGroup]="$any(reportForm.get('testValues'))"
+        >
           <!-- Height -->
           <z-form-field *ngIf="isTestSelected('height')">
             <label z-form-label>Height (cm)</label>
@@ -219,8 +299,8 @@
           <z-form-field *ngIf="isTestSelected('cervicalCancer')">
             <label z-form-label>Cervical Cancer</label>
             <z-form-control>
-              <z-combobox 
-                formControlName="cervicalCancer" 
+              <z-combobox
+                formControlName="cervicalCancer"
                 [options]="cancerResultOptions"
                 [searchable]="false"
                 zWidth="full"
@@ -232,8 +312,8 @@
           <z-form-field *ngIf="isTestSelected('breastCancer')">
             <label z-form-label>Breast Cancer</label>
             <z-form-control>
-              <z-combobox 
-                formControlName="breastCancer" 
+              <z-combobox
+                formControlName="breastCancer"
                 [options]="cancerResultOptions"
                 [searchable]="false"
                 zWidth="full"
@@ -254,9 +334,23 @@
       <div class="flex items-center justify-between gap-2 pt-6 border-t mt-4">
         <div class="flex items-center gap-3">
           <button z-button type="button" variant="ghost" (click)="cancel()">Cancel</button>
-          <button z-button type="button" [disabled]="isSubmitting" (click)="submit()" class="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]">
+          <button
+            z-button
+            type="button"
+            [disabled]="isSubmitting"
+            (click)="submit()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]"
+          >
             <z-icon zType="check" class="mr-2" *ngIf="!isSubmitting" />
-            {{ isSubmitting ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update Report' : 'Submit Report') }}
+            {{
+              isSubmitting
+                ? isEditing
+                  ? 'Updating...'
+                  : 'Submitting...'
+                : isEditing
+                  ? 'Update Report'
+                  : 'Submit Report'
+            }}
           </button>
         </div>
       </div>

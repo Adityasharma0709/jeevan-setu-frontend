@@ -12,6 +12,7 @@ import { ZardInputDirective } from '@/shared/components/input';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
 import { OutreachService } from '../outreach.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-outreach-profile',
@@ -33,6 +34,7 @@ export class Profile implements OnInit {
   private outreachService = inject(OutreachService);
   private fb = inject(FormBuilder);
   private api = inject(ApiService);
+  private router = inject(Router);
   private readonly cacheKey = 'outreach.profile.cache';
 
   isSubmitting = false;
@@ -133,5 +135,10 @@ export class Profile implements OnInit {
         this.isSubmitting = false;
       }
     });
+    
   }
+    cancel() {
+    this.router.navigate(['/outreach/activity']);
+  }
+
 }

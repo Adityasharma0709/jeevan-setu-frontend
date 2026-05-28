@@ -33,8 +33,8 @@ import { CreateBeneficiaryPayload, OutreachLocation, OutreachService } from '../
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardInputDirective,
-    ZardBreadcrumbComponent,
-    ZardBreadcrumbItemComponent,
+    // ZardBreadcrumbComponent,
+    // ZardBreadcrumbItemComponent,
     ZardComboboxComponent
   ],
   templateUrl: './create-beneficiary.html',
