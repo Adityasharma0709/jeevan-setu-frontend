@@ -23,7 +23,7 @@ import { Router } from '@angular/router';
     ZardButtonComponent,
     ZardFormControlComponent,
     ZardFormFieldComponent,
-    ZardIconComponent,
+    // ZardIconComponent,
     ZardInputDirective,
     LottieComponent,
   ],

@@ -120,8 +120,11 @@ export class ReportActivity {
   ];
 
   pregnancyStatusOptions: ZardComboboxOption[] = [
-    { value: 'Yes', label: 'Yes' }
+    { value: 'Yes', label: 'Yes' },
+    { value: 'Lactating', label: 'Lactating' },
+    { value: 'Aborted', label: 'Aborted' },
   ];
+
 
   samMamOptions: ZardComboboxOption[] = [
     { value: 'SAM', label: 'SAM (Severe Acute Malnutrition)' },
