@@ -1,16 +1,12 @@
 <div class="activity-page space-y-6 max-w-7xl mx-auto p-5 md:p-6 pb-28 md:pb-20">
   <div
-    class="sticky top-0 z-40 -mx-5 -mt-5 space-y-5 rounded-b-[24px] border-x border-b border-white/70 bg-white/70 px-5 py-4 shadow-[0_10px_32px_rgba(15,23,42,0.08)] backdrop-blur-2xl ring-1 ring-slate-200/40 md:hidden"
+    class="sticky top-0 z-40 -mx-5 -mt-5 space-y-5 rounded-b-3xl border-x border-b border-white/70 bg-white/70 px-5 py-4 shadow-[0_10px_32px_rgba(15,23,42,0.08)] backdrop-blur-2xl ring-1 ring-slate-200/40 md:hidden"
   >
-    <div class="pt-0.5 pr-14" *ngIf="profile$ | async as profile">
-      <h2 class="text-[18px] font-bold leading-tight text-slate-900">
-        {{ profile.name || 'Outreach Worker' }}
-      </h2>
-      <p class="text-[15px] leading-tight text-slate-600">
-        {{ profile.roleLabel || 'Outreach Worker' }} {{ profile.usercode || profile.id || '-' }}
-      </p>
-    </div>
+    <div class="pt-0.5">
+      <h2 class="text-[18px] font-bold leading-tight text-slate-900">Activity Report</h2>
 
+      <p class="text-[14px] text-slate-500">Manage and track health records</p>
+    </div>
     <div class="flex items-center gap-3">
       <label class="relative flex-1">
         <z-icon
@@ -24,23 +20,34 @@
           class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
         />
       </label>
-
-      <button
-        type="button"
-        (click)="cycleScreeningFilter()"
-        class="relative flex h-11 w-12 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50 active:bg-indigo-50"
-        [class.border-[#0F766E]]="screeningFilter !== 'ALL'"
-        [class.text-[#0F766E]]="screeningFilter !== 'ALL'"
-        [attr.aria-label]="'Screening filter: ' + screeningFilterLabel"
-      >
-        <z-icon zType="list-filter-plus" class="h-5 w-5"></z-icon>
-        <span
-          *ngIf="screeningFilter !== 'ALL'"
-          class="absolute -right-1 -top-1 rounded-full bg-[#0F766E] px-1.5 py-0.5 text-[9px] font-bold text-white"
+    </div>
+    <div class="md:hidden overflow-hidden rounded-md border border-sky-400 bg-white">
+      <div class="grid grid-cols-2">
+        <button
+          type="button"
+          (click)="setMobileViewMode('quickAccess')"
+          class="py-2.5 text-center text-[24px] leading-none transition"
+          [ngClass]="
+            mobileViewMode === 'quickAccess'
+              ? 'bg-sky-50 font-semibold text-slate-900'
+              : 'bg-white font-normal text-slate-700'
+          "
         >
-          {{ screeningFilterLabel }}
-        </span>
-      </button>
+          Quick access
+        </button>
+        <button
+          type="button"
+          (click)="setMobileViewMode('table')"
+          class="py-2.5 text-center text-[24px] leading-none transition"
+          [ngClass]="
+            mobileViewMode === 'table'
+              ? 'bg-sky-50 font-semibold text-slate-900'
+              : 'bg-white font-normal text-slate-700'
+          "
+        >
+          Table
+        </button>
+      </div>
     </div>
   </div>
 
@@ -49,6 +56,9 @@
     <div class="flex items-end justify-between gap-4 flex-wrap">
       <div class="flex-1 min-w-[280px]">
         <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">Activity Reports</h1>
+        <p class="text-gray-500 mt-1">
+          Manage and track health records for your assigned locations.
+        </p>
       </div>
 
       <button
@@ -95,10 +105,6 @@
     </nav>
   </div>
 
-  <h1 class="md:hidden text-[36px] font-extrabold leading-none tracking-normal text-slate-900">
-    Activity Repoorts
-  </h1>
-
   <!-- Reports Content -->
   <ng-container *ngIf="vm$ | async as vm; else loadingTpl">
     <!-- Large Screens: Modernized Table View -->
@@ -132,12 +138,6 @@
             <th class="w-12 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>#</span>
-
-                <input
-                  type="checkbox"
-                  aria-label="Select visible reports"
-                  class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
               </div>
             </th>
 
@@ -304,37 +304,16 @@
       </table>
     </div>
 
-    <div class="md:hidden overflow-hidden rounded-md border border-sky-400 bg-white">
-      <div class="grid grid-cols-2">
-        <button
-          type="button"
-          (click)="setMobileViewMode('quickAccess')"
-          class="py-2.5 text-center text-[24px] leading-none transition"
-          [ngClass]="
-            mobileViewMode === 'quickAccess'
-              ? 'bg-sky-50 font-semibold text-slate-900'
-              : 'bg-white font-normal text-slate-700'
-          "
-        >
-          Quick access
-        </button>
-        <button
-          type="button"
-          (click)="setMobileViewMode('table')"
-          class="py-2.5 text-center text-[24px] leading-none transition"
-          [ngClass]="
-            mobileViewMode === 'table'
-              ? 'bg-sky-50 font-semibold text-slate-900'
-              : 'bg-white font-normal text-slate-700'
-          "
-        >
-          Table
-        </button>
-      </div>
-    </div>
-
     <!-- Small Screens: Mobile Responsive Cards -->
     <div *ngIf="mobileViewMode === 'quickAccess'" class="md:hidden space-y-5">
+      <button
+        type="button"
+        (click)="addReport()"
+        class="fixed bottom-[calc(84px+env(safe-area-inset-bottom))] right-[clamp(14px,4vw,22px)] z-50 flex h-[clamp(56px,15vw,64px)] w-[clamp(56px,15vw,64px)] items-center justify-center rounded-full bg-[#4357F0] text-white shadow-[0_14px_28px_rgba(30,64,175,0.24)] transition active:bg-[#1D4ED8] md:hidden"
+        aria-label="Submit new report"
+      >
+        <z-icon zType="plus" class="h-[clamp(30px,8vw,36px)] w-[clamp(30px,8vw,36px)]"></z-icon>
+      </button>
       <div
         *ngFor="let report of vm.items"
         class="min-h-[250px] rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition active:bg-[#CCFBF1]/20"
@@ -702,15 +681,6 @@
         </tbody>
       </table>
     </div>
-
-    <button
-      type="button"
-      (click)="addReport()"
-      class="fixed bottom-[calc(84px+env(safe-area-inset-bottom))] right-[clamp(14px,4vw,22px)] z-50 flex h-[clamp(56px,15vw,64px)] w-[clamp(56px,15vw,64px)] items-center justify-center rounded-full bg-[#4357F0] text-white shadow-[0_14px_28px_rgba(30,64,175,0.24)] transition active:bg-[#1D4ED8] md:hidden"
-      aria-label="Submit new report"
-    >
-      <z-icon zType="plus" class="h-[clamp(30px,8vw,36px)] w-[clamp(30px,8vw,36px)]"></z-icon>
-    </button>
 
     <!-- Standardized Pagination (Admin Style) -->
     <div
