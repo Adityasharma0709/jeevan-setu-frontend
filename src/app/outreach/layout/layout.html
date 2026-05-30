@@ -55,7 +55,7 @@
           <a routerLink="/outreach" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }"
             class="menu-link" [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
             zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
+            <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
             @if (!sidebarCollapsed) { <span class="flex-1">Dashboard</span> }
           </a>
 
@@ -65,7 +65,7 @@
           <a routerLink="/outreach/requests" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'My Requests' : ''"
             zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="inbox" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
+            <z-icon zType="inbox" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
             @if (!sidebarCollapsed) { <span class="flex-1">My Requests</span> }
           </a>
 
@@ -73,14 +73,14 @@
           <a routerLink="/outreach/beneficiaries" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Beneficiaries' : ''"
             zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
+            <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
             @if (!sidebarCollapsed) { <span class="flex-1">Beneficiaries</span> }
           </a>
 
           <!-- Activity -->
           <a routerLink="/outreach/activity" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Activity' : ''" zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="file-text" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
+            <z-icon zType="file-text" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
             @if (!sidebarCollapsed) { <span class="flex-1">Report</span> }
           </a>
 
@@ -91,7 +91,7 @@
 
           <a routerLink="/outreach/profile" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''" zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-3 text-blue-500'" />
+            <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
             @if (!sidebarCollapsed) { <span class="flex-1 text-left">Profile</span> }
           </a>
 

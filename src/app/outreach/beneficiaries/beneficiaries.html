@@ -31,30 +31,32 @@
         />
       </label>
     </div>
-    <div class="md:hidden overflow-hidden rounded-md border border-sky-400 bg-white">
+    <div class="md:hidden overflow-hidden rounded-md border border-[#F3F4F6] bg-white">
       <div class="grid grid-cols-2">
         <button
           type="button"
           (click)="setMobileViewMode('quickAccess')"
-          class="py-2.5 text-center text-[24px] leading-none transition"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
           [ngClass]="
             mobileViewMode === 'quickAccess'
-              ? 'bg-sky-50 font-semibold text-slate-900'
-              : 'bg-white font-normal text-slate-700'
+              ? 'rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
+              : 'rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
           "
         >
+          <z-icon zType="popcorn"></z-icon>
           Quick access
         </button>
         <button
           type="button"
           (click)="setMobileViewMode('table')"
-          class="py-2.5 text-center text-[24px] leading-none transition"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
           [ngClass]="
             mobileViewMode === 'table'
-              ? 'bg-sky-50 font-semibold text-slate-900'
-              : 'bg-white font-normal text-slate-700'
+              ? ' rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
+              : ' rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
           "
         >
+          <z-icon zType="popcorn"></z-icon>
           Table
         </button>
       </div>
@@ -86,7 +88,7 @@
       <button
         z-button
         (click)="navigateToCreate()"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 active:translate-y-0"
+        class="bg-[#006666] hover:bg-[#006666] text-white shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 active:translate-y-0"
       >
         <z-icon zType="plus" class="w-4 h-4 mr-2" />
         Add New Beneficiary
@@ -309,7 +311,7 @@
       <button
         type="button"
         (click)="navigateToCreate()"
-        class="fixed bottom-[calc(84px+env(safe-area-inset-bottom))] right-[clamp(14px,4vw,22px)] z-50 flex h-[clamp(56px,15vw,64px)] w-[clamp(56px,15vw,64px)] items-center justify-center rounded-full bg-[#4357F0] text-white shadow-[0_14px_28px_rgba(30,64,175,0.24)] transition active:bg-[#1D4ED8] md:hidden"
+        class="fixed bottom-[calc(84px+env(safe-area-inset-bottom))] right-[clamp(14px,4vw,22px)] z-50 flex h-[clamp(56px,15vw,64px)] w-[clamp(56px,15vw,64px)] items-center justify-center rounded-full bg-[#006666] text-white shadow-[0_14px_28px_rgba(30,64,175,0.24)] transition active:bg-[#006666] md:hidden"
         aria-label="Submit new report"
       >
         <z-icon zType="plus" class="h-[clamp(30px,8vw,36px)] w-[clamp(30px,8vw,36px)]"></z-icon>
@@ -326,9 +328,11 @@
               {{ beneficiary.name }}
             </h3>
             <p class="text-[15px] leading-tight text-slate-600">
-              {{ beneficiary.uid }}&middot; <span class="text-[12px] text-gray-400 uppercase font-black tracking-widest"
+              {{ beneficiary.uid }}&middot;
+              <span class="text-[12px] text-gray-400 uppercase font-black tracking-widest"
                 >MOB:</span
-              > {{ beneficiary.mobileNumber || '-' }}
+              >
+              {{ beneficiary.mobileNumber || '-' }}
             </p>
           </div>
 
@@ -342,14 +346,19 @@
           </button> -->
         </div>
         <div class="mt-6 space-y-2 text-[18px] leading-snug text-slate-800">
-          <p>    <span class="text-[12px] text-gray-400 uppercase font-black tracking-widest"
-                >Location:</span
-              > {{ beneficiary.village || beneficiary.location?.village || '-' }}</p>
-          <p>   <span class="text-[12px] text-gray-400 uppercase font-black tracking-widest"
-                >Project:</span
-              > {{ beneficiary.project?.name || '-' }}</p>
+          <p>
+            <span class="text-[12px] text-gray-400 uppercase font-black tracking-widest"
+              >Location:</span
+            >
+            {{ beneficiary.village || beneficiary.location?.village || '-' }}
+          </p>
+          <p>
+            <span class="text-[12px] text-gray-400 uppercase font-black tracking-widest"
+              >Project:</span
+            >
+            {{ beneficiary.project?.name || '-' }}
+          </p>
         </div>
-      
       </div>
 
       <!-- MOBILE EMPTY STATE -->

@@ -11,19 +11,19 @@
 }
 
 .menu-link:hover {
-  background: #eff6ff;
-  color: #1e3a8a;
+  background: #f0f9f9;
+  color: #006666;
 }
 
 .active-link {
-  background: #dbeafe;
-  color: #1e3a8a;
-  border-left: 4px solid #2563eb;
+  background: #f0f9f9;
+  color: #006666;
+  border-left: 4px solid #006666;
   font-weight: 600;
 }
 
 .active-link z-icon {
-  color: #2563eb !important;
+  color: #006666 !important;
 }
 
 .mobile-bottom-nav {
@@ -62,10 +62,10 @@
 }
 
 .mobile-tab-active {
-  color: #1d4ed8;
+  color: #006666;
 }
 
 .mobile-tab-active .mobile-tab-icon {
-  color: #1d4ed8 !important;
+  color:#006666 !important;
   stroke-width: 2.6;
 }

@@ -69,6 +69,8 @@ export class LoginComponent {
           this.router.navigate(['/manager']);
         } else if (roles.includes('OUTREACH')) {
           this.router.navigate(['/outreach']);
+        } else if (roles.includes('ANALYST')) {
+          this.router.navigate(['/analyst']);
         }
       },
       error: (err) => {

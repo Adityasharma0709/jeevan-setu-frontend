@@ -21,30 +21,32 @@
         />
       </label>
     </div>
-    <div class="md:hidden overflow-hidden rounded-md border border-sky-400 bg-white">
+    <div class="md:hidden overflow-hidden rounded-md border border-[#F3F4F6] bg-white">
       <div class="grid grid-cols-2">
         <button
           type="button"
           (click)="setMobileViewMode('quickAccess')"
-          class="py-2.5 text-center text-[24px] leading-none transition"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
           [ngClass]="
             mobileViewMode === 'quickAccess'
-              ? 'bg-sky-50 font-semibold text-slate-900'
-              : 'bg-white font-normal text-slate-700'
+              ? 'rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
+              : 'rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
           "
         >
+          <z-icon zType="popcorn"></z-icon>
           Quick access
         </button>
         <button
           type="button"
           (click)="setMobileViewMode('table')"
-          class="py-2.5 text-center text-[24px] leading-none transition"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
           [ngClass]="
             mobileViewMode === 'table'
-              ? 'bg-sky-50 font-semibold text-slate-900'
-              : 'bg-white font-normal text-slate-700'
+              ? ' rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
+              : ' rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
           "
         >
+          <z-icon zType="popcorn"></z-icon>
           Table
         </button>
       </div>
@@ -309,7 +311,7 @@
       <button
         type="button"
         (click)="addReport()"
-        class="fixed bottom-[calc(84px+env(safe-area-inset-bottom))] right-[clamp(14px,4vw,22px)] z-50 flex h-[clamp(56px,15vw,64px)] w-[clamp(56px,15vw,64px)] items-center justify-center rounded-full bg-[#4357F0] text-white shadow-[0_14px_28px_rgba(30,64,175,0.24)] transition active:bg-[#1D4ED8] md:hidden"
+         class="fixed bottom-[calc(84px+env(safe-area-inset-bottom))] right-[clamp(14px,4vw,22px)] z-50 flex h-[clamp(56px,15vw,64px)] w-[clamp(56px,15vw,64px)] items-center justify-center rounded-full bg-[#006666] text-white shadow-[0_14px_28px_rgba(30,64,175,0.24)] transition active:bg-[#006666] md:hidden"
         aria-label="Submit new report"
       >
         <z-icon zType="plus" class="h-[clamp(30px,8vw,36px)] w-[clamp(30px,8vw,36px)]"></z-icon>
@@ -349,7 +351,7 @@
           <p>{{ report.session?.name || '-' }}</p>
         </div>
 
-        <div class="mt-9 flex items-center justify-end gap-8 pr-3 text-blue-700">
+        <div class="mt-9 flex items-center justify-end gap-8 pr-3 text-[#006666]">
           <button
             type="button"
             class="flex h-12 w-12 items-center justify-center rounded-full transition hover:bg-[#CCFBF1] active:bg-[#CCFBF1]"

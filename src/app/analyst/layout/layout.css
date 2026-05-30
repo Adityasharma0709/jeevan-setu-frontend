@@ -1,0 +1,27 @@
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #4b5563; /* text-gray-600 */
+  transition: 0.2s;
+  border-left: 4px solid transparent;
+}
+
+.menu-link:hover {
+  background: #f8fafc; /* slate-50 */
+  color: #0f4c75; /* deep blue */
+}
+
+.active-link {
+  background: #e0f2fe; /* sky-100 */
+  color: #0369a1; /* sky-700 */
+  border-left: 4px solid #0284c7; /* sky-600 */
+  font-weight: 600;
+}
+
+.active-link z-icon {
+  color: #0284c7 !important;
+}
