@@ -30,12 +30,12 @@ import { OutreachService } from '../outreach.service';
     ZardIconComponent,
     LottieComponent,
     // RouterLink,
-    // ZardTableComponent,
-    // ZardTableHeaderComponent,
-    // ZardTableBodyComponent,
-    // ZardTableRowComponent,
-    // ZardTableHeadComponent,
-    // ZardTableCellComponent,
+    ZardTableComponent,
+    ZardTableHeaderComponent,
+    ZardTableBodyComponent,
+    ZardTableRowComponent,
+    ZardTableHeadComponent,
+    ZardTableCellComponent,
     
   ],
   templateUrl: './activity.html',
@@ -54,6 +54,10 @@ export class Activity {
   private readonly screeningFilter$ = new BehaviorSubject<'ALL' | 'YES' | 'NO'>('ALL');
   private lastPage = 1;
   private lastPageCount = 1;
+
+  // Sorting
+  readonly sortCol$ = new BehaviorSubject<string | null>(null);
+  readonly sortDir$ = new BehaviorSubject<'asc' | 'desc'>('asc');
 
   isLoading = true;
   expandedReportId: number | null = null;
@@ -153,9 +157,11 @@ vm$ = combineLatest([
     map(value => (value || '').trim().toLowerCase())
   ),
   this.screeningFilter$.asObservable(),
+  this.sortCol$.asObservable(),
+  this.sortDir$.asObservable()
 ]).pipe(
 
-  map(([reports, page, search, screeningFilter]) => {
+  map(([reports, page, search, screeningFilter, sortCol, sortDir]) => {
 
     const filteredReports = reports.filter((report) => {
 
@@ -188,7 +194,48 @@ vm$ = combineLatest([
       return searchableText.includes(search);
     });
 
-    const total = filteredReports.length;
+    let sortedReports = [...filteredReports];
+    if (sortCol) {
+      sortedReports.sort((a: any, b: any) => {
+        let aVal: any;
+        let bVal: any;
+
+        if (sortCol === 'beneficiaryId') {
+          aVal = a.child?.uid || a.beneficiary?.uid || '';
+          bVal = b.child?.uid || b.beneficiary?.uid || '';
+        } else if (sortCol === 'beneficiaryName') {
+          aVal = a.child?.name || a.beneficiary?.name || '';
+          bVal = b.child?.name || b.beneficiary?.name || '';
+        } else if (sortCol === 'activity') {
+          aVal = a.activity?.name || '';
+          bVal = b.activity?.name || '';
+        } else if (sortCol === 'session') {
+          aVal = a.session?.name || '';
+          bVal = b.session?.name || '';
+        } else if (sortCol === 'screening') {
+          aVal = a.reportData?.screening || '';
+          bVal = b.reportData?.screening || '';
+        } else if (sortCol === 'date') {
+          aVal = new Date(a.date).getTime() || 0;
+          bVal = new Date(b.date).getTime() || 0;
+        } else if (sortCol === 'details') {
+          aVal = this.getScreeningSummary(a) || '';
+          bVal = this.getScreeningSummary(b) || '';
+        } else {
+          aVal = a[sortCol];
+          bVal = b[sortCol];
+        }
+
+        if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+        if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+        if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    const total = sortedReports.length;
 
     const pageCount = Math.max(
       1,
@@ -207,7 +254,7 @@ vm$ = combineLatest([
     this.lastPageCount = pageCount;
 
     return {
-      items: filteredReports.slice(
+      items: sortedReports.slice(
         startIndex,
         startIndex + this.pageSize
       ),
@@ -225,6 +272,18 @@ vm$ = combineLatest([
     };
   }),
 );
+
+  sortBy(col: string) {
+    const current = this.sortCol$.value;
+    const dir = this.sortDir$.value;
+    if (current === col) {
+      if (dir === 'asc') this.sortDir$.next('desc');
+      else { this.sortCol$.next(null); this.sortDir$.next('asc'); }
+    } else {
+      this.sortCol$.next(col);
+      this.sortDir$.next('asc');
+    }
+  }
 
   addReport() {
     this.router.navigate(['/outreach/report-activity']);

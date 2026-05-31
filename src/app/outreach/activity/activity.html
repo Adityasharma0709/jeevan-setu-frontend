@@ -123,10 +123,10 @@
         </button>
       </div> -->
 
-      <table class="w-full table-fixed border-collapse text-left text-[13px] text-slate-900">
-        <thead class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
-          <tr>
-            <td colspan="8" class="p-3 text-right">
+      <table z-table zType="grid" class="w-full table-fixed border-collapse text-left text-[13px] text-slate-900">
+        <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
+          <tr z-table-row>
+            <td z-table-cell colspan="8" class="p-3 text-right">
               <button (click)="exportToExcel()">
                 <img
                   src="excel.png"
@@ -136,99 +136,134 @@
               </button>
             </td>
           </tr>
-          <tr>
-            <th class="w-12 border-b border-slate-300 px-2 py-1.5">
+          <tr z-table-row>
+            <th z-table-head class="w-12 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>#</span>
               </div>
             </th>
 
-            <th class="w-28 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('beneficiaryId')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Beneficiary<br />id</span>
+                <span class="flex items-center gap-1">
+                  Beneficiary<br />id
+                  <z-icon [zType]="(sortCol$ | async) === 'beneficiaryId' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'beneficiaryId' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.beneficiaryId"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('beneficiaryName')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Beneficiary<br />name</span>
+                <span class="flex items-center gap-1">
+                  Beneficiary<br />name
+                  <z-icon [zType]="(sortCol$ | async) === 'beneficiaryName' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'beneficiaryName' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.beneficiaryName"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('activity')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Activity</span>
+                <span class="flex items-center gap-1">
+                  Activity
+                  <z-icon [zType]="(sortCol$ | async) === 'activity' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'activity' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.activity"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-32 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('session')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Session</span>
+                <span class="flex items-center gap-1">
+                  Session
+                  <z-icon [zType]="(sortCol$ | async) === 'session' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'session' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.session"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-44 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-44 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('screening')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Screening /<br />Services</span>
+                <span class="flex items-center gap-1">
+                  Screening /<br />Services
+                  <z-icon [zType]="(sortCol$ | async) === 'screening' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'screening' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.screening"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-28 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('date')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Date</span>
+                <span class="flex items-center gap-1">
+                  Date
+                  <z-icon [zType]="(sortCol$ | async) === 'date' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'date' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.date"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-24 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('details')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Details</span>
+                <span class="flex items-center gap-1">
+                  Details
+                  <z-icon [zType]="(sortCol$ | async) === 'details' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'details' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.details"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -236,19 +271,19 @@
           </tr>
         </thead>
 
-        <tbody class="divide-y divide-slate-100 text-[13px]">
-          <tr *ngFor="let report of vm.items; let i = index" class="align-top">
+        <tbody z-table-body class="divide-y divide-slate-100 text-[13px]">
+          <tr z-table-row *ngFor="let report of vm.items; let i = index" class="align-top">
             <!-- FIXED: removed extra empty td -->
 
-            <td class="px-2 py-3 text-center font-semibold">
+            <td z-table-cell class="px-2 py-3 text-center font-semibold">
               {{ vm.startIndex + i + 1 }}
             </td>
 
-            <td class="px-2 py-3 font-mono text-[12px] text-slate-600">
+            <td z-table-cell class="px-2 py-3 font-mono text-[12px] text-slate-600">
               {{ report.child?.uid || report.beneficiary?.uid || '-' }}
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span class="block font-semibold text-slate-900">
                 {{ report.child?.name || report.beneficiary?.name || 'Unknown' }}
               </span>
@@ -258,15 +293,15 @@
               </span>
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               {{ report.activity?.name || '-' }}
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               {{ report.session?.name || '-' }}
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span
                 [class]="
                   report.reportData?.screening === 'Yes'
@@ -281,11 +316,11 @@
               <span class="block text-[11px] leading-snug text-slate-500"></span>
             </td>
 
-            <td class="px-2 py-3 whitespace-nowrap">
+            <td z-table-cell class="px-2 py-3 whitespace-nowrap">
               {{ report.date | date: 'dd-MM-yyyy' }}
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span
                 class="block text-[11px] leading-snug text-slate-500"
                 [innerHTML]="getScreeningSummary(report)"
@@ -294,8 +329,9 @@
             </td>
           </tr>
 
-          <tr *ngIf="vm.items.length === 0">
+          <tr z-table-row *ngIf="vm.items.length === 0">
             <td
+              z-table-cell
               colspan="8"
               class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500"
             >
@@ -503,10 +539,8 @@
                 />
       </button>
       
-      <table
-        class="min-w-225 w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
-      >
-        <thead class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
+      <table z-table zType="grid" class="min-w-225 w-full table-fixed border-collapse text-left text-[13px] text-slate-900">
+        <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <!-- <tr>
             <td colspan="8" class="p-3 text-right">
               <button (click)="exportToExcel()">
@@ -518,99 +552,134 @@
               </button>
             </td>
           </tr> -->
-          <tr>
-            <th class="w-12 border-b border-slate-300 px-2 py-1.5">
+          <tr z-table-row>
+            <th z-table-head class="w-12 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>#</span>
               </div>
             </th>
 
-            <th class="w-28 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('beneficiaryId')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Beneficiary<br />id</span>
+                <span class="flex items-center gap-1">
+                  Beneficiary<br />id
+                  <z-icon [zType]="(sortCol$ | async) === 'beneficiaryId' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'beneficiaryId' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.beneficiaryId"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('beneficiaryName')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Beneficiary<br />name</span>
+                <span class="flex items-center gap-1">
+                  Beneficiary<br />name
+                  <z-icon [zType]="(sortCol$ | async) === 'beneficiaryName' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'beneficiaryName' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.beneficiaryName"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('activity')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Activity</span>
+                <span class="flex items-center gap-1">
+                  Activity
+                  <z-icon [zType]="(sortCol$ | async) === 'activity' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'activity' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.activity"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-32 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('session')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Session</span>
+                <span class="flex items-center gap-1">
+                  Session
+                  <z-icon [zType]="(sortCol$ | async) === 'session' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'session' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.session"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-44 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-44 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('screening')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Screening /<br />Services</span>
+                <span class="flex items-center gap-1">
+                  Screening /<br />Services
+                  <z-icon [zType]="(sortCol$ | async) === 'screening' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'screening' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.screening"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-28 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('date')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Date</span>
+                <span class="flex items-center gap-1">
+                  Date
+                  <z-icon [zType]="(sortCol$ | async) === 'date' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'date' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.date"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-24 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('details')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Details</span>
+                <span class="flex items-center gap-1">
+                  Details
+                  <z-icon [zType]="(sortCol$ | async) === 'details' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'details' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.details"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -618,19 +687,19 @@
           </tr>
         </thead>
 
-        <tbody class="divide-y divide-slate-100 text-[13px]">
-          <tr *ngFor="let report of vm.items; let i = index" class="align-top">
+        <tbody z-table-body class="divide-y divide-slate-100 text-[13px]">
+          <tr z-table-row *ngFor="let report of vm.items; let i = index" class="align-top">
             <!-- FIXED: removed extra empty td -->
 
-            <td class="px-2 py-3 text-center font-semibold">
+            <td z-table-cell class="px-2 py-3 text-center font-semibold">
               {{ vm.startIndex + i + 1 }}
             </td>
 
-            <td class="px-2 py-3 font-mono text-[12px] text-slate-600">
+            <td z-table-cell class="px-2 py-3 font-mono text-[12px] text-slate-600">
               {{ report.child?.uid || report.beneficiary?.uid || '-' }}
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span class="block font-semibold text-slate-900">
                 {{ report.child?.name || report.beneficiary?.name || 'Unknown' }}
               </span>
@@ -640,15 +709,15 @@
               </span>
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               {{ report.activity?.name || '-' }}
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               {{ report.session?.name || '-' }}
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span
                 [class]="
                   report.reportData?.screening === 'Yes'
@@ -663,11 +732,11 @@
               <span class="block text-[11px] leading-snug text-slate-500"></span>
             </td>
 
-            <td class="px-2 py-3 whitespace-nowrap">
+            <td z-table-cell class="px-2 py-3 whitespace-nowrap">
               {{ report.date | date: 'dd-MM-yyyy' }}
             </td>
 
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span
                 class="block text-[11px] leading-snug text-slate-500"
                 [innerHTML]="getScreeningSummary(report)"
@@ -676,8 +745,9 @@
             </td>
           </tr>
 
-          <tr *ngIf="vm.items.length === 0">
+          <tr z-table-row *ngIf="vm.items.length === 0">
             <td
+              z-table-cell
               colspan="8"
               class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500"
             >

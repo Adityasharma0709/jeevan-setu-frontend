@@ -134,11 +134,13 @@
     >
       <!-- TABLE -->
       <table
+        z-table
+        zType="grid"
         class="min-w-225 w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
       >
-        <thead class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
-          <tr>
-            <td colspan="7" class="p-3 text-right">
+        <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
+          <tr z-table-row>
+            <td z-table-cell colspan="7" class="p-3 text-right">
               <button (click)="exportToExcel()">
                 <img
                   src="excel.png"
@@ -148,86 +150,116 @@
               </button>
             </td>
           </tr>
-          <tr>
-            <th class="w-12 border-b border-slate-300 px-2 py-1.5">
+          <tr z-table-row>
+            <th z-table-head class="w-12 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>#</span>
               </div>
             </th>
 
-            <th class="w-28 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('uid')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Beneficiary<br />id</span>
+                <span class="flex items-center gap-1">
+                  Beneficiary<br />id
+                  <z-icon [zType]="(sortCol$ | async) === 'uid' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'uid' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.uid"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('name')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Beneficiary<br />name</span>
+                <span class="flex items-center gap-1">
+                  Beneficiary<br />name
+                  <z-icon [zType]="(sortCol$ | async) === 'name' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'name' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.name"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('gender')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Gender</span>
+                <span class="flex items-center gap-1">
+                  Gender
+                  <z-icon [zType]="(sortCol$ | async) === 'gender' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'gender' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.gender"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('mobileNumber')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Mobile</span>
+                <span class="flex items-center gap-1">
+                  Mobile
+                  <z-icon [zType]="(sortCol$ | async) === 'mobileNumber' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'mobileNumber' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.mobile"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-32 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('project')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Project</span>
+                <span class="flex items-center gap-1">
+                  Project
+                  <z-icon [zType]="(sortCol$ | async) === 'project' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'project' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.project"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-44 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-44 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('location')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Location</span>
+                <span class="flex items-center gap-1">
+                  Location
+                  <z-icon [zType]="(sortCol$ | async) === 'location' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'location' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.location"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -235,46 +267,47 @@
           </tr>
         </thead>
 
-        <tbody class="divide-y divide-slate-100 text-[13px]">
+        <tbody z-table-body class="divide-y divide-slate-100 text-[13px]">
           <!-- ROW -->
           <tr
+            z-table-row
             *ngFor="let beneficiary of vm.items; let i = index"
             class="align-top hover:bg-slate-50 transition-colors"
           >
             <!-- INDEX -->
-            <td class="px-2 py-3 text-center font-semibold">
+            <td z-table-cell class="px-2 py-3 text-center font-semibold">
               {{ vm.startIndex + i + 1 }}
             </td>
 
             <!-- UID -->
-            <td class="px-2 py-3 font-mono text-[12px] text-indigo-600">
+            <td z-table-cell class="px-2 py-3 font-mono text-[12px] text-indigo-600">
               <span *ngIf="selectedColumns.uid">
                 {{ beneficiary.uid || '-' }}
               </span>
             </td>
 
             <!-- NAME -->
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span *ngIf="selectedColumns.name" class="block font-semibold text-slate-900">
                 {{ beneficiary.name || 'Unknown' }}
               </span>
             </td>
             <!-- GENDER -->
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span class="block text-[11px] italic text-slate-500">
                 {{ beneficiary.gender || '-' }}
               </span>
             </td>
 
             <!-- MOBILE -->
-            <td class="px-2 py-3 text-slate-700">
+            <td z-table-cell class="px-2 py-3 text-slate-700">
               <span *ngIf="selectedColumns.mobile">
                 {{ beneficiary.mobileNumber || '-' }}
               </span>
             </td>
 
             <!-- PROJECT -->
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span
                 *ngIf="selectedColumns.project"
                 class="inline-flex rounded border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-bold uppercase tracking-tight text-indigo-700"
@@ -284,7 +317,7 @@
             </td>
 
             <!-- LOCATION -->
-            <td class="px-2 py-3 text-slate-600">
+            <td z-table-cell class="px-2 py-3 text-slate-600">
               <span *ngIf="selectedColumns.location">
                 {{ beneficiary.village || beneficiary.location?.village || '-' }}
               </span>
@@ -292,9 +325,10 @@
           </tr>
 
           <!-- EMPTY -->
-          <tr *ngIf="vm.items.length === 0">
+          <tr z-table-row *ngIf="vm.items.length === 0">
             <td
-              colspan="6"
+              z-table-cell
+              colspan="7"
               class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500"
             >
               No beneficiaries found.
@@ -392,100 +426,121 @@
       </button>
       </div>
       <table
+        z-table
+        zType="grid"
         class="min-w-225 w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
       >
-        <thead class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
-          <!-- <tr>
-            <td colspan="6" class="p-3 text-right">
-              <button (click)="exportToExcel()">
-                <img
-                  src="excel.png"
-                  alt="excel download button"
-                  class="w-8 h-8 object-contain cursor-pointer inline-block"
-                />
-              </button>
-            </td>
-          </tr> -->
-          <tr>
-            <th class="w-12 border-b border-slate-300 px-2 py-1.5">
+        <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
+          <tr z-table-row>
+            <th z-table-head class="w-12 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span>#</span>
               </div>
             </th>
 
-            <th class="w-28 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('uid')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Beneficiary<br />id</span>
+                <span class="flex items-center gap-1">
+                  Beneficiary<br />id
+                  <z-icon [zType]="(sortCol$ | async) === 'uid' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'uid' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.uid"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('name')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Beneficiary<br />name</span>
+                <span class="flex items-center gap-1">
+                  Beneficiary<br />name
+                  <z-icon [zType]="(sortCol$ | async) === 'name' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'name' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.name"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('gender')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Gender</span>
+                <span class="flex items-center gap-1">
+                  Gender
+                  <z-icon [zType]="(sortCol$ | async) === 'gender' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'gender' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.gender"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-36 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('mobileNumber')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Mobile</span>
+                <span class="flex items-center gap-1">
+                  Mobile
+                  <z-icon [zType]="(sortCol$ | async) === 'mobileNumber' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'mobileNumber' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.mobile"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-32 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('project')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Project</span>
+                <span class="flex items-center gap-1">
+                  Project
+                  <z-icon [zType]="(sortCol$ | async) === 'project' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'project' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.project"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
             </th>
 
-            <th class="w-44 border-b border-slate-300 px-2 py-1.5">
+            <th z-table-head class="w-44 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors" (click)="sortBy('location')">
               <div class="flex flex-col items-center justify-center gap-1">
-                <span>Location</span>
+                <span class="flex items-center gap-1">
+                  Location
+                  <z-icon [zType]="(sortCol$ | async) === 'location' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
+                          [class]="(sortCol$ | async) === 'location' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'"></z-icon>
+                </span>
 
                 <input
                   type="checkbox"
                   aria-label="Select visible reports"
                   [(ngModel)]="selectedColumns.location"
+                  (click)="$event.stopPropagation()"
                   class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
@@ -493,46 +548,47 @@
           </tr>
         </thead>
 
-        <tbody class="divide-y divide-slate-100 text-[13px]">
+        <tbody z-table-body class="divide-y divide-slate-100 text-[13px]">
           <!-- ROW -->
           <tr
+            z-table-row
             *ngFor="let beneficiary of vm.items; let i = index"
             class="align-top hover:bg-slate-50 transition-colors"
           >
             <!-- INDEX -->
-            <td class="px-2 py-3 text-center font-semibold">
+            <td z-table-cell class="px-2 py-3 text-center font-semibold">
               {{ vm.startIndex + i + 1 }}
             </td>
 
             <!-- UID -->
-            <td class="px-2 py-3 font-mono text-[12px] text-indigo-600">
+            <td z-table-cell class="px-2 py-3 font-mono text-[12px] text-indigo-600">
               <span *ngIf="selectedColumns.uid">
                 {{ beneficiary.uid || '-' }}
               </span>
             </td>
 
             <!-- NAME -->
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span *ngIf="selectedColumns.name" class="block font-semibold text-slate-900">
                 {{ beneficiary.name || 'Unknown' }}
               </span>
             </td>
             <!-- GENDER -->
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span class="block text-[11px] italic text-slate-500">
                 {{ beneficiary.gender || '-' }}
               </span>
             </td>
 
             <!-- MOBILE -->
-            <td class="px-2 py-3 text-slate-700">
+            <td z-table-cell class="px-2 py-3 text-slate-700">
               <span *ngIf="selectedColumns.mobile">
                 {{ beneficiary.mobileNumber || '-' }}
               </span>
             </td>
 
             <!-- PROJECT -->
-            <td class="px-2 py-3">
+            <td z-table-cell class="px-2 py-3">
               <span
                 *ngIf="selectedColumns.project"
                 class="inline-flex rounded border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-bold uppercase tracking-tight text-indigo-700"
@@ -542,7 +598,7 @@
             </td>
 
             <!-- LOCATION -->
-            <td class="px-2 py-3 text-slate-600">
+            <td z-table-cell class="px-2 py-3 text-slate-600">
               <span *ngIf="selectedColumns.location">
                 {{ beneficiary.village || beneficiary.location?.village || '-' }}
               </span>
@@ -550,9 +606,10 @@
           </tr>
 
           <!-- EMPTY -->
-          <tr *ngIf="vm.items.length === 0">
+          <tr z-table-row *ngIf="vm.items.length === 0">
             <td
-              colspan="6"
+              z-table-cell
+              colspan="7"
               class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500"
             >
               No beneficiaries found.

@@ -47,12 +47,12 @@ import { Router } from '@angular/router';
     ZardDialogModule,
     ZardIconComponent,
     ZardInputDirective,
-    // ZardTableBodyComponent,
-    // ZardTableCellComponent,
-    // ZardTableComponent,
-    // ZardTableHeadComponent,
-    // ZardTableHeaderComponent,
-    // ZardTableRowComponent,
+    ZardTableBodyComponent,
+    ZardTableCellComponent,
+    ZardTableComponent,
+    ZardTableHeadComponent,
+    ZardTableHeaderComponent,
+    ZardTableRowComponent,
     LottieComponent,
   ],
   templateUrl: './beneficiaries.html',
@@ -89,6 +89,10 @@ mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
   private lastPage = 1;
   private lastPageCount = 1;
 
+  // Sorting
+  readonly sortCol$ = new BehaviorSubject<string | null>(null);
+  readonly sortDir$ = new BehaviorSubject<'asc' | 'desc'>('asc');
+
   // ── Reactive streams ──────────────────────────────────────────────────────
 
   private readonly rawBeneficiaries$ = combineLatest([
@@ -108,9 +112,37 @@ mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
     shareReplay(1),
   );
 
-  vm$ = combineLatest([this.rawBeneficiaries$, this.page$.asObservable()]).pipe(
-    map(([beneficiaries, page]) => {
-      const total = beneficiaries.length;
+  vm$ = combineLatest([
+    this.rawBeneficiaries$,
+    this.page$.asObservable(),
+    this.sortCol$.asObservable(),
+    this.sortDir$.asObservable()
+  ]).pipe(
+    map(([beneficiaries, page, sortCol, sortDir]) => {
+      let items = [...beneficiaries];
+      if (sortCol) {
+        items.sort((a: any, b: any) => {
+          let aVal: any = a[sortCol];
+          let bVal: any = b[sortCol];
+
+          if (sortCol === 'project') {
+            aVal = a.project?.name || '';
+            bVal = b.project?.name || '';
+          } else if (sortCol === 'location') {
+            aVal = a.village || a.location?.village || '';
+            bVal = b.village || b.location?.village || '';
+          } else {
+            if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+            if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+          }
+
+          if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+          if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+
+      const total = items.length;
       const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
       const safePage = Math.min(Math.max(1, page), pageCount);
       const startIndex = (safePage - 1) * this.pageSize;
@@ -119,7 +151,7 @@ mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
       this.lastPageCount = pageCount;
 
       return {
-        items: beneficiaries.slice(startIndex, startIndex + this.pageSize),
+        items: items.slice(startIndex, startIndex + this.pageSize),
         total,
         page: safePage,
         pageCount,
@@ -139,6 +171,18 @@ mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  sortBy(col: string) {
+    const current = this.sortCol$.value;
+    const dir = this.sortDir$.value;
+    if (current === col) {
+      if (dir === 'asc') this.sortDir$.next('desc');
+      else { this.sortCol$.next(null); this.sortDir$.next('asc'); }
+    } else {
+      this.sortCol$.next(col);
+      this.sortDir$.next('asc');
+    }
+  }
 
   navigateToCreate(): void {
     this.router.navigate(['/outreach/beneficiaries/create']);
