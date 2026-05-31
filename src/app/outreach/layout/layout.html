@@ -3,10 +3,10 @@
   <header
     class="hidden md:flex items-center justify-between px-4 py-2.5 bg-[#f0f4f9] border-b border-gray-200 shrink-0 select-none">
     <div class="flex items-center gap-3">
-      <div
+      <!-- <div
         class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
         <z-icon zType="activity"></z-icon>
-      </div>
+      </div> -->
       <div class="flex flex-col leading-tight">
         <span class="text-xl font-bold text-blue-800 tracking-wide">
           {{ (profile$ | async)?.name || 'JS-OUTREACH' }}
@@ -37,8 +37,8 @@
     <!-- ================= SIDEBAR ================= -->
     <z-sidebar [zWidth]="260" [zCollapsible]="true" [zCollapsed]="sidebarCollapsed" [zCollapsedWidth]="isMobile ? 0 : 76"
       (zCollapsedChange)="sidebarCollapsed = $event" 
-      class="p-0! bg-white border-r border-gray-200 shadow-sm z-50 transition-all duration-300"
-      [class]="!sidebarCollapsed && isMobile ? 'fixed inset-y-0 left-0 shadow-2xl z-50' : ''">
+      class="p-0! bg-white border-r border-gray-200 shadow-sm z-[80] transition-all duration-300"
+      [class]="!sidebarCollapsed && isMobile ? 'fixed inset-y-0 left-0 shadow-2xl z-[80]' : ''">
 
       <nav class="flex h-full flex-col overflow-hidden bg-white"
         [ngClass]="sidebarCollapsed ? 'gap-1 p-2 pt-4' : 'gap-2 p-3'">
@@ -122,7 +122,7 @@
 
   </z-layout>
 
-  <nav *ngIf="sidebarCollapsed" class="mobile-bottom-nav sm:hidden" aria-label="Outreach mobile navigation">
+  <nav *ngIf="isMobile" class="mobile-bottom-nav md:hidden" aria-label="Outreach mobile navigation">
     <a routerLink="/outreach/activity" class="mobile-tab"
       [class.mobile-tab-active]="isActiveRoute(['/outreach/activity', '/outreach/report-activity'])">
       <z-icon zType="file-text" class="mobile-tab-icon"></z-icon>
