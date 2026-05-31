@@ -378,13 +378,18 @@
       class="md:hidden overflow-x-auto rounded-md border-b-4 border-blue-500 bg-white shadow-sm"
     >
       <div class="flex justify-start mb-2 p-2">
-        <button (click)="exportToExcel()">
-          <img
-            src="excel.png"
-            alt="excel download button"
-            class="w-10 h-10 object-contain cursor-pointer hover:scale-110 transition"
-          />
-        </button>
+  <button
+        type="button"
+        (click)="exportToExcel()"
+         class="fixed bottom-[calc(84px+env(safe-area-inset-bottom))] right-[clamp(14px,4vw,22px)] z-50 flex h-[clamp(56px,15vw,64px)] w-[clamp(56px,15vw,64px)] items-center justify-center rounded-full bg-[#006666] text-white shadow-[0_14px_28px_rgba(30,64,175,0.24)] transition active:bg-[#006666] md:hidden"
+        aria-label="Submit new report"
+      >
+              <img
+                  src="excel.png"
+                  alt="excel download button"
+                  class="w-8 h-8 object-contain cursor-pointer inline-block"
+                />
+      </button>
       </div>
       <table
         class="min-w-225 w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
