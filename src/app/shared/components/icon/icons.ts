@@ -14,6 +14,7 @@ import {
   Calendar,
   CalendarPlus,
   Check,
+  CardSim,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -80,6 +81,7 @@ import {
   SunMoon,
   Tablet,
   Tag,
+  Table,
   Terminal,
   TextAlignCenter,
   TextAlignEnd,
@@ -196,6 +198,8 @@ export const ZARD_ICONS = {
   'user-plus': UserPlus,
   'credit-card': CreditCard,
   activity: Activity,
+  table: Table,
+  'card-sim': CardSim,
 } as const satisfies Record<string, LucideIconData>;
 
 export declare type ZardIcon = keyof typeof ZARD_ICONS | LucideIconData;

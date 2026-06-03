@@ -32,6 +32,14 @@ export interface ReportRow {
   reportData: any;
   reportingDate: string;
   reportedBy: string;
+  // Beneficiary detail fields
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  guardianName?: string | null;
+  dateOfMarriage?: string | null;
+  womanAgeAtMarriage?: number | null;
+  husbandAgeAtMarriage?: number | null;
+  maritalStatus?: string | null;
 }
 
 @Component({
@@ -229,6 +237,35 @@ export class AnalystDashboard implements OnInit {
       .join(' | ') || '-';
   }
 
+  /** Get a specific top-level field from reportData */
+  getReportField(data: any, field: string): string {
+    if (!data || typeof data !== 'object') return '-';
+    const val = data[field];
+    if (val === null || val === undefined || val === '') return '-';
+    if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+    return String(val);
+  }
+
+  /** Get a screeningDetails sub-field from reportData */
+  getScreeningDetail(data: any, field: string): string {
+    if (!data?.screeningDetails || typeof data.screeningDetails !== 'object') return '-';
+    const val = data.screeningDetails[field];
+    if (val === null || val === undefined || val === '') return '-';
+    return String(val);
+  }
+
+  /** Calculate age from ISO date string */
+  getAge(dateOfBirth: string | null | undefined): string {
+    if (!dateOfBirth) return '-';
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) return '-';
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return String(age);
+  }
+
   openDetail(row: ReportRow) {
     this.selectedReport.set(row);
   }
@@ -251,6 +288,14 @@ export class AnalystDashboard implements OnInit {
         'S.No': i + 1,
         'Beneficiary ID': r.beneficiaryId,
         'Beneficiary Name': r.beneficiaryName,
+        'Gender': r.gender || '-',
+        'Date of Birth': r.dateOfBirth ? this.formatDate(r.dateOfBirth) : '-',
+        'Age': this.getAge(r.dateOfBirth),
+        'Guardian Name': r.guardianName || '-',
+        'Marital Status': r.maritalStatus || '-',
+        'Marriage Date': r.dateOfMarriage ? this.formatDate(r.dateOfMarriage) : '-',
+        'Age at Marriage (Woman)': r.womanAgeAtMarriage != null ? r.womanAgeAtMarriage : '-',
+        'Age at Marriage (Husband)': r.husbandAgeAtMarriage != null ? r.husbandAgeAtMarriage : '-',
         'State': r.state,
         'District': r.district,
         'Block': r.block,
@@ -258,10 +303,22 @@ export class AnalystDashboard implements OnInit {
         'AWC Center': r.awcCenter,
         'Activity': r.activity,
         'Session': r.session,
-        'Report Data': this.formatReportData(r.reportData),
+        'Screening': this.getReportField(r.reportData, 'screening'),
+        'Height (cm)': this.getScreeningDetail(r.reportData, 'height'),
+        'Weight (kg)': this.getScreeningDetail(r.reportData, 'weight'),
+        'Hb (g/dL)': this.getScreeningDetail(r.reportData, 'hb'),
+        'BP': this.getScreeningDetail(r.reportData, 'bp'),
+        'Sugar': this.getScreeningDetail(r.reportData, 'sugar'),
+        'Cervical Cancer': this.getScreeningDetail(r.reportData, 'cervicalCancer'),
+        'Breast Cancer': this.getScreeningDetail(r.reportData, 'breastCancer'),
+        'Pads': this.getScreeningDetail(r.reportData, 'pads'),
+        'Pregnancy Status': this.getReportField(r.reportData, 'pregnancyStatus'),
+        'LMP Date': this.getReportField(r.reportData, 'lmpDate'),
+        'SAM/MAM Status': this.getReportField(r.reportData, 'samMamStatus'),
         'Reporting Date': this.formatDate(r.reportingDate),
         'Reported By': r.reportedBy,
       }));
+
 
       // Dynamic import to avoid SSR issues
       const XLSX = await import('xlsx');

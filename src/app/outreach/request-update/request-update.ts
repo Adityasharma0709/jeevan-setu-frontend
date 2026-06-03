@@ -152,6 +152,11 @@ export class RequestUpdate implements OnInit {
     return age;
   }
 
+  private toIsoDateString(dateStr: string): string | null {
+    const date = this.parseDateStr(dateStr);
+    return date ? date.toISOString() : null;
+  }
+
   /** Convert an ISO date string from DB to DD/MM/YYYY for display */
   private toDDMMYYYY(value: string): string {
     try {
@@ -236,15 +241,18 @@ export class RequestUpdate implements OnInit {
     if (raw.mobileNumber && raw.mobileNumber !== b.mobileNumber) changes['mobileNumber'] = String(raw.mobileNumber);
     if (raw.gender && raw.gender !== b.gender) changes['gender'] = String(raw.gender);
     
-    // DOB / Age handling — send DD/MM/YYYY directly (backend @Transform handles it)
+    // DOB / Age handling - always normalize to ISO before submit
     if (this.isPriority) {
       const currentDob = b.dateOfBirth ? this.toDDMMYYYY(b.dateOfBirth) : '';
-      if (raw.dateOfBirth && raw.dateOfBirth !== currentDob) changes['dateOfBirth'] = raw.dateOfBirth;
+      if (raw.dateOfBirth && raw.dateOfBirth !== currentDob) {
+        const isoDob = this.toIsoDateString(raw.dateOfBirth);
+        if (isoDob) changes['dateOfBirth'] = isoDob;
+      }
     } else if (raw.age !== '') {
       const currentAge = b.dateOfBirth ? this.calculateAge(b.dateOfBirth) : -1;
       if (Number(raw.age) !== currentAge) {
         const y = new Date().getFullYear() - Number(raw.age);
-        changes['dateOfBirth'] = `01/01/${y}`;
+        changes['dateOfBirth'] = new Date(y, 0, 1).toISOString();
       }
     }
 
@@ -261,7 +269,10 @@ export class RequestUpdate implements OnInit {
 
       if (this.isMarried()) {
         const currentDom = b.dateOfMarriage ? this.toDDMMYYYY(b.dateOfMarriage) : '';
-        if (raw.dateOfMarriage && raw.dateOfMarriage !== currentDom) changes['dateOfMarriage'] = raw.dateOfMarriage;
+        if (raw.dateOfMarriage && raw.dateOfMarriage !== currentDom) {
+          const isoDom = this.toIsoDateString(raw.dateOfMarriage);
+          if (isoDom) changes['dateOfMarriage'] = isoDom;
+        }
         if (raw.womanAgeAtMarriage !== '' && Number(raw.womanAgeAtMarriage) !== Number(b.womanAgeAtMarriage)) changes['womanAgeAtMarriage'] = Number(raw.womanAgeAtMarriage);
         if (raw.husbandAgeAtMarriage !== '' && Number(raw.husbandAgeAtMarriage) !== Number(b.husbandAgeAtMarriage)) changes['husbandAgeAtMarriage'] = Number(raw.husbandAgeAtMarriage);
       }

@@ -265,6 +265,11 @@ export class ProfileView implements OnInit, OnDestroy {
         }
     }
 
+    private toIsoDateString(dateStr: string): string | null {
+        const date = this.parseDateStr(dateStr);
+        return date ? date.toISOString() : null;
+    }
+
     saveFamilyMember(): void {
         if (!this.beneficiary) return;
         
@@ -289,12 +294,14 @@ export class ProfileView implements OnInit, OnDestroy {
         }
 
         this.savingFamily = true;
+        const payload = {
+            ...this.familyForm,
+            dateOfBirth: this.toIsoDateString(this.familyForm.dateOfBirth) || '',
+        };
 
         if (this.editingFamilyMemberId) {
             // Edit existing member
             // Only send fields that actually changed or exist
-            const payload: any = { ...this.familyForm };
-            
             this.outreachService.updateFamilyMember(this.editingFamilyMemberId, payload)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
@@ -315,7 +322,7 @@ export class ProfileView implements OnInit, OnDestroy {
                 });
         } else {
             // Add new member
-            this.outreachService.addFamilyMember(this.beneficiary.id, this.familyForm)
+            this.outreachService.addFamilyMember(this.beneficiary.id, payload)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
                     next: () => {
