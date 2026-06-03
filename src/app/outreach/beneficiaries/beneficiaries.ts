@@ -24,6 +24,7 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardInputDirective } from '@/shared/components/input';
+import { OutreachPageHeaderComponent } from '../shared/page-header/page-header';
 import {
   ZardTableBodyComponent,
   ZardTableCellComponent,
@@ -53,6 +54,7 @@ import { Router } from '@angular/router';
     ZardTableHeadComponent,
     ZardTableHeaderComponent,
     ZardTableRowComponent,
+    OutreachPageHeaderComponent,
     LottieComponent,
   ],
   templateUrl: './beneficiaries.html',

@@ -1,32 +1,9 @@
 <div class="space-y-6 max-w-7xl mx-auto p-5 md:p-6 pb-28 md:pb-20">
-  <!-- Modern Header with Breadcrumbs & Stats -->
-  <div
-    class="sticky top-0 z-40 -mx-5 -mt-5 space-y-5 rounded-b-[24px] border-x border-b border-white/70 bg-white/70 px-5 py-4 shadow-[0_10px_32px_rgba(15,23,42,0.08)] backdrop-blur-2xl ring-1 ring-slate-200/40 md:hidden"
-  >
-    <!-- MOBILE TITLE -->
-    <div class="pt-0.5">
-      <h2 class="text-[18px] font-bold leading-tight text-slate-900">Requests</h2>
-
-      <p class="text-[14px] text-slate-500">Manage and track requests</p>
-    </div>
-
-    <!-- MOBILE SEARCH -->
-  </div>
-  <!-- =========================================================
-    DESKTOP HEADER
-  ========================================================= -->
-  <div class="hidden md:flex flex-col gap-4">
-    <!-- TITLE + ACTION -->
-    <div class="flex items-end justify-between gap-4 flex-wrap">
-      <div class="flex-1 min-w-[280px]">
-        <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">Requests</h1>
-
-        <p class="text-gray-500 mt-1">Manage and track requests.</p>
-      </div>
-    </div>
-
-    <!-- DESKTOP SEARCH -->
-  </div>
+  <app-outreach-page-header
+    title="Requests"
+    subtitle="Manage and track requests."
+    mobileSubtitle="Manage and track requests"
+  />
 
   <ng-container *ngIf="vm$ | async as vm; else rLoader">
     <!-- Desktop Table View -->

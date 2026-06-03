@@ -1,68 +1,12 @@
 <div class="activity-page space-y-6 max-w-7xl mx-auto p-5 md:p-6 pb-28 md:pb-20">
-  <div
-    class="sticky top-0 z-40 -mx-5 -mt-5 space-y-5 rounded-b-3xl border-x border-b border-white/70 bg-white/70 px-5 py-4 shadow-[0_10px_32px_rgba(15,23,42,0.08)] backdrop-blur-2xl ring-1 ring-slate-200/40 md:hidden"
+  <app-outreach-page-header
+    title="Activity Reports"
+    subtitle="Manage and track health records for your assigned locations."
+    mobileSubtitle="Manage and track health records"
+    [showSearch]="true"
+    [showMobileExtras]="true"
   >
-    <div class="pt-0.5">
-      <h2 class="text-[18px] font-bold leading-tight text-slate-900">Activity Report</h2>
-
-      <p class="text-[14px] text-slate-500">Manage and track health records</p>
-    </div>
-    <div class="flex items-center gap-3">
-      <label class="relative flex-1">
-        <z-icon
-          zType="search"
-          class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-        ></z-icon>
-        <input
-          type="search"
-          [formControl]="searchControl"
-          placeholder="Search by UID, name, or activity..."
-          class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-        />
-      </label>
-    </div>
-     <div class="md:hidden overflow-hidden rounded-md border border-[#F3F4F6] bg-white">
-      <div class="grid grid-cols-2">
-        <button
-          type="button"
-          (click)="setMobileViewMode('quickAccess')"
-          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
-          [ngClass]="
-            mobileViewMode === 'quickAccess'
-              ? 'rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
-              : 'rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
-          "
-        >
-          <z-icon zType="credit-card"></z-icon>
-          Quick access
-        </button>
-        <button
-          type="button"
-          (click)="setMobileViewMode('table')"
-          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
-          [ngClass]="
-            mobileViewMode === 'table'
-              ? ' rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
-              : ' rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
-          "
-        >
-          <z-icon zType="table"></z-icon>
-          Table
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modern Header with Breadcrumbs -->
-  <div class="hidden md:flex flex-col gap-4">
-    <div class="flex items-end justify-between gap-4 flex-wrap">
-      <div class="flex-1 min-w-[280px]">
-        <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">Activity Reports</h1>
-        <p class="text-gray-500 mt-1">
-          Manage and track health records for your assigned locations.
-        </p>
-      </div>
-
+    <div outreachHeaderActions>
       <button
         z-button
         (click)="addReport()"
@@ -72,7 +16,8 @@
         Submit New Report
       </button>
     </div>
-    <nav class="flex w-full">
+
+    <div outreachHeaderSearch>
       <div class="flex items-center gap-3 w-full">
         <label class="relative flex-1">
           <z-icon
@@ -104,8 +49,39 @@
           </span>
         </button>
       </div>
-    </nav>
-  </div>
+    </div>
+
+    <div outreachHeaderMobileExtras class="md:hidden overflow-hidden rounded-md border border-[#F3F4F6] bg-white">
+      <div class="grid grid-cols-2">
+        <button
+          type="button"
+          (click)="setMobileViewMode('quickAccess')"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
+          [ngClass]="
+            mobileViewMode === 'quickAccess'
+              ? 'rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
+              : 'rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
+          "
+        >
+          <z-icon zType="credit-card"></z-icon>
+          Quick access
+        </button>
+        <button
+          type="button"
+          (click)="setMobileViewMode('table')"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
+          [ngClass]="
+            mobileViewMode === 'table'
+              ? ' rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
+              : ' rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
+          "
+        >
+          <z-icon zType="table"></z-icon>
+          Table
+        </button>
+      </div>
+    </div>
+  </app-outreach-page-header>
 
   <!-- Reports Content -->
   <ng-container *ngIf="vm$ | async as vm; else loadingTpl">

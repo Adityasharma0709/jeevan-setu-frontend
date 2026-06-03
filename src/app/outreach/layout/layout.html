@@ -18,7 +18,19 @@
       </div>
     </div>
     <div class="flex items-center gap-5">
-      <div class="hidden sm:flex items-center gap-4 text-blue-800 text-sm font-medium"></div>
+      @if (pageContext$ | async; as page) {
+        <div class="hidden lg:flex flex-col items-end text-right">
+          <span class="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+            Current page
+          </span>
+          <span class="text-lg font-bold leading-tight text-slate-900">
+            {{ page.title }}
+          </span>
+          <span class="text-xs text-slate-500">
+            {{ page.subtitle }}
+          </span>
+        </div>
+      }
     </div>
   </header>
 
@@ -51,38 +63,24 @@
             </z-sidebar-group-label>
           }
 
-          <!-- Dashboard -->
-          <a routerLink="/outreach" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }"
-            class="menu-link" [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
-            zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Dashboard</span> }
-          </a>
+          @for (item of navItems; track item.path; let i = $index) {
+            @if (i === 1) {
+              <div class="h-px bg-gray-100 my-1 mx-2"></div>
+            }
 
-          <div class="h-px bg-gray-100 my-1 mx-2"></div>
-
-          <!-- My Requests -->
-          <a routerLink="/outreach/requests" routerLinkActive="active-link" class="menu-link"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'My Requests' : ''"
-            zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="inbox" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">My Requests</span> }
-          </a>
-
-          <!-- Beneficiaries -->
-          <a routerLink="/outreach/beneficiaries" routerLinkActive="active-link" class="menu-link"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Beneficiaries' : ''"
-            zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Beneficiaries</span> }
-          </a>
-
-          <!-- Activity -->
-          <a routerLink="/outreach/activity" routerLinkActive="active-link" class="menu-link"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Activity' : ''" zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="file-text" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Report</span> }
-          </a>
+            <a
+              [routerLink]="item.path"
+              class="menu-link"
+              [class.active-link]="isActiveRoute(item.activePaths, item.exact)"
+              [class.justify-center]="sidebarCollapsed"
+              [zTooltip]="sidebarCollapsed ? item.label : ''"
+              zPosition="right"
+              (click)="closeSidebar()"
+            >
+              <z-icon [zType]="item.icon" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
+              @if (!sidebarCollapsed) { <span class="flex-1">{{ item.label }}</span> }
+            </a>
+          }
 
         </z-sidebar-group>
 
@@ -123,22 +121,15 @@
   </z-layout>
 
   <nav *ngIf="isMobile" class="mobile-bottom-nav md:hidden" aria-label="Outreach mobile navigation">
-    <a routerLink="/outreach/activity" class="mobile-tab"
-      [class.mobile-tab-active]="isActiveRoute(['/outreach/activity', '/outreach/report-activity'])">
-      <z-icon zType="file-text" class="mobile-tab-icon"></z-icon>
-      <span>Reports</span>
-    </a>
-
-    <a routerLink="/outreach/beneficiaries" class="mobile-tab"
-      [class.mobile-tab-active]="isActiveRoute(['/outreach/beneficiaries', '/outreach/beneficiary'])">
-      <z-icon zType="users" class="mobile-tab-icon"></z-icon>
-      <span>Beneficiaries</span>
-    </a>
-
-    <a routerLink="/outreach/requests" class="mobile-tab"
-      [class.mobile-tab-active]="isActiveRoute(['/outreach/requests'])">
-      <z-icon zType="calendar" class="mobile-tab-icon"></z-icon>
-      <span>requests</span>
-    </a>
+    @for (item of mobileNavItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        class="mobile-tab"
+        [class.mobile-tab-active]="isActiveRoute(item.activePaths, item.exact)"
+      >
+        <z-icon [zType]="item.icon" class="mobile-tab-icon"></z-icon>
+        <span>{{ item.label }}</span>
+      </a>
+    }
   </nav>
 </div>

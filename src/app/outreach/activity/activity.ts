@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
+import { OutreachPageHeaderComponent } from '../shared/page-header/page-header';
 import {
   ZardTableComponent,
   ZardTableHeaderComponent,
@@ -36,6 +37,7 @@ import { OutreachService } from '../outreach.service';
     ZardTableRowComponent,
     ZardTableHeadComponent,
     ZardTableCellComponent,
+    OutreachPageHeaderComponent,
     
   ],
   templateUrl: './activity.html',

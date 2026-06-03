@@ -3,7 +3,7 @@
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-weight: 500;
   color: #4b5563;
   transition: 0.2s;
@@ -11,15 +11,16 @@
 }
 
 .menu-link:hover {
-  background: #f0f9f9;
+  background: linear-gradient(90deg, rgba(0, 102, 102, 0.08), rgba(0, 102, 102, 0.03));
   color: #006666;
 }
 
 .active-link {
-  background: #f0f9f9;
+  background: linear-gradient(90deg, rgba(0, 102, 102, 0.14), rgba(0, 102, 102, 0.05));
   color: #006666;
   border-left: 4px solid #006666;
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(0, 102, 102, 0.08);
 }
 
 .active-link z-icon {
@@ -33,12 +34,13 @@
   left: 0;
   z-index: 60;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  height: 72px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  height: 76px;
   padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
   border-top: 1px solid #e2e8f0;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(18px);
 }
 
 .mobile-tab {
@@ -66,7 +68,7 @@
 }
 
 .mobile-tab-active .mobile-tab-icon {
-  color:#006666 !important;
+  color: #006666 !important;
   stroke-width: 2.6;
 }
 
