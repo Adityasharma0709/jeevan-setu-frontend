@@ -87,10 +87,15 @@ export interface ZardComboboxGroup {
       (zVisibleChange)="setOpen($event)"
       #popoverTrigger
     >
-      <span class="flex-1 truncate text-left">
-        {{ displayValue() ?? placeholder() }}
+      <span class="flex min-w-0 flex-1 flex-col items-start text-left leading-tight py-0.5">
+        <span class="w-full whitespace-normal break-words">
+          {{ displayValue() ?? placeholder() }}
+        </span>
       </span>
-      <ng-icon name="lucideChevronsUpDown" class="ml-2 shrink-0 opacity-50" />
+      <ng-icon
+        name="lucideChevronsUpDown"
+        class="ml-2 mt-1 shrink-0 self-start opacity-50"
+      />
     </button>
 
     <ng-template #popoverContent>
@@ -245,7 +250,9 @@ export class ZardComboboxComponent implements ControlValueAccessor {
     ),
   );
 
-  protected readonly buttonClasses = computed(() => 'w-full justify-between');
+  protected readonly buttonClasses = computed(
+    () => 'w-full min-w-0 items-start justify-between overflow-hidden min-h-12 py-3',
+  );
 
   protected readonly popoverClasses = computed(() => {
     const widthClass = this.zWidth() === 'full' ? 'w-full' : comboboxVariants({ zWidth: this.zWidth() });
