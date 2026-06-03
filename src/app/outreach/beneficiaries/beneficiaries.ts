@@ -194,6 +194,10 @@ mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
     this.router.navigate(['/outreach/beneficiary', beneficiary.id], { state: { beneficiary } });
   }
 
+  editRecord(beneficiary: Beneficiary): void {
+    this.router.navigate(['/outreach/beneficiary', beneficiary.id, 'request-update'], { state: { beneficiary } });
+  }
+
   // ── Pagination Helpers ───────────────────────────────────────────────────
 
   nextPage(): void {

@@ -96,7 +96,7 @@ export class Layout {
   sidebarCollapsed = window.innerWidth < 768;
   isMobile = window.innerWidth < 768;
   profile$: Observable<ProfileVm>;
-  pageContext$: Observable<{ title: string; subtitle: string }>;
+  pageContext$: Observable<{ title: string; subtitle: string; showBack: boolean; backTarget: string }>;
 
   constructor(
     private route: ActivatedRoute,
@@ -122,6 +122,10 @@ export class Layout {
     }
   }
 
+  goBack(target: string): void {
+    this.router.navigateByUrl(target);
+  }
+
   isActiveRoute(prefixes: readonly string[], exact = false): boolean {
     const currentUrl = this.router.url.split('?')[0];
     return prefixes.some(prefix => exact ? currentUrl === prefix : currentUrl === prefix || currentUrl.startsWith(`${prefix}/`));
@@ -138,12 +142,14 @@ export class Layout {
     return item.path;
   }
 
-  private resolvePageContext(): { title: string; subtitle: string } {
+  private resolvePageContext(): { title: string; subtitle: string; showBack: boolean; backTarget: string } {
     const activeRoute = this.resolveActiveRoute(this.route);
     const title = String(activeRoute.snapshot.data?.['pageTitle'] || 'Outreach').trim();
     return {
       title,
       subtitle: this.getPageSubtitle(title),
+      showBack: title !== 'Dashboard',
+      backTarget: this.resolveBackTarget(this.router.url.split('?')[0]),
     };
   }
 
@@ -157,6 +163,39 @@ export class Layout {
 
   private getPageSubtitle(title: string): string {
     return this.titleContext[title as keyof typeof this.titleContext] || 'Outreach workspace';
+  }
+
+  private resolveBackTarget(path: string): string {
+    if (path.startsWith('/outreach/beneficiary/') && path.endsWith('/request-update')) {
+      const id = path.split('/')[3];
+      return `/outreach/beneficiary/${id}`;
+    }
+
+    if (path.startsWith('/outreach/beneficiary/')) {
+      return '/outreach/beneficiaries';
+    }
+
+    if (path === '/outreach/beneficiaries/create') {
+      return '/outreach/beneficiaries';
+    }
+
+    if (path === '/outreach/report-activity') {
+      return '/outreach/activity';
+    }
+
+    if (path === '/outreach/activity') {
+      return '/outreach';
+    }
+
+    if (path === '/outreach/requests') {
+      return '/outreach';
+    }
+
+    if (path === '/outreach/profile') {
+      return '/outreach';
+    }
+
+    return '/outreach';
   }
 
   @HostListener('window:resize')
