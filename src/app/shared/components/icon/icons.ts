@@ -94,6 +94,7 @@ import {
   Users,
   X,
   Zap,
+  Sliders,
 } from 'lucide-angular';
 
 const DarkMode: LucideIconData = [
@@ -200,6 +201,7 @@ export const ZARD_ICONS = {
   activity: Activity,
   table: Table,
   'card-sim': CardSim,
+  sliders: Sliders,
 } as const satisfies Record<string, LucideIconData>;
 
 export declare type ZardIcon = keyof typeof ZARD_ICONS | LucideIconData;

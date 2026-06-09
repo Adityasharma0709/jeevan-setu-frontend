@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, HostListener } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   Subscription,
@@ -68,16 +68,57 @@ export class Beneficiaries implements OnInit, OnDestroy {
   private refresh$ = new Subject<void>();
   private subs = new Subscription();
 
-  selectedColumns = {
-  uid: true,
-  name: true,
-  gender:true,
-  mobile: true,
-  project: true,
-  location: true,
-};
+  selectedColumns: { [key: string]: boolean } = {
+    uid: true,
+    name: true,
+    beneficiaryType: true,
+    age: true,
+    gender: true,
+    mobile: true,
+    guardianName: true,
+    maritalStatus: true,
+    dateOfMarriage: true,
+    womanAgeAtMarriage: true,
+    husbandAgeAtMarriage: true,
+    qualification: true,
+    religion: true,
+    caste: true,
+    monthlyIncome: true,
+    economicStatus: true,
+    primaryIncomeSource: true,
+    employmentStatus: true,
+    project: true,
+    location: true,
+    createdAt: true,
+  };
 
-mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
+  columnList = [
+    { key: 'uid', label: 'Beneficiary ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'beneficiaryType', label: 'Type' },
+    { key: 'age', label: 'Age' },
+    { key: 'gender', label: 'Gender' },
+    { key: 'mobile', label: 'Mobile' },
+    { key: 'guardianName', label: 'Guardian Name' },
+    { key: 'maritalStatus', label: 'Marital Status' },
+    { key: 'dateOfMarriage', label: 'Marriage Date' },
+    { key: 'womanAgeAtMarriage', label: 'Woman Age at Marriage' },
+    { key: 'husbandAgeAtMarriage', label: 'Husband Age at Marriage' },
+    { key: 'qualification', label: 'Qualification' },
+    { key: 'religion', label: 'Religion' },
+    { key: 'caste', label: 'Caste' },
+    { key: 'monthlyIncome', label: 'Monthly Income' },
+    { key: 'economicStatus', label: 'Economic Status' },
+    { key: 'primaryIncomeSource', label: 'Income Source' },
+    { key: 'employmentStatus', label: 'Employment Status' },
+    { key: 'project', label: 'Project' },
+    { key: 'location', label: 'Location' },
+    { key: 'createdAt', label: 'Registered Date' },
+  ];
+
+  showColumnSelector = false;
+
+  mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
 
   dialogRef!: ZardDialogRef<any>;
 
@@ -133,6 +174,20 @@ mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
           } else if (sortCol === 'location') {
             aVal = a.village || a.location?.village || '';
             bVal = b.village || b.location?.village || '';
+          } else if (sortCol === 'age') {
+            aVal = a.dateOfBirth ? new Date(a.dateOfBirth).getTime() : 0;
+            bVal = b.dateOfBirth ? new Date(b.dateOfBirth).getTime() : 0;
+          } else if (sortCol === 'beneficiaryType') {
+            const hasPriorityA = !!(a.guardianName || a.qualification || a.religion || a.caste);
+            const hasPriorityB = !!(b.guardianName || b.qualification || b.religion || b.caste);
+            aVal = hasPriorityA ? 'Priority' : 'General';
+            bVal = hasPriorityB ? 'Priority' : 'General';
+          } else if (sortCol === 'monthlyIncome') {
+            aVal = Number(a.monthlyIncome) || 0;
+            bVal = Number(b.monthlyIncome) || 0;
+          } else if (sortCol === 'dateOfBirth' || sortCol === 'dateOfMarriage' || sortCol === 'createdAt') {
+            aVal = a[sortCol] ? new Date(a[sortCol]).getTime() : 0;
+            bVal = b[sortCol] ? new Date(b[sortCol]).getTime() : 0;
           } else {
             if (typeof aVal === 'string') aVal = aVal.toLowerCase();
             if (typeof bVal === 'string') bVal = bVal.toLowerCase();
@@ -216,73 +271,105 @@ mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
     return item.id;
   }
   //===================Quick Access===========================
-    setMobileViewMode(mode: 'quickAccess' | 'table'): void {
+  setMobileViewMode(mode: 'quickAccess' | 'table'): void {
     this.mobileViewMode = mode;
   }
 
+  toggleColumnSelectorDropdown() {
+    this.showColumnSelector = !this.showColumnSelector;
+  }
+
+  getColspan(): number {
+    let count = 1; // Index column is always shown
+    for (const key of Object.keys(this.selectedColumns)) {
+      if (this.selectedColumns[key]) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  getAge(dateOfBirth: string | Date | null | undefined): string | number {
+    if (!dateOfBirth) return '-';
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) return '-';
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return age >= 0 ? age : '-';
+  }
+
+  getBeneficiaryType(b: Beneficiary): string {
+    const hasPriorityData = !!(b.guardianName || b.qualification || b.religion || b.caste);
+    return hasPriorityData ? 'Priority' : 'General';
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.relative.inline-block.text-left')) {
+      this.showColumnSelector = false;
+    }
+  }
 
   //====================Excel=================================
   async exportToExcel(): Promise<void> {
+    const vm = await firstValueFrom(this.vm$);
 
-  const vm = await firstValueFrom(this.vm$);
+    const data = vm.items.map((beneficiary: any) => {
+      const row: any = {};
 
-  const data = vm.items.map((beneficiary: any, index: number) => {
+      if (this.selectedColumns['uid']) row['Beneficiary ID'] = beneficiary.uid || '-';
+      if (this.selectedColumns['name']) row['Name'] = beneficiary.name || '-';
+      if (this.selectedColumns['beneficiaryType']) row['Type'] = this.getBeneficiaryType(beneficiary);
+      if (this.selectedColumns['age']) row['Age'] = this.getAge(beneficiary.dateOfBirth);
+      if (this.selectedColumns['gender']) row['Gender'] = beneficiary.gender || '-';
+      if (this.selectedColumns['mobile']) row['Mobile'] = beneficiary.mobileNumber || '-';
+      if (this.selectedColumns['guardianName']) row['Guardian Name'] = beneficiary.guardianName || '-';
+      if (this.selectedColumns['maritalStatus']) row['Marital Status'] = beneficiary.maritalStatus || 'Single';
+      if (this.selectedColumns['dateOfMarriage']) {
+        row['Marriage Date'] = beneficiary.dateOfMarriage ? new Date(beneficiary.dateOfMarriage).toLocaleDateString('en-GB') : '-';
+      }
+      if (this.selectedColumns['womanAgeAtMarriage']) row['Woman Age at Marriage'] = beneficiary.womanAgeAtMarriage || '-';
+      if (this.selectedColumns['husbandAgeAtMarriage']) row['Husband Age at Marriage'] = beneficiary.husbandAgeAtMarriage || '-';
+      if (this.selectedColumns['qualification']) row['Qualification'] = beneficiary.qualification || '-';
+      if (this.selectedColumns['religion']) row['Religion'] = beneficiary.religion || '-';
+      if (this.selectedColumns['caste']) row['Caste'] = beneficiary.caste || '-';
+      if (this.selectedColumns['monthlyIncome']) row['Monthly Income'] = beneficiary.monthlyIncome || 0;
+      if (this.selectedColumns['economicStatus']) row['Economic Status'] = beneficiary.economicStatus || '-';
+      if (this.selectedColumns['primaryIncomeSource']) row['Income Source'] = beneficiary.primaryIncomeSource || '-';
+      if (this.selectedColumns['employmentStatus']) row['Employment Status'] = beneficiary.employmentStatus || '-';
+      if (this.selectedColumns['project']) row['Project'] = beneficiary.project?.name || '-';
+      if (this.selectedColumns['location']) {
+        row['Location'] = beneficiary.village || beneficiary.location?.village || '-';
+      }
+      if (this.selectedColumns['createdAt']) {
+        row['Registered Date'] = beneficiary.createdAt ? new Date(beneficiary.createdAt).toLocaleDateString('en-GB') : '-';
+      }
 
-    const row: any = {};
+      return row;
+    });
 
-    if (this.selectedColumns.uid) {
-      row['UID'] = beneficiary.uid;
-    }
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
 
-    if (this.selectedColumns.name) {
-      row['Name'] = beneficiary.name;
-    }
+    const workbook: XLSX.WorkBook = {
+      Sheets: { Beneficiaries: worksheet },
+      SheetNames: ['Beneficiaries'],
+    };
 
-     if (this.selectedColumns.gender) {
-      row['Gender'] = beneficiary.gender;
-    }
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
 
-    if (this.selectedColumns.mobile) {
-      row['Mobile'] =
-        beneficiary.mobileNumber || '-';
-    }
+    const blob = new Blob(
+      [excelBuffer],
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+      }
+    );
 
-    if (this.selectedColumns.project) {
-      row['Project'] =
-        beneficiary.project?.name || '-';
-    }
-
-    if (this.selectedColumns.location) {
-      row['Location'] =
-        beneficiary.village ||
-        beneficiary.location?.village ||
-        '-';
-    }
-
-    return row;
-  });
-
-  const worksheet: XLSX.WorkSheet =
-    XLSX.utils.json_to_sheet(data);
-
-  const workbook: XLSX.WorkBook = {
-    Sheets: { Beneficiaries: worksheet },
-    SheetNames: ['Beneficiaries'],
-  };
-
-  const excelBuffer = XLSX.write(workbook, {
-    bookType: 'xlsx',
-    type: 'array',
-  });
-
-  const blob = new Blob(
-    [excelBuffer],
-    {
-      type:
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
-    }
-  );
-
-  saveAs(blob, 'beneficiaries.xlsx');
-}
+    saveAs(blob, 'beneficiaries.xlsx');
+  }
 }
