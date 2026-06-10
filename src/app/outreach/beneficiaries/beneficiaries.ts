@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject, HostListener } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, HostListener, TemplateRef, viewChild } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   Subscription,
@@ -24,6 +24,8 @@ import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
 import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardInputDirective } from '@/shared/components/input';
+import { ZardCalendarComponent } from '@/shared/components/calendar/calendar.component';
+import { ZardComboboxComponent } from '@/shared/components/combobox';
 import { OutreachPageHeaderComponent } from '../shared/page-header/page-header';
 import {
   ZardTableBodyComponent,
@@ -48,6 +50,8 @@ import { Router } from '@angular/router';
     ZardDialogModule,
     ZardIconComponent,
     ZardInputDirective,
+    ZardCalendarComponent,
+    ZardComboboxComponent,
     ZardTableBodyComponent,
     ZardTableCellComponent,
     ZardTableComponent,
@@ -121,6 +125,18 @@ export class Beneficiaries implements OnInit, OnDestroy {
   mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
 
   dialogRef!: ZardDialogRef<any>;
+  exportDateRange: Date[] | null = null;
+  exportMode: 'ALL' | 'RANGE' = 'RANGE';
+  exportOptions = [
+    {
+      label: 'Date Range',
+      value: 'RANGE',
+    },
+    {
+      label: 'All Records',
+      value: 'ALL',
+    },
+  ];
 
   // ── Animations ────────────────────────────────────────────────────────────
   options: AnimationOptions = { path: '/loading.json' };
@@ -135,6 +151,7 @@ export class Beneficiaries implements OnInit, OnDestroy {
   // Sorting
   readonly sortCol$ = new BehaviorSubject<string | null>(null);
   readonly sortDir$ = new BehaviorSubject<'asc' | 'desc'>('asc');
+  readonly exportDialog = viewChild.required<TemplateRef<any>>('exportDialog');
 
   // ── Reactive streams ──────────────────────────────────────────────────────
 
@@ -305,6 +322,74 @@ export class Beneficiaries implements OnInit, OnDestroy {
     return hasPriorityData ? 'Priority' : 'General';
   }
 
+  private toDateTimestamp(value: any): number | null {
+    if (!value) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      const time = value.getTime();
+      return Number.isNaN(time) ? null : time;
+    }
+
+    const text = String(value).trim();
+    if (!text) {
+      return null;
+    }
+
+    const dateOnlyMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnlyMatch) {
+      const [, year, month, day] = dateOnlyMatch;
+      return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+    }
+
+    const parsed = new Date(text);
+    const time = parsed.getTime();
+    return Number.isNaN(time) ? null : time;
+  }
+
+  private filterBeneficiariesByDateRange(beneficiaries: Beneficiary[]): Beneficiary[] {
+    const range = (this.exportDateRange || []).filter(Boolean) as Date[];
+
+    if (range.length === 0) {
+      return beneficiaries;
+    }
+
+    const startDate = range[0];
+    const endDate = range[1] ?? range[0];
+    const startOfStartDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime();
+    const endOfStartDay = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).getTime();
+    const startOfEndDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()).getTime();
+    const endOfEndDay = new Date(
+      endDate.getFullYear(),
+      endDate.getMonth(),
+      endDate.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).getTime();
+    const lowerBound = Math.min(startOfStartDay, startOfEndDay);
+    const upperBound = Math.max(endOfStartDay, endOfEndDay);
+
+    return beneficiaries.filter((beneficiary) => {
+      const createdAtTimestamp = this.toDateTimestamp(beneficiary?.createdAt);
+      if (createdAtTimestamp === null) {
+        return false;
+      }
+
+      return createdAtTimestamp >= lowerBound && createdAtTimestamp <= upperBound;
+    });
+  }
+
   @HostListener('document:click', ['$event'])
   onClickOutside(event: MouseEvent) {
     const target = event.target as HTMLElement;
@@ -315,9 +400,24 @@ export class Beneficiaries implements OnInit, OnDestroy {
 
   //====================Excel=================================
   async exportToExcel(): Promise<void> {
-    const vm = await firstValueFrom(this.vm$);
+    const beneficiaries = await firstValueFrom(this.rawBeneficiaries$);
 
-    const data = vm.items.map((beneficiary: any) => {
+    let exportBeneficiaries: Beneficiary[] = [];
+
+    switch (this.exportMode) {
+      case 'ALL':
+        exportBeneficiaries = beneficiaries;
+        break;
+
+      case 'RANGE':
+        exportBeneficiaries = this.filterBeneficiariesByDateRange(beneficiaries);
+        break;
+
+      default:
+        exportBeneficiaries = beneficiaries;
+    }
+
+    const data = exportBeneficiaries.map((beneficiary: any) => {
       const row: any = {};
 
       if (this.selectedColumns['uid']) row['Beneficiary ID'] = beneficiary.uid || '-';
@@ -371,5 +471,20 @@ export class Beneficiaries implements OnInit, OnDestroy {
     );
 
     saveAs(blob, 'beneficiaries.xlsx');
+  }
+
+  openExportDialog(): void {
+    this.exportMode = 'RANGE';
+    this.exportDateRange = null;
+
+    this.dialog.create({
+      zTitle: 'Export Beneficiaries',
+      zContent: this.exportDialog(),
+      zOkText: 'Export',
+      zCancelText: null,
+      zOnOk: () => {
+        this.exportToExcel();
+      },
+    });
   }
 }
