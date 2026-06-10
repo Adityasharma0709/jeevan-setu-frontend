@@ -54,7 +54,7 @@
         class="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[#006666] px-4 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.18)] transition hover:bg-[#005353] active:scale-[0.99]"
       >
         <z-icon zType="plus" class="h-5 w-5"></z-icon>
-        <span class="text-[15px] font-semibold leading-none">Add New Beneficiary</span>
+        <span class="text-sm font-semibold leading-none">Add New Beneficiary</span>
       </button>
 
       <div class="grid grid-cols-2">
@@ -100,7 +100,7 @@
           </div>
 
           <div class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm text-slate-600">
-            <span class="font-medium uppercase tracking-wider text-slate-400">Selected range</span>
+            <span class="font-semibold uppercase tracking-wider text-slate-400">Selected range</span>
 
             <span class="text-right font-semibold text-slate-800">
               @if (exportDateRange?.length === 2) {
@@ -154,7 +154,7 @@
           class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] sm:w-auto"
         >
           <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
-          <span class="text-[15px] font-semibold leading-none">Download sheet</span>
+          <span class="text-sm font-semibold leading-none">Download sheet</span>
         </button>
 
         <div class="relative inline-block self-end text-left sm:self-auto">
@@ -536,12 +536,12 @@
 
           <div class="min-w-0 flex-1">
             <div class="flex items-start gap-3">
-              <h3 class="break-words text-[24px] font-extrabold leading-[1.08] tracking-tight text-slate-900">
+              <h3 class="break-words text-[22px] font-extrabold leading-[1.08] tracking-tight text-slate-900">
                 {{ beneficiary.name }}
               </h3>
             </div>
 
-            <p class="mt-2 text-[18px] leading-snug text-slate-600">
+            <p class="mt-2 text-sm leading-snug text-slate-600">
               <span class="font-medium uppercase tracking-wide text-slate-600">
                 {{ beneficiary.uid || '-' }}
               </span>
@@ -558,7 +558,7 @@
             <p class="text-[13px] font-bold uppercase tracking-[0.16em] text-slate-400">
               Location
             </p>
-            <p class="mt-1 break-words text-[24px] font-extrabold leading-[1.05] text-slate-900">
+            <p class="mt-1 break-words text-lg font-extrabold leading-[1.05] text-slate-900">
               {{ beneficiary.village || beneficiary.location?.village || '-' }}
             </p>
           </div>
@@ -567,7 +567,7 @@
             <p class="text-[13px] font-bold uppercase tracking-[0.16em] text-slate-400">
               Project
             </p>
-            <p class="mt-1 break-words text-[24px] font-extrabold leading-[1.05] text-slate-900">
+            <p class="mt-1 break-words text-lg font-extrabold leading-[1.05] text-slate-900">
               {{ beneficiary.project?.name || '-' }}
             </p>
           </div>
@@ -580,7 +580,7 @@
             class="flex min-h-16 items-center justify-center gap-3 rounded-[22px] border-2 border-[#006666] px-4 py-4 text-[#006666] transition active:scale-[0.99]"
           >
             <z-icon zType="eye" class="h-6 w-6"></z-icon>
-            <span class="text-[21px] font-semibold leading-none">View Details</span>
+            <span class="text-sm font-semibold leading-none">View Details</span>
           </button>
 
           <button
@@ -589,7 +589,7 @@
             class="flex min-h-16 items-center justify-center gap-3 rounded-[22px] bg-[#006666] px-4 py-4 text-white shadow-[0_10px_24px_rgba(0,102,102,0.22)] transition active:scale-[0.99]"
           >
             <z-icon zType="edit" class="h-6 w-6"></z-icon>
-            <span class="text-[21px] font-semibold leading-none">Edit Record</span>
+            <span class="text-sm font-semibold leading-none">Edit Record</span>
           </button>
         </div>
       </div>
@@ -601,7 +601,7 @@
       >
         <z-icon zType="users" class="w-12 h-12 text-gray-200 mx-auto mb-3" />
 
-        <p class="text-gray-500 font-medium italic">No beneficiaries found.</p>
+        <p class="text-slate-500 font-medium italic">No beneficiaries found.</p>
       </div>
     </div>
 
@@ -989,7 +989,7 @@
       class="mt-8 pt-6 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4"
     >
       <!-- INFO -->
-      <p class="text-sm font-medium text-gray-500 order-2 md:order-1">
+      <p class="text-sm font-medium text-slate-500 order-2 md:order-1">
         Showing
 
         <span class="font-bold text-gray-700">
