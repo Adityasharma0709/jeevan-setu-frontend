@@ -30,8 +30,6 @@ export interface Activity {
 export interface Group {
     id: number;
     name: string;
-    minAge?: number;
-    maxAge?: number;
     status: string;
     activities?: { activity: Activity }[];
     creator?: {
@@ -121,21 +119,6 @@ export class AdminService {
         return this.api.get(`${this.endpoint}/groups`) as Observable<Group[]>;
     }
 
-    createGroup(data: any): Observable<Group> {
-        return this.api.post(`${this.endpoint}/groups`, data) as Observable<Group>;
-    }
-
-    updateGroup(id: number, data: any): Observable<Group> {
-        return this.api.put(`${this.endpoint}/group/${id}`, data) as Observable<Group>;
-    }
-
-    deactivateGroup(id: number): Observable<any> {
-        return this.api.patch(`${this.endpoint}/group/${id}/deactivate`, {});
-    }
-
-    activateGroup(id: number): Observable<any> {
-        return this.api.patch(`${this.endpoint}/group/${id}/activate`, {});
-    }
 
     tagGroupWithActivity(data: { groupId: number; activityId: number }): Observable<any> {
         return this.api.post(`${this.endpoint}/tag-group-activity`, data);

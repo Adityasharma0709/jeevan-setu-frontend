@@ -5,7 +5,6 @@ import { roleGuard } from '../core/guards/role-guard';
 import { Layout } from './layout/layout';
 import { Dashboard } from './dashboard/dashboard';
 import { Managers } from './managers/managers';
-import { Groups } from './groups/groups';
 import { Activities } from './activities/activities';
 import { Sessions } from './sessions/sessions';
 import { Profile } from './profile/profile';
@@ -35,14 +34,6 @@ const routes: Routes = [
         component: Managers,
         data: { pageTitle: 'Managers' },
       },
-
-      // Beneficiary Groups
-      {
-        path: 'groups',
-        component: Groups,
-        data: { pageTitle: 'Groups' },
-      },
-
       // Activities
       {
         path: 'activities',

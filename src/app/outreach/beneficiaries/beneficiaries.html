@@ -2,19 +2,12 @@
   BENEFICIARY PAGE CONTAINER
 ========================================================= -->
 <div class="space-y-6 max-w-7xl mx-auto p-5 md:p-6 pb-28 md:pb-20">
-  <app-outreach-page-header
-    title="Beneficiaries"
+  <app-outreach-page-header title="Beneficiaries"
     subtitle="Manage and track health records for your assigned locations."
-    mobileSubtitle="Manage and track health records"
-    [showSearch]="true"
-    [showMobileExtras]="true"
-  >
+    mobileSubtitle="Manage and track health records" [showSearch]="true" [showMobileExtras]="true">
     <div outreachHeaderActions>
-      <button
-        z-button
-        (click)="navigateToCreate()"
-        class="bg-[#006666] hover:bg-[#006666] text-white shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 active:translate-y-0"
-      >
+      <button z-button (click)="navigateToCreate()"
+        class="bg-[#006666] hover:bg-[#006666] text-white shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 active:translate-y-0">
         <z-icon zType="plus" class="w-4 h-4 mr-2" />
         Add New Beneficiary
       </button>
@@ -22,65 +15,44 @@
 
     <div outreachHeaderMeta>
       <span
-        class="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800"
-      >
+        class="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
         {{ (vm$ | async)?.total || 0 }} Total
       </span>
     </div>
 
     <div outreachHeaderSearch>
       <label class="relative flex-1 max-w-md">
-        <z-icon
-          zType="search"
-          class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-        ></z-icon>
+        <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
 
-        <input
-          z-input
-          [formControl]="searchControl"
-          placeholder="Search by UID, name, or mobile..."
-          class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-        />
+        <input z-input [formControl]="searchControl" placeholder="Search by UID, name, or mobile..."
+          class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
       </label>
     </div>
 
-    <div
-      outreachHeaderMobileExtras
-      class="md:hidden overflow-hidden rounded-md border border-[#F3F4F6] bg-white p-3 space-y-3"
-    >
-      <button
-        type="button"
-        (click)="navigateToCreate()"
-        class="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[#006666] px-4 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.18)] transition hover:bg-[#005353] active:scale-[0.99]"
-      >
+    <div outreachHeaderMobileExtras
+      class="md:hidden overflow-hidden rounded-md border border-[#F3F4F6] bg-white p-3 space-y-3">
+      <button type="button" (click)="navigateToCreate()"
+        class="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[#006666] px-4 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.18)] transition hover:bg-[#005353] active:scale-[0.99]">
         <z-icon zType="plus" class="h-5 w-5"></z-icon>
         <span class="text-sm font-semibold leading-none">Add New Beneficiary</span>
       </button>
 
       <div class="grid grid-cols-2">
-        <button
-          type="button"
-          (click)="setMobileViewMode('quickAccess')"
-          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
-          [ngClass]="
+        <button type="button" (click)="setMobileViewMode('quickAccess')"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition" [ngClass]="
             mobileViewMode === 'quickAccess'
               ? 'rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
               : 'rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
-          "
-        >
+          ">
           <z-icon zType="credit-card"></z-icon>
           Quick access
         </button>
-        <button
-          type="button"
-          (click)="setMobileViewMode('table')"
-          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
-          [ngClass]="
+        <button type="button" (click)="setMobileViewMode('table')"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition" [ngClass]="
             mobileViewMode === 'table'
               ? ' rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
               : ' rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
-          "
-        >
+          ">
           <z-icon zType="table"></z-icon>
           Table
         </button>
@@ -94,25 +66,25 @@
       </z-combobox>
 
       @if (exportMode === 'RANGE') {
-        <div class="space-y-3">
-          <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
-            <z-calendar zMode="range" [(value)]="exportDateRange" class="mx-auto"></z-calendar>
-          </div>
-
-          <div class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm text-slate-600">
-            <span class="font-semibold uppercase tracking-wider text-slate-400">Selected range</span>
-
-            <span class="text-right font-semibold text-slate-800">
-              @if (exportDateRange?.length === 2) {
-                {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }} - {{ exportDateRange?.[1] | date: 'dd-MM-yyyy' }}
-              } @else if (exportDateRange?.length === 1) {
-                {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }}
-              } @else {
-                Not selected
-              }
-            </span>
-          </div>
+      <div class="space-y-3">
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+          <z-calendar zMode="range" [(value)]="exportDateRange" class="mx-auto"></z-calendar>
         </div>
+
+        <div class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm text-slate-600">
+          <span class="font-semibold uppercase tracking-wider text-slate-400">Selected range</span>
+
+          <span class="text-right font-semibold text-slate-800">
+            @if (exportDateRange?.length === 2) {
+            {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }} - {{ exportDateRange?.[1] | date: 'dd-MM-yyyy' }}
+            } @else if (exportDateRange?.length === 1) {
+            {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }}
+            } @else {
+            Not selected
+            }
+          </span>
+        </div>
+      </div>
       }
     </div>
   </ng-template>
@@ -126,66 +98,44 @@
     <!-- =====================================================
       DESKTOP TABLE VIEW
     ====================================================== -->
-    <div
-      class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-x-auto shadow-sm"
-    >
+    <div class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-x-auto shadow-sm">
       <div class="border-b border-slate-200 px-4 py-4">
         <div class="flex items-center gap-3 w-full max-w-3xl">
           <label class="relative flex-1">
-            <z-icon
-              zType="search"
-              class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-            ></z-icon>
+            <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
 
-            <input
-              z-input
-              [formControl]="searchControl"
-              placeholder="Search by UID, name, or mobile..."
-              class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-            />
+            <input z-input [formControl]="searchControl" placeholder="Search by UID, name, or mobile..."
+              class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
           </label>
         </div>
       </div>
 
-      <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <button
-          type="button"
-          (click)="openExportDialog()"
-          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] sm:w-auto"
-        >
+      <div
+        class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <button type="button" (click)="openExportDialog()"
+          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] sm:w-auto">
           <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
           <span class="text-sm font-semibold leading-none">Download sheet</span>
         </button>
 
         <div class="relative inline-block self-end text-left sm:self-auto">
-          <button
-            type="button"
-            (click)="toggleColumnSelectorDropdown()"
-            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-          >
+          <button type="button" (click)="toggleColumnSelectorDropdown()"
+            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
             <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
             Columns
           </button>
 
-          <div
-            *ngIf="showColumnSelector"
-            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50"
-          >
+          <div *ngIf="showColumnSelector"
+            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
             <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
               Show / Hide Columns
             </div>
 
             <div class="space-y-2">
-              <label
-                *ngFor="let col of columnList"
-                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50"
-              >
-                <input
-                  type="checkbox"
-                  [(ngModel)]="selectedColumns[col.key]"
-                  (click)="$event.stopPropagation()"
-                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]"
-                />
+              <label *ngFor="let col of columnList"
+                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
+                <input type="checkbox" [(ngModel)]="selectedColumns[col.key]" (click)="$event.stopPropagation()"
+                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]" />
                 <span class="text-xs font-medium text-slate-700">{{ col.label }}</span>
               </label>
             </div>
@@ -194,182 +144,244 @@
       </div>
 
       <!-- TABLE -->
-      <table
-        z-table
-        zType="grid"
-        class="w-max table-auto border-collapse text-left text-[13px] text-slate-900"
-      >
+      <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
         <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>
+            <th z-table-head class="border-b border-slate-300 px-2 py-1.5 text-center whitespace-nowrap">
+              <span>Action</span>
+            </th>
             <th z-table-head class="border-b border-slate-300 px-2 py-1.5 text-center whitespace-nowrap">
               <span>#</span>
             </th>
 
-            <th *ngIf="selectedColumns['uid']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('uid')">
+            <th *ngIf="selectedColumns['uid']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('uid')">
               <span class="flex items-center justify-center gap-1">
                 Beneficiary ID
-                <z-icon [zType]="(sortCol$ | async) === 'uid' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'uid' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'uid' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'uid' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['name']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('name')">
+            <th *ngIf="selectedColumns['name']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('name')">
               <span class="flex items-center justify-center gap-1">
                 Name
-                <z-icon [zType]="(sortCol$ | async) === 'name' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'name' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'name' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'name' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['beneficiaryType']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('beneficiaryType')">
+            <th *ngIf="selectedColumns['beneficiaryType']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('beneficiaryType')">
               <span class="flex items-center justify-center gap-1">
                 Type
-                <z-icon [zType]="(sortCol$ | async) === 'beneficiaryType' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'beneficiaryType' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'beneficiaryType' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'beneficiaryType' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['age']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('age')">
+            <th *ngIf="selectedColumns['age']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('age')">
               <span class="flex items-center justify-center gap-1">
                 Age
-                <z-icon [zType]="(sortCol$ | async) === 'age' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'age' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'age' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'age' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['gender']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('gender')">
+            <th *ngIf="selectedColumns['gender']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('gender')">
               <span class="flex items-center justify-center gap-1">
                 Gender
-                <z-icon [zType]="(sortCol$ | async) === 'gender' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'gender' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'gender' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'gender' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['mobile']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('mobileNumber')">
+            <th *ngIf="selectedColumns['mobile']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('mobileNumber')">
               <span class="flex items-center justify-center gap-1">
                 Mobile
-                <z-icon [zType]="(sortCol$ | async) === 'mobileNumber' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'mobileNumber' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'mobileNumber' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'mobileNumber' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['guardianName']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('guardianName')">
+            <th *ngIf="selectedColumns['guardianName']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('guardianName')">
               <span class="flex items-center justify-center gap-1">
                 Guardian Name
-                <z-icon [zType]="(sortCol$ | async) === 'guardianName' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'guardianName' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'guardianName' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'guardianName' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['maritalStatus']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('maritalStatus')">
+            <th *ngIf="selectedColumns['maritalStatus']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('maritalStatus')">
               <span class="flex items-center justify-center gap-1">
                 Marital Status
-                <z-icon [zType]="(sortCol$ | async) === 'maritalStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'maritalStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'maritalStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'maritalStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['dateOfMarriage']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('dateOfMarriage')">
+            <th *ngIf="selectedColumns['dateOfMarriage']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('dateOfMarriage')">
               <span class="flex items-center justify-center gap-1">
                 Marriage Date
-                <z-icon [zType]="(sortCol$ | async) === 'dateOfMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'dateOfMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'dateOfMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'dateOfMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['womanAgeAtMarriage']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('womanAgeAtMarriage')">
+            <th *ngIf="selectedColumns['womanAgeAtMarriage']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('womanAgeAtMarriage')">
               <span class="flex items-center justify-center gap-1">
                 Woman Age at Marriage
-                <z-icon [zType]="(sortCol$ | async) === 'womanAgeAtMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'womanAgeAtMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'womanAgeAtMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'womanAgeAtMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['husbandAgeAtMarriage']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('husbandAgeAtMarriage')">
+            <th *ngIf="selectedColumns['husbandAgeAtMarriage']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('husbandAgeAtMarriage')">
               <span class="flex items-center justify-center gap-1">
                 Husband Age at Marriage
-                <z-icon [zType]="(sortCol$ | async) === 'husbandAgeAtMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'husbandAgeAtMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'husbandAgeAtMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'husbandAgeAtMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['qualification']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('qualification')">
+            <th *ngIf="selectedColumns['qualification']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('qualification')">
               <span class="flex items-center justify-center gap-1">
                 Qualification
-                <z-icon [zType]="(sortCol$ | async) === 'qualification' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'qualification' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'qualification' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'qualification' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['religion']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('religion')">
+            <th *ngIf="selectedColumns['religion']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('religion')">
               <span class="flex items-center justify-center gap-1">
                 Religion
-                <z-icon [zType]="(sortCol$ | async) === 'religion' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'religion' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'religion' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'religion' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['caste']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('caste')">
+            <th *ngIf="selectedColumns['caste']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('caste')">
               <span class="flex items-center justify-center gap-1">
                 Caste
-                <z-icon [zType]="(sortCol$ | async) === 'caste' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'caste' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'caste' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'caste' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['monthlyIncome']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('monthlyIncome')">
+            <th *ngIf="selectedColumns['monthlyIncome']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('monthlyIncome')">
               <span class="flex items-center justify-center gap-1">
                 Monthly Income
-                <z-icon [zType]="(sortCol$ | async) === 'monthlyIncome' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'monthlyIncome' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'monthlyIncome' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'monthlyIncome' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['economicStatus']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('economicStatus')">
+            <th *ngIf="selectedColumns['economicStatus']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('economicStatus')">
               <span class="flex items-center justify-center gap-1">
                 Economic Status
-                <z-icon [zType]="(sortCol$ | async) === 'economicStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'economicStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'economicStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'economicStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['primaryIncomeSource']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('primaryIncomeSource')">
+            <th *ngIf="selectedColumns['primaryIncomeSource']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('primaryIncomeSource')">
               <span class="flex items-center justify-center gap-1">
                 Income Source
-                <z-icon [zType]="(sortCol$ | async) === 'primaryIncomeSource' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'primaryIncomeSource' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'primaryIncomeSource' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'primaryIncomeSource' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['employmentStatus']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('employmentStatus')">
+            <th *ngIf="selectedColumns['employmentStatus']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('employmentStatus')">
               <span class="flex items-center justify-center gap-1">
                 Employment Status
-                <z-icon [zType]="(sortCol$ | async) === 'employmentStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'employmentStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'employmentStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'employmentStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['project']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('project')">
+            <th *ngIf="selectedColumns['project']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('project')">
               <span class="flex items-center justify-center gap-1">
                 Project
-                <z-icon [zType]="(sortCol$ | async) === 'project' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'project' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'project' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'project' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['location']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('location')">
+            <th *ngIf="selectedColumns['location']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('location')">
               <span class="flex items-center justify-center gap-1">
                 Location
-                <z-icon [zType]="(sortCol$ | async) === 'location' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'location' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'location' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'location' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['createdAt']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('createdAt')">
+            <th *ngIf="selectedColumns['createdAt']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('createdAt')">
               <span class="flex items-center justify-center gap-1">
                 Registered Date
-                <z-icon [zType]="(sortCol$ | async) === 'createdAt' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'createdAt' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'createdAt' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'createdAt' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
           </tr>
@@ -377,18 +389,24 @@
 
         <tbody z-table-body class="divide-y divide-slate-100 text-[13px]">
           <!-- ROW -->
-          <tr
-            z-table-row
-            *ngFor="let beneficiary of vm.items; let i = index"
-            class="align-top hover:bg-slate-50 transition-colors"
-          >
+          <tr z-table-row *ngFor="let beneficiary of vm.items; let i = index"
+            class="align-top hover:bg-slate-50 transition-colors">
+
+            <!-- Edit -->
+            <td z-table-cell> <button type="button" (click)="editRecord(beneficiary); $event.stopPropagation()"
+                class="flex items-center justify-center gap-3 rounded-[22px] border-2 border-[#005353] px-2 py-2 text-[#005353] transition active:scale-[0.99]">
+                <z-icon zType="edit" class="h-3 w-3"></z-icon>
+                <span class="text-sm font-semibold leading-none">Edit</span>
+              </button></td>
+
             <!-- INDEX -->
             <td z-table-cell class="px-2 py-3 text-center font-semibold">
               {{ vm.startIndex + i + 1 }}
             </td>
 
             <!-- UID -->
-            <td *ngIf="selectedColumns['uid']" z-table-cell class="px-2 py-3 font-mono text-[12px] text-indigo-600 text-center">
+            <td *ngIf="selectedColumns['uid']" z-table-cell
+              class="px-2 py-3 font-mono text-[12px] text-indigo-600 text-center">
               {{ beneficiary.uid || '-' }}
             </td>
 
@@ -403,8 +421,7 @@
             <td *ngIf="selectedColumns['beneficiaryType']" z-table-cell class="px-2 py-3 text-center">
               <span
                 [class]="getBeneficiaryType(beneficiary) === 'Priority' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-700 border-slate-200'"
-                class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border"
-              >
+                class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border">
                 {{ getBeneficiaryType(beneficiary) }}
               </span>
             </td>
@@ -447,7 +464,8 @@
             </td>
 
             <!-- HUSBAND AGE AT MARRIAGE -->
-            <td *ngIf="selectedColumns['husbandAgeAtMarriage']" z-table-cell class="px-2 py-3 text-slate-700 text-center">
+            <td *ngIf="selectedColumns['husbandAgeAtMarriage']" z-table-cell
+              class="px-2 py-3 text-slate-700 text-center">
               {{ beneficiary.husbandAgeAtMarriage || '-' }}
             </td>
 
@@ -468,7 +486,8 @@
 
             <!-- MONTHLY INCOME -->
             <td *ngIf="selectedColumns['monthlyIncome']" z-table-cell class="px-2 py-3 text-slate-700 text-right">
-              {{ beneficiary.monthlyIncome !== null && beneficiary.monthlyIncome !== undefined ? (beneficiary.monthlyIncome | currency: 'INR' : 'symbol' : '1.0-0') : '-' }}
+              {{ beneficiary.monthlyIncome !== null && beneficiary.monthlyIncome !== undefined ?
+              (beneficiary.monthlyIncome | currency: 'INR' : 'symbol' : '1.0-0') : '-' }}
             </td>
 
             <!-- ECONOMIC STATUS -->
@@ -489,8 +508,7 @@
             <!-- PROJECT -->
             <td *ngIf="selectedColumns['project']" z-table-cell class="px-2 py-3">
               <span
-                class="inline-flex rounded border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-bold uppercase tracking-tight text-indigo-700"
-              >
+                class="inline-flex rounded border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-bold uppercase tracking-tight text-indigo-700">
                 {{ beneficiary.project?.name || '-' }}
               </span>
             </td>
@@ -508,11 +526,8 @@
 
           <!-- EMPTY -->
           <tr z-table-row *ngIf="vm.items.length === 0">
-            <td
-              z-table-cell
-              [attr.colspan]="getColspan()"
-              class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500"
-            >
+            <td z-table-cell [attr.colspan]="getColspan()"
+              class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
               No beneficiaries found.
             </td>
           </tr>
@@ -524,11 +539,9 @@
       MOBILE CARD VIEW
     ====================================================== -->
     <div *ngIf="mobileViewMode === 'quickAccess'" class="md:hidden space-y-4">
-      <div
-        *ngFor="let beneficiary of vm.items; trackBy: trackById"
+      <div *ngFor="let beneficiary of vm.items; trackBy: trackById"
         class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition active:bg-[#CCFBF1]/20"
-        (click)="viewDetails(beneficiary)"
-      >
+        (click)="viewDetails(beneficiary)">
         <div class="flex items-start gap-4">
           <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-[28px] bg-slate-100 text-[#006666]">
             <z-icon zType="user" class="h-10 w-10"></z-icon>
@@ -574,20 +587,14 @@
         </div>
 
         <div class="mt-8 grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            (click)="viewDetails(beneficiary); $event.stopPropagation()"
-            class="flex min-h-16 items-center justify-center gap-3 rounded-[22px] border-2 border-[#006666] px-4 py-4 text-[#006666] transition active:scale-[0.99]"
-          >
+          <button type="button" (click)="viewDetails(beneficiary); $event.stopPropagation()"
+            class="flex min-h-16 items-center justify-center gap-3 rounded-[22px] border-2 border-[#006666] px-4 py-4 text-[#006666] transition active:scale-[0.99]">
             <z-icon zType="eye" class="h-6 w-6"></z-icon>
             <span class="text-sm font-semibold leading-none">View Details</span>
           </button>
 
-          <button
-            type="button"
-            (click)="editRecord(beneficiary); $event.stopPropagation()"
-            class="flex min-h-16 items-center justify-center gap-3 rounded-[22px] bg-[#006666] px-4 py-4 text-white shadow-[0_10px_24px_rgba(0,102,102,0.22)] transition active:scale-[0.99]"
-          >
+          <button type="button" (click)="editRecord(beneficiary); $event.stopPropagation()"
+            class="flex min-h-16 items-center justify-center gap-3 rounded-[22px] bg-[#006666] px-4 py-4 text-white shadow-[0_10px_24px_rgba(0,102,102,0.22)] transition active:scale-[0.99]">
             <z-icon zType="edit" class="h-6 w-6"></z-icon>
             <span class="text-sm font-semibold leading-none">Edit Record</span>
           </button>
@@ -595,10 +602,7 @@
       </div>
 
       <!-- MOBILE EMPTY STATE -->
-      <div
-        *ngIf="vm.items.length === 0"
-        class="py-20 text-center bg-white border border-dashed rounded-xl"
-      >
+      <div *ngIf="vm.items.length === 0" class="py-20 text-center bg-white border border-dashed rounded-xl">
         <z-icon zType="users" class="w-12 h-12 text-gray-200 mx-auto mb-3" />
 
         <p class="text-slate-500 font-medium italic">No beneficiaries found.</p>
@@ -606,49 +610,33 @@
     </div>
 
     <!-- Small Screens: Mobile Table -->
-    <div
-      *ngIf="mobileViewMode === 'table'"
-      class="md:hidden bg-white border border-gray-100 rounded-2xl overflow-x-auto shadow-sm"
-    >
+    <div *ngIf="mobileViewMode === 'table'"
+      class="md:hidden bg-white border border-gray-100 rounded-2xl overflow-x-auto shadow-sm">
       <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4">
-        <button
-          type="button"
-          (click)="openExportDialog()"
-          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353]"
-        >
+        <button type="button" (click)="openExportDialog()"
+          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353]">
           <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
           <span class="text-[15px] font-semibold leading-none">Download sheet</span>
         </button>
 
         <div class="relative inline-block self-end text-left">
-          <button
-            type="button"
-            (click)="toggleColumnSelectorDropdown()"
-            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-          >
+          <button type="button" (click)="toggleColumnSelectorDropdown()"
+            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
             <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
             Columns
           </button>
 
-          <div
-            *ngIf="showColumnSelector"
-            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50"
-          >
+          <div *ngIf="showColumnSelector"
+            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
             <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
               Show / Hide Columns
             </div>
 
             <div class="space-y-2">
-              <label
-                *ngFor="let col of columnList"
-                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50"
-              >
-                <input
-                  type="checkbox"
-                  [(ngModel)]="selectedColumns[col.key]"
-                  (click)="$event.stopPropagation()"
-                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]"
-                />
+              <label *ngFor="let col of columnList"
+                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
+                <input type="checkbox" [(ngModel)]="selectedColumns[col.key]" (click)="$event.stopPropagation()"
+                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]" />
                 <span class="text-xs font-medium text-slate-700">{{ col.label }}</span>
               </label>
             </div>
@@ -657,182 +645,241 @@
       </div>
 
       <!-- TABLE -->
-      <table
-        z-table
-        zType="grid"
-        class="w-max table-auto border-collapse text-left text-[13px] text-slate-900"
-      >
+      <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
         <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>
             <th z-table-head class="border-b border-slate-300 px-2 py-1.5 text-center whitespace-nowrap">
               <span>#</span>
             </th>
 
-            <th *ngIf="selectedColumns['uid']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('uid')">
+            <th *ngIf="selectedColumns['uid']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('uid')">
               <span class="flex items-center justify-center gap-1">
                 Beneficiary ID
-                <z-icon [zType]="(sortCol$ | async) === 'uid' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'uid' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'uid' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'uid' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['name']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('name')">
+            <th *ngIf="selectedColumns['name']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('name')">
               <span class="flex items-center justify-center gap-1">
                 Name
-                <z-icon [zType]="(sortCol$ | async) === 'name' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'name' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'name' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'name' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['beneficiaryType']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('beneficiaryType')">
+            <th *ngIf="selectedColumns['beneficiaryType']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('beneficiaryType')">
               <span class="flex items-center justify-center gap-1">
                 Type
-                <z-icon [zType]="(sortCol$ | async) === 'beneficiaryType' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'beneficiaryType' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'beneficiaryType' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'beneficiaryType' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['age']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('age')">
+            <th *ngIf="selectedColumns['age']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('age')">
               <span class="flex items-center justify-center gap-1">
                 Age
-                <z-icon [zType]="(sortCol$ | async) === 'age' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'age' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'age' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'age' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['gender']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('gender')">
+            <th *ngIf="selectedColumns['gender']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('gender')">
               <span class="flex items-center justify-center gap-1">
                 Gender
-                <z-icon [zType]="(sortCol$ | async) === 'gender' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'gender' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'gender' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'gender' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['mobile']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('mobileNumber')">
+            <th *ngIf="selectedColumns['mobile']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('mobileNumber')">
               <span class="flex items-center justify-center gap-1">
                 Mobile
-                <z-icon [zType]="(sortCol$ | async) === 'mobileNumber' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'mobileNumber' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'mobileNumber' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'mobileNumber' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['guardianName']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('guardianName')">
+            <th *ngIf="selectedColumns['guardianName']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('guardianName')">
               <span class="flex items-center justify-center gap-1">
                 Guardian Name
-                <z-icon [zType]="(sortCol$ | async) === 'guardianName' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'guardianName' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'guardianName' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'guardianName' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['maritalStatus']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('maritalStatus')">
+            <th *ngIf="selectedColumns['maritalStatus']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('maritalStatus')">
               <span class="flex items-center justify-center gap-1">
                 Marital Status
-                <z-icon [zType]="(sortCol$ | async) === 'maritalStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'maritalStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'maritalStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'maritalStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['dateOfMarriage']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('dateOfMarriage')">
+            <th *ngIf="selectedColumns['dateOfMarriage']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('dateOfMarriage')">
               <span class="flex items-center justify-center gap-1">
                 Marriage Date
-                <z-icon [zType]="(sortCol$ | async) === 'dateOfMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'dateOfMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'dateOfMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'dateOfMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['womanAgeAtMarriage']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('womanAgeAtMarriage')">
+            <th *ngIf="selectedColumns['womanAgeAtMarriage']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('womanAgeAtMarriage')">
               <span class="flex items-center justify-center gap-1">
                 Woman Age at Marriage
-                <z-icon [zType]="(sortCol$ | async) === 'womanAgeAtMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'womanAgeAtMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'womanAgeAtMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'womanAgeAtMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['husbandAgeAtMarriage']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('husbandAgeAtMarriage')">
+            <th *ngIf="selectedColumns['husbandAgeAtMarriage']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('husbandAgeAtMarriage')">
               <span class="flex items-center justify-center gap-1">
                 Husband Age at Marriage
-                <z-icon [zType]="(sortCol$ | async) === 'husbandAgeAtMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'husbandAgeAtMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'husbandAgeAtMarriage' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'husbandAgeAtMarriage' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['qualification']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('qualification')">
+            <th *ngIf="selectedColumns['qualification']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('qualification')">
               <span class="flex items-center justify-center gap-1">
                 Qualification
-                <z-icon [zType]="(sortCol$ | async) === 'qualification' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'qualification' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'qualification' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'qualification' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['religion']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('religion')">
+            <th *ngIf="selectedColumns['religion']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('religion')">
               <span class="flex items-center justify-center gap-1">
                 Religion
-                <z-icon [zType]="(sortCol$ | async) === 'religion' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'religion' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'religion' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'religion' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['caste']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('caste')">
+            <th *ngIf="selectedColumns['caste']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('caste')">
               <span class="flex items-center justify-center gap-1">
                 Caste
-                <z-icon [zType]="(sortCol$ | async) === 'caste' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'caste' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'caste' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'caste' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['monthlyIncome']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('monthlyIncome')">
+            <th *ngIf="selectedColumns['monthlyIncome']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('monthlyIncome')">
               <span class="flex items-center justify-center gap-1">
                 Monthly Income
-                <z-icon [zType]="(sortCol$ | async) === 'monthlyIncome' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'monthlyIncome' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'monthlyIncome' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'monthlyIncome' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['economicStatus']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('economicStatus')">
+            <th *ngIf="selectedColumns['economicStatus']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('economicStatus')">
               <span class="flex items-center justify-center gap-1">
                 Economic Status
-                <z-icon [zType]="(sortCol$ | async) === 'economicStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'economicStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'economicStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'economicStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['primaryIncomeSource']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('primaryIncomeSource')">
+            <th *ngIf="selectedColumns['primaryIncomeSource']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('primaryIncomeSource')">
               <span class="flex items-center justify-center gap-1">
                 Income Source
-                <z-icon [zType]="(sortCol$ | async) === 'primaryIncomeSource' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'primaryIncomeSource' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'primaryIncomeSource' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'primaryIncomeSource' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['employmentStatus']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('employmentStatus')">
+            <th *ngIf="selectedColumns['employmentStatus']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('employmentStatus')">
               <span class="flex items-center justify-center gap-1">
                 Employment Status
-                <z-icon [zType]="(sortCol$ | async) === 'employmentStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'employmentStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'employmentStatus' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'employmentStatus' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['project']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('project')">
+            <th *ngIf="selectedColumns['project']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('project')">
               <span class="flex items-center justify-center gap-1">
                 Project
-                <z-icon [zType]="(sortCol$ | async) === 'project' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'project' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'project' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'project' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['location']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('location')">
+            <th *ngIf="selectedColumns['location']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('location')">
               <span class="flex items-center justify-center gap-1">
                 Location
-                <z-icon [zType]="(sortCol$ | async) === 'location' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'location' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'location' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'location' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
 
-            <th *ngIf="selectedColumns['createdAt']" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap" (click)="sortBy('createdAt')">
+            <th *ngIf="selectedColumns['createdAt']" z-table-head
+              class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+              (click)="sortBy('createdAt')">
               <span class="flex items-center justify-center gap-1">
                 Registered Date
-                <z-icon [zType]="(sortCol$ | async) === 'createdAt' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'" 
-                        [class]="(sortCol$ | async) === 'createdAt' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
+                <z-icon
+                  [zType]="(sortCol$ | async) === 'createdAt' ? ((sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down') : 'chevrons-up-down'"
+                  [class]="(sortCol$ | async) === 'createdAt' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"></z-icon>
               </span>
             </th>
           </tr>
@@ -840,18 +887,16 @@
 
         <tbody z-table-body class="divide-y divide-slate-100 text-[13px]">
           <!-- ROW -->
-          <tr
-            z-table-row
-            *ngFor="let beneficiary of vm.items; let i = index"
-            class="align-top hover:bg-slate-50 transition-colors"
-          >
+          <tr z-table-row *ngFor="let beneficiary of vm.items; let i = index"
+            class="align-top hover:bg-slate-50 transition-colors">
             <!-- INDEX -->
             <td z-table-cell class="px-2 py-3 text-center font-semibold">
               {{ vm.startIndex + i + 1 }}
             </td>
 
             <!-- UID -->
-            <td *ngIf="selectedColumns['uid']" z-table-cell class="px-2 py-3 font-mono text-[12px] text-indigo-600 text-center">
+            <td *ngIf="selectedColumns['uid']" z-table-cell
+              class="px-2 py-3 font-mono text-[12px] text-indigo-600 text-center">
               {{ beneficiary.uid || '-' }}
             </td>
 
@@ -866,8 +911,7 @@
             <td *ngIf="selectedColumns['beneficiaryType']" z-table-cell class="px-2 py-3 text-center">
               <span
                 [class]="getBeneficiaryType(beneficiary) === 'Priority' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-700 border-slate-200'"
-                class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border"
-              >
+                class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border">
                 {{ getBeneficiaryType(beneficiary) }}
               </span>
             </td>
@@ -910,7 +954,8 @@
             </td>
 
             <!-- HUSBAND AGE AT MARRIAGE -->
-            <td *ngIf="selectedColumns['husbandAgeAtMarriage']" z-table-cell class="px-2 py-3 text-slate-700 text-center">
+            <td *ngIf="selectedColumns['husbandAgeAtMarriage']" z-table-cell
+              class="px-2 py-3 text-slate-700 text-center">
               {{ beneficiary.husbandAgeAtMarriage || '-' }}
             </td>
 
@@ -931,7 +976,8 @@
 
             <!-- MONTHLY INCOME -->
             <td *ngIf="selectedColumns['monthlyIncome']" z-table-cell class="px-2 py-3 text-slate-700 text-right">
-              {{ beneficiary.monthlyIncome !== null && beneficiary.monthlyIncome !== undefined ? (beneficiary.monthlyIncome | currency: 'INR' : 'symbol' : '1.0-0') : '-' }}
+              {{ beneficiary.monthlyIncome !== null && beneficiary.monthlyIncome !== undefined ?
+              (beneficiary.monthlyIncome | currency: 'INR' : 'symbol' : '1.0-0') : '-' }}
             </td>
 
             <!-- ECONOMIC STATUS -->
@@ -952,8 +998,7 @@
             <!-- PROJECT -->
             <td *ngIf="selectedColumns['project']" z-table-cell class="px-2 py-3">
               <span
-                class="inline-flex rounded border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-bold uppercase tracking-tight text-indigo-700"
-              >
+                class="inline-flex rounded border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-bold uppercase tracking-tight text-indigo-700">
                 {{ beneficiary.project?.name || '-' }}
               </span>
             </td>
@@ -971,11 +1016,8 @@
 
           <!-- EMPTY -->
           <tr z-table-row *ngIf="vm.items.length === 0">
-            <td
-              z-table-cell
-              [attr.colspan]="getColspan()"
-              class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500"
-            >
+            <td z-table-cell [attr.colspan]="getColspan()"
+              class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
               No beneficiaries found.
             </td>
           </tr>
@@ -985,9 +1027,7 @@
     <!-- =====================================================
       PAGINATION
     ====================================================== -->
-    <div
-      class="mt-8 pt-6 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4"
-    >
+    <div class="mt-8 pt-6 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
       <!-- INFO -->
       <p class="text-sm font-medium text-slate-500 order-2 md:order-1">
         Showing
@@ -1012,30 +1052,21 @@
       <!-- PAGINATION CONTROLS -->
       <div class="flex items-center gap-2 order-1 md:order-2">
         <!-- PREV -->
-        <button
-          type="button"
-          (click)="prevPage()"
-          [disabled]="vm.page <= 1"
-          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
-        >
+        <button type="button" (click)="prevPage()" [disabled]="vm.page <= 1"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm">
           <z-icon zType="chevron-left" class="w-4 h-4"></z-icon>
           Prev
         </button>
 
         <!-- PAGE INFO -->
         <span
-          class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap shadow-sm"
-        >
+          class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap shadow-sm">
           {{ vm.page }} / {{ vm.pageCount }}
         </span>
 
         <!-- NEXT -->
-        <button
-          type="button"
-          (click)="nextPage()"
-          [disabled]="vm.page >= vm.pageCount"
-          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
-        >
+        <button type="button" (click)="nextPage()" [disabled]="vm.page >= vm.pageCount"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm">
           Next
           <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
         </button>

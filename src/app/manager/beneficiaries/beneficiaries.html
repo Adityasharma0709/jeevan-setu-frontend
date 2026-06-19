@@ -1,11 +1,4 @@
 <div class="p-6 space-y-6">
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 mb-2">Beneficiaries</h1>
-            <p class="text-gray-600">View and manage beneficiaries in your assigned area.</p>
-        </div>
-    </div>
-
 <ng-container *ngIf="pager$ | async as pager; else loader" class="fade-in">
     <!-- Mobile Card View -->
     <div class="md:hidden grid grid-cols-1 gap-6">

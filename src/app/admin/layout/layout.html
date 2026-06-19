@@ -77,12 +77,6 @@
             @if (!sidebarCollapsed) { <span class="flex-1">AWCs</span> }
           </a>
 
-          <!-- Groups -->
-          <a routerLink="/admin/groups" routerLinkActive="active-link" class="menu-link"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Groups' : ''" zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="layers" [class]="sidebarCollapsed ? '' : 'mr-3 text-red-500'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Groups</span> }
-          </a>
 
           <!-- Activities -->
           <a routerLink="/admin/activities" routerLinkActive="active-link" class="menu-link"
