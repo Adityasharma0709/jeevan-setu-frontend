@@ -135,7 +135,22 @@
             />
           </z-form-control>
         </z-form-field>
-      </div>
+
+        <!-- Age -->
+        <z-form-field>
+          <label z-form-label>Age</label>
+          <z-form-control>
+            <input z-input type="text" formControlName="age" placeholder="Auto-calculated" readonly class="bg-gray-50" />
+          </z-form-control>
+        </z-form-field>
+
+        <!-- Group -->
+        <z-form-field>
+          <label z-form-label>Group</label>
+          <z-form-control>
+            <input z-input type="text" formControlName="groupText" placeholder="Auto-determined" readonly class="bg-gray-50" />
+          </z-form-control>
+        </z-form-field>      </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
         <!-- Screening -->
@@ -171,7 +186,7 @@
           </z-form-control>
         </z-form-field>
 
-        <!-- LMP Date (when Pregnancy = Yes) -->
+        <!-- LMP Date (when Pregnancy = Currently Pregnant) -->
         <z-form-field *ngIf="showPregnancy && showLmpDate">
           <label z-form-label>
             LMP Date
@@ -197,6 +212,36 @@
           </z-form-control>
         </z-form-field>
 
+        <!-- Date (when Pregnancy = Still Birth or Miscarriage) -->
+        <z-form-field *ngIf="showPregnancy && showPregnancyDate">
+          <label z-form-label>
+            Date
+            <span class="ml-1 text-xs font-normal text-gray-400">(DD/MM/YYYY)</span>
+          </label>
+          <z-form-control class="relative">
+            <input z-input type="text" formControlName="pregnancyDate" placeholder="DD/MM/YYYY" maxlength="10" class="pr-10" />
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <z-icon zType="calendar" class="w-4 h-4 text-gray-400 pointer-events-none" />
+              <input type="date" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" (change)="onPregnancyDatePickerChange($event)" />
+            </div>
+          </z-form-control>
+        </z-form-field>
+
+        <!-- DOD (when Pregnancy = Baby Delivered) -->
+        <z-form-field *ngIf="showPregnancy && showDeliveryDate">
+          <label z-form-label>
+            Date of Delivery
+            <span class="ml-1 text-xs font-normal text-gray-400">(DD/MM/YYYY)</span>
+          </label>
+          <z-form-control class="relative">
+            <input z-input type="text" formControlName="deliveryDate" placeholder="DD/MM/YYYY" maxlength="10" class="pr-10" />
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <z-icon zType="calendar" class="w-4 h-4 text-gray-400 pointer-events-none" />
+              <input type="date" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" (change)="onDeliveryDatePickerChange($event)" />
+            </div>
+          </z-form-control>
+        </z-form-field>
+
         <!-- SAM/MAM Status (Child ≤ 5 years) -->
         <z-form-field *ngIf="showSamMam">
           <label z-form-label>
@@ -216,6 +261,33 @@
             />
           </z-form-control>
         </z-form-field>
+      </div>
+
+      <!-- Baby Details (Baby Delivered) -->
+      <div *ngIf="showPregnancy && showDeliveryDate" formGroupName="babyDetails" class="mt-4 p-4 border rounded-xl bg-gray-50/50 space-y-4 animate-in fade-in slide-in-from-top-2">
+        <h3 class="text-sm font-semibold text-gray-800">Add Baby as Family Member</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <z-form-field>
+            <label z-form-label>Name</label>
+            <z-form-control>
+              <input z-input type="text" formControlName="name" placeholder="Baby Name" />
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <label z-form-label>Gender</label>
+            <z-form-control>
+              <z-combobox formControlName="gender" [options]="genderOptions" [searchable]="false" placeholder="Select gender" zWidth="full" />
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <label z-form-label>Relation</label>
+            <z-form-control>
+              <input z-input type="text" formControlName="relation" placeholder="Son/Daughter" readonly class="bg-gray-100" />
+            </z-form-control>
+          </z-form-field>
+        </div>
       </div>
 
       <!-- Tests Selection (Conditional) -->

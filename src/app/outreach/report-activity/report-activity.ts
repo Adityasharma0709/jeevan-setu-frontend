@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, switchMap, tap, catchError, throwError } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { Router, ActivatedRoute } from '@angular/router';
 
@@ -47,7 +47,7 @@ export class ReportActivity {
     sessionId: ['', Validators.required],
     sessionDate: [this.getTodayFormatted(), Validators.required],
     beneficiaryId: ['', Validators.required],
-    childId: [''],
+    childId: ['MAIN'],
     screening: ['No', Validators.required],
     selectedTests: this.fb.array([]),
     testValues: this.fb.group({
@@ -63,7 +63,16 @@ export class ReportActivity {
     }),
     pregnancyStatus: [''],
     lmpDate: [''],
+    pregnancyDate: [''],
+    deliveryDate: [''],
+    babyDetails: this.fb.group({
+      name: [''],
+      gender: [''],
+      relation: ['Son/Daughter'],
+    }),
     samMamStatus: [''],
+    age: [{ value: '', disabled: true }],
+    groupText: [{ value: '', disabled: true }],
   });
 
   beneficiarySearch$ = new BehaviorSubject<string>('');
@@ -120,9 +129,16 @@ export class ReportActivity {
   ];
 
   pregnancyStatusOptions: ZardComboboxOption[] = [
-    { value: 'Yes', label: 'Yes' },
-    { value: 'Lactating', label: 'Lactating' },
-    { value: 'Aborted', label: 'Aborted' },
+    { value: 'No', label: 'No' },
+    { value: 'Currently Pregnant', label: 'Currently Pregnant' },
+    { value: 'Still Birth', label: 'Still Birth' },
+    { value: 'Baby Delivered', label: 'Baby Delivered' },
+    { value: 'Miscarriage/Aborted', label: 'Miscarriage/Aborted' },
+  ];
+
+  genderOptions: ZardComboboxOption[] = [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
   ];
 
 
@@ -167,15 +183,25 @@ export class ReportActivity {
     if (child) {
       return this.calcAge(child.dateOfBirth) <= 5;
     }
-    if (this.selectedBeneficiary && !this.reportForm.get('childId')?.value) {
+    const childId = this.reportForm.get('childId')?.value;
+    if (this.selectedBeneficiary && (!childId || childId === 'MAIN')) {
       return this.calcAge(this.selectedBeneficiary.dateOfBirth) <= 5;
     }
     return false;
   }
 
-  /** True when pregnancy status is Yes */
+  /** True when pregnancy status is Currently Pregnant */
   get showLmpDate(): boolean {
-    return this.reportForm.get('pregnancyStatus')?.value === 'Yes';
+    return this.reportForm.get('pregnancyStatus')?.value === 'Currently Pregnant';
+  }
+
+  get showPregnancyDate(): boolean {
+    const status = this.reportForm.get('pregnancyStatus')?.value;
+    return status === 'Still Birth' || status === 'Miscarriage/Aborted';
+  }
+
+  get showDeliveryDate(): boolean {
+    return this.reportForm.get('pregnancyStatus')?.value === 'Baby Delivered';
   }
 
   private calcAge(dob: any): number {
@@ -190,13 +216,13 @@ export class ReportActivity {
 
   private getSelectedChild(): any | null {
     const childId = this.reportForm.get('childId')?.value;
-    if (!childId || !this.selectedBeneficiary?.children) return null;
+    if (!childId || childId === 'MAIN' || !this.selectedBeneficiary?.children) return null;
     return this.selectedBeneficiary.children.find((c: any) => c.id.toString() === childId.toString()) || null;
   }
 
   get familyMemberOptions(): ZardComboboxOption[] {
     const options: ZardComboboxOption[] = [
-      { value: '', label: 'Main Beneficiary' }
+      { value: 'MAIN', label: 'Main Beneficiary' }
     ];
     
     if (this.selectedBeneficiary?.children) {
@@ -270,13 +296,31 @@ export class ReportActivity {
     }
   }
 
+  onPregnancyDatePickerChange(event: any) {
+    const pickerDate = event.target.value; 
+    if (pickerDate) {
+      const parts = pickerDate.split('-');
+      const formatted = `${parts[2]}/${parts[1]}/${parts[0]}`; 
+      this.reportForm.patchValue({ pregnancyDate: formatted });
+    }
+  }
+
+  onDeliveryDatePickerChange(event: any) {
+    const pickerDate = event.target.value; 
+    if (pickerDate) {
+      const parts = pickerDate.split('-');
+      const formatted = `${parts[2]}/${parts[1]}/${parts[0]}`; 
+      this.reportForm.patchValue({ deliveryDate: formatted });
+    }
+  }
+
   onSearchBeneficiary(event: any) {
     const value = event.target.value;
     this.beneficiarySearch$.next(value);
     
     // Clear selection when user starts typing a new search
     if (this.reportForm.get('beneficiaryId')?.value) {
-      this.reportForm.patchValue({ beneficiaryId: '', childId: '' });
+      this.reportForm.patchValue({ beneficiaryId: '', childId: 'MAIN' });
       this.selectedBeneficiary = null;
     }
   }
@@ -287,16 +331,24 @@ export class ReportActivity {
     this.outreachService.getBeneficiary(benId).subscribe(beneficiary => {
       this.selectedBeneficiary = beneficiary;
       
+      const groupsText = beneficiary.groups && beneficiary.groups.length > 0 
+        ? beneficiary.groups.map((g: any) => g.group?.name || g.name || 'Unknown').join(', ')
+        : 'None';
+
+      this.reportForm.patchValue({ groupText: groupsText });
+
       if (item.isChild) {
         this.reportForm.patchValue({ 
           beneficiaryId: benId.toString(),
-          childId: item.id.toString() 
+          childId: item.id.toString(),
+          age: this.calcAge(item.dateOfBirth).toString()
         });
         this.beneficiarySearch$.next(item.parentName);
       } else {
         this.reportForm.patchValue({ 
           beneficiaryId: benId.toString(),
-          childId: ''
+          childId: 'MAIN',
+          age: this.calcAge(beneficiary.dateOfBirth).toString()
         });
         this.beneficiarySearch$.next(item.name);
       }
@@ -336,8 +388,15 @@ export class ReportActivity {
     // Pregnancy status (optional, female 14+)
     if (this.showPregnancy && raw.pregnancyStatus) {
       reportData.pregnancyStatus = raw.pregnancyStatus;
-      if (raw.pregnancyStatus === 'Yes' && raw.lmpDate) {
+      if (raw.pregnancyStatus === 'Currently Pregnant' && raw.lmpDate) {
         reportData.lmpDate = raw.lmpDate; // stored as DD/MM/YYYY string
+      } else if ((raw.pregnancyStatus === 'Still Birth' || raw.pregnancyStatus === 'Miscarriage/Aborted') && raw.pregnancyDate) {
+        reportData.date = raw.pregnancyDate;
+      } else if (raw.pregnancyStatus === 'Baby Delivered' && raw.deliveryDate) {
+        reportData.dod = raw.deliveryDate;
+        if (raw.babyDetails) {
+          reportData.babyDetails = raw.babyDetails;
+        }
       }
     }
 
@@ -354,13 +413,29 @@ export class ReportActivity {
       reportData,
     };
 
-    if (raw.childId) {
+    if (raw.childId && raw.childId !== 'MAIN') {
       payload.childId = Number(raw.childId);
     }
 
-    const request$ = this.isEditing && this.reportId 
+    const saveReport$ = this.isEditing && this.reportId 
       ? this.outreachService.updateReport(this.reportId, payload as any)
       : this.outreachService.submitReport(payload);
+
+    const request$ = (!this.isEditing && this.showDeliveryDate && raw.babyDetails?.name)
+      ? this.outreachService.addFamilyMember(Number(raw.beneficiaryId), {
+          name: raw.babyDetails.name || '',
+          gender: raw.babyDetails.gender || '',
+          relationship: raw.babyDetails.relation || '',
+          dateOfBirth: this.parseDateForApi((raw.deliveryDate || '').split('/').join('-')),
+        }).pipe(
+          switchMap(() => saveReport$),
+          catchError((err) => {
+            // Ignore error of family member add, and just save report
+            // or pass it along to let the UI show error
+            return throwError(() => err);
+          })
+        )
+      : saveReport$;
 
     request$.subscribe({
         next: () => {
@@ -391,6 +466,18 @@ export class ReportActivity {
     this.reportForm.get('sessionId')?.valueChanges.subscribe(sessionId => {
       // Logic removed to allow Reporting Date to remain independent of Session Date
     });
+
+    this.reportForm.get('childId')?.valueChanges.subscribe(childId => {
+      if (!this.selectedBeneficiary) return;
+      let targetAge = 0;
+      if (childId && childId !== 'MAIN') {
+        const child = this.selectedBeneficiary.children?.find((c: any) => c.id.toString() === childId.toString());
+        if (child) targetAge = this.calcAge(child.dateOfBirth);
+      } else {
+        targetAge = this.calcAge(this.selectedBeneficiary.dateOfBirth);
+      }
+      this.reportForm.patchValue({ age: targetAge.toString() }, { emitEvent: false });
+    });
   }
 
   private loadReport(id: number) {
@@ -401,6 +488,10 @@ export class ReportActivity {
           this.outreachService.getBeneficiary(benId).subscribe(ben => {
             this.selectedBeneficiary = ben;
             this.beneficiarySearch$.next(ben.name);
+            const groupsText = ben.groups && ben.groups.length > 0 
+              ? ben.groups.map((g: any) => g.group?.name || g.name || 'Unknown').join(', ')
+              : 'None';
+            this.reportForm.patchValue({ groupText: groupsText });
           });
         }
 
@@ -413,13 +504,16 @@ export class ReportActivity {
           activityId: report.activityId?.toString() || '',
           sessionId: report.sessionId?.toString() || '',
           beneficiaryId: report.beneficiaryId?.toString() || '',
-          childId: report.childId?.toString() || '',
+          childId: report.childId?.toString() || 'MAIN',
           sessionDate: this.formatDateForInput(report.date || report.sessionDate),
           screening: report.reportData?.screening || 'No',
           selectedTests: [],
           testValues: {},
           pregnancyStatus: reportData.pregnancyStatus || '',
           lmpDate: reportData.lmpDate || '',
+          pregnancyDate: reportData.date || '',
+          deliveryDate: reportData.dod || '',
+          babyDetails: reportData.babyDetails || { name: '', gender: '', relation: 'Son/Daughter' },
           samMamStatus: reportData.samMamStatus || '',
         });
 

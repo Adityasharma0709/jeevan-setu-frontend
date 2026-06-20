@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 2026-06-19
+## [Unreleased] - 2026-06-20
+
+### Added
+- **Outreach Beneficiaries**: Added a "View" button to the Desktop table view in the `Beneficiaries` component, linking directly to the beneficiary profile details view.
+- **Outreach Activity Report**:
+  - Overhauled Pregnancy Status dropdown to support specific statuses (`Currently Pregnant`, `Still Birth`, `Baby Delivered`, `Miscarriage/Aborted`).
+  - Added dynamically rendered date fields based on pregnancy status: `LMP Date` (pregnant), `Date` (still birth/miscarriage), and `Date of Delivery` (baby delivered).
+  - Implemented a "Baby Details" sub-form that automatically registers a newly born baby as a family member when "Baby Delivered" is selected.
+  - Added readonly, auto-calculated `Age` and `Group` display fields that populate dynamically based on the selected target beneficiary/family member.
+
+### Fixed
+- **Outreach Activity Report**: Fixed a UI bug where the "Main Beneficiary" option wasn't properly selected in the Target Person combobox by default.
 
 ### Removed
 - **Groups Component**: Completely removed the Groups component files from the admin module (`src/app/admin/groups/`).
