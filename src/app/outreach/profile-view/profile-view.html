@@ -742,10 +742,10 @@
                         {{ r.reportData?.screening === 'Yes' ? 'Done' : 'Not Done' }}
                       </span>
                       <span
-                        *ngIf="r.reportData?.pregnancyStatus === 'Yes'"
+                        *ngIf="r.reportData?.pregnancyStatus && r.reportData?.pregnancyStatus !== 'No'"
                         class="bg-pink-50 text-pink-700 border-pink-200 px-2 py-0.5 rounded-full text-[10px] font-bold border"
                       >
-                        Pregnant
+                        {{ r.reportData.pregnancyStatus === 'Currently Pregnant' || r.reportData.pregnancyStatus === 'Yes' ? 'Pregnant' : r.reportData.pregnancyStatus }}
                       </span>
                       <span
                         *ngIf="r.reportData?.samMamStatus"
@@ -853,10 +853,10 @@
                   {{ r.reportData?.screening === 'Yes' ? 'Done' : 'Not Done' }}
                 </span>
                 <span
-                  *ngIf="r.reportData?.pregnancyStatus === 'Yes'"
+                  *ngIf="r.reportData?.pregnancyStatus && r.reportData?.pregnancyStatus !== 'No'"
                   class="bg-pink-50 text-pink-700 border-pink-200 px-2 py-0.5 rounded-full text-[10px] font-bold border"
                 >
-                  Pregnant
+                  {{ r.reportData.pregnancyStatus === 'Currently Pregnant' || r.reportData.pregnancyStatus === 'Yes' ? 'Pregnant' : r.reportData.pregnancyStatus }}
                 </span>
                 <span
                   *ngIf="r.reportData?.samMamStatus"

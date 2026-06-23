@@ -368,7 +368,7 @@
         <!-- ── Actions ───────────────────────────────────────────────────────── -->
         <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
           <button type="button" z-button zType="outline" (click)="cancel()">Cancel</button>
-          <button type="button" z-button (click)="submit()" [disabled]="isSubmitting || form.invalid"             class="bg-indigo-600 hover:bg-indigo-700 text-white min-w-35"
+          <button type="button" z-button (click)="submit()" [disabled]="isSubmitting || form.invalid"
 >
             {{ isSubmitting ? 'Submitting...' : 'Create Beneficiary' }}
           </button>

@@ -30,6 +30,7 @@ export interface Beneficiary {
   locationId: number;
   mobileNumber: string;
   name: string;
+  typeof?: string | null;
   gender: string;
   guardianName: string;
   dateOfBirth: string;

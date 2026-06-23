@@ -118,11 +118,7 @@
 
         <!-- Family Member Selection (Conditional) -->
         <z-form-field
-          *ngIf="
-            selectedBeneficiary &&
-            selectedBeneficiary.children &&
-            selectedBeneficiary.children.length > 0
-          "
+          *ngIf="selectedBeneficiary()?.children?.length"
         >
           <label z-form-label>Target Person (Family Member)</label>
           <z-form-control>
@@ -186,6 +182,26 @@
           </z-form-control>
         </z-form-field>
 
+        <!-- Pregnancy Outcome (Female 14+ and previously pregnant) -->
+        <z-form-field *ngIf="showOutcomeDropdown">
+          <label z-form-label>
+            Pregnancy Outcome
+            <span
+              class="ml-1 text-xs font-normal text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-full"
+              >Female 14+</span
+            >
+          </label>
+          <z-form-control>
+            <z-combobox
+              formControlName="pregnancyOutcome"
+              [options]="pregnancyOutcomeOptions"
+              [searchable]="false"
+              placeholder="Select outcome"
+              zWidth="full"
+            />
+          </z-form-control>
+        </z-form-field>
+
         <!-- LMP Date (when Pregnancy = Currently Pregnant) -->
         <z-form-field *ngIf="showPregnancy && showLmpDate">
           <label z-form-label>
@@ -212,10 +228,36 @@
           </z-form-control>
         </z-form-field>
 
-        <!-- Date (when Pregnancy = Still Birth or Miscarriage) -->
+        <!-- EDD (when Pregnancy = Currently Pregnant) -->
+        <z-form-field *ngIf="showPregnancy && showLmpDate">
+          <label z-form-label>
+            EDD (Expected Delivery Date)
+            <span class="ml-1 text-xs font-normal text-gray-400">(DD/MM/YYYY)</span>
+          </label>
+          <z-form-control class="relative">
+            <input
+              z-input
+              type="text"
+              formControlName="edd"
+              placeholder="DD/MM/YYYY"
+              maxlength="10"
+              class="pr-10"
+            />
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <z-icon zType="calendar" class="w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                type="date"
+                class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                (change)="onEddPickerChange($event)"
+              />
+            </div>
+          </z-form-control>
+        </z-form-field>
+
+        <!-- Date (when Pregnancy = Still Birth or Miscarriage outcome) -->
         <z-form-field *ngIf="showPregnancy && showPregnancyDate">
           <label z-form-label>
-            Date
+            {{ reportForm.get('pregnancyOutcome')?.value === 'Still Birth' ? 'Date of Still Birth' : 'Date of Miscarriage/Abortion' }}
             <span class="ml-1 text-xs font-normal text-gray-400">(DD/MM/YYYY)</span>
           </label>
           <z-form-control class="relative">
@@ -227,7 +269,7 @@
           </z-form-control>
         </z-form-field>
 
-        <!-- DOD (when Pregnancy = Baby Delivered) -->
+        <!-- DOD (when Pregnancy = Baby Delivered outcome) -->
         <z-form-field *ngIf="showPregnancy && showDeliveryDate">
           <label z-form-label>
             Date of Delivery
@@ -405,15 +447,13 @@
 
       <div class="flex items-center justify-between gap-2 pt-6 border-t mt-4">
         <div class="flex items-center gap-3">
-          <button z-button type="button" variant="ghost" (click)="cancel()">Cancel</button>
+          <button z-button type="button" zType="outline" (click)="cancel()">Cancel</button>
           <button
             z-button
             type="button"
             [disabled]="isSubmitting"
             (click)="submit()"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]"
           >
-            <z-icon zType="check" class="mr-2" *ngIf="!isSubmitting" />
             {{
               isSubmitting
                 ? isEditing

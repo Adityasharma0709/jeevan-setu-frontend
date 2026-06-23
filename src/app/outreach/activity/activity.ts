@@ -101,6 +101,7 @@ export class Activity {
     index: true,
     beneficiaryId: true,
     beneficiaryName: true,
+    group: true,
     activity: true,
     session: true,
     screening: true,
@@ -110,6 +111,7 @@ export class Activity {
   columnList = [
     { key: 'beneficiaryId', label: 'Beneficiary ID' },
     { key: 'beneficiaryName', label: 'Beneficiary Name' },
+    { key: 'group', label: 'Group' },
     { key: 'activity', label: 'Activity' },
     { key: 'session', label: 'Session' },
     { key: 'screening', label: 'Screening' },
@@ -232,6 +234,9 @@ export class Activity {
           } else if (sortCol === 'beneficiaryName') {
             aVal = a.child?.name || a.beneficiary?.name || '';
             bVal = b.child?.name || b.beneficiary?.name || '';
+          } else if (sortCol === 'group') {
+            aVal = this.getReportGroup(a) || '';
+            bVal = this.getReportGroup(b) || '';
           } else if (sortCol === 'activity') {
             aVal = a.activity?.name || '';
             bVal = b.activity?.name || '';
@@ -358,6 +363,17 @@ export class Activity {
     }
   }
 
+  getReportGroup(report: any): string {
+    if (report?.reportData?.group) {
+      return report.reportData.group;
+    }
+    // Fallback to database beneficiary groups for legacy records
+    if (report?.beneficiary?.groups && report.beneficiary.groups.length > 0) {
+      return report.beneficiary.groups.map((g: any) => g.group?.name || g.name).join(', ');
+    }
+    return 'None';
+  }
+
   getScreeningSummary(report: any): string {
     const data = report?.reportData;
     if (!data) return '—';
@@ -376,9 +392,19 @@ export class Activity {
     }
 
     // Pregnancy Status
-    if (data.pregnancyStatus === 'Yes') {
-      parts.push('Pregnant');
-      data.lmpDate ? parts.push(`lmpDate:${data.lmpDate}`) : '';
+    if (data.pregnancyStatus && data.pregnancyStatus !== 'No') {
+      if (data.pregnancyStatus === 'Currently Pregnant' || data.pregnancyStatus === 'Yes') {
+        parts.push('Pregnant');
+        if (data.lmpDate) parts.push(`LMP: ${data.lmpDate}`);
+        if (data.edd) parts.push(`EDD: ${data.edd}`);
+      } else if (data.pregnancyStatus === 'Still Birth' || data.pregnancyStatus === 'Miscarriage/Aborted') {
+        parts.push(data.pregnancyStatus);
+        if (data.date) parts.push(`Date: ${data.date}`);
+      } else if (data.pregnancyStatus === 'Baby Delivered') {
+        parts.push('Baby Delivered');
+        if (data.dod) parts.push(`DOD: ${data.dod}`);
+        if (data.babyDetails?.name) parts.push(`Baby: ${data.babyDetails.name}`);
+      }
     }
 
     // Nutrition Status
@@ -545,6 +571,10 @@ export class Activity {
         row['Beneficiary Name'] = report.child?.name || report.beneficiary?.name || 'Unknown';
       }
 
+      if (this.selectedColumns['group']) {
+        row['Group'] = this.getReportGroup(report);
+      }
+
       if (this.selectedColumns['activity']) {
         row['Activity'] = report.activity?.name || '-';
       }
@@ -576,6 +606,16 @@ export class Activity {
       row['Pregnancy Status'] = reportData?.pregnancyStatus ?? '-';
 
       row['LMP Date'] = reportData?.lmpDate ?? '-';
+
+      row['EDD'] = reportData?.edd ?? '-';
+
+      row['Pregnancy Event Date'] = (reportData?.pregnancyStatus === 'Still Birth' || reportData?.pregnancyStatus === 'Miscarriage/Aborted') ? (reportData?.date ?? '-') : '-';
+
+      row['Date of Delivery'] = reportData?.dod ?? '-';
+
+      row['Baby Name'] = reportData?.babyDetails?.name ?? '-';
+
+      row['Baby Gender'] = reportData?.babyDetails?.gender ?? '-';
 
       row['SAM/MAM Status'] = reportData?.samMamStatus ?? '-';
 

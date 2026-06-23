@@ -1,36 +1,20 @@
 <div class="flex flex-col h-dvh overflow-hidden w-full bg-[#f8fafc] md:bg-[#f4f7fe]">
   <!-- ================= TOPBAR ================= -->
   <header
-    class="hidden md:flex items-center justify-between px-4 py-2.5 bg-[#f0f4f9] border-b border-gray-200 shrink-0 select-none">
-    <div class="flex items-center gap-3">
-      <!-- <div
-        class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-        <z-icon zType="activity"></z-icon>
-      </div> -->
-      <div class="flex flex-col leading-tight">
-        <span class="text-xl font-bold text-blue-800 tracking-wide">
-          {{ (profile$ | async)?.name || 'JS-OUTREACH' }}
-        </span>
-        <span class="text-xs font-medium text-blue-700">
-          {{ (profile$ | async)?.roleLabel || 'Outreach Worker' }} · ACC CODE:
-          {{ (profile$ | async)?.usercode || (profile$ | async)?.id || '-' }}
-        </span>
-      </div>
+    class="hidden md:flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200 shrink-0 select-none z-50 relative">
+    <div class="flex items-center">
+      <img src="/Landing.png" alt="Jeevan Setu" class="h-10 object-contain">
     </div>
-    <div class="flex items-center gap-5">
-      @if (pageContext$ | async; as page) {
-        <div class="hidden lg:flex flex-col items-end text-right">
-          <span class="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-            Current page
-          </span>
-          <span class="text-lg font-bold leading-tight text-slate-900">
-            {{ page.title }}
-          </span>
-          <span class="text-xs text-slate-500">
-            {{ page.subtitle }}
-          </span>
-        </div>
-      }
+    
+    <div class="flex items-center">
+      <button
+        type="button"
+        class="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-slate-800 shadow-sm transition hover:bg-gray-50 active:scale-95"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'"
+      >
+        <z-icon zType="menu" class="h-6 w-6"></z-icon>
+      </button>
     </div>
   </header>
 

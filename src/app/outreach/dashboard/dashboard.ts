@@ -18,9 +18,10 @@ import {
 } from 'rxjs';
 
 import { AuthService } from '@/core/services/auth';
-import { ZardIconComponent } from '@/shared/components/icon';
-import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
+import { ZardIconComponent, type ZardIcon } from '@/shared/components/icon';
+import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
+import { ZardDropdownImports } from '@/shared/components/dropdown';
 import { ApiService } from '@/core/services/api';
 import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
 
@@ -52,7 +53,7 @@ interface AssignedProjectsPagerVm {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, ZardIconComponent, LottieComponent, ZardComboboxComponent],
+  imports: [CommonModule, ReactiveFormsModule, ZardIconComponent, LottieComponent, ...ZardDropdownImports, ZardComboboxComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -75,6 +76,62 @@ export class Dashboard implements OnInit {
   recentBeneficiariesStatusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
   recentRequestsStatusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
   projectStatusFilter = new FormControl<ProjectStatusFilter>('ALL', { nonNullable: true });
+
+  // --- MOCK DATA FOR NEW DASHBOARD DESIGN ---
+  outreachActions: { label: string; count: number; bgColor: string; textColor: string; icon: ZardIcon }[] = [
+    { label: 'Currently Active Pregnant women', count: 128, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'user' },
+    { label: 'Currently Active Lactating Mothers', count: 234, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
+    { label: 'Currently Active SAM Children', count: 18, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
+    { label: 'Adolescent Girls', count: 189, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
+    { label: 'Infants for EBF Promotion (<= 6m)', count: 96, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'circle-check' },
+    { label: 'Infants for CF Promotion (12year<child age<6months)', count: 24, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
+    { label: 'Currently Active MAM Children', count: 25, bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', icon: 'circle-alert' },
+    { label: 'Women due for delivery in next 30 days', count: 53, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
+  ];
+
+  episodesOfCare: { label: string; count: number; icon: ZardIcon }[] = [
+    { label: 'Adults (>19 Years)', count: 324, icon: 'user' },
+    { label: 'Adolescents (10-19 Years)', count: 145, icon: 'users' },
+    { label: 'Children (<5 Years)', count: 87, icon: 'user' },
+    { label: 'Children (6-10 Years)', count: 102, icon: 'users' },
+  ];
+
+  activities = [
+    { label: 'YOUNG MARRIED WOMEN', count: 120, countColor: 'text-gray-900' },
+    { label: 'PREGNANT WOMEN', count: 85, countColor: 'text-gray-900' },
+    { label: 'MAM (0-5)', count: 34, countColor: 'text-green-600' },
+    { label: 'CHILDREN BELOW 6 (0-5 YEARS) - GIRLS', count: 150, countColor: 'text-gray-900' },
+    { label: 'LACTATING WOMEN', count: 92, countColor: 'text-gray-900' },
+    { label: 'ADOLESCENT GIRLS', count: 150, countColor: 'text-gray-900' },
+    { label: 'CHILDREN ABOVE 6 (6-10 YEARS) - GIRLS', count: 12, countColor: 'text-red-600' },
+    { label: 'STAKEHOLDERS', count: 150, countColor: 'text-gray-900' },
+    { label: 'ADOLESCENT BOYS', count: 140, countColor: 'text-gray-900' },
+    { label: 'SAM (0-5)', count: 12, countColor: 'text-red-600' },
+    { label: 'CHILDREN ABOVE 6 (6-10 YEARS) - BOYS', count: 15, countColor: 'text-green-600' },
+    { label: 'OTHER BENEFICIARIES', count: 15, countColor: 'text-gray-900' },
+  ];
+
+  yearFilter = new FormControl('2024');
+  yearOptions: ZardComboboxOption[] = [{ value: '2024', label: '2024' }];
+
+  monthFilter = new FormControl('May');
+  monthOptions: ZardComboboxOption[] = [{ value: 'May', label: 'May' }];
+
+  stateFilter = new FormControl('Rajasthan');
+  stateOptions: ZardComboboxOption[] = [{ value: 'Rajasthan', label: 'Rajasthan' }];
+
+  districtFilter = new FormControl('Ajmer');
+  districtOptions: ZardComboboxOption[] = [{ value: 'Ajmer', label: 'Ajmer' }];
+
+  blockFilter = new FormControl('Kishangarh');
+  blockOptions: ZardComboboxOption[] = [{ value: 'Kishangarh', label: 'Kishangarh' }];
+
+  activityFilter = new FormControl('All activity');
+  activityOptions: ZardComboboxOption[] = [{ value: 'All activity', label: 'All activity' }];
+
+  sessionFilter = new FormControl('All session');
+  sessionOptions: ZardComboboxOption[] = [{ value: 'All session', label: 'All session' }];
+  // ------------------------------------------
 
   private readonly recentCardPageSize = 3;
   private readonly recentBeneficiariesPage$ = new BehaviorSubject<number>(1);

@@ -95,10 +95,7 @@
     BENEFICIARY CONTENT
   ========================================================= -->
   <ng-container *ngIf="vm$ | async as vm; else bLoader">
-    <!-- =====================================================
-      DESKTOP TABLE VIEW
-    ====================================================== -->
-    <div class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-x-auto shadow-sm">
+    <div class="hidden md:block bg-white border border-gray-100 rounded-2xl shadow-sm">
       <div class="border-b border-slate-200 px-4 py-4">
         <div class="flex items-center gap-3 w-full max-w-3xl">
           <label class="relative flex-1">
@@ -143,8 +140,8 @@
         </div>
       </div>
 
-      <!-- TABLE -->
-      <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
+      <div class="w-full overflow-x-auto">
+        <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
         <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>
             <th z-table-head class="border-b border-slate-300 px-2 py-1.5 text-center whitespace-nowrap">
@@ -542,6 +539,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- =====================================================
@@ -618,9 +616,8 @@
       </div>
     </div>
 
-    <!-- Small Screens: Mobile Table -->
     <div *ngIf="mobileViewMode === 'table'"
-      class="md:hidden bg-white border border-gray-100 rounded-2xl overflow-x-auto shadow-sm">
+      class="md:hidden bg-white border border-gray-100 rounded-2xl shadow-sm">
       <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4">
         <button type="button" (click)="openExportDialog()"
           class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353]">
@@ -653,8 +650,8 @@
         </div>
       </div>
 
-      <!-- TABLE -->
-      <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
+      <div class="w-full overflow-x-auto">
+        <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
         <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>
             <th z-table-head class="border-b border-slate-300 px-2 py-1.5 text-center whitespace-nowrap">
@@ -1032,6 +1029,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
     <!-- =====================================================
       PAGINATION

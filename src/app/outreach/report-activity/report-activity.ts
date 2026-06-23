@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, switchMap, tap, catchError, throwError } from 'rxjs';
 import { toast } from 'ngx-sonner';
@@ -38,7 +38,7 @@ export class ReportActivity {
   isSubmitting = false;
   isEditing = false;
   reportId: number | null = null;
-  selectedBeneficiary: Beneficiary | null = null;
+  selectedBeneficiary = signal<Beneficiary | null>(null);
   private rawSessions: OutreachSession[] = [];
 
 
@@ -62,7 +62,9 @@ export class ReportActivity {
       pads: [''],
     }),
     pregnancyStatus: [''],
+    pregnancyOutcome: [''],
     lmpDate: [''],
+    edd: [''],
     pregnancyDate: [''],
     deliveryDate: [''],
     babyDetails: this.fb.group({
@@ -131,9 +133,13 @@ export class ReportActivity {
   pregnancyStatusOptions: ZardComboboxOption[] = [
     { value: 'No', label: 'No' },
     { value: 'Currently Pregnant', label: 'Currently Pregnant' },
+  ];
+
+  pregnancyOutcomeOptions: ZardComboboxOption[] = [
+    { value: '', label: 'Select Outcome' },
     { value: 'Still Birth', label: 'Still Birth' },
-    { value: 'Baby Delivered', label: 'Baby Delivered' },
     { value: 'Miscarriage/Aborted', label: 'Miscarriage/Aborted' },
+    { value: 'Baby Delivered', label: 'Baby Delivered' },
   ];
 
   genderOptions: ZardComboboxOption[] = [
@@ -164,15 +170,59 @@ export class ReportActivity {
     { id: 'pads', label: 'Pads' },
   ];
 
+  wasPreviouslyPregnant = false;
+
+  checkPreviousPregnancyStatus(beneficiaryId: number, currentReportId: number | null, savedOutcome?: string) {
+    this.outreachService.getReportsByBeneficiary(beneficiaryId).subscribe(reports => {
+      const otherReports = reports.filter(r => currentReportId === null || r.id !== currentReportId);
+      otherReports.sort((a, b) => {
+        const dateA = new Date(a.date || a.createdAt).getTime();
+        const dateB = new Date(b.date || b.createdAt).getTime();
+        return dateB - dateA;
+      });
+
+      const lastPregnancyReport = otherReports.find(r => r.reportData && r.reportData.pregnancyStatus);
+
+      if (lastPregnancyReport) {
+        const status = lastPregnancyReport.reportData.pregnancyStatus;
+        this.wasPreviouslyPregnant = status === 'Currently Pregnant' || status === 'Yes';
+      } else {
+        this.wasPreviouslyPregnant = false;
+      }
+
+      if (savedOutcome && ['Still Birth', 'Miscarriage/Aborted', 'Baby Delivered'].includes(savedOutcome)) {
+        this.wasPreviouslyPregnant = true;
+      }
+    });
+  }
+
+  calculateEDD(lmpDateStr: string): string {
+    if (!lmpDateStr) return '';
+    const parts = lmpDateStr.split(/[-/]/);
+    if (parts.length !== 3) return '';
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    const lmpDate = new Date(year, month, day);
+    if (isNaN(lmpDate.getTime())) return '';
+    
+    const eddDate = new Date(lmpDate.getTime() + 280 * 24 * 60 * 60 * 1000);
+    const eddDay = String(eddDate.getDate()).padStart(2, '0');
+    const eddMonth = String(eddDate.getMonth() + 1).padStart(2, '0');
+    const eddYear = eddDate.getFullYear();
+    return `${eddDay}/${eddMonth}/${eddYear}`;
+  }
+
   /** True when selected entity is female AND aged 14 or more */
   get showPregnancy(): boolean {
     const child = this.getSelectedChild();
     if (child) {
       return child.gender?.toLowerCase() === 'female' && this.calcAge(child.dateOfBirth) >= 14;
     }
-    if (this.selectedBeneficiary) {
-      return this.selectedBeneficiary.gender?.toLowerCase() === 'female' &&
-        this.calcAge(this.selectedBeneficiary.dateOfBirth) >= 14;
+    const ben = this.selectedBeneficiary();
+    if (ben) {
+      return ben.gender?.toLowerCase() === 'female' &&
+        this.calcAge(ben.dateOfBirth) >= 14;
     }
     return false;
   }
@@ -184,10 +234,15 @@ export class ReportActivity {
       return this.calcAge(child.dateOfBirth) <= 5;
     }
     const childId = this.reportForm.get('childId')?.value;
-    if (this.selectedBeneficiary && (!childId || childId === 'MAIN')) {
-      return this.calcAge(this.selectedBeneficiary.dateOfBirth) <= 5;
+    const ben = this.selectedBeneficiary();
+    if (ben && (!childId || childId === 'MAIN')) {
+      return this.calcAge(ben.dateOfBirth) <= 5;
     }
     return false;
+  }
+
+  get showOutcomeDropdown(): boolean {
+    return this.showPregnancy && this.wasPreviouslyPregnant;
   }
 
   /** True when pregnancy status is Currently Pregnant */
@@ -196,12 +251,13 @@ export class ReportActivity {
   }
 
   get showPregnancyDate(): boolean {
-    const status = this.reportForm.get('pregnancyStatus')?.value;
-    return status === 'Still Birth' || status === 'Miscarriage/Aborted';
+    const outcome = this.reportForm.get('pregnancyOutcome')?.value;
+    return this.showOutcomeDropdown && (outcome === 'Still Birth' || outcome === 'Miscarriage/Aborted');
   }
 
   get showDeliveryDate(): boolean {
-    return this.reportForm.get('pregnancyStatus')?.value === 'Baby Delivered';
+    const outcome = this.reportForm.get('pregnancyOutcome')?.value;
+    return this.showOutcomeDropdown && outcome === 'Baby Delivered';
   }
 
   private calcAge(dob: any): number {
@@ -216,8 +272,9 @@ export class ReportActivity {
 
   private getSelectedChild(): any | null {
     const childId = this.reportForm.get('childId')?.value;
-    if (!childId || childId === 'MAIN' || !this.selectedBeneficiary?.children) return null;
-    return this.selectedBeneficiary.children.find((c: any) => c.id.toString() === childId.toString()) || null;
+    const ben = this.selectedBeneficiary();
+    if (!childId || childId === 'MAIN' || !ben?.children) return null;
+    return ben.children.find((c: any) => c.id.toString() === childId.toString()) || null;
   }
 
   get familyMemberOptions(): ZardComboboxOption[] {
@@ -225,8 +282,9 @@ export class ReportActivity {
       { value: 'MAIN', label: 'Main Beneficiary' }
     ];
     
-    if (this.selectedBeneficiary?.children) {
-      this.selectedBeneficiary.children.forEach(child => {
+    const ben = this.selectedBeneficiary();
+    if (ben?.children) {
+      ben.children.forEach(child => {
         options.push({ value: child.id.toString(), label: child.name });
       });
     }
@@ -296,6 +354,15 @@ export class ReportActivity {
     }
   }
 
+  onEddPickerChange(event: any) {
+    const pickerDate = event.target.value; // yyyy-mm-dd
+    if (pickerDate) {
+      const parts = pickerDate.split('-');
+      const formatted = `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
+      this.reportForm.patchValue({ edd: formatted });
+    }
+  }
+
   onPregnancyDatePickerChange(event: any) {
     const pickerDate = event.target.value; 
     if (pickerDate) {
@@ -321,7 +388,7 @@ export class ReportActivity {
     // Clear selection when user starts typing a new search
     if (this.reportForm.get('beneficiaryId')?.value) {
       this.reportForm.patchValue({ beneficiaryId: '', childId: 'MAIN' });
-      this.selectedBeneficiary = null;
+      this.selectedBeneficiary.set(null);
     }
   }
 
@@ -329,13 +396,7 @@ export class ReportActivity {
     const benId = item.isChild ? item.beneficiaryId : item.id;
     
     this.outreachService.getBeneficiary(benId).subscribe(beneficiary => {
-      this.selectedBeneficiary = beneficiary;
-      
-      const groupsText = beneficiary.groups && beneficiary.groups.length > 0 
-        ? beneficiary.groups.map((g: any) => g.group?.name || g.name || 'Unknown').join(', ')
-        : 'None';
-
-      this.reportForm.patchValue({ groupText: groupsText });
+      this.selectedBeneficiary.set(beneficiary);
 
       if (item.isChild) {
         this.reportForm.patchValue({ 
@@ -352,7 +413,147 @@ export class ReportActivity {
         });
         this.beneficiarySearch$.next(item.name);
       }
+
+      this.checkPreviousPregnancyStatus(benId, this.reportId);
+      this.updateCalculatedGroup();
     });
+  }
+
+  updateCalculatedGroup() {
+    const ben = this.selectedBeneficiary();
+    if (!ben) {
+      this.reportForm.patchValue({ groupText: '' }, { emitEvent: false });
+      return;
+    }
+
+    const childId = this.reportForm.get('childId')?.value;
+    let gender = '';
+    let age = 0;
+    let dob = '';
+    let isChild = false;
+
+    if (childId && childId !== 'MAIN') {
+      const child = ben.children?.find((c: any) => c.id.toString() === childId.toString());
+      if (child) {
+        gender = child.gender || '';
+        dob = child.dateOfBirth;
+        age = this.calcAge(dob);
+        isChild = true;
+      }
+    } else {
+      gender = ben.gender || '';
+      dob = ben.dateOfBirth;
+      age = this.calcAge(dob);
+      isChild = false;
+    }
+
+    const genderLower = (gender || '').trim().toLowerCase();
+    const isFemale = genderLower === 'female';
+    const isMale = genderLower === 'male';
+
+    const groupNames = new Set<string>();
+
+    if (!isChild && ben.typeof === 'Stakeholder') {
+      groupNames.add('Stakeholders');
+    }
+
+    const samMam = this.reportForm.get('samMamStatus')?.value || '';
+    const pregnancyStatus = this.reportForm.get('pregnancyStatus')?.value || '';
+    const pregnancyOutcome = this.reportForm.get('pregnancyOutcome')?.value || '';
+    const pregnancy = (this.showOutcomeDropdown && pregnancyOutcome) ? pregnancyOutcome : pregnancyStatus;
+    const maritalStatus = ben.maritalStatus || '';
+
+    // Check if parent has child under 2
+    const hasChildUnder2 = ben.children?.some((c: any) => this.calcAge(c.dateOfBirth) <= 2) || false;
+
+    if (isFemale) {
+      if (age < 6) {
+        if (samMam === 'SAM') {
+          groupNames.add('SAM Children [0-5 Years]');
+        } else if (samMam === 'MAM') {
+          groupNames.add('MAM Children [0-5 Years]');
+        } else {
+          groupNames.add('Children below 6(3-6 Years) - Girls');
+        }
+      } else if (age >= 6 && age < 10) {
+        groupNames.add('Children above 6(6-9 Years) - Girls');
+      } else if (
+        (age >= 10 && age < 14) ||
+        (age >= 14 && age < 18 && pregnancy !== 'Currently Pregnant') ||
+        (age >= 14 && age <= 18 && maritalStatus !== 'Married' && !hasChildUnder2)
+      ) {
+        groupNames.add('Adolescent Girls');
+      }
+
+      if (age >= 14) {
+        if (maritalStatus === 'Married' && age >= 15 && age <= 24) {
+          groupNames.add('Young Married Women');
+        }
+        if (pregnancy === 'Currently Pregnant') {
+          groupNames.add('Pregnant Women');
+        }
+        if (pregnancy === 'Baby Delivered' || hasChildUnder2) {
+          groupNames.add('Lactating Women');
+        }
+
+        const hasPrimaryGroup =
+          groupNames.has('Pregnant Women') ||
+          groupNames.has('Lactating Women') ||
+          groupNames.has('Adolescent Girls') ||
+          groupNames.has('Young Married Women');
+
+        if (!hasPrimaryGroup) {
+          groupNames.add('Other Beneficiaries - Females');
+        }
+      }
+    } else if (isMale) {
+      if (age < 6) {
+        if (samMam === 'SAM') {
+          groupNames.add('SAM Children [0-5 Years]');
+        } else if (samMam === 'MAM') {
+          groupNames.add('MAM Children [0-5 Years]');
+        } else {
+          groupNames.add('Children below 6(3-6 Years) - Boys');
+        }
+      } else if (age >= 6 && age < 10) {
+        groupNames.add('Children above 6 (6-9 Years) - Boys');
+      } else if (age >= 10 && age < 18) {
+        groupNames.add('Adolescent Boys');
+      } else if (age >= 18) {
+        groupNames.add('Other Beneficiaries - Males');
+      }
+    }
+
+    if (!isChild && ben.groups) {
+      const systemGroupNames = [
+        'Young Married Women',
+        'Pregnant Women',
+        'Lactating Women',
+        'Adolescent Girls',
+        'Adolescent Boys',
+        'Children above 6(6-9 Years) - Girls',
+        'Children above 6 (6-9 Years) - Boys',
+        'Children below 6(3-6 Years) - Girls',
+        'Children below 6(3-6 Years) - Boys',
+        'Other Beneficiaries - Females',
+        'Other Beneficiaries - Males',
+        'SAM Children [0-5 Years]',
+        'MAM Children [0-5 Years]',
+        'Stakeholders'
+      ];
+      ben.groups.forEach((g: any) => {
+        const name = g.group?.name || g.name;
+        if (name && !systemGroupNames.includes(name)) {
+          groupNames.add(name);
+        }
+      });
+    }
+
+    const groupsText = groupNames.size > 0
+      ? Array.from(groupNames).join(', ')
+      : 'None';
+
+    this.reportForm.patchValue({ groupText: groupsText }, { emitEvent: false });
   }
 
   submit() {
@@ -383,16 +584,27 @@ export class ReportActivity {
     const reportData: any = {
       screening: raw.screening,
       screeningDetails: raw.screening === 'Yes' ? screeningDetails : null,
+      group: raw.groupText || 'None',
     };
 
-    // Pregnancy status (optional, female 14+)
-    if (this.showPregnancy && raw.pregnancyStatus) {
-      reportData.pregnancyStatus = raw.pregnancyStatus;
-      if (raw.pregnancyStatus === 'Currently Pregnant' && raw.lmpDate) {
-        reportData.lmpDate = raw.lmpDate; // stored as DD/MM/YYYY string
-      } else if ((raw.pregnancyStatus === 'Still Birth' || raw.pregnancyStatus === 'Miscarriage/Aborted') && raw.pregnancyDate) {
+    // Pregnancy status and outcome (optional, female 14+)
+    if (this.showPregnancy) {
+      const rawStatus = raw.pregnancyStatus;
+      const rawOutcome = raw.pregnancyOutcome;
+
+      if (this.showOutcomeDropdown && rawOutcome) {
+        reportData.pregnancyStatus = rawOutcome;
+        reportData.pregnancyOutcome = rawOutcome;
+      } else if (rawStatus) {
+        reportData.pregnancyStatus = rawStatus;
+      }
+
+      if (reportData.pregnancyStatus === 'Currently Pregnant') {
+        if (raw.lmpDate) reportData.lmpDate = raw.lmpDate;
+        if (raw.edd) reportData.edd = raw.edd;
+      } else if ((reportData.pregnancyStatus === 'Still Birth' || reportData.pregnancyStatus === 'Miscarriage/Aborted') && raw.pregnancyDate) {
         reportData.date = raw.pregnancyDate;
-      } else if (raw.pregnancyStatus === 'Baby Delivered' && raw.deliveryDate) {
+      } else if (reportData.pregnancyStatus === 'Baby Delivered' && raw.deliveryDate) {
         reportData.dod = raw.deliveryDate;
         if (raw.babyDetails) {
           reportData.babyDetails = raw.babyDetails;
@@ -468,15 +680,42 @@ export class ReportActivity {
     });
 
     this.reportForm.get('childId')?.valueChanges.subscribe(childId => {
-      if (!this.selectedBeneficiary) return;
+      const ben = this.selectedBeneficiary();
+      if (!ben) return;
       let targetAge = 0;
       if (childId && childId !== 'MAIN') {
-        const child = this.selectedBeneficiary.children?.find((c: any) => c.id.toString() === childId.toString());
-        if (child) targetAge = this.calcAge(child.dateOfBirth);
+        const child = ben.children?.find((c: any) => c.id.toString() === childId.toString());
+        if (child) {
+          targetAge = this.calcAge(child.dateOfBirth);
+          this.reportForm.patchValue({ age: targetAge.toString() }, { emitEvent: false });
+          this.updateCalculatedGroup();
+        }
       } else {
-        targetAge = this.calcAge(this.selectedBeneficiary.dateOfBirth);
+        targetAge = this.calcAge(ben.dateOfBirth);
+        this.reportForm.patchValue({ age: targetAge.toString() }, { emitEvent: false });
+        this.updateCalculatedGroup();
       }
-      this.reportForm.patchValue({ age: targetAge.toString() }, { emitEvent: false });
+    });
+
+    this.reportForm.get('samMamStatus')?.valueChanges.subscribe(() => {
+      this.updateCalculatedGroup();
+    });
+
+    this.reportForm.get('pregnancyStatus')?.valueChanges.subscribe(() => {
+      this.updateCalculatedGroup();
+    });
+
+    this.reportForm.get('pregnancyOutcome')?.valueChanges.subscribe(() => {
+      this.updateCalculatedGroup();
+    });
+
+    this.reportForm.get('lmpDate')?.valueChanges.subscribe(val => {
+      if (val) {
+        const edd = this.calculateEDD(val);
+        if (edd) {
+          this.reportForm.patchValue({ edd }, { emitEvent: false });
+        }
+      }
     });
   }
 
@@ -484,20 +723,54 @@ export class ReportActivity {
     this.outreachService.getReportById(id).subscribe({
       next: (report) => {
         const benId = report.beneficiaryId;
+        if (report.beneficiary) {
+          this.selectedBeneficiary.set(report.beneficiary);
+          this.beneficiarySearch$.next(report.beneficiary.name);
+
+          let targetAge = 0;
+          if (report.child) {
+            targetAge = this.calcAge(report.child.dateOfBirth);
+          } else {
+            targetAge = this.calcAge(report.beneficiary.dateOfBirth);
+          }
+          this.reportForm.patchValue({ age: targetAge.toString() }, { emitEvent: false });
+          this.updateCalculatedGroup();
+        }
+
         if (benId) {
           this.outreachService.getBeneficiary(benId).subscribe(ben => {
-            this.selectedBeneficiary = ben;
+            this.selectedBeneficiary.set(ben);
             this.beneficiarySearch$.next(ben.name);
-            const groupsText = ben.groups && ben.groups.length > 0 
-              ? ben.groups.map((g: any) => g.group?.name || g.name || 'Unknown').join(', ')
-              : 'None';
-            this.reportForm.patchValue({ groupText: groupsText });
+            
+            const childId = this.reportForm.get('childId')?.value;
+            let targetAge = 0;
+            if (childId && childId !== 'MAIN') {
+              const child = ben.children?.find((c: any) => c.id.toString() === childId.toString());
+              if (child) targetAge = this.calcAge(child.dateOfBirth);
+            } else {
+              targetAge = this.calcAge(ben.dateOfBirth);
+            }
+            this.reportForm.patchValue({ age: targetAge.toString() }, { emitEvent: false });
+
+            this.updateCalculatedGroup();
           });
         }
 
         const reportData = report.reportData || {};
         const screeningDetails = reportData.screeningDetails || {};
         const screening = reportData.screening || 'No';
+
+        const savedStatus = reportData.pregnancyStatus || '';
+        let formStatus = '';
+        let formOutcome = '';
+
+        if (savedStatus === 'Currently Pregnant' || savedStatus === 'No' || savedStatus === 'Yes') {
+          formStatus = savedStatus;
+          formOutcome = '';
+        } else if (['Still Birth', 'Miscarriage/Aborted', 'Baby Delivered'].includes(savedStatus)) {
+          formStatus = 'No';
+          formOutcome = savedStatus;
+        }
 
         // Set to string format for combobox compatibility
         this.reportForm.patchValue({
@@ -509,13 +782,19 @@ export class ReportActivity {
           screening: report.reportData?.screening || 'No',
           selectedTests: [],
           testValues: {},
-          pregnancyStatus: reportData.pregnancyStatus || '',
+          pregnancyStatus: formStatus,
+          pregnancyOutcome: formOutcome,
           lmpDate: reportData.lmpDate || '',
+          edd: reportData.edd || '',
           pregnancyDate: reportData.date || '',
           deliveryDate: reportData.dod || '',
           babyDetails: reportData.babyDetails || { name: '', gender: '', relation: 'Son/Daughter' },
           samMamStatus: reportData.samMamStatus || '',
         });
+
+        if (benId) {
+          this.checkPreviousPregnancyStatus(benId, id, formOutcome);
+        }
 
         if (screening === 'Yes') {
           if (screeningDetails.height) { this.toggleTest('height'); this.reportForm.get('testValues.height')!.setValue(screeningDetails.height); }

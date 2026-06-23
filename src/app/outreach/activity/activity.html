@@ -1,17 +1,10 @@
 <div class="activity-page space-y-6 max-w-7xl mx-auto p-5 md:p-6 pb-28 md:pb-20">
-  <app-outreach-page-header
-    title="Activity Reports"
+  <app-outreach-page-header title="Activity Reports"
     subtitle="Manage and track health records for your assigned locations."
-    mobileSubtitle="Manage and track health records"
-    [showSearch]="true"
-    [showMobileExtras]="true"
-  >
+    mobileSubtitle="Manage and track health records" [showSearch]="true" [showMobileExtras]="true">
     <div outreachHeaderActions>
-      <button
-        z-button
-        (click)="addReport()"
-        class="bg-[#006666] hover:bg-[#006666] text-white shadow-lg shadow-indigo-100 transition-all hover:-translate-y-0.5"
-      >
+      <button z-button (click)="addReport()"
+        class="bg-[#006666] hover:bg-[#006666] text-white shadow-lg shadow-indigo-100 transition-all hover:-translate-y-0.5">
         <z-icon zType="plus" class="w-4 h-4 mr-2" />
         Submit New Report
       </button>
@@ -20,74 +13,48 @@
     <div outreachHeaderSearch>
       <div class="flex items-center gap-3 w-full">
         <label class="relative flex-1">
-          <z-icon
-            zType="search"
-            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-          ></z-icon>
-          <input
-            type="search"
-            [formControl]="searchControl"
-            placeholder="Search by UID, name, or activity..."
-            class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-          />
+          <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
+          <input type="search" [formControl]="searchControl" placeholder="Search by UID, name, or activity..."
+            class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
         </label>
 
-        <button
-          type="button"
-          (click)="cycleScreeningFilter()"
+        <button type="button" (click)="cycleScreeningFilter()"
           class="relative flex h-11 w-12 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50 active:bg-indigo-50"
-          [class.border-[#0F766E]]="screeningFilter !== 'ALL'"
-          [class.text-[#0F766E]]="screeningFilter !== 'ALL'"
-          [attr.aria-label]="'Screening filter: ' + screeningFilterLabel"
-        >
+          [class.border-[#0F766E]]="screeningFilter !== 'ALL'" [class.text-[#0F766E]]="screeningFilter !== 'ALL'"
+          [attr.aria-label]="'Screening filter: ' + screeningFilterLabel">
           <z-icon zType="list-filter-plus" class="h-5 w-5"></z-icon>
-          <span
-            *ngIf="screeningFilter !== 'ALL'"
-            class="absolute -right-1 -top-1 rounded-full bg-[#0F766E] px-1.5 py-0.5 text-[9px] font-bold text-white"
-          >
+          <span *ngIf="screeningFilter !== 'ALL'"
+            class="absolute -right-1 -top-1 rounded-full bg-[#0F766E] px-1.5 py-0.5 text-[9px] font-bold text-white">
             {{ screeningFilterLabel }}
           </span>
         </button>
       </div>
     </div>
 
-    <div
-      outreachHeaderMobileExtras
-      class="md:hidden space-y-3 overflow-hidden rounded-md border border-[#F3F4F6] bg-white p-3"
-    >
-      <button
-        type="button"
-        (click)="addReport()"
-        class="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[#006666] px-4 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.18)] transition hover:bg-[#005353] active:scale-[0.99]"
-      >
+    <div outreachHeaderMobileExtras
+      class="md:hidden space-y-3 overflow-hidden rounded-md border border-[#F3F4F6] bg-white p-3">
+      <button type="button" (click)="addReport()"
+        class="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[#006666] px-4 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.18)] transition hover:bg-[#005353] active:scale-[0.99]">
         <z-icon zType="plus" class="h-5 w-5"></z-icon>
         <span class="text-sm font-semibold leading-none">Submit New Report</span>
       </button>
 
       <div class="grid grid-cols-2">
-        <button
-          type="button"
-          (click)="setMobileViewMode('quickAccess')"
-          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
-          [ngClass]="
+        <button type="button" (click)="setMobileViewMode('quickAccess')"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition" [ngClass]="
             mobileViewMode === 'quickAccess'
               ? 'rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
               : 'rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
-          "
-        >
+          ">
           <z-icon zType="credit-card"></z-icon>
           Quick access
         </button>
-        <button
-          type="button"
-          (click)="setMobileViewMode('table')"
-          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
-          [ngClass]="
+        <button type="button" (click)="setMobileViewMode('table')"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition" [ngClass]="
             mobileViewMode === 'table'
               ? ' rounded-xl bg-[#066] text-center text-white font-semibold text-[14px] leading-5'
               : ' rounded-xl bg-white text-slate-700 text-center font-normal text-[14px] leading-5'
-          "
-        >
+          ">
           <z-icon zType="table"></z-icon>
           Table
         </button>
@@ -96,70 +63,51 @@
   </app-outreach-page-header>
   <ng-template #exportDialog>
     <div class="space-y-4">
-      <z-combobox
-        [(ngModel)]="exportMode"
-        [options]="exportOptions"
-        placeholder="Select Export Type"
-      >
+      <z-combobox [(ngModel)]="exportMode" [options]="exportOptions" placeholder="Select Export Type">
       </z-combobox>
 
       @if (exportMode === 'RANGE') {
-        <div class="space-y-3">
-          <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
-            <z-calendar zMode="range" [(value)]="exportDateRange" class="mx-auto"></z-calendar>
-          </div>
-
-          <div class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm text-slate-600">
-            <span class="font-medium uppercase tracking-wider text-slate-400">Selected range</span>
-
-            <span class="text-right font-semibold text-slate-800">
-              @if (exportDateRange?.length === 2) {
-                {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }} - {{ exportDateRange?.[1] | date: 'dd-MM-yyyy' }}
-              } @else if (exportDateRange?.length === 1) {
-                {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }}
-              } @else {
-                Not selected
-              }
-            </span>
-          </div>
+      <div class="space-y-3">
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+          <z-calendar zMode="range" [(value)]="exportDateRange" class="mx-auto"></z-calendar>
         </div>
+
+        <div class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm text-slate-600">
+          <span class="font-medium uppercase tracking-wider text-slate-400">Selected range</span>
+
+          <span class="text-right font-semibold text-slate-800">
+            @if (exportDateRange?.length === 2) {
+            {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }} - {{ exportDateRange?.[1] | date: 'dd-MM-yyyy' }}
+            } @else if (exportDateRange?.length === 1) {
+            {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }}
+            } @else {
+            Not selected
+            }
+          </span>
+        </div>
+      </div>
       }
     </div>
   </ng-template>
   <!-- Reports Content -->
   <ng-container *ngIf="vm$ | async as vm; else loadingTpl">
     <!-- Large Screens: Modernized Table View -->
-    <div
-      class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm"
-    >
+    <div class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
       <div class="border-b border-slate-200 px-4 py-4">
         <div class="flex items-center gap-3 w-full max-w-3xl">
           <label class="relative flex-1">
-            <z-icon
-              zType="search"
-              class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-            ></z-icon>
-            <input
-              type="search"
-              [formControl]="searchControl"
-              placeholder="Search by UID, name, or activity..."
-              class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-            />
+            <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
+            <input type="search" [formControl]="searchControl" placeholder="Search by UID, name, or activity..."
+              class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
           </label>
 
-          <button
-            type="button"
-            (click)="cycleScreeningFilter()"
+          <button type="button" (click)="cycleScreeningFilter()"
             class="relative flex h-11 w-12 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50 active:bg-indigo-50"
-            [class.border-[#0F766E]]="screeningFilter !== 'ALL'"
-            [class.text-[#0F766E]]="screeningFilter !== 'ALL'"
-            [attr.aria-label]="'Screening filter: ' + screeningFilterLabel"
-          >
+            [class.border-[#0F766E]]="screeningFilter !== 'ALL'" [class.text-[#0F766E]]="screeningFilter !== 'ALL'"
+            [attr.aria-label]="'Screening filter: ' + screeningFilterLabel">
             <z-icon zType="list-filter-plus" class="h-5 w-5"></z-icon>
-            <span
-              *ngIf="screeningFilter !== 'ALL'"
-              class="absolute -right-1 -top-1 rounded-full bg-[#0F766E] px-1.5 py-0.5 text-[9px] font-bold text-white"
-            >
+            <span *ngIf="screeningFilter !== 'ALL'"
+              class="absolute -right-1 -top-1 rounded-full bg-[#0F766E] px-1.5 py-0.5 text-[9px] font-bold text-white">
               {{ screeningFilterLabel }}
             </span>
           </button>
@@ -167,46 +115,31 @@
       </div>
 
       <div
-        class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <button
-          type="button"
-          (click)="openExportDialog()"
-          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] sm:w-auto"
-        >
+        class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <button type="button" (click)="openExportDialog()"
+          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] sm:w-auto">
           <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
           <span class="text-[15px] font-semibold leading-none">Download sheet</span>
         </button>
 
         <div class="relative inline-block self-end text-left sm:self-auto">
-          <button
-            type="button"
-            (click)="toggleColumnSelectorDropdown()"
-            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-          >
+          <button type="button" (click)="toggleColumnSelectorDropdown()"
+            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
             <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
             Columns
           </button>
 
-          <div
-            *ngIf="showColumnSelector"
-            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50"
-          >
+          <div *ngIf="showColumnSelector"
+            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
             <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
               Show / Hide Columns
             </div>
 
             <div class="space-y-2">
-              <label
-                *ngFor="let col of columnList"
-                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50"
-              >
-                <input
-                  type="checkbox"
-                  [(ngModel)]="selectedColumns[col.key]"
-                  (click)="$event.stopPropagation()"
-                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]"
-                />
+              <label *ngFor="let col of columnList"
+                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
+                <input type="checkbox" [(ngModel)]="selectedColumns[col.key]" (click)="$event.stopPropagation()"
+                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]" />
 
                 <span class="text-xs font-medium text-slate-700">
                   {{ col.label }}
@@ -217,12 +150,9 @@
         </div>
       </div>
 
-      <table
-        z-table
-        zType="grid"
-        class="w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
-      >
-        <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
+      <div class="w-full overflow-x-auto">
+        <table z-table zType="grid" class="w-full min-w-[1200px] table-fixed border-collapse text-left text-[13px] text-slate-900">
+          <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>
             <th z-table-head class="w-12 border-b border-slate-300 px-2 py-1.5">
               <div class="flex flex-col items-center justify-center gap-1">
@@ -230,198 +160,175 @@
               </div>
             </th>
 
-            <th
-              *ngIf="selectedColumns['beneficiaryId']"
-              z-table-head
+            <th *ngIf="selectedColumns['beneficiaryId']" z-table-head
               class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('beneficiaryId')"
-            >
+              (click)="sortBy('beneficiaryId')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Beneficiary<br />id
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'beneficiaryId'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'beneficiaryId'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              *ngIf="selectedColumns['beneficiaryName']"
-              z-table-head
+            <th *ngIf="selectedColumns['beneficiaryName']" z-table-head
               class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('beneficiaryName')"
-            >
+              (click)="sortBy('beneficiaryName')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Beneficiary<br />name
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'beneficiaryName'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'beneficiaryName'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              *ngIf="selectedColumns['activity']"
-              z-table-head
+            <th *ngIf="selectedColumns['group']" z-table-head
               class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('activity')"
-            >
+              (click)="sortBy('group')">
+              <div class="flex flex-col items-center justify-center gap-1">
+                <span class="flex items-center gap-1">
+                  Group
+                  <z-icon [zType]="
+                      (sortCol$ | async) === 'group'
+                        ? (sortDir$ | async) === 'asc'
+                          ? 'chevron-up'
+                          : 'chevron-down'
+                        : 'chevrons-up-down'
+                    " [class]="
+                      (sortCol$ | async) === 'group'
+                        ? 'w-3 h-3 text-[#006666] shrink-0'
+                        : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
+                    "></z-icon>
+                </span>
+              </div>
+            </th>
+
+            <th *ngIf="selectedColumns['activity']" z-table-head
+              class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+              (click)="sortBy('activity')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Activity
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'activity'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'activity'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              *ngIf="selectedColumns['session']"
-              z-table-head
+            <th *ngIf="selectedColumns['session']" z-table-head
               class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('session')"
-            >
+              (click)="sortBy('session')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Session
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'session'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'session'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              *ngIf="selectedColumns['screening']"
-              z-table-head
+            <th *ngIf="selectedColumns['screening']" z-table-head
               class="w-44 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('screening')"
-            >
+              (click)="sortBy('screening')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Screening /<br />Services
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'screening'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'screening'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              *ngIf="selectedColumns['date']"
-              z-table-head
+            <th *ngIf="selectedColumns['date']" z-table-head
               class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('date')"
-            >
+              (click)="sortBy('date')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Date
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'date'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'date'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              *ngIf="selectedColumns['details']"
-              z-table-head
+            <th *ngIf="selectedColumns['details']" z-table-head
               class="w-24 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('details')"
-            >
+              (click)="sortBy('details')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Details
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'details'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'details'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
-            <th
-              z-table-head
-              class="w-24 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-            >
+            <th z-table-head
+              class="w-24 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors">
               <span class="flex items-center gap-1">Actions</span>
             </th>
           </tr>
@@ -435,11 +342,8 @@
               {{ vm.startIndex + i + 1 }}
             </td>
 
-            <td
-              *ngIf="selectedColumns['beneficiaryId']"
-              z-table-cell
-              class="px-2 py-3 font-mono text-[12px] text-slate-600"
-            >
+            <td *ngIf="selectedColumns['beneficiaryId']" z-table-cell
+              class="px-2 py-3 font-mono text-[12px] text-slate-600">
               {{ report.child?.uid || report.beneficiary?.uid || '-' }}
             </td>
 
@@ -453,6 +357,10 @@
               </span>
             </td>
 
+            <td *ngIf="selectedColumns['group']" z-table-cell class="px-2 py-3 font-medium text-slate-700">
+              {{ getReportGroup(report) }}
+            </td>
+
             <td *ngIf="selectedColumns['activity']" z-table-cell class="px-2 py-3">
               {{ report.activity?.name || '-' }}
             </td>
@@ -462,14 +370,11 @@
             </td>
 
             <td *ngIf="selectedColumns['screening']" z-table-cell class="px-2 py-3">
-              <span
-                [class]="
+              <span [class]="
                   report.reportData?.screening === 'Yes'
                     ? 'bg-green-100 text-green-700 border-green-200'
                     : 'bg-slate-100 text-slate-600 border-slate-200'
-                "
-                class="mb-1 inline-flex rounded border px-2 py-0.5 text-[10px] font-bold uppercase"
-              >
+                " class="mb-1 inline-flex rounded border px-2 py-0.5 text-[10px] font-bold uppercase">
                 {{ report.reportData?.screening || 'No' }}
               </span>
 
@@ -481,19 +386,13 @@
             </td>
 
             <td *ngIf="selectedColumns['details']" z-table-cell class="px-2 py-3">
-              <span
-                class="block text-[11px] leading-snug text-slate-500"
-                [innerHTML]="getScreeningSummary(report)"
-              >
+              <span class="block text-[11px] leading-snug text-slate-500" [innerHTML]="getScreeningSummary(report)">
               </span>
             </td>
             <td>
-              <button
-                type="button"
+              <button type="button"
                 class="flex items-center justify-center gap-3 rounded-[22px] border-2 border-[#005353] px-2 py-2 text-[#005353] transition active:scale-[0.99]"
-                (click)="editReport(report.id)"
-                aria-label="Edit report"
-              >
+                (click)="editReport(report.id)" aria-label="Edit report">
                 <z-icon zType="edit" class="h-3 w-3"></z-icon>
                 <span class="text-sm font-semibold leading-none">Edit</span>
               </button>
@@ -501,29 +400,22 @@
           </tr>
 
           <tr z-table-row *ngIf="vm.items.length === 0">
-            <td
-              z-table-cell
-              colspan="8"
-              class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500"
-            >
+            <td z-table-cell colspan="8" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
               No activity reports recorded yet.
             </td>
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Small Screens: Mobile Responsive Cards -->
     <div *ngIf="mobileViewMode === 'quickAccess'" class="md:hidden space-y-5">
-      <div
-        *ngFor="let report of vm.items"
-        class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition active:bg-[#CCFBF1]/20"
-      >
+      <div *ngFor="let report of vm.items"
+        class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition active:bg-[#CCFBF1]/20">
         <div class="flex items-start justify-between gap-4">
           <div class="min-w-0 flex-1">
-            <h3
-              class="wrap-break-word text-[22px] font-extrabold leading-[1.08] tracking-tight text-slate-900"
-            >
+            <h3 class="wrap-break-word text-[22px] font-extrabold leading-[1.08] tracking-tight text-slate-900">
               {{ report.child?.name || report.beneficiary?.name || 'Unknown' }}
             </h3>
             <p class="mt-2 text-sm leading-snug text-slate-600">
@@ -536,16 +428,20 @@
             <p *ngIf="report.child" class="mt-1 text-xs italic leading-tight text-slate-500">
               Child of {{ report.beneficiary?.name }}
             </p>
+            <div class="mt-2.5 flex flex-wrap gap-1.5">
+              <span
+                class="inline-flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                <z-icon zType="users" class="w-3.5 h-3.5"></z-icon>
+                {{ getReportGroup(report) }}
+              </span>
+            </div>
           </div>
 
-          <span
-            [class]="
+          <span [class]="
               report.reportData?.screening === 'Yes'
                 ? 'bg-[#D1FAE5] text-[#166534]'
                 : 'bg-slate-200 text-slate-600'
-            "
-            class="mt-0.5 rounded-full px-4 py-1.5 text-[13px] font-bold uppercase leading-none"
-          >
+            " class="mt-0.5 rounded-full px-4 py-1.5 text-[13px] font-bold uppercase leading-none">
             {{ report.reportData?.screening || 'No' }}
           </span>
         </div>
@@ -566,185 +462,137 @@
         <div class="mt-6 border-t border-slate-100"></div>
 
         <div class="mt-7 grid grid-cols-2 gap-4">
-          <button
-            type="button"
+          <button type="button"
             class="flex min-h-16 items-center justify-center gap-3 rounded-[22px] border-2 border-[#006666] px-4 py-4 text-[#006666] transition active:scale-[0.99]"
-            (click)="editReport(report.id)"
-            aria-label="Edit report"
-          >
-            <z-icon zType="edit" class="h-6 w-6"></z-icon>
-            <span class="text-sm font-semibold leading-none">Edit</span>
+            (click)="toggleExpand(report.id)" aria-label="View measurements">
+            <z-icon zType="eye" class="h-6 w-6"></z-icon>
+            <span class="text-sm font-semibold leading-none">View Details</span>
           </button>
 
-          <button
-            type="button"
-            class="flex min-h-16 items-center justify-center gap-3 rounded-[22px] bg-[#006666] px-4 py-4 text-white shadow-[0_10px_24px_rgba(59,50,214,0.22)] transition active:scale-[0.99]"
-            (click)="toggleExpand(report.id)"
-            aria-label="View measurements"
-          >
-            <z-icon zType="eye" class="h-6 w-6"></z-icon>
-            <span class="text-sm font-semibold leading-none">View</span>
+          <button type="button"
+            class="flex min-h-16 items-center justify-center gap-3 rounded-[22px] bg-[#006666] px-4 py-4 text-white shadow-[0_10px_24px_rgba(0,102,102,0.22)] transition active:scale-[0.99]"
+            (click)="editReport(report.id)" aria-label="Edit report">
+            <z-icon zType="edit" class="h-6 w-6"></z-icon>
+            <span class="text-sm font-semibold leading-none">Edit Record</span>
           </button>
         </div>
 
         <!-- Expanded Measurements (Mobile) -->
-        <div
-          *ngIf="expandedReportId === report.id"
-          class="p-4 pt-0 border-t border-indigo-50 bg-white animate-in slide-in-from-top-2"
-        >
-          <div
-            *ngIf="report.reportData?.screening === 'Yes' && report.reportData?.screeningDetails"
-            class="pt-4 grid grid-cols-3 gap-3 border-b border-gray-50 pb-3"
-          >
+        <div *ngIf="expandedReportId === report.id"
+          class="p-4 pt-0 border-t border-indigo-50 bg-white animate-in slide-in-from-top-2">
+          <div *ngIf="report.reportData?.screening === 'Yes' && report.reportData?.screeningDetails"
+            class="pt-4 grid grid-cols-3 gap-3 border-b border-gray-50 pb-3">
             <div *ngIf="report.reportData?.screeningDetails?.height" class="flex flex-col">
-              <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest"
-                >H (cm)</span
-              >
+              <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">H (cm)</span>
               <span class="text-sm font-black text-indigo-600 leading-none">{{
                 report.reportData.screeningDetails.height
-              }}</span>
+                }}</span>
             </div>
             <div *ngIf="report.reportData?.screeningDetails?.weight" class="flex flex-col">
-              <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest"
-                >W (kg)</span
-              >
+              <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">W (kg)</span>
               <span class="text-sm font-black text-indigo-600 leading-none">{{
                 report.reportData.screeningDetails.weight
-              }}</span>
+                }}</span>
             </div>
             <div *ngIf="report.reportData?.screeningDetails?.hb" class="flex flex-col">
               <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">Hb</span>
               <span class="text-sm font-black text-rose-600 leading-none">{{
                 report.reportData.screeningDetails.hb
-              }}</span>
+                }}</span>
             </div>
             <div *ngIf="report.reportData?.screeningDetails?.bp" class="flex flex-col">
-              <span
-                class="text-[8px] text-gray-400 uppercase font-black tracking-widest text-nowrap"
-                >BP (S/D)</span
-              >
+              <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest text-nowrap">BP (S/D)</span>
               <span class="text-sm font-black text-indigo-600 leading-none">{{
                 report.reportData.screeningDetails.bp
-              }}</span>
+                }}</span>
             </div>
             <div *ngIf="report.reportData?.screeningDetails?.sugar" class="flex flex-col">
-              <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest"
-                >Sugar</span
-              >
+              <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">Sugar</span>
               <span class="text-sm font-black text-indigo-600 leading-none">{{
                 report.reportData.screeningDetails.sugar
-              }}</span>
+                }}</span>
             </div>
             <div *ngIf="report.reportData?.screeningDetails?.pads" class="flex flex-col">
-              <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest"
-                >Pads</span
-              >
+              <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest">Pads</span>
               <span class="text-sm font-black text-indigo-600 leading-none">{{
                 report.reportData.screeningDetails.pads
-              }}</span>
+                }}</span>
             </div>
           </div>
 
           <!-- Status Details (Mobile) -->
-          <div
-            *ngIf="report.reportData?.pregnancyStatus === 'Yes' || report.reportData?.samMamStatus"
-            class="pt-3 space-y-3"
-          >
-            <div *ngIf="report.reportData?.pregnancyStatus === 'Yes'">
-              <span class="text-[8px] text-pink-500 uppercase font-black tracking-widest block mb-1"
-                >Pregnancy</span
-              >
-              <div class="flex items-center gap-2">
-                <span
-                  class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-[10px] font-black uppercase border border-pink-200"
-                  >Pregnant</span
-                >
-                <span
-                  *ngIf="report.reportData?.lmpDate"
-                  class="text-[10px] text-pink-600 font-bold italic"
-                  >LMP: {{ report.reportData.lmpDate }}</span
-                >
+          <div *ngIf="(report.reportData?.pregnancyStatus && report.reportData?.pregnancyStatus !== 'No') || report.reportData?.samMamStatus"
+            class="pt-3 space-y-3">
+            <div *ngIf="report.reportData?.pregnancyStatus && report.reportData?.pregnancyStatus !== 'No'">
+              <span class="text-[8px] text-pink-500 uppercase font-black tracking-widest block mb-1">Pregnancy</span>
+              <div class="flex flex-col gap-1 text-[10px] text-pink-700">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-[10px] font-black uppercase border border-pink-200">
+                    {{ report.reportData.pregnancyStatus === 'Currently Pregnant' || report.reportData.pregnancyStatus === 'Yes' ? 'Pregnant' : report.reportData.pregnancyStatus }}
+                  </span>
+                </div>
+                <span *ngIf="(report.reportData.pregnancyStatus === 'Currently Pregnant' || report.reportData.pregnancyStatus === 'Yes') && report.reportData?.lmpDate" class="font-bold italic">LMP: {{ report.reportData.lmpDate }}</span>
+                <span *ngIf="(report.reportData.pregnancyStatus === 'Currently Pregnant' || report.reportData.pregnancyStatus === 'Yes') && report.reportData?.edd" class="font-bold italic">EDD: {{ report.reportData.edd }}</span>
+                <span *ngIf="(report.reportData.pregnancyStatus === 'Still Birth' || report.reportData.pregnancyStatus === 'Miscarriage/Aborted') && report.reportData?.date" class="font-bold italic">Date: {{ report.reportData.date }}</span>
+                <span *ngIf="report.reportData.pregnancyStatus === 'Baby Delivered' && report.reportData?.dod" class="font-bold italic">DOD: {{ report.reportData.dod }}</span>
+                <span *ngIf="report.reportData.pregnancyStatus === 'Baby Delivered' && report.reportData?.babyDetails?.name" class="font-bold italic">Baby: {{ report.reportData.babyDetails.name }} ({{ report.reportData.babyDetails.gender }})</span>
               </div>
             </div>
             <div *ngIf="report.reportData?.samMamStatus">
+              <span class="text-[8px] text-amber-500 uppercase font-black tracking-widest block mb-1">Nutrition
+                Status</span>
               <span
-                class="text-[8px] text-amber-500 uppercase font-black tracking-widest block mb-1"
-                >Nutrition Status</span
-              >
-              <span
-                class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[10px] font-black uppercase border border-amber-200"
-                >{{ report.reportData.samMamStatus }}</span
-              >
+                class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[10px] font-black uppercase border border-amber-200">{{
+                report.reportData.samMamStatus }}</span>
             </div>
           </div>
 
-          <div
-            *ngIf="
+          <div *ngIf="
               report.reportData?.screening === 'No' &&
               !report.reportData?.pregnancyStatus &&
               !report.reportData?.samMamStatus
-            "
-            class="py-4 text-center text-[10px] text-gray-400 italic"
-          >
+            " class="py-4 text-center text-[10px] text-gray-400 italic">
             No diagnostic data found for this session.
           </div>
         </div>
       </div>
 
       <!-- Mobile Empty State -->
-      <div
-        *ngIf="vm.items.length === 0"
-        class="py-20 text-center bg-white border border-dashed rounded-2xl flex flex-col items-center p-6"
-      >
+      <div *ngIf="vm.items.length === 0"
+        class="py-20 text-center bg-white border border-dashed rounded-2xl flex flex-col items-center p-6">
         <z-icon zType="file-text" class="w-12 h-12 text-gray-200 mb-4" />
         <p class="text-slate-500 font-bold italic text-sm">No activity reports recorded yet.</p>
       </div>
     </div>
 
-    <!-- Small Screens: Mobile Table -->
-    <div
-      *ngIf="mobileViewMode === 'table'"
-      class="md:hidden overflow-x-auto rounded-md border-b-4 border-blue-500 bg-white shadow-sm"
-    >
+    <div *ngIf="mobileViewMode === 'table'"
+      class="md:hidden rounded-md border-b-4 border-blue-500 bg-white shadow-sm">
       <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4">
-        <button
-          type="button"
-          (click)="openExportDialog()"
-          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353]"
-        >
+        <button type="button" (click)="openExportDialog()"
+          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353]">
           <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
           <span class="text-sm font-semibold leading-none">Download sheet</span>
         </button>
 
         <div class="relative inline-block self-end text-left">
-          <button
-            type="button"
-            (click)="toggleColumnSelectorDropdown()"
-            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-          >
+          <button type="button" (click)="toggleColumnSelectorDropdown()"
+            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
             <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
             Columns
           </button>
 
-          <div
-            *ngIf="showColumnSelector"
-            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50"
-          >
+          <div *ngIf="showColumnSelector"
+            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
             <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
               Show / Hide Columns
             </div>
 
             <div class="space-y-2">
-              <label
-                *ngFor="let col of columnList"
-                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50"
-              >
-                <input
-                  type="checkbox"
-                  [(ngModel)]="selectedColumns[col.key]"
-                  (click)="$event.stopPropagation()"
-                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]"
-                />
+              <label *ngFor="let col of columnList"
+                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
+                <input type="checkbox" [(ngModel)]="selectedColumns[col.key]" (click)="$event.stopPropagation()"
+                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]" />
 
                 <span class="text-xs font-medium text-slate-700">
                   {{ col.label }}
@@ -755,11 +603,9 @@
         </div>
       </div>
 
-      <table
-        z-table
-        zType="grid"
-        class="min-w-225 w-full table-fixed border-collapse text-left text-[13px] text-slate-900"
-      >
+      <div class="w-full overflow-x-auto">
+        <table z-table zType="grid"
+          class="w-full min-w-[1200px] table-fixed border-collapse text-left text-[13px] text-slate-900">
         <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>
             <th z-table-head class="w-12 border-b border-slate-300 px-2 py-1.5">
@@ -768,184 +614,170 @@
               </div>
             </th>
 
-            <th
-              z-table-head
+            <th z-table-head
               class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('beneficiaryId')"
-            >
+              (click)="sortBy('beneficiaryId')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Beneficiary<br />id
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'beneficiaryId'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'beneficiaryId'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              z-table-head
+            <th z-table-head
               class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('beneficiaryName')"
-            >
+              (click)="sortBy('beneficiaryName')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Beneficiary<br />name
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'beneficiaryName'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'beneficiaryName'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              z-table-head
+            <th z-table-head
               class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('activity')"
-            >
+              (click)="sortBy('group')">
+              <div class="flex flex-col items-center justify-center gap-1">
+                <span class="flex items-center gap-1">
+                  Group
+                  <z-icon [zType]="
+                      (sortCol$ | async) === 'group'
+                        ? (sortDir$ | async) === 'asc'
+                          ? 'chevron-up'
+                          : 'chevron-down'
+                        : 'chevrons-up-down'
+                    " [class]="
+                      (sortCol$ | async) === 'group'
+                        ? 'w-3 h-3 text-[#006666] shrink-0'
+                        : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
+                    "></z-icon>
+                </span>
+              </div>
+            </th>
+
+            <th z-table-head
+              class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+              (click)="sortBy('activity')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Activity
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'activity'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'activity'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              z-table-head
+            <th z-table-head
               class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('session')"
-            >
+              (click)="sortBy('session')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Session
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'session'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'session'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              z-table-head
+            <th z-table-head
               class="w-44 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('screening')"
-            >
+              (click)="sortBy('screening')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Screening /<br />Services
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'screening'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'screening'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              z-table-head
+            <th z-table-head
               class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('date')"
-            >
+              (click)="sortBy('date')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Date
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'date'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'date'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
 
-            <th
-              z-table-head
+            <th z-table-head
               class="w-24 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-              (click)="sortBy('details')"
-            >
+              (click)="sortBy('details')">
               <div class="flex flex-col items-center justify-center gap-1">
                 <span class="flex items-center gap-1">
                   Details
-                  <z-icon
-                    [zType]="
+                  <z-icon [zType]="
                       (sortCol$ | async) === 'details'
                         ? (sortDir$ | async) === 'asc'
                           ? 'chevron-up'
                           : 'chevron-down'
                         : 'chevrons-up-down'
-                    "
-                    [class]="
+                    " [class]="
                       (sortCol$ | async) === 'details'
                         ? 'w-3 h-3 text-[#006666] shrink-0'
                         : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
-                    "
-                  ></z-icon>
+                    "></z-icon>
                 </span>
               </div>
             </th>
@@ -974,6 +806,10 @@
               </span>
             </td>
 
+            <td z-table-cell class="px-2 py-3 font-medium text-slate-700">
+              {{ getReportGroup(report) }}
+            </td>
+
             <td z-table-cell class="px-2 py-3">
               {{ report.activity?.name || '-' }}
             </td>
@@ -983,14 +819,11 @@
             </td>
 
             <td z-table-cell class="px-2 py-3">
-              <span
-                [class]="
+              <span [class]="
                   report.reportData?.screening === 'Yes'
                     ? 'bg-green-100 text-green-700 border-green-200'
                     : 'bg-slate-100 text-slate-600 border-slate-200'
-                "
-                class="mb-1 inline-flex rounded border px-2 py-0.5 text-[10px] font-bold uppercase"
-              >
+                " class="mb-1 inline-flex rounded border px-2 py-0.5 text-[10px] font-bold uppercase">
                 {{ report.reportData?.screening || 'No' }}
               </span>
 
@@ -1002,32 +835,24 @@
             </td>
 
             <td z-table-cell class="px-2 py-3">
-              <span
-                class="block text-[11px] leading-snug text-slate-500"
-                [innerHTML]="getScreeningSummary(report)"
-              >
+              <span class="block text-[11px] leading-snug text-slate-500" [innerHTML]="getScreeningSummary(report)">
               </span>
             </td>
           </tr>
 
           <tr z-table-row *ngIf="vm.items.length === 0">
-            <td
-              z-table-cell
-              colspan="8"
-              class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500"
-            >
+            <td z-table-cell colspan="8" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
               No activity reports recorded yet.
             </td>
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Standardized Pagination (Admin Style) -->
-    <div
-      class="mt-8 pt-6 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4"
-      *ngIf="vm.total > 0"
-    >
+    <div class="mt-8 pt-6 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4"
+      *ngIf="vm.total > 0">
       <p class="text-sm font-medium text-slate-500 order-2 md:order-1">
         Showing
         <span class="font-bold text-gray-700">{{ vm.total ? vm.startIndex + 1 : 0 }}</span>
@@ -1037,27 +862,18 @@
       </p>
 
       <div class="flex items-center gap-2 order-1 md:order-2">
-        <button
-          type="button"
-          (click)="prevPage()"
-          [disabled]="vm.page <= 1"
-          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
-        >
+        <button type="button" (click)="prevPage()" [disabled]="vm.page <= 1"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm">
           <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
         </button>
 
         <span
-          class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap shadow-sm"
-        >
+          class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap shadow-sm">
           {{ vm.page }} / {{ vm.pageCount }}
         </span>
 
-        <button
-          type="button"
-          (click)="nextPage()"
-          [disabled]="vm.page >= vm.pageCount"
-          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
-        >
+        <button type="button" (click)="nextPage()" [disabled]="vm.page >= vm.pageCount"
+          class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm">
           Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
         </button>
       </div>
