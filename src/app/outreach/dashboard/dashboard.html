@@ -1,6 +1,9 @@
 <ng-container *ngIf="stats$ | async as stats; else loader" class="fade-in">
     <div class="max-w-7xl mx-auto space-y-6">
-
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl flex items-center gap-3 shadow-sm mb-4">
+            <z-icon zType="circle-alert" class="w-5 h-5 text-amber-600"></z-icon>
+            <p class="text-sm font-semibold m-0">Development is under process for the dashboard section.</p>
+        </div>
         <!-- ================= ACTION BUTTONS ================= -->
         <div class="flex flex-wrap items-center gap-4 mb-6 pt-4">
             <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#CCFBF1] bg-white shadow-sm text-green-700 hover:bg-green-50 transition-colors text-sm font-medium">
@@ -73,8 +76,8 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-4xl font-black text-gray-800 tracking-tight">543</div>
-                        <div class="text-xs font-bold text-green-500 tracking-wide">^ 32 new</div>
+                        <div class="text-4xl font-black text-gray-800 tracking-tight">{{stats.totalReports || 0}}</div>
+                        <div class="text-xs font-bold text-gray-500 tracking-wide mt-1">reports logged</div>
                     </div>
                 </div>
 
@@ -133,65 +136,6 @@
                 </div>
             </div>
         </ng-template>
-
-        <!-- Recent Cards -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Recent Beneficiaries -->
-        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold">Recent Beneficiaries</h3>
-                <!-- <div class="flex items-center gap-3">
-                    <a routerLink="/outreach/beneficiaries" class="text-xs text-indigo-600 hover:underline font-medium">View all</a>
-                </div> -->
-            </div>
-
-            <ng-container *ngIf="recentBeneficiariesVm$ | async as vm; else sectionLoader">
-
-                <!-- Standardized Pagination (Admin Style) -->
-
-                <ng-template #noBen>
-                    <div class="text-center py-10">
-                        <z-icon zType="users" class="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                        <p class="text-gray-400 italic text-sm font-medium">No beneficiaries found.</p>
-                    </div>
-                </ng-template>
-            </ng-container>
-        </div>
-
-        <!-- My Requests -->
-        <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold truncate pr-2">My Requests</h3>
-            </div>
-
-            <ng-container *ngIf="recentRequestsVm$ | async as vm; else sectionLoader">
-                           <!-- Standardized Pagination (Admin Style) -->
-                <ng-template #noReq>
-                    <div class="text-center py-10">
-                        <z-icon zType="file-text" class="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                        <p class="text-gray-400 italic text-sm font-medium">No requests sent yet.</p>
-                    </div>
-                </ng-template>
-            </ng-container>
-        </div>
-    </div>
-
-    <!-- Assigned Projects & Locations -->
-    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold">Assigned Projects &amp; Locations</h3>
-    
-        </div>
-
-        <ng-container *ngIf="assignedProjectsVm$ | async as pager; else sectionLoader">
-                <!-- Pagination -->
-
-            <ng-template #noAssignedProjects>
-                <div class="text-center py-6 text-gray-400 italic">No projects assigned to you yet.</div>
-            </ng-template>
-        </ng-container>
-    </div>
-
 </div>
 </ng-container>
 

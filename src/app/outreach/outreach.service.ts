@@ -201,8 +201,11 @@ export class OutreachService {
     );
   }
 
-  getBeneficiaries(search?: string): Observable<Beneficiary[]> {
-    return (this.api.get(`${this.endpoint}/beneficiary-list`, search ? { search } : {}) as Observable<Beneficiary[]>).pipe(
+  getBeneficiaries(search?: string, projectId?: number): Observable<Beneficiary[]> {
+    const params: any = {};
+    if (search) params.search = search;
+    if (projectId) params.projectId = projectId;
+    return (this.api.get(`${this.endpoint}/beneficiary-list`, params) as Observable<Beneficiary[]>).pipe(
       map((rows) => rows || []),
       catchError((error: HttpErrorResponse) => {
         if (error.status === 404) return of([]);
@@ -262,39 +265,12 @@ export class OutreachService {
     return this.api.delete(`${this.endpoint}/my-requests/${requestId}`);
   }
 
-  getDashboardStats(userId?: number): Observable<OutreachDashboardStats> {
-    return this.getAssignedProjects(userId).pipe(
-      switchMap((projects) => {
-        if (!projects.length) {
-          return this.getBeneficiaries().pipe(
-            map((beneficiaries) => ({
-              totalBeneficiaries: beneficiaries.length,
-              assignedProjects: 0,
-              assignedLocations: 0,
-            }))
-          );
-        }
-
-        const locationCalls = projects.map((project) => this.getLocationsByProject(project.id));
-
-        return forkJoin({
-          beneficiaries: this.getBeneficiaries(),
-          locationsByProject: forkJoin(locationCalls),
-        }).pipe(
-          map(({ beneficiaries, locationsByProject }) => {
-            const uniqueLocationIds = new Set(
-              locationsByProject.flat().map((location) => Number(location.id))
-            );
-
-            return {
-              totalBeneficiaries: beneficiaries.length,
-              assignedProjects: projects.length,
-              assignedLocations: uniqueLocationIds.size,
-            };
-          })
-        );
-      })
-    );
+  getDashboardStats(projectId?: number, activityId?: number, sessionId?: number): Observable<OutreachDashboardStats | any> {
+    const params: any = {};
+    if (projectId) params.projectId = projectId;
+    if (activityId) params.activityId = activityId;
+    if (sessionId) params.sessionId = sessionId;
+    return this.api.get(`${this.endpoint}/dashboard/stats`, params);
   }
 
   // Tagging
@@ -342,8 +318,10 @@ export class OutreachService {
     );
   }
 
-  getMyReports(): Observable<any[]> {
-    return (this.api.get(`${this.endpoint}/my-reports`) as Observable<any[]>).pipe(
+  getMyReports(projectId?: number): Observable<any[]> {
+    const params: any = {};
+    if (projectId) params.projectId = projectId;
+    return (this.api.get(`${this.endpoint}/my-reports`, params) as Observable<any[]>).pipe(
       map(reports => reports || []),
       catchError(() => of([]))
     );

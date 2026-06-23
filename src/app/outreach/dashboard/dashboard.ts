@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { toast } from 'ngx-sonner';
 import {
   BehaviorSubject,
   catchError,
@@ -77,38 +78,38 @@ export class Dashboard implements OnInit {
   recentRequestsStatusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
   projectStatusFilter = new FormControl<ProjectStatusFilter>('ALL', { nonNullable: true });
 
-  // --- MOCK DATA FOR NEW DASHBOARD DESIGN ---
+  // --- INITIAL DATA STATE FOR NEW DASHBOARD DESIGN ---
   outreachActions: { label: string; count: number; bgColor: string; textColor: string; icon: ZardIcon }[] = [
-    { label: 'Currently Active Pregnant women', count: 128, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'user' },
-    { label: 'Currently Active Lactating Mothers', count: 234, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
-    { label: 'Currently Active SAM Children', count: 18, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
-    { label: 'Adolescent Girls', count: 189, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
-    { label: 'Infants for EBF Promotion (<= 6m)', count: 96, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'circle-check' },
-    { label: 'Infants for CF Promotion (12year<child age<6months)', count: 24, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
-    { label: 'Currently Active MAM Children', count: 25, bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', icon: 'circle-alert' },
-    { label: 'Women due for delivery in next 30 days', count: 53, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
+    { label: 'Currently Active Pregnant women', count: 0, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'user' },
+    { label: 'Currently Active Lactating Mothers', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
+    { label: 'Currently Active SAM Children', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
+    { label: 'Adolescent Girls', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
+    { label: 'Infants for EBF Promotion (<= 6m)', count: 0, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'circle-check' },
+    { label: 'Infants for CF Promotion (12year<child age<6months)', count: 0, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
+    { label: 'Currently Active MAM Children', count: 0, bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', icon: 'circle-alert' },
+    { label: 'Women due for delivery in next 30 days', count: 0, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
   ];
 
   episodesOfCare: { label: string; count: number; icon: ZardIcon }[] = [
-    { label: 'Adults (>19 Years)', count: 324, icon: 'user' },
-    { label: 'Adolescents (10-19 Years)', count: 145, icon: 'users' },
-    { label: 'Children (<5 Years)', count: 87, icon: 'user' },
-    { label: 'Children (6-10 Years)', count: 102, icon: 'users' },
+    { label: 'Adults (>19 Years)', count: 0, icon: 'user' },
+    { label: 'Adolescents (10-19 Years)', count: 0, icon: 'users' },
+    { label: 'Children (<5 Years)', count: 0, icon: 'user' },
+    { label: 'Children (6-10 Years)', count: 0, icon: 'users' },
   ];
 
   activities = [
-    { label: 'YOUNG MARRIED WOMEN', count: 120, countColor: 'text-gray-900' },
-    { label: 'PREGNANT WOMEN', count: 85, countColor: 'text-gray-900' },
-    { label: 'MAM (0-5)', count: 34, countColor: 'text-green-600' },
-    { label: 'CHILDREN BELOW 6 (0-5 YEARS) - GIRLS', count: 150, countColor: 'text-gray-900' },
-    { label: 'LACTATING WOMEN', count: 92, countColor: 'text-gray-900' },
-    { label: 'ADOLESCENT GIRLS', count: 150, countColor: 'text-gray-900' },
-    { label: 'CHILDREN ABOVE 6 (6-10 YEARS) - GIRLS', count: 12, countColor: 'text-red-600' },
-    { label: 'STAKEHOLDERS', count: 150, countColor: 'text-gray-900' },
-    { label: 'ADOLESCENT BOYS', count: 140, countColor: 'text-gray-900' },
-    { label: 'SAM (0-5)', count: 12, countColor: 'text-red-600' },
-    { label: 'CHILDREN ABOVE 6 (6-10 YEARS) - BOYS', count: 15, countColor: 'text-green-600' },
-    { label: 'OTHER BENEFICIARIES', count: 15, countColor: 'text-gray-900' },
+    { label: 'YOUNG MARRIED WOMEN', count: 0, countColor: 'text-gray-900' },
+    { label: 'PREGNANT WOMEN', count: 0, countColor: 'text-gray-900' },
+    { label: 'MAM (0-5)', count: 0, countColor: 'text-green-600' },
+    { label: 'CHILDREN BELOW 6 (0-5 YEARS) - GIRLS', count: 0, countColor: 'text-gray-900' },
+    { label: 'LACTATING WOMEN', count: 0, countColor: 'text-gray-900' },
+    { label: 'ADOLESCENT GIRLS', count: 0, countColor: 'text-gray-900' },
+    { label: 'CHILDREN ABOVE 6 (6-10 YEARS) - GIRLS', count: 0, countColor: 'text-red-600' },
+    { label: 'STAKEHOLDERS', count: 0, countColor: 'text-gray-900' },
+    { label: 'ADOLESCENT BOYS', count: 0, countColor: 'text-gray-900' },
+    { label: 'SAM (0-5)', count: 0, countColor: 'text-red-600' },
+    { label: 'CHILDREN ABOVE 6 (6-10 YEARS) - BOYS', count: 0, countColor: 'text-green-600' },
+    { label: 'OTHER BENEFICIARIES', count: 0, countColor: 'text-gray-900' },
   ];
 
   yearFilter = new FormControl('2024');
@@ -154,8 +155,63 @@ export class Dashboard implements OnInit {
 
   ngOnInit() {
     // ─── STATS ────────────────────────────────────────────────────────────────
-    this.stats$ = this.outreachService.getDashboardStats(this.currentUserId).pipe(
-      catchError(() => of({ totalBeneficiaries: 0, assignedProjects: 0, assignedLocations: 0 })),
+    this.outreachService.getOutreachActivities().subscribe(activities => {
+      this.activityOptions = [
+        { value: 'All activity', label: 'All activity' },
+        ...activities.map(a => ({ value: String(a.id), label: a.name }))
+      ];
+    });
+
+    this.activityFilter.valueChanges.subscribe(actVal => {
+      this.sessionFilter.setValue('All session');
+      if (actVal && actVal !== 'All activity') {
+        this.outreachService.getSessions(Number(actVal)).subscribe(sessions => {
+          this.sessionOptions = [
+            { value: 'All session', label: 'All session' },
+            ...sessions.map(s => ({ value: String(s.id), label: s.name }))
+          ];
+        });
+      } else {
+        this.sessionOptions = [{ value: 'All session', label: 'All session' }];
+      }
+    });
+
+    const activity$ = this.activityFilter.valueChanges.pipe(startWith(this.activityFilter.value), distinctUntilChanged());
+    const session$ = this.sessionFilter.valueChanges.pipe(startWith(this.sessionFilter.value), distinctUntilChanged());
+
+    this.stats$ = combineLatest([activity$, session$]).pipe(
+      switchMap(([actVal, sessVal]) => {
+        const aId = actVal !== 'All activity' ? Number(actVal) : undefined;
+        const sId = sessVal !== 'All session' ? Number(sessVal) : undefined;
+        return this.outreachService.getDashboardStats(undefined, aId, sId).pipe(
+          tap(stats => {
+            if (stats.outreachActions) {
+              this.outreachActions[0].count = stats.outreachActions.activePregnantWomen || 0;
+              this.outreachActions[1].count = stats.outreachActions.activeLactatingMothers || 0;
+              this.outreachActions[2].count = stats.outreachActions.activeSamChildren || 0;
+              this.outreachActions[3].count = stats.outreachActions.adolescentGirls || 0;
+              this.outreachActions[4].count = stats.outreachActions.infantsEbfPromotion || 0;
+              this.outreachActions[5].count = stats.outreachActions.infantsCfPromotion || 0;
+              this.outreachActions[6].count = stats.outreachActions.activeMamChildren || 0;
+              this.outreachActions[7].count = stats.outreachActions.womenDueForDelivery30Days || 0;
+            }
+            if (stats.episodesOfCare) {
+              this.episodesOfCare[0].count = stats.episodesOfCare.adults || 0;
+              this.episodesOfCare[1].count = stats.episodesOfCare.adolescents || 0;
+              this.episodesOfCare[2].count = stats.episodesOfCare.childrenUnder5 || 0;
+              this.episodesOfCare[3].count = stats.episodesOfCare.children6To10 || 0;
+            }
+            if (stats.activities && stats.activities.length) {
+              this.activities = stats.activities;
+            }
+          }),
+          catchError((err) => {
+            console.error('Error fetching dashboard stats:', err);
+            toast.error('Failed to load dashboard data');
+            return of({ totalBeneficiaries: 0, assignedProjects: 0, assignedLocations: 0 });
+          })
+        );
+      }),
       shareReplay(1)
     );
     this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
