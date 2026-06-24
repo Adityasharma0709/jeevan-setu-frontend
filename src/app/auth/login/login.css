@@ -428,15 +428,6 @@
 
 .remember-me-container input:checked ~ .checkbox-custom::after { display: block; }
 
-.forgot-pwd-link {
-  color: #08705f;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-
-.forgot-pwd-link:hover { color: #054f43; }
-
 /* Error message */
 .error-msg {
   color: #dc2626;
