@@ -6,13 +6,13 @@
         </div>
         <!-- ================= ACTION BUTTONS ================= -->
         <div class="flex flex-wrap items-center gap-4 mb-6 pt-4">
-            <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#CCFBF1] bg-white shadow-sm text-green-700 hover:bg-green-50 transition-colors text-sm font-medium">
+            <button routerLink="/outreach/report-activity" class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#CCFBF1] bg-white shadow-sm text-green-700 hover:bg-green-50 transition-colors text-sm font-medium">
                 <z-icon zType="plus" class="w-4 h-4"></z-icon> Add Report
             </button>
-            <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#CCFBF1] bg-white shadow-sm text-green-700 hover:bg-green-50 transition-colors text-sm font-medium">
+            <button routerLink="/outreach/beneficiaries/create" class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#CCFBF1] bg-white shadow-sm text-green-700 hover:bg-green-50 transition-colors text-sm font-medium">
                 <z-icon zType="plus" class="w-4 h-4"></z-icon> Add Beneficiary
             </button>
-            <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#CCFBF1] bg-white shadow-sm text-green-700 hover:bg-green-50 transition-colors text-sm font-medium">
+            <button routerLink="/outreach/requests" class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#CCFBF1] bg-white shadow-sm text-green-700 hover:bg-green-50 transition-colors text-sm font-medium">
                 <z-icon zType="file-text" class="w-4 h-4"></z-icon> Review Requests
             </button>
         </div>
@@ -76,23 +76,54 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-4xl font-black text-gray-800 tracking-tight">{{stats.totalReports || 0}}</div>
+                        <div class="text-4xl font-black text-gray-800 tracking-tight">{{filteredReportsCount}}</div>
                         <div class="text-xs font-bold text-gray-500 tracking-wide mt-1">reports logged</div>
                     </div>
                 </div>
 
-                <div class="mb-3 text-xs text-gray-400 font-bold uppercase tracking-widest pl-1">DATA POINTS</div>
-                <div class="space-y-3">
-                    <div *ngFor="let item of episodesOfCare" class="flex items-center justify-between bg-slate-50/50 hover:bg-slate-100 transition-colors border border-gray-100 rounded-xl p-4 md:p-5 cursor-pointer group shadow-sm">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 shadow-inner">
-                                <z-icon [zType]="item.icon" class="w-5 h-5"></z-icon>
+                <div class="mb-5 text-xs text-gray-400 font-bold uppercase tracking-widest pl-1">Age & Gender Distribution</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div *ngFor="let item of episodesOfCare" class="bg-slate-50/50 border border-gray-100 rounded-2xl p-6 flex flex-col items-center justify-between hover:shadow-md hover:bg-slate-100/50 transition-all duration-300 shadow-sm relative group">
+                        <!-- Card Header: Title and Icon -->
+                        <div class="flex items-center gap-3 w-full mb-6">
+                            <div class="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 shadow-sm">
+                                <z-icon [zType]="item.icon" class="w-4 h-4"></z-icon>
                             </div>
-                            <span class="text-base font-bold text-gray-700">{{item.label}}</span>
+                            <h4 class="text-sm font-bold text-gray-800 tracking-wide line-clamp-1">{{item.label}}</h4>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-lg font-black text-gray-900">{{item.count}}</span>
-                            <z-icon zType="chevron-right" class="w-5 h-5 text-gray-300 group-hover:text-gray-500"></z-icon>
+
+                        <!-- Pie/Donut Chart -->
+                        <div class="relative w-28 h-28 rounded-full flex items-center justify-center shadow-md hover:scale-105 transition-transform duration-300 cursor-pointer mb-6" [style.background]="getConicGradient(item)">
+                            <!-- Inner white circle to construct the donut chart -->
+                            <div class="w-20 h-20 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total</span>
+                                <span class="text-2xl font-black text-gray-800 mt-0.5">{{item.total}}</span>
+                            </div>
+                        </div>
+
+                        <!-- Gender Breakdown Details -->
+                        <div class="w-full space-y-2 pt-4 border-t border-gray-100">
+                            <div class="flex items-center justify-between text-xs font-semibold text-gray-600">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#0EA5E9] block"></span>
+                                    <span>Male</span>
+                                </div>
+                                <span class="font-bold text-gray-800">{{item.male}}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs font-semibold text-gray-600">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#F43F5E] block"></span>
+                                    <span>Female</span>
+                                </div>
+                                <span class="font-bold text-gray-800">{{item.female}}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs font-semibold text-gray-600">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B] block"></span>
+                                    <span>Others</span>
+                                </div>
+                                <span class="font-bold text-gray-800">{{item.others}}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -101,29 +132,37 @@
 
         <!-- ================= ACTIVITY / SESSIONS ================= -->
         <div class="mb-8 pt-4">
-             <div class="flex items-center gap-4 mb-6">
-                <div class="flex flex-col gap-1.5 w-48">
-                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Activity</label>
-                    <z-combobox [options]="activityOptions" [formControl]="activityFilter" zWidth="full" [searchable]="false" class="w-full"></z-combobox>
-                </div>
-                <div class="flex flex-col gap-1.5 w-48">
-                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Session</label>
-                    <z-combobox [options]="sessionOptions" [formControl]="sessionFilter" zWidth="full" [searchable]="false" class="w-full"></z-combobox>
-                </div>
-            </div>
-
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8">
-                 <div class="flex items-center gap-3 mb-8">
-                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
-                        <z-icon zType="calendar" class="w-5 h-5"></z-icon>
+                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-100/50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+                            <z-icon zType="calendar" class="w-5 h-5"></z-icon>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">Activity / Sessions</h2>
+                            <p class="text-xs text-gray-400 font-semibold mt-0.5">Filter and view outreach counts by activity categories</p>
+                        </div>
                     </div>
-                    <h2 class="text-xl font-bold text-gray-800">Activity / Sessions</h2>
+
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex flex-col gap-1 w-44">
+                            <label class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest">Activity</label>
+                            <z-combobox [options]="activityOptions" [formControl]="activityFilter" zWidth="full" [searchable]="false" class="w-full"></z-combobox>
+                        </div>
+                        <div class="flex flex-col gap-1 w-44">
+                            <label class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest">Session</label>
+                            <z-combobox [options]="sessionOptions" [formControl]="sessionFilter" zWidth="full" [searchable]="false" class="w-full"></z-combobox>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-                    <div *ngFor="let item of activities" class="bg-slate-50/80 border border-gray-100 rounded-xl p-6 md:p-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
-                        <h3 [class]="item.countColor + ' text-3xl md:text-4xl font-black mb-3 tracking-tight'">{{item.count}}</h3>
-                        <p class="text-gray-500 text-xs font-bold uppercase tracking-wider leading-snug">{{item.label}}</p>
+                    <div *ngFor="let item of activities" [class]="'border rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-md shadow-sm ' + getActivityBgClass(item.label)">
+                        <div class="w-10 h-10 rounded-full bg-white/85 flex items-center justify-center shadow-inner mb-4">
+                            <z-icon [zType]="getActivityIcon(item.label)" class="w-5 h-5 opacity-90"></z-icon>
+                        </div>
+                        <h3 class="text-3xl md:text-4xl font-black mb-2 tracking-tight">{{item.count}}</h3>
+                        <p class="text-[10px] font-extrabold uppercase tracking-widest leading-snug opacity-80">{{item.label}}</p>
                     </div>
                 </div>
             </div>
