@@ -194,6 +194,9 @@ export class Dashboard implements OnInit {
       switchMap(([actVal, sessVal]) => {
         const aId = actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal !== 'All session' ? Number(sessVal) : undefined;
+        // Temporary Pause: Backend API call paused to fix high computation issues.
+        // Uncomment once the backend query optimization is done.
+        /*
         return this.outreachService.getDashboardStats(undefined, aId, sId).pipe(
           tap(stats => {
             if (stats.outreachActions) {
@@ -217,6 +220,23 @@ export class Dashboard implements OnInit {
             return of({ totalBeneficiaries: 0, assignedProjects: 0, assignedLocations: 0 });
           })
         );
+        */
+        return of({
+          totalBeneficiaries: 0,
+          assignedProjects: 0,
+          assignedLocations: 0,
+          outreachActions: {
+            activePregnantWomen: 0,
+            activeLactatingMothers: 0,
+            activeSamChildren: 0,
+            adolescentGirls: 0,
+            infantsEbfPromotion: 0,
+            infantsCfPromotion: 0,
+            activeMamChildren: 0,
+            womenDueForDelivery30Days: 0
+          },
+          activities: []
+        });
       }),
       shareReplay(1)
     );
