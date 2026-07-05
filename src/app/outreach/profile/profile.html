@@ -40,14 +40,13 @@
           <p class="mt-1 text-xs text-gray-500">Leave blank if you don't want to change it.</p>
         </z-form-field>
 
-        <div class="md:col-span-2 flex justify-end pt-2 border-t">
-          <button z-button type="button" variant="ghost" (click)="cancel()">Cancel</button>
+        <div class="md:col-span-2 flex justify-end gap-2 pt-2 border-t">
+          <button z-button type="button" zType="outline" (click)="cancel()">Cancel</button>
           <button
             z-button
             type="button"
             [disabled]="isSubmitting"
             (click)="submit()"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]"
           >
             {{ isSubmitting ? 'Updating...' : 'Update Profile' }}
           </button>

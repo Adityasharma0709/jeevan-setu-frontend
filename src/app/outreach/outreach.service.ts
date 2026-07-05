@@ -115,6 +115,7 @@ export interface FamilyMember {
   schoolingStatus?: string | null;
   employmentStatus?: string | null;
   qualification?: string | null;
+  childGroups?: any[];
 }
 
 export interface AddFamilyMemberPayload {
@@ -142,6 +143,16 @@ export interface CreateReportPayload {
   sessionId?: number;
   sessionDate: string;
   reportData: Record<string, unknown>;
+}
+
+export interface DynamicsTableRecord {
+  id: string;
+  name: string;
+  group: string;
+  awc: string;
+  activity: string;
+  session: string;
+  reportingDate: string;
 }
 
 export interface OutreachDashboardStats {
@@ -271,6 +282,10 @@ export class OutreachService {
     if (activityId) params.activityId = activityId;
     if (sessionId) params.sessionId = sessionId;
     return this.api.get(`${this.endpoint}/dashboard/stats`, params);
+  }
+
+  getDynamicsReports(groupName: string): Observable<DynamicsTableRecord[]> {
+    return this.api.get<DynamicsTableRecord[]>(`${this.endpoint}/dashboard/action-details`, { group: groupName });
   }
 
   // Tagging

@@ -367,11 +367,14 @@ export class Activity {
     if (report?.reportData?.group) {
       return report.reportData.group;
     }
-    // Fallback to database beneficiary groups for legacy records
-    if (report?.beneficiary?.groups && report.beneficiary.groups.length > 0) {
+    // Fallback to database groups
+    if (report?.child && report.child.childGroups && report.child.childGroups.length > 0) {
+      return report.child.childGroups.map((g: any) => g.group?.name || g.name).join(', ');
+    }
+    if (report?.beneficiary?.groups && report.beneficiary.groups.length > 0 && !report.child) {
       return report.beneficiary.groups.map((g: any) => g.group?.name || g.name).join(', ');
     }
-    return 'None';
+    return 'N/A';
   }
 
   getScreeningSummary(report: any): string {

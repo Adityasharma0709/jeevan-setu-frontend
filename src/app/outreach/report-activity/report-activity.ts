@@ -427,131 +427,18 @@ export class ReportActivity {
     }
 
     const childId = this.reportForm.get('childId')?.value;
-    let gender = '';
-    let age = 0;
-    let dob = '';
-    let isChild = false;
+    let groupsText = 'N/A';
 
     if (childId && childId !== 'MAIN') {
       const child = ben.children?.find((c: any) => c.id.toString() === childId.toString());
-      if (child) {
-        gender = child.gender || '';
-        dob = child.dateOfBirth;
-        age = this.calcAge(dob);
-        isChild = true;
+      if (child && child.childGroups && child.childGroups.length > 0) {
+        groupsText = child.childGroups.map((g: any) => g.group?.name || g.name).join(', ');
       }
     } else {
-      gender = ben.gender || '';
-      dob = ben.dateOfBirth;
-      age = this.calcAge(dob);
-      isChild = false;
-    }
-
-    const genderLower = (gender || '').trim().toLowerCase();
-    const isFemale = genderLower === 'female';
-    const isMale = genderLower === 'male';
-
-    const groupNames = new Set<string>();
-
-    if (!isChild && ben.typeof === 'Stakeholder') {
-      groupNames.add('Stakeholders');
-    }
-
-    const samMam = this.reportForm.get('samMamStatus')?.value || '';
-    const pregnancyStatus = this.reportForm.get('pregnancyStatus')?.value || '';
-    const pregnancyOutcome = this.reportForm.get('pregnancyOutcome')?.value || '';
-    const pregnancy = (this.showOutcomeDropdown && pregnancyOutcome) ? pregnancyOutcome : pregnancyStatus;
-    const maritalStatus = ben.maritalStatus || '';
-
-    // Check if parent has child under 2
-    const hasChildUnder2 = ben.children?.some((c: any) => this.calcAge(c.dateOfBirth) <= 2) || false;
-
-    if (isFemale) {
-      if (age < 6) {
-        if (samMam === 'SAM') {
-          groupNames.add('SAM Children [0-5 Years]');
-        } else if (samMam === 'MAM') {
-          groupNames.add('MAM Children [0-5 Years]');
-        } else {
-          groupNames.add('Children below 6(3-6 Years) - Girls');
-        }
-      } else if (age >= 6 && age < 10) {
-        groupNames.add('Children above 6(6-9 Years) - Girls');
-      } else if (
-        (age >= 10 && age < 14) ||
-        (age >= 14 && age < 18 && pregnancy !== 'Currently Pregnant') ||
-        (age >= 14 && age <= 18 && maritalStatus !== 'Married' && !hasChildUnder2)
-      ) {
-        groupNames.add('Adolescent Girls');
-      }
-
-      if (age >= 14) {
-        if (maritalStatus === 'Married' && age >= 15 && age <= 24) {
-          groupNames.add('Young Married Women');
-        }
-        if (pregnancy === 'Currently Pregnant') {
-          groupNames.add('Pregnant Women');
-        }
-        if (pregnancy === 'Baby Delivered' || hasChildUnder2) {
-          groupNames.add('Lactating Women');
-        }
-
-        const hasPrimaryGroup =
-          groupNames.has('Pregnant Women') ||
-          groupNames.has('Lactating Women') ||
-          groupNames.has('Adolescent Girls') ||
-          groupNames.has('Young Married Women');
-
-        if (!hasPrimaryGroup) {
-          groupNames.add('Other Beneficiaries - Females');
-        }
-      }
-    } else if (isMale) {
-      if (age < 6) {
-        if (samMam === 'SAM') {
-          groupNames.add('SAM Children [0-5 Years]');
-        } else if (samMam === 'MAM') {
-          groupNames.add('MAM Children [0-5 Years]');
-        } else {
-          groupNames.add('Children below 6(3-6 Years) - Boys');
-        }
-      } else if (age >= 6 && age < 10) {
-        groupNames.add('Children above 6 (6-9 Years) - Boys');
-      } else if (age >= 10 && age < 18) {
-        groupNames.add('Adolescent Boys');
-      } else if (age >= 18) {
-        groupNames.add('Other Beneficiaries - Males');
+      if (ben.groups && ben.groups.length > 0) {
+        groupsText = ben.groups.map((g: any) => g.group?.name || g.name).join(', ');
       }
     }
-
-    if (!isChild && ben.groups) {
-      const systemGroupNames = [
-        'Young Married Women',
-        'Pregnant Women',
-        'Lactating Women',
-        'Adolescent Girls',
-        'Adolescent Boys',
-        'Children above 6(6-9 Years) - Girls',
-        'Children above 6 (6-9 Years) - Boys',
-        'Children below 6(3-6 Years) - Girls',
-        'Children below 6(3-6 Years) - Boys',
-        'Other Beneficiaries - Females',
-        'Other Beneficiaries - Males',
-        'SAM Children [0-5 Years]',
-        'MAM Children [0-5 Years]',
-        'Stakeholders'
-      ];
-      ben.groups.forEach((g: any) => {
-        const name = g.group?.name || g.name;
-        if (name && !systemGroupNames.includes(name)) {
-          groupNames.add(name);
-        }
-      });
-    }
-
-    const groupsText = groupNames.size > 0
-      ? Array.from(groupNames).join(', ')
-      : 'None';
 
     this.reportForm.patchValue({ groupText: groupsText }, { emitEvent: false });
   }
