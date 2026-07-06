@@ -87,6 +87,7 @@ import { DashboardFacade } from '../../dashboard.facade';
                             <th z-table-head class="w-16 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex items-center justify-center gap-1">#</span></th>
                             <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Beneficiary ID</span></th>
                             <th z-table-head class="w-48 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Beneficiary Name</span></th>
+                            <th z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Age</span></th>
                             <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Group</span></th>
                             <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">AWC</span></th>
                             <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Activity</span></th>
@@ -108,6 +109,9 @@ import { DashboardFacade } from '../../dashboard.facade';
                                     {{ row.name || 'Unknown' }}
                                   </span>
                                 </td>
+                                <td z-table-cell class="px-2 py-3 text-slate-700">
+                                  {{ row.age || '-' }}
+                                </td>
                                 <td z-table-cell class="px-2 py-3 font-medium text-slate-700">
                                   {{ row.group }}
                                 </td>
@@ -125,14 +129,14 @@ import { DashboardFacade } from '../../dashboard.facade';
                                 </td>
                             </tr>
                             <tr z-table-row *ngIf="records.length === 0">
-                                <td z-table-cell colspan="8" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
+                                <td z-table-cell colspan="9" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
                                     No reports found for this group.
                                 </td>
                             </tr>
                         </ng-container>
                         <ng-template #loadingTable>
                             <tr z-table-row>
-                                <td z-table-cell colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                <td z-table-cell colspan="9" class="px-4 py-8 text-center text-gray-500">
                                     <z-icon zType="loader-circle" class="w-6 h-6 animate-spin mx-auto text-blue-500"></z-icon>
                                     <p class="mt-2 font-medium text-sm">Loading records...</p>
                                 </td>
