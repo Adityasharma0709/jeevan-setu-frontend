@@ -78,6 +78,7 @@ export class DashboardFacade {
     { label: 'PREGNANT WOMEN', count: 0, countColor: 'text-gray-900' },
     { label: 'MAM (0-5)', count: 0, countColor: 'text-green-600' },
     { label: 'CHILDREN BELOW 6 (0-5 YEARS) - GIRLS', count: 0, countColor: 'text-gray-900' },
+    { label: 'CHILDREN BELOW 6 (0-5 YEARS) - BOYS', count: 0, countColor: 'text-gray-900' },
     { label: 'LACTATING WOMEN', count: 0, countColor: 'text-gray-900' },
     { label: 'ADOLESCENT GIRLS', count: 0, countColor: 'text-gray-900' },
     { label: 'CHILDREN ABOVE 6 (6-10 YEARS) - GIRLS', count: 0, countColor: 'text-red-600' },
@@ -92,7 +93,7 @@ export class DashboardFacade {
   private episodesOfCareSub = new BehaviorSubject<EpisodeOfCare[]>([
     { label: 'Adults (>19 Years)', icon: 'user', male: 0, female: 0, others: 0, total: 0 },
     { label: 'Adolescents (10-19 Years)', icon: 'users', male: 0, female: 0, others: 0, total: 0 },
-    { label: 'Children (<5 Years)', icon: 'user', male: 0, female: 0, others: 0, total: 0 },
+    { label: 'Children (0-5 Years)', icon: 'user', male: 0, female: 0, others: 0, total: 0 },
     { label: 'Children (6-10 Years)', icon: 'users', male: 0, female: 0, others: 0, total: 0 },
   ]);
   episodesOfCare$ = this.episodesOfCareSub.asObservable();
@@ -418,7 +419,7 @@ export class DashboardFacade {
 
         if (ageYears > 19) targetGroup = adults;
         else if (ageYears >= 10 && ageYears <= 19) targetGroup = adolescents;
-        else if (ageYears < 5) targetGroup = childrenUnder5;
+        else if (ageYears < 6) targetGroup = childrenUnder5;
         else if (ageYears >= 6 && ageYears <= 10) targetGroup = children6To10;
         else return;
 
@@ -431,7 +432,7 @@ export class DashboardFacade {
       this.episodesOfCareSub.next([
         { label: 'Adults (>19 Years)', icon: 'user', ...adults },
         { label: 'Adolescents (10-19 Years)', icon: 'users', ...adolescents },
-        { label: 'Children (<5 Years)', icon: 'user', ...childrenUnder5 },
+        { label: 'Children (0-5 Years)', icon: 'user', ...childrenUnder5 },
         { label: 'Children (6-10 Years)', icon: 'users', ...children6To10 },
       ]);
       this.filteredReportsCountSub.next(reports.length);

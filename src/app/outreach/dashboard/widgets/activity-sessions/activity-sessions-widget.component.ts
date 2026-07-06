@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
 import { DashboardFacade } from '../../dashboard.facade';
 import { ActivityCardComponent } from '../../components/activity-card/activity-card.component';
@@ -9,16 +8,13 @@ import { ActivityCardComponent } from '../../components/activity-card/activity-c
 @Component({
   selector: 'app-activity-sessions-widget',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ZardIconComponent, ZardComboboxComponent, ActivityCardComponent],
+  imports: [CommonModule, ReactiveFormsModule, ZardComboboxComponent, ActivityCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mb-8 pt-4">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8">
              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-100/50">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
-                        <z-icon zType="calendar" class="w-5 h-5"></z-icon>
-                    </div>
                     <div>
                         <h2 class="text-xl font-bold text-gray-800">Activity / Sessions</h2>
                         <p class="text-xs text-gray-400 font-semibold mt-0.5">Filter and view outreach counts by activity categories</p>

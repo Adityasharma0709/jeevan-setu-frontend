@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
 import { DashboardFacade } from '../../dashboard.facade';
 import { EpisodeCardComponent } from '../../components/episode-card/episode-card.component';
@@ -9,7 +8,7 @@ import { EpisodeCardComponent } from '../../components/episode-card/episode-card
 @Component({
   selector: 'app-coverage-widget',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ZardIconComponent, ZardComboboxComponent, EpisodeCardComponent],
+  imports: [CommonModule, ReactiveFormsModule, ZardComboboxComponent, EpisodeCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="pt-4">
@@ -42,9 +41,6 @@ import { EpisodeCardComponent } from '../../components/episode-card/episode-card
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8 mb-8">
             <div class="flex items-start justify-between mb-8 pb-6 border-b border-gray-100">
                 <div class="flex items-center gap-4">
-                     <div class="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center text-teal-600 shadow-sm">
-                        <z-icon zType="heart" class="w-6 h-6"></z-icon>
-                    </div>
                     <div>
                         <h3 class="text-xl font-bold text-gray-800">Episodes of Care</h3>
                         <p class="text-sm text-gray-500 font-medium">Total Episodes</p>

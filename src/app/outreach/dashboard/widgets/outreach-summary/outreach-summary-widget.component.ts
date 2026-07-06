@@ -26,10 +26,7 @@ import { DashboardFacade } from '../../dashboard.facade';
   template: `
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8">
         <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center text-white shadow-sm">
-                <z-icon zType="activity" class="w-5 h-5"></z-icon>
-            </div>
-            <h2 class="text-xl font-bold text-gray-800">Outreach Action (Dynamic)</h2>
+            <h2 class="text-xl font-bold text-gray-800">Outreach Dynamics</h2>
         </div>
 
         <div class="relative flex items-center mb-6 group">
