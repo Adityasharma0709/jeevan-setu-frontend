@@ -51,14 +51,14 @@ export class DashboardFacade {
 
   // -- State Subjects --
   private outreachActionsSub = new BehaviorSubject<OutreachAction[]>([
-    { label: 'Currently Active Pregnant women', count: 0, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'user' },
-    { label: 'Currently Active Lactating Mothers', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
+    { label: 'Currently Active Pregnant women', count: 0, bgColor: 'bg-pink-50', textColor: 'text-pink-700', icon: 'heart' },
+    { label: 'Currently Active Lactating Mothers', count: 0, bgColor: 'bg-purple-50', textColor: 'text-purple-700', icon: 'heart' },
     { label: 'Currently Active SAM Children', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
-    { label: 'Adolescent Girls', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
-    { label: 'Infants for EBF Promotion (<= 6m)', count: 0, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'circle-check' },
-    { label: 'Infants for CF Promotion(2year<child age<6months)', count: 0, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
+    { label: 'Adolescent Girls', count: 0, bgColor: 'bg-rose-50', textColor: 'text-rose-700', icon: 'users' },
+    { label: 'Infants for EBF Promotion (<= 6m)', count: 0, bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', icon: 'circle-check' },
+    { label: 'Infants for CF Promotion(2year<child age<6months)', count: 0, bgColor: 'bg-sky-50', textColor: 'text-sky-700', icon: 'shield' },
     { label: 'Currently Active MAM Children', count: 0, bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', icon: 'circle-alert' },
-    { label: 'Women due for delivery in next 30 days', count: 0, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
+    { label: 'Women due for delivery in next 30 days', count: 0, bgColor: 'bg-indigo-50', textColor: 'text-indigo-700', icon: 'clock' },
   ]);
   outreachActions$ = this.outreachActionsSub.asObservable();
 
