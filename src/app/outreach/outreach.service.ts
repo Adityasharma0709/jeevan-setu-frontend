@@ -284,8 +284,11 @@ export class OutreachService {
     return this.api.get(`${this.endpoint}/dashboard/stats`, params);
   }
 
-  getDynamicsReports(groupName: string): Observable<DynamicsTableRecord[]> {
-    return this.api.get<DynamicsTableRecord[]>(`${this.endpoint}/dashboard/action-details`, { group: groupName });
+  getDynamicsReports(groupName: string, activityId?: number, sessionId?: number): Observable<DynamicsTableRecord[]> {
+    const params: any = { group: groupName };
+    if (activityId) params.activityId = activityId;
+    if (sessionId) params.sessionId = sessionId;
+    return this.api.get<DynamicsTableRecord[]>(`${this.endpoint}/dashboard/action-details`, params);
   }
 
   // Tagging

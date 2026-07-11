@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ZardIconComponent } from '@/shared/components/icon';
 import {
@@ -9,6 +9,7 @@ import {
   ZardTableCellComponent,
 } from '@/shared/components/table';
 import { DashboardFacade } from '../../dashboard.facade';
+import { OutreachAction } from '../../models/dashboard.types';
 
 @Component({
   selector: 'app-outreach-summary-widget',
@@ -29,49 +30,18 @@ import { DashboardFacade } from '../../dashboard.facade';
             <h2 class="text-xl font-bold text-gray-800">Outreach Dynamics</h2>
         </div>
 
-        <div class="relative flex items-center mb-6 group">
-            <!-- Left Arrow -->
-            <button (click)="scrollTabs('left')" class="absolute left-0 z-10 p-1.5 bg-white shadow-md border border-gray-200 rounded-full hover:bg-gray-50 focus:outline-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity -ml-3" aria-label="Scroll left">
-                <z-icon zType="chevron-left" class="w-5 h-5 text-gray-600"></z-icon>
-            </button>
-            
-            <!-- Tabs container -->
-            <div #tabsContainer class="flex-1 overflow-x-auto no-scrollbar scroll-smooth px-2 py-1" style="scrollbar-width: none;">
-                <ng-container *ngIf="facade.selectedActionTab$ | async as selectedTabIndex; else defaultTab">
-                    <div class="flex items-center gap-3 w-max">
-                        <button *ngFor="let item of (facade.outreachActions$ | async); let i = index; trackBy: trackByLabel" 
-                            (click)="facade.selectActionTab(i)"
-                            class="px-5 py-2.5 rounded-xl border transition-all text-[14px] font-semibold whitespace-nowrap flex items-center gap-2 outline-none focus:ring-2 focus:ring-[#005353]/20"
-                            [class]="i === selectedTabIndex ? 'bg-[#005353] border-[#005353] text-white shadow-sm' : 'bg-white border-gray-200 text-slate-700 font-normal hover:bg-gray-50 hover:border-gray-300'">
-                            <z-icon [zType]="item.icon" class="w-4 h-4" [class]="i === selectedTabIndex ? 'text-white' : 'text-gray-400'"></z-icon>
-                            <span>{{item.label}}</span>
-                            <span class="ml-1.5 px-2 py-0.5 rounded-full text-xs font-bold" 
-                                [class]="i === selectedTabIndex ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'">
-                                {{item.count}}
-                            </span>
-                        </button>
-                    </div>
-                </ng-container>
-                <ng-template #defaultTab>
-                    <div class="flex items-center gap-3 w-max">
-                        <button *ngFor="let item of (facade.outreachActions$ | async); let i = index; trackBy: trackByLabel" 
-                            (click)="facade.selectActionTab(i)"
-                            class="px-5 py-2.5 rounded-xl border transition-all text-[14px] font-semibold whitespace-nowrap flex items-center gap-2 outline-none focus:ring-2 focus:ring-[#005353]/20"
-                            [class]="i === 0 ? 'bg-[#005353] border-[#005353] text-white shadow-sm' : 'bg-white border-gray-200 text-slate-700 font-normal hover:bg-gray-50 hover:border-gray-300'">
-                            <z-icon [zType]="item.icon" class="w-4 h-4" [class]="i === 0 ? 'text-white' : 'text-gray-400'"></z-icon>
-                            <span>{{item.label}}</span>
-                            <span class="ml-1.5 px-2 py-0.5 rounded-full text-xs font-bold" 
-                                [class]="i === 0 ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'">
-                                {{item.count}}
-                            </span>
-                        </button>
-                    </div>
-                </ng-template>
-            </div>
-            
-            <!-- Right Arrow -->
-            <button (click)="scrollTabs('right')" class="absolute right-0 z-10 p-1.5 bg-white shadow-md border border-gray-200 rounded-full hover:bg-gray-50 focus:outline-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity -mr-3" aria-label="Scroll right">
-                <z-icon zType="chevron-right" class="w-5 h-5 text-gray-600"></z-icon>
+        <!-- Cards Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 mb-8">
+            <button *ngFor="let item of (facade.outreachActions$ | async); let i = index; trackBy: trackByLabel" 
+                (click)="facade.selectActionTab(i)"
+                [class]="getCardClass(item, i === ((facade.selectedActionTab$ | async) ?? 0))"
+                type="button">
+                <div [class]="'w-10 h-10 rounded-full flex items-center justify-center shadow-inner mb-4 shrink-0 transition-transform duration-300 group-hover:scale-110 ' + 
+                    (i === ((facade.selectedActionTab$ | async) ?? 0) ? 'bg-white/95' : 'bg-white/85')">
+                    <z-icon [zType]="item.icon" class="w-5 h-5 opacity-90"></z-icon>
+                </div>
+                <h3 class="text-3xl md:text-4xl font-black mb-2 tracking-tight">{{item.count}}</h3>
+                <p class="text-[10px] font-extrabold uppercase tracking-widest leading-snug opacity-80 mb-0">{{item.label}}</p>
             </button>
         </div>
 
@@ -162,22 +132,53 @@ import { DashboardFacade } from '../../dashboard.facade';
 export class OutreachSummaryWidgetComponent {
   facade = inject(DashboardFacade);
   Math = Math;
-  
-  @ViewChild('tabsContainer') tabsContainer!: ElementRef<HTMLDivElement>;
 
   trackByLabel(index: number, item: any): string {
     return item.label;
   }
 
-  scrollTabs(direction: 'left' | 'right') {
-    if (this.tabsContainer) {
-      const scrollAmount = 300;
-      const element = this.tabsContainer.nativeElement;
-      if (direction === 'left') {
-        element.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-      } else {
-        element.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      }
+  getCardClass(item: OutreachAction, isSelected: boolean): string {
+    const l = (item.label || '').toUpperCase();
+    let colorClasses = '';
+    
+    if (l.includes('PREGNANT')) {
+      colorClasses = isSelected
+        ? 'bg-pink-100/80 text-pink-800 border-pink-500 ring-4 ring-pink-500/20 scale-[1.02] shadow-md font-bold'
+        : 'bg-pink-50 text-pink-700 border-pink-100 hover:bg-pink-100/50 hover:border-pink-300';
+    } else if (l.includes('LACTATING')) {
+      colorClasses = isSelected
+        ? 'bg-purple-100/80 text-purple-800 border-purple-500 ring-4 ring-purple-500/20 scale-[1.02] shadow-md font-bold'
+        : 'bg-purple-50 text-purple-700 border-purple-100 hover:bg-purple-100/50 hover:border-purple-300';
+    } else if (l.includes('SAM')) {
+      colorClasses = isSelected
+        ? 'bg-red-100/80 text-red-800 border-red-500 ring-4 ring-red-500/20 scale-[1.02] shadow-md font-bold'
+        : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100/50 hover:border-red-300';
+    } else if (l.includes('ADOLESCENT') || l.includes('GIRLS')) {
+      colorClasses = isSelected
+        ? 'bg-rose-100/80 text-rose-800 border-rose-500 ring-4 ring-rose-500/20 scale-[1.02] shadow-md font-bold'
+        : 'bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100/50 hover:border-rose-300';
+    } else if (l.includes('EBF')) {
+      colorClasses = isSelected
+        ? 'bg-emerald-100/80 text-emerald-800 border-emerald-500 ring-4 ring-emerald-500/20 scale-[1.02] shadow-md font-bold'
+        : 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100/50 hover:border-emerald-300';
+    } else if (l.includes('CF PROMOTION')) {
+      colorClasses = isSelected
+        ? 'bg-sky-100/80 text-sky-800 border-sky-500 ring-4 ring-sky-500/20 scale-[1.02] shadow-md font-bold'
+        : 'bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100/50 hover:border-sky-300';
+    } else if (l.includes('MAM')) {
+      colorClasses = isSelected
+        ? 'bg-yellow-100/80 text-yellow-800 border-yellow-500 ring-4 ring-yellow-500/20 scale-[1.02] shadow-md font-bold'
+        : 'bg-yellow-50 text-yellow-700 border-yellow-100 hover:bg-yellow-100/50 hover:border-yellow-300';
+    } else if (l.includes('DELIVERY') || l.includes('30 DAYS')) {
+      colorClasses = isSelected
+        ? 'bg-indigo-100/80 text-indigo-800 border-indigo-500 ring-4 ring-indigo-500/20 scale-[1.02] shadow-md font-bold'
+        : 'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100/50 hover:border-indigo-300';
+    } else {
+      colorClasses = isSelected
+        ? 'bg-slate-100 text-slate-800 border-slate-500 ring-4 ring-slate-500/20 scale-[1.02] shadow-md font-bold'
+        : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100/50 hover:border-slate-300';
     }
+
+    return `w-full text-center border rounded-2xl p-6 flex flex-col items-center justify-center transition-all duration-300 h-full group focus:outline-none cursor-pointer ${colorClasses}`;
   }
 }

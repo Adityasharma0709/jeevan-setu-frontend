@@ -26,6 +26,8 @@ All notable changes to this project will be documented in this file.
   - Adjusted statistics and recently-created cards grids layout columns from 3 columns to 2 columns in `dashboard.html`.
 
 ### Changed
+- **Outreach Dynamics**: Redesigned tabs into a multi-colored card grid (styled similarly to activity sessions cards) that displays corresponding table data when clicked, highlighting the currently selected card.
+- **Activity / Sessions**: Redesigned activity/sessions cards into clickable button cards that filter a new paginated details table when clicked, complete with custom colored highlights for the active state.
 - **Outreach Dashboard**: Redesigned the Outreach Worker dashboard interface with new metrics, dynamic mock data grids ("Outreach Action", "Coverage Dashboard", "Activity / Sessions"), and standardized all action buttons to a cohesive style. Replaced all native select filters with the searchable `<z-combobox>` component.
 - **Outreach Layout**: Updated the main desktop navigation header to feature the new project logo (`Landing.png`) and added a sidebar toggle menu icon on the right for cleaner aesthetics.
 - **Design Specifications**: Reviewed and updated design specification files for [OUTREACH_MOBILE_LAYOUT_SPEC.md](file:///C:/Users/Aditya/Desktop/PROJECTS/JeevanSetu/Design/OUTREACH_MOBILE_LAYOUT_SPEC.md) and [OUTREACH_TYPOGRAPHY_SPEC.md](file:///C:/Users/Aditya/Desktop/PROJECTS/JeevanSetu/Design/OUTREACH_TYPOGRAPHY_SPEC.md) to document current fully implemented mobile status, mapping actual Angular layout, headers, cards components and CSS style tokens.

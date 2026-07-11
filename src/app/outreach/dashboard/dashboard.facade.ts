@@ -51,14 +51,14 @@ export class DashboardFacade {
 
   // -- State Subjects --
   private outreachActionsSub = new BehaviorSubject<OutreachAction[]>([
-    { label: 'Currently Active Pregnant women', count: 0, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'user' },
-    { label: 'Currently Active Lactating Mothers', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
+    { label: 'Currently Active Pregnant women', count: 0, bgColor: 'bg-pink-50', textColor: 'text-pink-700', icon: 'heart' },
+    { label: 'Currently Active Lactating Mothers', count: 0, bgColor: 'bg-purple-50', textColor: 'text-purple-700', icon: 'heart' },
     { label: 'Currently Active SAM Children', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
-    { label: 'Adolescent Girls', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
-    { label: 'Infants for EBF Promotion (<= 6m)', count: 0, bgColor: 'bg-green-50', textColor: 'text-green-700', icon: 'circle-check' },
-    { label: 'Infants for CF Promotion(2year<child age<6months)', count: 0, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
+    { label: 'Adolescent Girls', count: 0, bgColor: 'bg-rose-50', textColor: 'text-rose-700', icon: 'users' },
+    { label: 'Infants for EBF Promotion (<= 6m)', count: 0, bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', icon: 'circle-check' },
+    { label: 'Infants for CF Promotion(2year<child age<6months)', count: 0, bgColor: 'bg-sky-50', textColor: 'text-sky-700', icon: 'shield' },
     { label: 'Currently Active MAM Children', count: 0, bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', icon: 'circle-alert' },
-    { label: 'Women due for delivery in next 30 days', count: 0, bgColor: 'bg-blue-50', textColor: 'text-blue-700', icon: 'shield' },
+    { label: 'Women due for delivery in next 30 days', count: 0, bgColor: 'bg-indigo-50', textColor: 'text-indigo-700', icon: 'clock' },
   ]);
   outreachActions$ = this.outreachActionsSub.asObservable();
 
@@ -72,6 +72,17 @@ export class DashboardFacade {
   
   dynamicsTableData$!: Observable<any[] | null>;
   totalDynamicsRecords$!: Observable<number>;
+
+  private selectedActivityTabSub = new BehaviorSubject<number>(0);
+  selectedActivityTab$ = this.selectedActivityTabSub.asObservable();
+
+  private currentActivityPageSub = new BehaviorSubject<number>(0);
+  currentActivityPage$ = this.currentActivityPageSub.asObservable();
+
+  private allActivityDataSub = new BehaviorSubject<any[] | null>(null);
+
+  activityTableData$!: Observable<any[] | null>;
+  totalActivityRecords$!: Observable<number>;
 
   private activitiesSub = new BehaviorSubject<ActivityStat[]>([
     { label: 'YOUNG MARRIED WOMEN', count: 0, countColor: 'text-gray-900' },
@@ -130,12 +141,46 @@ export class DashboardFacade {
     }
   }
 
+  selectActivityTab(index: number) {
+    this.selectedActivityTabSub.next(index);
+    this.currentActivityPageSub.next(0); // Reset page on tab change
+  }
+
+  activityNextPage() {
+    this.currentActivityPageSub.next(this.currentActivityPageSub.value + 1);
+  }
+
+  activityPrevPage() {
+    if (this.currentActivityPageSub.value > 0) {
+      this.currentActivityPageSub.next(this.currentActivityPageSub.value - 1);
+    }
+  }
+
   private initDataStreams() {
-    this.selectedActionTab$.pipe(
-      switchMap(index => {
+    const activity$ = this.activityFilter.valueChanges.pipe(startWith(this.activityFilter.value), distinctUntilChanged());
+    const session$ = this.sessionFilter.valueChanges.pipe(startWith(this.sessionFilter.value), distinctUntilChanged());
+
+    // Reset pagination to 0 on filter changes
+    activity$.subscribe(() => {
+      this.currentPageSub.next(0);
+      this.currentActivityPageSub.next(0);
+    });
+    session$.subscribe(() => {
+      this.currentPageSub.next(0);
+      this.currentActivityPageSub.next(0);
+    });
+
+    combineLatest([
+      this.selectedActionTab$,
+      activity$,
+      session$
+    ]).pipe(
+      switchMap(([index, actVal, sessVal]) => {
         this.allDynamicsDataSub.next(null); // Set loading state
         const actionLabel = this.outreachActionsSub.value[index]?.label || '';
-        return this.outreachService.getDynamicsReports(actionLabel).pipe(
+        const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
+        const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
+        return this.outreachService.getDynamicsReports(actionLabel, aId, sId).pipe(
           catchError(() => of([]))
         );
       })
@@ -148,6 +193,37 @@ export class DashboardFacade {
     this.dynamicsTableData$ = combineLatest([
       this.allDynamicsDataSub,
       this.currentPage$
+    ]).pipe(
+      map(([data, page]) => {
+        if (!data) return null;
+        const start = page * 10;
+        return data.slice(start, start + 10);
+      })
+    );
+
+    combineLatest([
+      this.selectedActivityTab$,
+      activity$,
+      session$
+    ]).pipe(
+      switchMap(([index, actVal, sessVal]) => {
+        this.allActivityDataSub.next(null); // Set loading state
+        const actionLabel = this.activitiesSub.value[index]?.label || '';
+        const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
+        const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
+        return this.outreachService.getDynamicsReports(actionLabel, aId, sId).pipe(
+          catchError(() => of([]))
+        );
+      })
+    ).subscribe(data => this.allActivityDataSub.next(data));
+
+    this.totalActivityRecords$ = this.allActivityDataSub.pipe(
+      map(data => data ? data.length : 0)
+    );
+
+    this.activityTableData$ = combineLatest([
+      this.allActivityDataSub,
+      this.currentActivityPage$
     ]).pipe(
       map(([data, page]) => {
         if (!data) return null;
@@ -177,9 +253,6 @@ export class DashboardFacade {
         this.sessionOptionsSub.next([{ value: 'All session', label: 'All session' }]);
       }
     });
-
-    const activity$ = this.activityFilter.valueChanges.pipe(startWith(this.activityFilter.value), distinctUntilChanged());
-    const session$ = this.sessionFilter.valueChanges.pipe(startWith(this.sessionFilter.value), distinctUntilChanged());
 
     this.stats$ = combineLatest([activity$, session$]).pipe(
       switchMap(([actVal, sessVal]) => {
