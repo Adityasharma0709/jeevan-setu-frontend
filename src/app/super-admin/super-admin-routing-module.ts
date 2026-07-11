@@ -4,6 +4,7 @@ import { roleGuard } from '../core/guards/role-guard';
 
 import { DashboardComponent } from './dashboard/dashboard';
 import { CreateAdminComponent } from './create-admin/create-admin';
+import { CreateAnalystComponent } from './create-analyst/create-analyst';
 import { ProjectsComponent } from './projects/projects';
 import { ProfileComponent } from './profile/profile';
 import { Layout } from './layout/layout';
@@ -28,6 +29,12 @@ const routes: Routes = [
         path: 'create-admin',
         component: CreateAdminComponent,
         data: { pageTitle: 'Create Admin' },
+      },
+
+      {
+        path: 'create-analyst',
+        component: CreateAnalystComponent,
+        data: { pageTitle: 'Analysts' },
       },
 
       {

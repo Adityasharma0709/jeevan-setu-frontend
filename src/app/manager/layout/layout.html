@@ -1,7 +1,7 @@
 <div class="flex flex-col h-dvh overflow-hidden w-full bg-[#f4f7fe]">
-  <!-- ================= TOPBAR ================= -->
+  <!-- ================= TOPBAR (Desktop only) ================= -->
   <header
-    class="flex items-center justify-between px-4 py-2.5 bg-[#f0f4f9] border-b border-gray-200 shrink-0 select-none">
+    class="hidden md:flex items-center justify-between px-4 py-2.5 bg-[#f0f4f9] border-b border-gray-200 shrink-0 select-none">
     <div class="flex items-center gap-3">
       <div
         class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
@@ -26,14 +26,50 @@
     </div>
   </header>
 
+  <!-- ================= MOBILE HEADER ================= -->
+  @if (pageContext$ | async; as page) {
+    <header class="sticky top-0 z-[75] border-b border-slate-200/70 bg-white/95 px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl md:hidden">
+      <div class="grid grid-cols-[44px_1fr_44px] items-center gap-2">
+        <button
+          *ngIf="page.showBack"
+          type="button"
+          class="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-600 text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition active:scale-95"
+          (click)="goBack(page.backTarget)"
+          [attr.aria-label]="'Go back to previous section'"
+        >
+          <z-icon zType="arrow-left" class="h-6 w-6"></z-icon>
+        </button>
+        <div *ngIf="!page.showBack" class="h-11 w-11"></div>
+
+        <div class="min-w-0 text-center">
+          <h1 class="truncate text-[22px] font-extrabold leading-tight tracking-tight text-slate-900">
+            {{ page.title }}
+          </h1>
+          <p class="mt-0.5 truncate text-[13px] text-slate-500">
+            {{ page.subtitle }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="flex h-11 w-11 items-center justify-center rounded-xl border border-white/70 bg-white/85 text-slate-800 shadow-[0_8px_24px_rgba(15,23,42,0.10)] transition active:scale-95"
+          (click)="toggleSidebar()"
+          [attr.aria-label]="sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'"
+        >
+          <z-icon [zType]="sidebarCollapsed ? 'menu' : 'x'" class="h-6 w-6"></z-icon>
+        </button>
+      </div>
+    </header>
+  }
+
   <!-- ================= LAYOUT ================= -->
   <z-layout class="flex-1 overflow-hidden flex border-none bg-transparent">
 
     <!-- ================= SIDEBAR ================= -->
     <z-sidebar [zWidth]="260" [zCollapsible]="true" [zCollapsed]="sidebarCollapsed" [zCollapsedWidth]="isMobile ? 0 : 76"
       (zCollapsedChange)="sidebarCollapsed = $event" 
-      class="p-0! bg-white border-r border-gray-200 shadow-sm z-50"
-      [class]="!sidebarCollapsed && isMobile ? 'fixed inset-y-0 left-0 shadow-2xl transition-all duration-300' : ''">
+      class="p-0! bg-white border-r border-gray-200 shadow-sm z-[80]"
+      [class]="!sidebarCollapsed && isMobile ? 'fixed inset-y-0 left-0 shadow-2xl z-[80] transition-all duration-300' : ''">
 
       <nav class="flex h-full flex-col overflow-hidden bg-white"
         [ngClass]="sidebarCollapsed ? 'gap-1 p-2 pt-4' : 'gap-2 p-3'">
@@ -47,8 +83,8 @@
           }
 
           <!-- Dashboard -->
-          <a routerLink="/manager" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }"
-            class="menu-link" [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
+          <a routerLink="/manager" class="menu-link" [class.active-link]="isActiveRoute(['/manager'], true)"
+            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
             zPosition="right" (click)="closeSidebar()">
             <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
             @if (!sidebarCollapsed) { <span class="flex-1">Dashboard</span> }
@@ -57,7 +93,7 @@
           <div class="h-px bg-gray-100 my-1 mx-2"></div>
 
           <!-- Requests -->
-          <a routerLink="/manager/requests" routerLinkActive="active-link" class="menu-link relative"
+          <a routerLink="/manager/requests" class="menu-link relative" [class.active-link]="isActiveRoute(['/manager/requests'])"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Requests' : ''" zPosition="right" (click)="closeSidebar()">
             <z-icon zType="inbox" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
             @if (!sidebarCollapsed) { 
@@ -79,7 +115,7 @@
           </a>
 
           <!-- Outreach Workers -->
-          <a routerLink="/manager/outreach-workers" routerLinkActive="active-link" class="menu-link"
+          <a routerLink="/manager/outreach-workers" class="menu-link" [class.active-link]="isActiveRoute(['/manager/outreach-workers'])"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Outreach Workers' : ''"
             zPosition="right" (click)="closeSidebar()">
             <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
@@ -87,7 +123,7 @@
           </a>
 
           <!-- Beneficiaries -->
-          <a routerLink="/manager/beneficiaries" routerLinkActive="active-link" class="menu-link"
+          <a routerLink="/manager/beneficiaries" class="menu-link" [class.active-link]="isActiveRoute(['/manager/beneficiaries'])"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Beneficiaries' : ''"
             zPosition="right" (click)="closeSidebar()">
             <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
@@ -99,7 +135,7 @@
         <!-- ===== PROFILE & LOGOUT ===== -->
         <div class="mt-auto pt-2 border-t border-gray-100">
 
-          <a routerLink="/manager/profile" routerLinkActive="active-link" class="menu-link"
+          <a routerLink="/manager/profile" class="menu-link" [class.active-link]="isActiveRoute(['/manager/profile'])"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''" zPosition="right" (click)="closeSidebar()">
             <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
             @if (!sidebarCollapsed) { <span class="flex-1 text-left">Profile</span> }
@@ -120,15 +156,29 @@
     <!-- Mobile Backdrop -->
     <div *ngIf="isMobile && !sidebarCollapsed" 
          (click)="sidebarCollapsed = true"
-         class="fixed inset-0 bg-black/40 z-40 animate-in fade-in duration-300">
+         class="fixed inset-0 bg-black/40 z-[70] animate-in fade-in duration-300">
     </div>
 
     <!-- ================= MAIN CONTENT ================= -->
-    <div class="flex flex-col flex-1 min-h-0 bg-[#f4f7fe]">
-      <z-content class="flex-1 min-h-0 overflow-y-auto p-4 md:p-6 lg:p-8 bg-transparent">
+    <div class="flex flex-col flex-1 min-h-0 min-w-0 bg-[#f4f7fe]">
+      <z-content class="flex-1 min-h-0 min-w-0 overflow-y-auto p-0 pb-24 sm:p-4 md:p-6 lg:p-8 md:pb-6 bg-transparent">
         <router-outlet></router-outlet>
       </z-content>
     </div>
 
   </z-layout>
+
+  <!-- Mobile Bottom Nav -->
+  <nav *ngIf="isMobile" class="mobile-bottom-nav md:hidden" aria-label="Manager mobile navigation">
+    @for (item of mobileNavItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        class="mobile-tab"
+        [class.mobile-tab-active]="isActiveRoute(item.activePaths, item.exact)"
+      >
+        <z-icon [zType]="item.icon" class="mobile-tab-icon"></z-icon>
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  </nav>
 </div>

@@ -42,6 +42,14 @@ export const routes: Routes = [
   },
 
   {
+    path: 'analyst',
+    loadChildren: () =>
+      import('./analyst/analyst-module').then(
+        (m) => m.AnalystModule
+      ),
+  },
+
+  {
     path: '',
     component: LandingComponent,
     data: { pageTitle: 'Welcome to Jeevan Setu' },

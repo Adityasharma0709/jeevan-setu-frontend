@@ -1,15 +1,9 @@
-<div class="min-h-screen bg-gray-50">
-  <!-- Header -->
-  <div class="px-6 py-4 flex flex-col gap-2 bg-transparent">
-    <z-breadcrumb>
-      <z-breadcrumb-item [routerLink]="['/outreach/beneficiaries']">Beneficiaries</z-breadcrumb-item>
-      <z-breadcrumb-item>Create Beneficiary</z-breadcrumb-item>
-    </z-breadcrumb>
-    <div>
-      <h1 class="text-xl font-semibold text-gray-900">Create Beneficiary</h1>
-      <p class="text-sm text-gray-500">Register a new beneficiary to a project location.</p>
-    </div>
-  </div>
+<div class="space-y-6 max-w-7xl mx-auto p-5 md:p-6 pb-28 md:pb-20">
+  <app-outreach-page-header
+    title="Create Beneficiary"
+    subtitle="Register a new beneficiary."
+    mobileSubtitle="Register a new beneficiary"
+  />
 
   <!-- Form -->
   <div class="max-w-4xl mx-auto px-6 py-8">
@@ -374,7 +368,8 @@
         <!-- ── Actions ───────────────────────────────────────────────────────── -->
         <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
           <button type="button" z-button zType="outline" (click)="cancel()">Cancel</button>
-          <button type="button" z-button (click)="submit()" [disabled]="isSubmitting || form.invalid">
+          <button type="button" z-button (click)="submit()" [disabled]="isSubmitting || form.invalid"
+>
             {{ isSubmitting ? 'Submitting...' : 'Create Beneficiary' }}
           </button>
         </div>

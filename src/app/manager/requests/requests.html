@@ -2,7 +2,7 @@
     <!-- ================= INCOMING REQUESTS ================= -->
     <div>
         <h1 class="text-xl font-bold text-gray-900 mb-2">Incoming Outreach Requests</h1>
-        <p class="text-gray-600">Review beneficiary update requests submitted by outreach workers.</p>
+        <!-- <p class="text-gray-600">Review beneficiary update requests submitted by outreach workers.</p> -->
     </div>
 
     <ng-container *ngIf="incomingPager$ | async as pager; else managerReqLoader">
@@ -146,7 +146,7 @@
     <!-- ================= MY SENT REQUESTS ================= -->
     <div class="pt-6">
         <h2 class="text-xl font-bold text-gray-900 mb-2">My Sent Requests</h2>
-        <p class="text-gray-600">Track requests created by you, along with status and target approver.</p>
+        <!-- <p class="text-gray-600">Track requests created by you, along with status and target approver.</p> -->
     </div>
 
     <ng-container *ngIf="myPager$ | async as pager; else managerReqLoader">

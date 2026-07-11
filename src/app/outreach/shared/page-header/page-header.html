@@ -1,0 +1,36 @@
+<div class="space-y-6">
+  @if (showSearch() || showMobileExtras()) {
+    <div
+      class="sticky top-0 z-40 -mx-5 -mt-5 space-y-3 rounded-b-[24px] border-x border-b border-white/70 bg-white/75 px-5 py-4 shadow-[0_10px_32px_rgba(15,23,42,0.08)] backdrop-blur-2xl ring-1 ring-slate-200/40 md:hidden"
+    >
+      <ng-content select="[outreachHeaderSearch]"></ng-content>
+      <ng-content select="[outreachHeaderMobileExtras]"></ng-content>
+    </div>
+  }
+
+  <div class="hidden md:flex flex-col gap-4">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+      <div class="flex-1 min-w-[280px]">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          {{ title() }}
+        </h1>
+        @if (subtitle()) {
+          <p class="text-gray-500 mt-1">
+            {{ subtitle() }}
+          </p>
+        }
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap justify-end">
+        <ng-content select="[outreachHeaderMeta]"></ng-content>
+        <ng-content select="[outreachHeaderActions]"></ng-content>
+      </div>
+    </div>
+
+    @if (showSearch()) {
+      <div class="flex w-full">
+        <ng-content select="[outreachHeaderSearch]"></ng-content>
+      </div>
+    }
+  </div>
+</div>

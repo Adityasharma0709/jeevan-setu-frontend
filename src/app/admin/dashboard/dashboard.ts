@@ -42,11 +42,9 @@ interface RecentCardPagerVm<T> {
 export class Dashboard implements OnInit {
   stats$!: Observable<any>;
   assignedProjectsVm$!: Observable<AssignedProjectsPagerVm>;
-  myGroups$!: Observable<any[]>;
   myActivities$!: Observable<any[]>;
   mySessions$!: Observable<any[]>;
 
-  myGroupsCount$!: Observable<number>;
   myActivitiesCount$!: Observable<number>;
   mySessionsCount$!: Observable<number>;
 
@@ -59,20 +57,15 @@ export class Dashboard implements OnInit {
 
   projectStatusFilter = new FormControl<ProjectStatusFilter>('ALL', { nonNullable: true });
 
-  recentGroupsStatusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
   recentActivitiesStatusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
   recentSessionsStatusFilter = new FormControl<StatusFilter>('ALL', { nonNullable: true });
 
-  recentGroupsVm$!: Observable<RecentCardPagerVm<any>>;
   recentActivitiesVm$!: Observable<RecentCardPagerVm<any>>;
   recentSessionsVm$!: Observable<RecentCardPagerVm<any>>;
 
   private readonly recentCardPageSize = 2;
-  private readonly recentGroupsPage$ = new BehaviorSubject<number>(1);
   private readonly recentActivitiesPage$ = new BehaviorSubject<number>(1);
   private readonly recentSessionsPage$ = new BehaviorSubject<number>(1);
-  private recentGroupsLastPage = 1;
-  private recentGroupsLastTotalPages = 1;
   private recentActivitiesLastPage = 1;
   private recentActivitiesLastTotalPages = 1;
   private recentSessionsLastPage = 1;
@@ -181,11 +174,6 @@ export class Dashboard implements OnInit {
       shareReplay(1),
     );
 
-    this.myGroups$ = this.adminService.getGroups().pipe(
-      map((rows) => (rows ?? []).filter((g) => this.isOwnedByCurrentAdmin(g))),
-      shareReplay(1)
-    );
-
     this.myActivities$ = this.adminService.getActivities().pipe(
       map((rows) => (rows ?? []).filter((a) => this.isOwnedByCurrentAdmin(a))),
       shareReplay(1)
@@ -196,14 +184,8 @@ export class Dashboard implements OnInit {
       shareReplay(1)
     );
 
-    this.myGroupsCount$ = this.myGroups$.pipe(map((rows) => rows.length));
     this.myActivitiesCount$ = this.myActivities$.pipe(map((rows) => rows.length));
     this.mySessionsCount$ = this.mySessions$.pipe(map((rows) => rows.length));
-
-    this.recentGroupsVm$ = this.createRecentCardVm$(this.myGroups$, this.recentGroupsStatusFilter, this.recentGroupsPage$, (vm) => {
-      this.recentGroupsLastPage = vm.page;
-      this.recentGroupsLastTotalPages = vm.totalPages;
-    });
 
     this.recentActivitiesVm$ = this.createRecentCardVm$(this.myActivities$, this.recentActivitiesStatusFilter, this.recentActivitiesPage$, (vm) => {
       this.recentActivitiesLastPage = vm.page;
@@ -376,14 +358,6 @@ export class Dashboard implements OnInit {
     if (!createdAt) return 0;
     const ms = Date.parse(createdAt);
     return Number.isFinite(ms) ? ms : 0;
-  }
-
-  prevRecentGroupsPage() {
-    this.recentGroupsPage$.next(Math.max(1, this.recentGroupsLastPage - 1));
-  }
-
-  nextRecentGroupsPage() {
-    this.recentGroupsPage$.next(Math.min(this.recentGroupsLastTotalPages, this.recentGroupsLastPage + 1));
   }
 
   prevRecentActivitiesPage() {

@@ -105,6 +105,7 @@ export class ProjectsComponent {
   locationForm!: FormGroup;
   assignLocationForm!: FormGroup;
   assignAdminForm!: FormGroup;
+  assignAnalystForm!: FormGroup;
 
   // Search controls
   projectSearch = new FormControl('');
@@ -121,6 +122,10 @@ export class ProjectsComponent {
   targetProject: ProjectWithLocations | null = null;
   selectedProjectDetails: ProjectWithLocations | null = null;
   readonly selectedProjectAdminsState$ = new BehaviorSubject<{ loading: boolean; items: any[] }>({
+    loading: false,
+    items: [],
+  });
+  readonly selectedProjectAnalystsState$ = new BehaviorSubject<{ loading: boolean; items: any[] }>({
     loading: false,
     items: [],
   });
@@ -166,8 +171,22 @@ export class ProjectsComponent {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
+  analysts$: Observable<any[]> = this.refresh$.pipe(
+    startWith(void 0),
+    switchMap(() => this.api.get('users/analysts') as Observable<any[]>),
+    map((analysts) =>
+      (analysts || []).filter((a) => {
+        const raw = (a as any)?.status;
+        if (raw == null) return true;
+        return raw.toString().toUpperCase() === 'ACTIVE';
+      }),
+    ),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
   adminSearchInput = new FormControl('');
   adminOptions$!: Observable<ZardComboboxOption[]>;
+  analystOptions$!: Observable<ZardComboboxOption[]>;
 
   filteredAdmins$: Observable<any[]> = combineLatest([
     this.admins$,
@@ -286,9 +305,22 @@ export class ProjectsComponent {
       adminId: [''],
     });
 
+    this.assignAnalystForm = this.fb.group({
+      analystId: [''],
+    });
+
     this.adminOptions$ = this.admins$.pipe(
       map((admins) =>
         admins.map((a) => ({
+          label: `${a.name} (${a.email})`,
+          value: String(a.id),
+        })),
+      ),
+    );
+
+    this.analystOptions$ = this.analysts$.pipe(
+      map((analysts) =>
+        analysts.map((a) => ({
           label: `${a.name} (${a.email})`,
           value: String(a.id),
         })),
@@ -494,6 +526,7 @@ export class ProjectsComponent {
     const projectId = Number(project?.id);
     this.selectedProjectDetails = project;
     this.selectedProjectAdminsState$.next({ loading: true, items: [] });
+    this.selectedProjectAnalystsState$.next({ loading: true, items: [] });
     this.selectedProjectLocationsState$.next({ loading: true, items: [] });
 
     this.dialogRef = this.dialog.create({
@@ -516,6 +549,7 @@ export class ProjectsComponent {
       afterNextRender(() => {
         if (!Number.isFinite(projectId) || Number(this.selectedProjectDetails?.id) !== projectId) return;
         this.loadSelectedProjectAdmins(projectId);
+        this.loadSelectedProjectAnalysts(projectId);
         this.loadSelectedProjectStates(projectId);
       });
     });
@@ -532,6 +566,7 @@ export class ProjectsComponent {
 
   private resetProjectDetailsState() {
     this.selectedProjectAdminsState$.next({ loading: false, items: [] });
+    this.selectedProjectAnalystsState$.next({ loading: false, items: [] });
     this.selectedProjectLocationsState$.next({ loading: false, items: [] });
   }
 
@@ -554,6 +589,29 @@ export class ProjectsComponent {
       error: () => {
         if (Number(this.selectedProjectDetails?.id) !== projectId) return;
         this.selectedProjectAdminsState$.next({ loading: false, items: [] });
+      },
+    });
+  }
+
+  private loadSelectedProjectAnalysts(projectId: number) {
+    this.analysts$.pipe(take(1)).subscribe({
+      next: (analysts) => {
+        if (Number(this.selectedProjectDetails?.id) !== projectId) return;
+        const list = Array.isArray(analysts) ? analysts : [];
+        this.resolveAssignedAnalysts(projectId, list).subscribe({
+          next: (assignedAnalysts) => {
+            if (Number(this.selectedProjectDetails?.id) !== projectId) return;
+            this.selectedProjectAnalystsState$.next({ loading: false, items: assignedAnalysts });
+          },
+          error: () => {
+            if (Number(this.selectedProjectDetails?.id) !== projectId) return;
+            this.selectedProjectAnalystsState$.next({ loading: false, items: [] });
+          },
+        });
+      },
+      error: () => {
+        if (Number(this.selectedProjectDetails?.id) !== projectId) return;
+        this.selectedProjectAnalystsState$.next({ loading: false, items: [] });
       },
     });
   }
@@ -598,6 +656,36 @@ export class ProjectsComponent {
         const uniqueById = new Map<number, any>();
         for (const admin of results) {
           if (admin && !uniqueById.has(admin.id)) uniqueById.set(admin.id, admin);
+        }
+        return [...uniqueById.values()];
+      }),
+      catchError(() => of([])),
+    );
+  }
+
+  private resolveAssignedAnalysts(projectId: number, analysts: any[]): Observable<any[]> {
+    const requests = analysts
+      .map((analyst) => {
+        const analystId = Number(analyst?.id);
+        if (!Number.isFinite(analystId)) return null;
+
+        return this.projectService.findAssignedToUser(analystId).pipe(
+          map((projects) => {
+            const assigned = Array.isArray(projects) && projects.some((p) => Number(p?.id) === projectId);
+            return assigned ? analyst : null;
+          }),
+          catchError(() => of(null)),
+        );
+      })
+      .filter(Boolean) as Observable<any | null>[];
+
+    if (!requests.length) return of([]);
+
+    return forkJoin(requests).pipe(
+      map((results) => {
+        const uniqueById = new Map<number, any>();
+        for (const analyst of results) {
+          if (analyst && !uniqueById.has(analyst.id)) uniqueById.set(analyst.id, analyst);
         }
         return [...uniqueById.values()];
       }),
@@ -681,6 +769,65 @@ export class ProjectsComponent {
         this.assignAdminLoading.set(false);
         toast.error('Failed to assign admin');
       },
+    });
+  }
+
+  readonly assignAnalystLoading = signal(false);
+  @ViewChild('assignAnalystDialog') assignAnalystDialog!: TemplateRef<any>;
+
+  openAssignAnalystDialog(project: ProjectWithLocations) {
+    this.targetProject = project;
+    this.assignAnalystForm.reset();
+    this.dialogRef = this.dialog.create({
+      zTitle: `Assign Analyst`,
+      zContent: this.assignAnalystDialog,
+      zOkText: 'Assign',
+      zCancelText: 'Cancel',
+      zWidth: '450px',
+      zOkLoading: this.assignAnalystLoading,
+      zOnOk: () => {
+        this.assignAnalystToProject();
+        return false;
+      },
+    });
+  }
+
+  assignAnalystToProject() {
+    if (!this.targetProject) return;
+    const { analystId } = this.assignAnalystForm.value;
+    if (!analystId) {
+      toast.error('Please select an analyst');
+      return;
+    }
+    this.assignAnalystLoading.set(true);
+    this.api.post('users/assign-project-location', {
+      userId: Number(analystId),
+      projectId: this.targetProject.id,
+    }).subscribe({
+      next: () => {
+        toast.success('Analyst assigned successfully');
+        this.assignAnalystLoading.set(false);
+        this.refresh$.next();
+        this.dialogRef?.close();
+      },
+      error: () => {
+        this.assignAnalystLoading.set(false);
+        toast.error('Failed to assign analyst');
+      },
+    });
+  }
+
+  revokeAnalyst(projectId: number, analystId: number) {
+    if (!confirm('Are you sure you want to revoke this project from the analyst?')) return;
+    this.api.delete(`users/analyst/${analystId}/project/${projectId}`).subscribe({
+      next: () => {
+        toast.success('Project revoked from analyst successfully');
+        this.loadSelectedProjectAnalysts(projectId);
+        this.refresh$.next();
+      },
+      error: () => {
+        toast.error('Failed to revoke project');
+      }
     });
   }
 

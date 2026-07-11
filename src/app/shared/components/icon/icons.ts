@@ -14,6 +14,7 @@ import {
   Calendar,
   CalendarPlus,
   Check,
+  CardSim,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -56,6 +57,7 @@ import {
   type LucideIconData,
   Mail,
   MapPin,
+  Menu,
   Minus,
   Monitor,
   Moon,
@@ -79,6 +81,7 @@ import {
   SunMoon,
   Tablet,
   Tag,
+  Table,
   Terminal,
   TextAlignCenter,
   TextAlignEnd,
@@ -91,6 +94,7 @@ import {
   Users,
   X,
   Zap,
+  Sliders,
 } from 'lucide-angular';
 
 const DarkMode: LucideIconData = [
@@ -108,6 +112,7 @@ export const ZARD_ICONS = {
   search: Search,
   bell: Bell,
   mail: Mail,
+  menu: Menu,
   calendar: Calendar,
   'map-pin': MapPin,
   'log-out': LogOut,
@@ -194,6 +199,9 @@ export const ZARD_ICONS = {
   'user-plus': UserPlus,
   'credit-card': CreditCard,
   activity: Activity,
+  table: Table,
+  'card-sim': CardSim,
+  sliders: Sliders,
 } as const satisfies Record<string, LucideIconData>;
 
 export declare type ZardIcon = keyof typeof ZARD_ICONS | LucideIconData;

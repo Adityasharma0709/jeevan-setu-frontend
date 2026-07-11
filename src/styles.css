@@ -123,6 +123,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
   input[type="number"]::-webkit-inner-spin-button,

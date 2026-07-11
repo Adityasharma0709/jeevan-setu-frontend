@@ -1,16 +1,47 @@
-<div class="min-h-screen bg-gray-50">
+<div class="bg-white px-4 sm:px-6 pt-5 pb-0 border-b border-gray-100 shadow-sm">
   <!-- Header -->
-  <div class="px-6 py-4 flex flex-col gap-2 bg-transparent">
+  <div
+    class="sticky top-0 z-40 -mx-5 -mt-5 space-y-5 rounded-b-3xl border-x border-b border-white/70 bg-white/70 px-5 py-4 shadow-[0_10px_32px_rgba(15,23,42,0.08)] backdrop-blur-2xl ring-1 ring-slate-200/40 md:hidden"
+  >
+    <div class="flex items-center gap-4">
+      <div class="min-w-0" *ngIf="beneficiary">
+        <h1
+          class="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight wrap-break-word truncate"
+        >
+          {{ beneficiary.name }}
+        </h1>
+        <div class="flex flex-wrap items-center gap-2 mt-1.5">
+          <span class="text-[12px] font-mono text-gray-600 px-2 py-0.5 shrink-0">{{
+            beneficiary.uid
+          }}</span>
+          <span class="text-gray-500 text-[12px] flex items-center gap-1 shrink-0">
+            Reg: {{ beneficiary.createdAt | date: 'mediumDate' }}
+          </span>
+          <span
+            class="px-2 py-0.5 text-[12px] font-bold uppercase shrink-0"
+            [ngClass]="beneficiary.gender === 'female' ? ' text-pink-700' : ' text-blue-700'"
+          >
+            {{ beneficiary.gender }}
+          </span>
+        </div>
+      </div>
+      <!-- <p class="text-sm text-gray-500" *ngIf="beneficiary">
+        {{ beneficiary.name }} · {{ beneficiary.uid }}
+      </p> -->
+    </div>
     <z-breadcrumb>
-      <z-breadcrumb-item [routerLink]="['/outreach/beneficiaries']">Beneficiaries</z-breadcrumb-item>
-      <z-breadcrumb-item *ngIf="beneficiary" [routerLink]="['/outreach/beneficiary', beneficiary.id.toString()]" [state]="{ beneficiary: beneficiary }">View Detail</z-breadcrumb-item>
+      <z-breadcrumb-item [routerLink]="['/outreach/beneficiaries']"
+        >Beneficiaries</z-breadcrumb-item
+      >
+      <z-breadcrumb-item
+        *ngIf="beneficiary"
+        [routerLink]="['/outreach/beneficiary', beneficiary.id.toString()]"
+        [state]="{ beneficiary: beneficiary }"
+        >View Detail</z-breadcrumb-item
+      >
       <z-breadcrumb-item *ngIf="!beneficiary">View Detail</z-breadcrumb-item>
       <z-breadcrumb-item>Request Update</z-breadcrumb-item>
     </z-breadcrumb>
-    <div>
-      <h1 class="text-xl font-semibold text-gray-900">Request Update</h1>
-      <p class="text-sm text-gray-500" *ngIf="beneficiary">{{ beneficiary.name }} · {{ beneficiary.uid }}</p>
-    </div>
   </div>
 
   <!-- Loading -->
@@ -29,8 +60,8 @@
         <z-form-field>
           <label z-form-label zRequired>Beneficiary Type</label>
           <z-form-control>
-            <z-combobox 
-              formControlName="beneficiaryType" 
+            <z-combobox
+              formControlName="beneficiaryType"
               [options]="beneficiaryTypeOptions"
               [searchable]="false"
               placeholder="Select type"
@@ -40,184 +71,262 @@
         </z-form-field>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-        <z-form-field>
-          <label z-form-label>Name</label>
-          <z-form-control><input z-input formControlName="name" /></z-form-control>
-        </z-form-field>
-
-        <z-form-field>
-          <label z-form-label>Mobile Number</label>
-          <z-form-control><input z-input formControlName="mobileNumber" maxlength="10" /></z-form-control>
-        </z-form-field>
-
-        <z-form-field>
-          <label z-form-label>Gender</label>
-          <z-form-control>
-            <z-combobox 
-              formControlName="gender" 
-              [options]="genderOptions"
-              [searchable]="false"
-              placeholder="Select"
-              zWidth="full"
-            />
-          </z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="isPriority">
-          <label z-form-label>Date of Birth</label>
-          <z-form-control>
-            <div style="position:relative;display:flex;align-items:center;">
-              <input z-input formControlName="dateOfBirth" placeholder="DD/MM/YYYY" maxlength="10"
-                (input)="formatDateInput($event, 'dateOfBirth')" style="padding-right:2.5rem;" />
-              <input #dobPicker type="date" [value]="getNativeDateValue('dateOfBirth')"
-                (change)="onNativeDateChange($event, 'dateOfBirth')" style="position:absolute;opacity:0;width:1px;height:1px;" />
-              <button type="button" (click)="openPicker(dobPicker)" style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;color:#6b7280;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/></svg>
-              </button>
-            </div>
-          </z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="!isPriority">
-          <label z-form-label>Age</label>
-          <z-form-control><input z-input type="number" formControlName="age" placeholder="Enter age" /></z-form-control>
-        </z-form-field>
-
-        <z-form-field class="md:col-span-2" *ngIf="isPriority">
-          <label z-form-label>Guardian Name</label>
-          <z-form-control><input z-input formControlName="guardianName" /></z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="isPriority">
-          <label z-form-label>Qualification</label>
-          <z-form-control>
-            <z-combobox 
-              formControlName="qualification" 
-              [options]="qualificationOptions"
-              [searchable]="false"
-              placeholder="Select"
-              zWidth="full"
-            />
-          </z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="isPriority">
-          <label z-form-label>Religion</label>
-          <z-form-control>
-            <z-combobox 
-              formControlName="religion" 
-              [options]="religionOptions"
-              [searchable]="false"
-              placeholder="Select"
-              zWidth="full"
-            />
-          </z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="isPriority">
-          <label z-form-label>Caste</label>
-          <z-form-control>
-            <z-combobox 
-              formControlName="caste" 
-              [options]="casteOptions"
-              [searchable]="false"
-              placeholder="Select"
-              zWidth="full"
-            />
-          </z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="isPriority">
-          <label z-form-label>Monthly Income</label>
-          <z-form-control><input z-input type="number" formControlName="monthlyIncome" /></z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="isPriority">
-          <label z-form-label>Economic Status</label>
-          <z-form-control>
-            <z-combobox 
-              formControlName="economicStatus" 
-              [options]="economicStatusOptions"
-              [searchable]="false"
-              placeholder="Select"
-              zWidth="full"
-            />
-          </z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="isPriority">
-          <label z-form-label>Primary Income Source</label>
-          <z-form-control>
-            <z-combobox 
-              formControlName="primaryIncomeSource" 
-              [options]="primaryIncomeSourceOptions"
-              [searchable]="false"
-              placeholder="Select"
-              zWidth="full"
-            />
-          </z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="isPriority">
-          <label z-form-label>Employment Status</label>
-          <z-form-control>
-            <z-combobox 
-              formControlName="employmentStatus" 
-              [options]="employmentStatusOptions"
-              [searchable]="false"
-              placeholder="Select"
-              zWidth="full"
-            />
-          </z-form-control>
-        </z-form-field>
-
-        <z-form-field *ngIf="isPriority">
-          <label z-form-label>Marital Status</label>
-          <z-form-control>
-            <z-combobox 
-              formControlName="maritalStatus" 
-              [options]="maritalStatusOptions"
-              [searchable]="false"
-              placeholder="Select"
-              zWidth="full"
-            />
-          </z-form-control>
-        </z-form-field>
-
-        <ng-container *ngIf="isMarried()">
           <z-form-field>
-            <label z-form-label>Date of Marriage</label>
+            <label z-form-label>Name</label>
+            <z-form-control><input z-input formControlName="name" /></z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <label z-form-label>Mobile Number</label>
+            <z-form-control
+              ><input z-input formControlName="mobileNumber" maxlength="10"
+            /></z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <label z-form-label>Gender</label>
             <z-form-control>
-              <div style="position:relative;display:flex;align-items:center;">
-                <input z-input formControlName="dateOfMarriage" placeholder="DD/MM/YYYY" maxlength="10"
-                  (input)="formatDateInput($event, 'dateOfMarriage')" style="padding-right:2.5rem;" />
-                <input #domPicker type="date" [value]="getNativeDateValue('dateOfMarriage')"
-                  (change)="onNativeDateChange($event, 'dateOfMarriage')" style="position:absolute;opacity:0;width:1px;height:1px;" />
-                <button type="button" (click)="openPicker(domPicker)" style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;color:#6b7280;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/></svg>
+              <z-combobox
+                formControlName="gender"
+                [options]="genderOptions"
+                [searchable]="false"
+                placeholder="Select"
+                zWidth="full"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field *ngIf="isPriority">
+            <label z-form-label>Date of Birth</label>
+            <z-form-control>
+              <div style="position: relative; display: flex; align-items: center">
+                <input
+                  z-input
+                  formControlName="dateOfBirth"
+                  placeholder="DD/MM/YYYY"
+                  maxlength="10"
+                  (input)="formatDateInput($event, 'dateOfBirth')"
+                  style="padding-right: 2.5rem"
+                />
+                <input
+                  #dobPicker
+                  type="date"
+                  [value]="getNativeDateValue('dateOfBirth')"
+                  (change)="onNativeDateChange($event, 'dateOfBirth')"
+                  style="position: absolute; opacity: 0; width: 1px; height: 1px"
+                />
+                <button
+                  type="button"
+                  (click)="openPicker(dobPicker)"
+                  style="
+                    position: absolute;
+                    right: 0.5rem;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    color: #6b7280;
+                  "
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path
+                      d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"
+                    />
+                  </svg>
                 </button>
               </div>
             </z-form-control>
           </z-form-field>
 
-          <z-form-field>
-            <label z-form-label>Woman Age at Marriage</label>
-            <z-form-control><input z-input type="number" formControlName="womanAgeAtMarriage" /></z-form-control>
+          <z-form-field *ngIf="!isPriority">
+            <label z-form-label>Age</label>
+            <z-form-control
+              ><input z-input type="number" formControlName="age" placeholder="Enter age"
+            /></z-form-control>
           </z-form-field>
 
-          <z-form-field>
-            <label z-form-label>Husband Age at Marriage</label>
-            <z-form-control><input z-input type="number" formControlName="husbandAgeAtMarriage" /></z-form-control>
+          <z-form-field class="md:col-span-2" *ngIf="isPriority">
+            <label z-form-label>Guardian Name</label>
+            <z-form-control><input z-input formControlName="guardianName" /></z-form-control>
           </z-form-field>
-        </ng-container>
 
-        </div> <!-- grid div close -->
+          <z-form-field *ngIf="isPriority">
+            <label z-form-label>Qualification</label>
+            <z-form-control>
+              <z-combobox
+                formControlName="qualification"
+                [options]="qualificationOptions"
+                [searchable]="false"
+                placeholder="Select"
+                zWidth="full"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field *ngIf="isPriority">
+            <label z-form-label>Religion</label>
+            <z-form-control>
+              <z-combobox
+                formControlName="religion"
+                [options]="religionOptions"
+                [searchable]="false"
+                placeholder="Select"
+                zWidth="full"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field *ngIf="isPriority">
+            <label z-form-label>Caste</label>
+            <z-form-control>
+              <z-combobox
+                formControlName="caste"
+                [options]="casteOptions"
+                [searchable]="false"
+                placeholder="Select"
+                zWidth="full"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field *ngIf="isPriority">
+            <label z-form-label>Monthly Income</label>
+            <z-form-control
+              ><input z-input type="number" formControlName="monthlyIncome"
+            /></z-form-control>
+          </z-form-field>
+
+          <z-form-field *ngIf="isPriority">
+            <label z-form-label>Economic Status</label>
+            <z-form-control>
+              <z-combobox
+                formControlName="economicStatus"
+                [options]="economicStatusOptions"
+                [searchable]="false"
+                placeholder="Select"
+                zWidth="full"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field *ngIf="isPriority">
+            <label z-form-label>Primary Income Source</label>
+            <z-form-control>
+              <z-combobox
+                formControlName="primaryIncomeSource"
+                [options]="primaryIncomeSourceOptions"
+                [searchable]="false"
+                placeholder="Select"
+                zWidth="full"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field *ngIf="isPriority">
+            <label z-form-label>Employment Status</label>
+            <z-form-control>
+              <z-combobox
+                formControlName="employmentStatus"
+                [options]="employmentStatusOptions"
+                [searchable]="false"
+                placeholder="Select"
+                zWidth="full"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field *ngIf="isPriority">
+            <label z-form-label>Marital Status</label>
+            <z-form-control>
+              <z-combobox
+                formControlName="maritalStatus"
+                [options]="maritalStatusOptions"
+                [searchable]="false"
+                placeholder="Select"
+                zWidth="full"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <ng-container *ngIf="isMarried()">
+            <z-form-field>
+              <label z-form-label>Date of Marriage</label>
+              <z-form-control>
+                <div style="position: relative; display: flex; align-items: center">
+                  <input
+                    z-input
+                    formControlName="dateOfMarriage"
+                    placeholder="DD/MM/YYYY"
+                    maxlength="10"
+                    (input)="formatDateInput($event, 'dateOfMarriage')"
+                    style="padding-right: 2.5rem"
+                  />
+                  <input
+                    #domPicker
+                    type="date"
+                    [value]="getNativeDateValue('dateOfMarriage')"
+                    (change)="onNativeDateChange($event, 'dateOfMarriage')"
+                    style="position: absolute; opacity: 0; width: 1px; height: 1px"
+                  />
+                  <button
+                    type="button"
+                    (click)="openPicker(domPicker)"
+                    style="
+                      position: absolute;
+                      right: 0.5rem;
+                      background: none;
+                      border: none;
+                      cursor: pointer;
+                      color: #6b7280;
+                    "
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                      viewBox="0 0 16 16"
+                    >
+                      <path
+                        d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label>Woman Age at Marriage</label>
+              <z-form-control
+                ><input z-input type="number" formControlName="womanAgeAtMarriage"
+              /></z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label>Husband Age at Marriage</label>
+              <z-form-control
+                ><input z-input type="number" formControlName="husbandAgeAtMarriage"
+              /></z-form-control>
+            </z-form-field>
+          </ng-container>
+        </div>
+        <!-- grid div close -->
 
         <!-- Actions -->
         <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
           <button type="button" z-button zType="outline" (click)="goBack()">Cancel</button>
-          <button type="button" z-button (click)="submit()" [disabled]="isSubmitting || form.invalid">
+          <button
+            type="button"
+            z-button
+            (click)="submit()"
+            [disabled]="isSubmitting || form.invalid"
+          >
             {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
           </button>
         </div>

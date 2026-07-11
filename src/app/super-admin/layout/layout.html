@@ -59,6 +59,13 @@
             @if (!sidebarCollapsed) { <span class="flex-1">Admins</span> }
           </a>
 
+          <!-- Analysts -->
+          <a routerLink="/super-admin/create-analyst" routerLinkActive="active-link" class="menu-link"
+            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Analysts' : ''" zPosition="right" (click)="closeSidebar()">
+            <z-icon zType="popcorn" [class]="sidebarCollapsed ? '' : 'mr-3 text-teal-500'" />
+            @if (!sidebarCollapsed) { <span class="flex-1">Analysts</span> }
+          </a>
+
           <!-- Projects -->
           <a routerLink="/super-admin/projects" routerLinkActive="active-link" class="menu-link"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Projects' : ''" zPosition="right" (click)="closeSidebar()">
