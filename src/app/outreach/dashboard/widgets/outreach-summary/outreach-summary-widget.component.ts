@@ -36,10 +36,6 @@ import { OutreachAction } from '../../models/dashboard.types';
                 (click)="facade.selectActionTab(i)"
                 [class]="getCardClass(item, i === ((facade.selectedActionTab$ | async) ?? 0))"
                 type="button">
-                <div [class]="'w-10 h-10 rounded-full flex items-center justify-center shadow-inner mb-4 shrink-0 transition-transform duration-300 group-hover:scale-110 ' + 
-                    (i === ((facade.selectedActionTab$ | async) ?? 0) ? 'bg-white/95' : 'bg-white/85')">
-                    <z-icon [zType]="item.icon" class="w-5 h-5 opacity-90"></z-icon>
-                </div>
                 <h3 class="text-3xl md:text-4xl font-black mb-2 tracking-tight">{{item.count}}</h3>
                 <p class="text-[10px] font-extrabold uppercase tracking-widest leading-snug opacity-80 mb-0">{{item.label}}</p>
             </button>
