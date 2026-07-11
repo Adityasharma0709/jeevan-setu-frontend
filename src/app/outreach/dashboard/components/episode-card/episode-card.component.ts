@@ -1,20 +1,16 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ZardIconComponent } from '@/shared/components/icon';
 import { EpisodeOfCare } from '../../models/dashboard.types';
 
 @Component({
   selector: 'app-episode-card',
   standalone: true,
-  imports: [CommonModule, ZardIconComponent],
+  imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-slate-50/50 border border-gray-100 rounded-2xl p-6 flex flex-col items-center justify-between hover:shadow-md hover:bg-slate-100/50 transition-all duration-300 shadow-sm relative group h-full">
-        <!-- Card Header: Title and Icon -->
+        <!-- Card Header: Title -->
         <div class="flex items-center gap-3 w-full mb-6">
-            <div class="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 shadow-sm shrink-0 transition-transform duration-300 group-hover:scale-110">
-                <z-icon [zType]="data.icon" class="w-4 h-4"></z-icon>
-            </div>
             <h4 class="text-sm font-bold text-gray-800 tracking-wide line-clamp-1">{{data.label}}</h4>
         </div>
 

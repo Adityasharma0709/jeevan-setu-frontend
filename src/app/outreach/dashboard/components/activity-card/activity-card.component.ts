@@ -1,18 +1,14 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ZardIconComponent, type ZardIcon } from '@/shared/components/icon';
 import { ActivityStat } from '../../models/dashboard.types';
 
 @Component({
   selector: 'app-activity-card',
   standalone: true,
-  imports: [CommonModule, ZardIconComponent],
+  imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div [class]="'border rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-md shadow-sm h-full group ' + activityBgClass">
-        <div class="w-10 h-10 rounded-full bg-white/85 flex items-center justify-center shadow-inner mb-4 shrink-0 transition-transform duration-300 group-hover:scale-110">
-            <z-icon [zType]="activityIcon" class="w-5 h-5 opacity-90"></z-icon>
-        </div>
         <h3 class="text-3xl md:text-4xl font-black mb-2 tracking-tight">{{data.count}}</h3>
         <p class="text-[10px] font-extrabold uppercase tracking-widest leading-snug opacity-80 mb-0">{{data.label}}</p>
     </div>
@@ -20,14 +16,6 @@ import { ActivityStat } from '../../models/dashboard.types';
 })
 export class ActivityCardComponent {
   @Input({ required: true }) data!: ActivityStat;
-
-  get activityIcon(): ZardIcon {
-    const l = (this.data.label || '').toUpperCase();
-    if (l.includes('STAKEHOLDER')) return 'users';
-    if (l.includes('SAM') || l.includes('MAM')) return 'circle-alert';
-    if (l.includes('PREGNANT') || l.includes('LACTATING') || l.includes('MARRIED')) return 'heart';
-    return 'user';
-  }
 
   get activityBgClass(): string {
     const l = (this.data.label || '').toUpperCase();

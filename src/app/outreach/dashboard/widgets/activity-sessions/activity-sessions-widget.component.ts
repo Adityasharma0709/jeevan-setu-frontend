@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
-import { ZardIconComponent, type ZardIcon } from '@/shared/components/icon';
+import { ZardIconComponent } from '@/shared/components/icon';
 import {
   ZardTableComponent,
   ZardTableBodyComponent,
@@ -56,12 +56,6 @@ import { DashboardFacade } from '../../dashboard.facade';
                     (click)="facade.selectActivityTab(i)"
                     [class]="getCardClass(item, i === ((facade.selectedActivityTab$ | async) ?? 0))"
                     type="button">
-                    
-                    <!-- Icon container -->
-                    <div [class]="'w-10 h-10 rounded-full flex items-center justify-center shadow-inner mb-4 shrink-0 transition-transform duration-300 group-hover:scale-110 ' + 
-                        (i === ((facade.selectedActivityTab$ | async) ?? 0) ? 'bg-white/95' : 'bg-white/85')">
-                        <z-icon [zType]="getActivityIcon(item)" class="w-5 h-5 opacity-90"></z-icon>
-                    </div>
                     
                     <!-- Count -->
                     <h3 class="text-3xl md:text-4xl font-black mb-2 tracking-tight">{{item.count}}</h3>
@@ -162,14 +156,6 @@ export class ActivitySessionsWidgetComponent {
 
   trackByLabel(index: number, item: any): string {
     return item.label;
-  }
-
-  getActivityIcon(item: any): ZardIcon {
-    const l = (item.label || '').toUpperCase();
-    if (l.includes('STAKEHOLDER')) return 'users';
-    if (l.includes('SAM') || l.includes('MAM')) return 'circle-alert';
-    if (l.includes('PREGNANT') || l.includes('LACTATING') || l.includes('MARRIED')) return 'heart';
-    return 'user';
   }
 
   getCardClass(item: any, isSelected: boolean): string {
