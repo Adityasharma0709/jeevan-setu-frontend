@@ -88,15 +88,15 @@ export class DashboardFacade {
     { label: 'YOUNG MARRIED WOMEN', count: 0, countColor: 'text-gray-900' },
     { label: 'PREGNANT WOMEN', count: 0, countColor: 'text-gray-900' },
     { label: 'MAM (0-5)', count: 0, countColor: 'text-green-600' },
-    { label: 'CHILDREN BELOW 6 (0-5 YEARS) - GIRLS', count: 0, countColor: 'text-gray-900' },
-    { label: 'CHILDREN BELOW 6 (0-5 YEARS) - BOYS', count: 0, countColor: 'text-gray-900' },
+    { label: 'CHILDREN BELOW 6 (3-6 YEARS) - GIRLS', count: 0, countColor: 'text-gray-900' },
+    { label: 'CHILDREN BELOW 6 (3-6 YEARS) - BOYS', count: 0, countColor: 'text-gray-900' },
     { label: 'LACTATING WOMEN', count: 0, countColor: 'text-gray-900' },
     { label: 'ADOLESCENT GIRLS', count: 0, countColor: 'text-gray-900' },
-    { label: 'CHILDREN ABOVE 6 (6-10 YEARS) - GIRLS', count: 0, countColor: 'text-red-600' },
+    { label: 'CHILDREN ABOVE 6 (6-9 YEARS) - GIRLS', count: 0, countColor: 'text-red-600' },
     { label: 'STAKEHOLDERS', count: 0, countColor: 'text-gray-900' },
     { label: 'ADOLESCENT BOYS', count: 0, countColor: 'text-gray-900' },
     { label: 'SAM (0-5)', count: 0, countColor: 'text-red-600' },
-    { label: 'CHILDREN ABOVE 6 (6-10 YEARS) - BOYS', count: 0, countColor: 'text-green-600' },
+    { label: 'CHILDREN ABOVE 6 (6-9 YEARS) - BOYS', count: 0, countColor: 'text-green-600' },
     { label: 'OTHER BENEFICIARIES', count: 0, countColor: 'text-gray-900' },
   ]);
   activities$ = this.activitiesSub.asObservable();
@@ -105,7 +105,7 @@ export class DashboardFacade {
     { label: 'Adults (>19 Years)', icon: 'user', male: 0, female: 0, others: 0, total: 0 },
     { label: 'Adolescents (10-19 Years)', icon: 'users', male: 0, female: 0, others: 0, total: 0 },
     { label: 'Children (0-5 Years)', icon: 'user', male: 0, female: 0, others: 0, total: 0 },
-    { label: 'Children (6-10 Years)', icon: 'users', male: 0, female: 0, others: 0, total: 0 },
+    { label: 'Children (6-9 Years)', icon: 'users', male: 0, female: 0, others: 0, total: 0 },
   ]);
   episodesOfCare$ = this.episodesOfCareSub.asObservable();
 
@@ -274,7 +274,15 @@ export class DashboardFacade {
             this.outreachActionsSub.next([...actions]);
 
             if (stats.activities && stats.activities.length) {
-              this.activitiesSub.next(stats.activities);
+              const mappedActivities = stats.activities.map((act: any) => {
+                let lbl = act.label;
+                if (lbl === 'CHILDREN BELOW 6 (0-5 YEARS) - GIRLS') lbl = 'CHILDREN BELOW 6 (3-6 YEARS) - GIRLS';
+                if (lbl === 'CHILDREN BELOW 6 (0-5 YEARS) - BOYS') lbl = 'CHILDREN BELOW 6 (3-6 YEARS) - BOYS';
+                if (lbl === 'CHILDREN ABOVE 6 (6-10 YEARS) - GIRLS') lbl = 'CHILDREN ABOVE 6 (6-9 YEARS) - GIRLS';
+                if (lbl === 'CHILDREN ABOVE 6 (6-10 YEARS) - BOYS') lbl = 'CHILDREN ABOVE 6 (6-9 YEARS) - BOYS';
+                return { ...act, label: lbl };
+              });
+              this.activitiesSub.next(mappedActivities);
             }
           }),
           catchError(() => {
@@ -476,16 +484,19 @@ export class DashboardFacade {
       const adolescents = { male: 0, female: 0, others: 0, total: 0 };
       const childrenUnder5 = { male: 0, female: 0, others: 0, total: 0 };
       const children6To10 = { male: 0, female: 0, others: 0, total: 0 };
-      const today = new Date();
 
       reports.forEach((r: any) => {
         const dobStr = r.child?.dateOfBirth || r.beneficiary?.dateOfBirth;
         if (!dobStr) return;
         const dob = new Date(dobStr);
         if (Number.isNaN(dob.getTime())) return;
-        let ageYears = today.getFullYear() - dob.getFullYear();
-        const m = today.getMonth() - dob.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) ageYears--;
+
+        const sessionDateStr = r.date || r.createdAt;
+        const sessionDate = sessionDateStr ? new Date(sessionDateStr) : new Date();
+
+        let ageYears = sessionDate.getFullYear() - dob.getFullYear();
+        const m = sessionDate.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && sessionDate.getDate() < dob.getDate())) ageYears--;
 
         const genderStr = (r.child?.gender || r.beneficiary?.gender || '').trim().toLowerCase();
         let targetGroup: any;
@@ -493,7 +504,7 @@ export class DashboardFacade {
         if (ageYears > 19) targetGroup = adults;
         else if (ageYears >= 10 && ageYears <= 19) targetGroup = adolescents;
         else if (ageYears < 6) targetGroup = childrenUnder5;
-        else if (ageYears >= 6 && ageYears <= 10) targetGroup = children6To10;
+        else if (ageYears >= 6 && ageYears < 10) targetGroup = children6To10;
         else return;
 
         targetGroup.total++;
@@ -506,7 +517,7 @@ export class DashboardFacade {
         { label: 'Adults (>19 Years)', icon: 'user', ...adults },
         { label: 'Adolescents (10-19 Years)', icon: 'users', ...adolescents },
         { label: 'Children (0-5 Years)', icon: 'user', ...childrenUnder5 },
-        { label: 'Children (6-10 Years)', icon: 'users', ...children6To10 },
+        { label: 'Children (6-9 Years)', icon: 'users', ...children6To10 },
       ]);
       this.filteredReportsCountSub.next(reports.length);
     });
