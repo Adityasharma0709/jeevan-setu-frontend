@@ -52,18 +52,38 @@ export class AnalystService {
     );
   }
 
-  getDashboardStats(projectId?: number, activityId?: number, sessionId?: number): Observable<OutreachDashboardStats | any> {
+  getDashboardStats(
+    projectId?: number,
+    activityId?: number,
+    sessionId?: number,
+    adminId?: number,
+    managerId?: number,
+    workerId?: number
+  ): Observable<OutreachDashboardStats | any> {
     const params: any = {};
     if (projectId) params.projectId = projectId;
     if (activityId) params.activityId = activityId;
     if (sessionId) params.sessionId = sessionId;
+    if (adminId) params.adminId = adminId;
+    if (managerId) params.managerId = managerId;
+    if (workerId) params.workerId = workerId;
     return this.api.get(`users/analyst/dashboard/stats`, params);
   }
 
-  getDynamicsReports(groupName: string, activityId?: number, sessionId?: number): Observable<DynamicsTableRecord[]> {
+  getDynamicsReports(
+    groupName: string,
+    activityId?: number,
+    sessionId?: number,
+    adminId?: number,
+    managerId?: number,
+    workerId?: number
+  ): Observable<DynamicsTableRecord[]> {
     const params: any = { group: groupName };
     if (activityId) params.activityId = activityId;
     if (sessionId) params.sessionId = sessionId;
+    if (adminId) params.adminId = adminId;
+    if (managerId) params.managerId = managerId;
+    if (workerId) params.workerId = workerId;
     return this.api.get<DynamicsTableRecord[]>(`users/analyst/dashboard/action-details`, params);
   }
 
@@ -94,5 +114,9 @@ export class AnalystService {
       map((rows) => rows || []),
       catchError(() => of([]))
     );
+  }
+
+  getAnalystDashboardUsers(): Observable<{ admins: any[], managers: any[], workers: any[] }> {
+    return this.api.get<{ admins: any[], managers: any[], workers: any[] }>(`users/analyst/dashboard/users`);
   }
 }

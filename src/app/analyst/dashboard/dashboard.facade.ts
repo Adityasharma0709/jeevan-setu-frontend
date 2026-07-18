@@ -27,8 +27,20 @@ export class DashboardFacade {
   districtFilter = new FormControl('ALL', { nonNullable: true });
   blockFilter = new FormControl('ALL', { nonNullable: true });
   awcFilter = new FormControl('ALL', { nonNullable: true });
+  adminFilter = new FormControl('ALL', { nonNullable: true });
+  managerFilter = new FormControl('ALL', { nonNullable: true });
+  workerFilter = new FormControl('ALL', { nonNullable: true });
 
   // -- Options Subjects --
+  private adminOptionsSub = new BehaviorSubject<ZardComboboxOption[]>([{ value: 'ALL', label: 'All Admins' }]);
+  adminOptions$ = this.adminOptionsSub.asObservable();
+
+  private managerOptionsSub = new BehaviorSubject<ZardComboboxOption[]>([{ value: 'ALL', label: 'All Managers' }]);
+  managerOptions$ = this.managerOptionsSub.asObservable();
+
+  private workerOptionsSub = new BehaviorSubject<ZardComboboxOption[]>([{ value: 'ALL', label: 'All Workers' }]);
+  workerOptions$ = this.workerOptionsSub.asObservable();
+
   private activityOptionsSub = new BehaviorSubject<ZardComboboxOption[]>([{ value: 'All activity', label: 'All activity' }]);
   activityOptions$ = this.activityOptionsSub.asObservable();
 
@@ -177,18 +189,36 @@ export class DashboardFacade {
       this.currentPageSub.next(0);
       this.currentActivityPageSub.next(0);
     });
+    this.adminFilter.valueChanges.subscribe(() => {
+      this.currentPageSub.next(0);
+      this.currentActivityPageSub.next(0);
+    });
+    this.managerFilter.valueChanges.subscribe(() => {
+      this.currentPageSub.next(0);
+      this.currentActivityPageSub.next(0);
+    });
+    this.workerFilter.valueChanges.subscribe(() => {
+      this.currentPageSub.next(0);
+      this.currentActivityPageSub.next(0);
+    });
 
     combineLatest([
       this.selectedActionTab$,
       activity$,
-      session$
+      session$,
+      this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
+      this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
+      this.workerFilter.valueChanges.pipe(startWith(this.workerFilter.value)),
     ]).pipe(
-      switchMap(([index, actVal, sessVal]) => {
+      switchMap(([index, actVal, sessVal, adminVal, managerVal, workerVal]) => {
         this.allDynamicsDataSub.next(null); // Set loading state
         const actionLabel = this.outreachActionsSub.value[index]?.label || '';
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
-        return this.analystService.getDynamicsReports(actionLabel, aId, sId).pipe(
+        const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
+        const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
+        const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
+        return this.analystService.getDynamicsReports(actionLabel, aId, sId, adminId, managerId, workerId).pipe(
           catchError(() => of([]))
         );
       })
@@ -212,14 +242,20 @@ export class DashboardFacade {
     combineLatest([
       this.selectedActivityTab$,
       activity$,
-      session$
+      session$,
+      this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
+      this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
+      this.workerFilter.valueChanges.pipe(startWith(this.workerFilter.value)),
     ]).pipe(
-      switchMap(([index, actVal, sessVal]) => {
+      switchMap(([index, actVal, sessVal, adminVal, managerVal, workerVal]) => {
         this.allActivityDataSub.next(null); // Set loading state
         const actionLabel = this.activitiesSub.value[index]?.label || '';
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
-        return this.analystService.getDynamicsReports(actionLabel, aId, sId).pipe(
+        const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
+        const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
+        const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
+        return this.analystService.getDynamicsReports(actionLabel, aId, sId, adminId, managerId, workerId).pipe(
           catchError(() => of([]))
         );
       })
@@ -262,12 +298,21 @@ export class DashboardFacade {
       }
     });
 
-    this.stats$ = combineLatest([activity$, session$]).pipe(
-      switchMap(([actVal, sessVal]) => {
+    this.stats$ = combineLatest([
+      activity$,
+      session$,
+      this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
+      this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
+      this.workerFilter.valueChanges.pipe(startWith(this.workerFilter.value)),
+    ]).pipe(
+      switchMap(([actVal, sessVal, adminVal, managerVal, workerVal]) => {
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
+        const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
+        const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
+        const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
 
-        return this.analystService.getDashboardStats(undefined, aId, sId).pipe(
+        return this.analystService.getDashboardStats(undefined, aId, sId, adminId, managerId, workerId).pipe(
           tap(stats => {
             if (!stats) return;
             const actions = this.outreachActionsSub.value;
@@ -306,6 +351,63 @@ export class DashboardFacade {
       }),
       shareReplay(1)
     );
+
+    // Fetch user hierarchy and setup cascading options
+    this.analystService.getAnalystDashboardUsers().subscribe(res => {
+      const allAdmins = res.admins || [];
+      const allManagers = res.managers || [];
+      const allWorkers = res.workers || [];
+
+      this.adminOptionsSub.next([
+        { value: 'ALL', label: 'All Admins' },
+        ...allAdmins.map(a => ({ value: String(a.id), label: a.name }))
+      ]);
+
+      combineLatest([
+        this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
+      ]).subscribe(([selectedAdmin]) => {
+        let filteredManagers = allManagers;
+        if (selectedAdmin && selectedAdmin !== 'ALL') {
+          filteredManagers = allManagers.filter(m => String(m.createdByAdminId) === selectedAdmin);
+        }
+        
+        this.managerOptionsSub.next([
+          { value: 'ALL', label: 'All Managers' },
+          ...filteredManagers.map(m => ({ value: String(m.id), label: m.name }))
+        ]);
+
+        const currentManager = this.managerFilter.value;
+        const managerIds = filteredManagers.map(m => String(m.id));
+        if (currentManager && currentManager !== 'ALL' && !managerIds.includes(currentManager)) {
+          this.managerFilter.setValue('ALL', { emitEvent: false });
+        }
+      });
+
+      combineLatest([
+        this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
+        this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
+      ]).subscribe(([selectedAdmin, selectedManager]) => {
+        let filteredWorkers = allWorkers;
+
+        if (selectedManager && selectedManager !== 'ALL') {
+          filteredWorkers = allWorkers.filter(w => String(w.createdByAdminId) === selectedManager);
+        } else if (selectedAdmin && selectedAdmin !== 'ALL') {
+          const adminManagers = allManagers.filter(m => String(m.createdByAdminId) === selectedAdmin).map(m => String(m.id));
+          filteredWorkers = allWorkers.filter(w => adminManagers.includes(String(w.createdByAdminId)));
+        }
+
+        this.workerOptionsSub.next([
+          { value: 'ALL', label: 'All Workers' },
+          ...filteredWorkers.map(w => ({ value: String(w.id), label: w.name }))
+        ]);
+
+        const currentWorker = this.workerFilter.value;
+        const workerIds = filteredWorkers.map(w => String(w.id));
+        if (currentWorker && currentWorker !== 'ALL' && !workerIds.includes(currentWorker)) {
+          this.workerFilter.setValue('ALL', { emitEvent: false });
+        }
+      });
+    });
 
     this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
       map((raw) => normalizeProfile(raw, 'Analyst')),
