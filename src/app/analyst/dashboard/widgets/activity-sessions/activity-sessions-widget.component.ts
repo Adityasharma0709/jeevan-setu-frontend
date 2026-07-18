@@ -61,7 +61,7 @@ import { DashboardFacade } from '../../dashboard.facade';
                     <h3 class="text-3xl md:text-4xl font-black mb-2 tracking-tight">{{item.count}}</h3>
                     
                     <!-- Label -->
-                    <p class="text-[10px] font-extrabold uppercase tracking-widest leading-snug opacity-80 mb-0">{{item.label}}</p>
+                    <p class="text-[10px] font-extrabold uppercase tracking-wide leading-snug opacity-80 mb-0">{{item.label}}</p>
                 </button>
             </div>
 
@@ -118,7 +118,7 @@ import { DashboardFacade } from '../../dashboard.facade';
                                 <tr z-table-row *ngIf="records.length === 0">
                                     <td z-table-cell colspan="9" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
                                         No reports found for this group.
-                                    </td>
+                                </td>
                                 </tr>
                             </ng-container>
                             <ng-template #loadingTable>

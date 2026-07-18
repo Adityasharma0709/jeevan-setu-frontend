@@ -5,14 +5,14 @@ import { catchError, map, shareReplay, startWith, switchMap, tap, distinctUntilC
 
 import { AuthService } from '@/core/services/auth';
 import { ApiService } from '@/core/services/api';
-import { OutreachService } from '../outreach.service';
+import { AnalystService } from '../analyst.service';
 import { normalizeProfile, emptyProfile, ProfileVm } from '@/shared/utils/profile';
 import { ZardComboboxOption } from '@/shared/components/combobox';
 import { OutreachAction, EpisodeOfCare, ActivityStat } from './models/dashboard.types';
 
 @Injectable()
 export class DashboardFacade {
-  private outreachService = inject(OutreachService);
+  private analystService = inject(AnalystService);
   private authService = inject(AuthService);
   private api = inject(ApiService);
 
@@ -188,7 +188,7 @@ export class DashboardFacade {
         const actionLabel = this.outreachActionsSub.value[index]?.label || '';
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
-        return this.outreachService.getDynamicsReports(actionLabel, aId, sId).pipe(
+        return this.analystService.getDynamicsReports(actionLabel, aId, sId).pipe(
           catchError(() => of([]))
         );
       })
@@ -219,7 +219,7 @@ export class DashboardFacade {
         const actionLabel = this.activitiesSub.value[index]?.label || '';
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
-        return this.outreachService.getDynamicsReports(actionLabel, aId, sId).pipe(
+        return this.analystService.getDynamicsReports(actionLabel, aId, sId).pipe(
           catchError(() => of([]))
         );
       })
@@ -241,7 +241,7 @@ export class DashboardFacade {
     );
 
     // 1. Base API Calls
-    this.outreachService.getOutreachActivities().subscribe(activities => {
+    this.analystService.getAnalystActivities().subscribe(activities => {
       this.activityOptionsSub.next([
         { value: 'All activity', label: 'All activity' },
         ...activities.map(a => ({ value: String(a.id), label: a.name }))
@@ -251,7 +251,7 @@ export class DashboardFacade {
     this.activityFilter.valueChanges.subscribe(actVal => {
       this.sessionFilter.setValue('All session');
       if (actVal && actVal !== 'All activity') {
-        this.outreachService.getSessions(Number(actVal)).subscribe(sessions => {
+        this.analystService.getAnalystSessions(Number(actVal)).subscribe(sessions => {
           this.sessionOptionsSub.next([
             { value: 'All session', label: 'All session' },
             ...sessions.map(s => ({ value: String(s.id), label: s.name }))
@@ -267,7 +267,7 @@ export class DashboardFacade {
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
 
-        return this.outreachService.getDashboardStats(undefined, aId, sId).pipe(
+        return this.analystService.getDashboardStats(undefined, aId, sId).pipe(
           tap(stats => {
             if (!stats) return;
             const actions = this.outreachActionsSub.value;
@@ -308,19 +308,19 @@ export class DashboardFacade {
     );
 
     this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
-      map((raw) => normalizeProfile(raw, 'Outreach Worker')),
-      catchError(() => of(emptyProfile('Outreach Worker'))),
+      map((raw) => normalizeProfile(raw, 'Analyst')),
+      catchError(() => of(emptyProfile('Analyst'))),
       shareReplay(1)
     );
 
     // 2. Fetch Projects, Beneficiaries, Reports
-    this.enrichedProjects$ = this.outreachService.getAssignedProjects(this.currentUserId).pipe(
+    this.enrichedProjects$ = this.analystService.getAssignedProjects(this.currentUserId).pipe(
       map((rows) => Array.isArray(rows) ? rows : []),
       switchMap((projects) => {
         if (!projects.length) return of([] as any[]);
         return forkJoin(
           projects.map((p) =>
-            this.outreachService.getProjectAssignments(p.id).pipe(
+            this.analystService.getProjectAssignments(p.id).pipe(
               map((res) => ({ ...p, locations: res.awcs, assignedStates: res.states })),
               catchError(() => of({ ...p, locations: [], assignedStates: [] }))
             )
@@ -331,13 +331,13 @@ export class DashboardFacade {
       shareReplay(1)
     );
 
-    this.myBeneficiaries$ = this.outreachService.getBeneficiaries().pipe(
+    this.myBeneficiaries$ = this.analystService.getBeneficiaries().pipe(
       map((rows) => Array.isArray(rows) ? rows : []),
       catchError(() => of([])),
       shareReplay(1)
     );
 
-    this.myReports$ = this.outreachService.getMyReports().pipe(
+    this.myReports$ = this.analystService.getAnalystReports().pipe(
       map((rows) => Array.isArray(rows) ? rows : []),
       catchError(() => of([])),
       shareReplay(1)

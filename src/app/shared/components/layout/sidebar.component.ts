@@ -19,7 +19,7 @@ import {
   sidebarTriggerVariants,
   sidebarVariants,
 } from '@/shared/components/layout/layout.variants';
-import { ZardStringTemplateOutletDirective } from '@/shared/core/directives/string-template-outlet/string-template-outlet.directive';
+import { ZardStringTemplateOutletDirective } from '@/shared/directives';
 import { mergeClasses, transform } from '@/shared/utils/merge-classes';
 
 @Component({
