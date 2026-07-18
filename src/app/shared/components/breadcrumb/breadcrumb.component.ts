@@ -24,7 +24,7 @@ import {
   type ZardBreadcrumbWrapVariants,
 } from '@/shared/components/breadcrumb/breadcrumb.variants';
 import { ZardIconComponent } from '@/shared/components/icon';
-import { ZardStringTemplateOutletDirective } from '@/shared/core/directives/string-template-outlet/string-template-outlet.directive';
+import { ZardStringTemplateOutletDirective } from '@/shared/directives';
 import { mergeClasses } from '@/shared/utils/merge-classes';
 
 @Component({

@@ -5,7 +5,7 @@ import { ZardIconComponent } from '../icon/icon.component';
 import { ZARD_ICONS, type ZardIcon } from '../icon/icons';
 import type { ClassValue } from 'clsx';
 
-import { ZardStringTemplateOutletDirective } from '../../core/directives/string-template-outlet/string-template-outlet.directive';
+import { ZardStringTemplateOutletDirective } from '@/shared/directives';
 import { mergeClasses } from '@/shared/utils/merge-classes';
 
 import {

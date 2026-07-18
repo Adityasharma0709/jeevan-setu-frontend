@@ -27,7 +27,7 @@ import {
 
 import type { ClassValue } from 'clsx';
 
-import { ZardIdDirective } from '@/shared/core';
+import { ZardIdDirective } from '@/shared/directives';
 import { mergeClasses, noopFn } from '@/shared/utils/merge-classes';
 
 import type { ZardAlertDialogRef } from './alert-dialog-ref';

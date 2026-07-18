@@ -6,7 +6,7 @@ import player from 'lottie-web';
 
 import { routes } from './app.routes';
 import { tokenInterceptor } from './core/interceptors/token-interceptor';
-import { provideZard } from '@/shared/core/provider/providezard';
+import { provideZard } from '@/core/providers/providezard';
 
 
 export const appConfig: ApplicationConfig = {

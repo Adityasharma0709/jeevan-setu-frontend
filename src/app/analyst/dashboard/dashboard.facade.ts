@@ -5,7 +5,7 @@ import { catchError, map, shareReplay, startWith, switchMap, tap, distinctUntilC
 
 import { AuthService } from '@/core/services/auth';
 import { ApiService } from '@/core/services/api';
-import { OutreachService } from '../outreach.service';
+import { OutreachService } from '../../outreach/outreach.service';
 import { normalizeProfile, emptyProfile, ProfileVm } from '@/shared/utils/profile';
 import { ZardComboboxOption } from '@/shared/components/combobox';
 import { OutreachAction, EpisodeOfCare, ActivityStat } from './models/dashboard.types';
@@ -308,8 +308,8 @@ export class DashboardFacade {
     );
 
     this.profile$ = this.api.get('auth/me', undefined, { cache: 'reload' }).pipe(
-      map((raw) => normalizeProfile(raw, 'Outreach Worker')),
-      catchError(() => of(emptyProfile('Outreach Worker'))),
+      map((raw) => normalizeProfile(raw, 'Analyst')),
+      catchError(() => of(emptyProfile('Analyst'))),
       shareReplay(1)
     );
 

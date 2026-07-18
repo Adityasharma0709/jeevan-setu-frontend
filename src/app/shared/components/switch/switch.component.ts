@@ -13,7 +13,7 @@ import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import type { ClassValue } from 'clsx';
 
-import { ZardIdDirective } from '@/shared/core';
+import { ZardIdDirective } from '@/shared/directives';
 import { mergeClasses, noopFn } from '@/shared/utils/merge-classes';
 
 import { switchVariants, type ZardSwitchSizeVariants, type ZardSwitchTypeVariants } from './switch.variants';
