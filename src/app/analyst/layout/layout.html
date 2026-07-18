@@ -46,6 +46,14 @@
             @if (!sidebarCollapsed) { <span class="flex-1">Dashboard</span> }
           </a>
 
+          <!-- Beneficiary -->
+          <a routerLink="/analyst/beneficiary" routerLinkActive="active-link"
+            class="menu-link" [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Beneficiary' : ''"
+            zPosition="right" (click)="closeSidebar()">
+            <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
+            @if (!sidebarCollapsed) { <span class="flex-1">Beneficiary</span> }
+          </a>
+
         </z-sidebar-group>
 
         <!-- ===== BOTTOM ACTIONS ===== -->
