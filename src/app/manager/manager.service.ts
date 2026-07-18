@@ -201,4 +201,16 @@ export class ManagerService {
     getBeneficiary(id: number): Observable<ManagerBeneficiary> {
         return this.api.get(`outreach/beneficiary/${id}`) as Observable<ManagerBeneficiary>;
     }
+
+    getAccountShares(): Observable<any[]> {
+        return this.api.get(`${this.endpoint}/account-shares`) as Observable<any[]>;
+    }
+
+    shareAccount(fromWorkerId: number, toWorkerId: number): Observable<any> {
+        return this.api.post(`${this.endpoint}/account-share`, { fromWorkerId, toWorkerId });
+    }
+
+    revokeShare(shareId: number): Observable<any> {
+        return this.api.delete(`${this.endpoint}/account-share/${shareId}`);
+    }
 }

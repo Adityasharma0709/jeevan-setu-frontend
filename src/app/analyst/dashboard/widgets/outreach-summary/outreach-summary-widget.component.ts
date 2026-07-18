@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
+import { ZardComboboxComponent } from '@/shared/components/combobox';
 import { ZardIconComponent } from '@/shared/components/icon';
 import {
   ZardTableComponent,
@@ -16,6 +18,8 @@ import { OutreachAction } from '../../models/dashboard.types';
   standalone: true,
   imports: [
     CommonModule, 
+    ReactiveFormsModule,
+    ZardComboboxComponent,
     ZardIconComponent,
     ZardTableComponent,
     ZardTableBodyComponent,
@@ -28,6 +32,22 @@ import { OutreachAction } from '../../models/dashboard.types';
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8">
         <div class="flex items-center gap-3 mb-6">
             <h2 class="text-xl font-bold text-gray-800">Outreach Dynamics</h2>
+        </div>
+
+        <!-- Cascading Hierarchy Filters -->
+        <div class="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+            <div class="flex flex-col gap-1.5 w-48">
+                <label class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">ADMIN</label>
+                <z-combobox [options]="(facade.adminOptions$ | async) || []" [formControl]="facade.adminFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search Admin..." class="w-full"></z-combobox>
+            </div>
+            <div class="flex flex-col gap-1.5 w-48">
+                <label class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">MANAGER</label>
+                <z-combobox [options]="(facade.managerOptions$ | async) || []" [formControl]="facade.managerFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search Manager..." class="w-full"></z-combobox>
+            </div>
+            <div class="flex flex-col gap-1.5 w-56">
+                <label class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">OUTREACH WORKER</label>
+                <z-combobox [options]="(facade.workerOptions$ | async) || []" [formControl]="facade.workerFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search Worker..." class="w-full"></z-combobox>
+            </div>
         </div>
 
         <!-- Cards Grid -->

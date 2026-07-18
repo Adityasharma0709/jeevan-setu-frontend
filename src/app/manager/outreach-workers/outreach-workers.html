@@ -8,6 +8,10 @@
             <z-icon zType="plus" class="mr-2" />
             Request New Account
         </button>
+        <button z-button zType="outline" (click)="openShareDialog()">
+            <z-icon zType="network" class="mr-2" />
+            Account Sharing
+        </button>
     </div>
 
     <div class="flex flex-col gap-4 mb-8">
@@ -411,5 +415,96 @@
                 </div>
             </div>
         </ng-template>
+    </div>
+</ng-template>
+
+<!-- ================= ACCOUNT SHARING DIALOG ================= -->
+<ng-template #shareDialog>
+    <div class="space-y-6 py-2">
+        <p class="text-sm text-gray-500">
+            Share beneficiary and activity data between your outreach worker accounts.
+        </p>
+
+        <div class="flex flex-col gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <z-form-field>
+                <label z-form-label zRequired>Outreach Worker (Source)</label>
+                <z-form-control>
+                    <z-combobox
+                        [options]="workerOptions"
+                        [value]="shareFromWorkerId"
+                        (zValueChange)="shareFromWorkerId = $event"
+                        placeholder="Select source worker"
+                        zWidth="full"
+                    />
+                </z-form-control>
+            </z-form-field>
+
+            <div class="flex items-center justify-center my-1">
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-100 flex items-center gap-1.5 shadow-sm">
+                    <z-icon zType="network" class="w-3.5 h-3.5" />
+                    share with
+                </span>
+            </div>
+
+            <z-form-field>
+                <label z-form-label zRequired>Outreach Worker (Destination)</label>
+                <z-form-control>
+                    <z-combobox
+                        [options]="workerOptions"
+                        [value]="shareToWorkerId"
+                        (zValueChange)="shareToWorkerId = $event"
+                        placeholder="Select destination worker"
+                        zWidth="full"
+                    />
+                </z-form-control>
+            </z-form-field>
+
+            <button 
+                z-button 
+                class="w-full mt-2" 
+                (click)="submitShare()" 
+                [disabled]="isSharing || !shareFromWorkerId || !shareToWorkerId || shareFromWorkerId === shareToWorkerId"
+            >
+                <z-icon zType="plus" class="mr-2" />
+                Share Account
+            </button>
+        </div>
+
+        <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-1.5">
+                <z-icon zType="file-text" class="w-3.5 h-3.5 text-gray-400" />
+                Active Shares
+            </h4>
+
+            <div *ngIf="isLoadingShares" class="flex justify-center items-center py-6">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
+            </div>
+
+            <div *ngIf="!isLoadingShares && !activeShares.length" class="text-sm text-gray-400 py-6 text-center bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                No active sharing relationships found.
+            </div>
+
+            <div *ngIf="!isLoadingShares && activeShares.length" class="max-h-[220px] overflow-y-auto space-y-2 pr-1">
+                <div *ngFor="let share of activeShares" class="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 hover:border-emerald-100 hover:shadow-sm transition-all">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-sm font-semibold text-gray-800 break-words">{{ share.fromUser?.name }}</span>
+                            <z-icon zType="move-right" class="w-3.5 h-3.5 text-slate-400" />
+                            <span class="text-sm font-semibold text-gray-800 break-words">{{ share.toUser?.name }}</span>
+                        </div>
+                        <span class="text-[10px] text-gray-400 font-mono mt-0.5 block">Shared on {{ share.createdAt | date:'mediumDate' }}</span>
+                    </div>
+                    <button 
+                        z-button 
+                        zType="ghost"
+                        class="text-red-500 hover:text-red-600 hover:bg-red-50! p-1.5 rounded-lg shrink-0"
+                        (click)="revokeShare(share.id)"
+                        title="Revoke Sharing"
+                    >
+                        <z-icon zType="trash" class="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </ng-template>

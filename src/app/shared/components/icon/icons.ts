@@ -95,6 +95,11 @@ import {
   X,
   Zap,
   Sliders,
+  Share2,
+  RefreshCw,
+  Download,
+  GitMerge,
+  Network,
 } from 'lucide-angular';
 
 const DarkMode: LucideIconData = [
@@ -202,6 +207,11 @@ export const ZARD_ICONS = {
   table: Table,
   'card-sim': CardSim,
   sliders: Sliders,
+  'share-2': Share2,
+  'refresh-cw': RefreshCw,
+  download: Download,
+  'git-merge': GitMerge,
+  network: Network,
 } as const satisfies Record<string, LucideIconData>;
 
 export declare type ZardIcon = keyof typeof ZARD_ICONS | LucideIconData;

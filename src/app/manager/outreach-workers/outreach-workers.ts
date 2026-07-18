@@ -87,6 +87,17 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
     targetWorkerForRemoval: OutreachWorker | null = null;
     removeDialogRef!: ZardDialogRef<any>;
 
+    currentWorkers: OutreachWorker[] = [];
+
+    @ViewChild('shareDialog') shareDialog!: TemplateRef<any>;
+    shareDialogRef!: ZardDialogRef<any>;
+    shareFromWorkerId: string | null = null;
+    shareToWorkerId: string | null = null;
+    workerOptions: ZardComboboxOption[] = [];
+    activeShares: any[] = [];
+    isLoadingShares = false;
+    isSharing = false;
+
     readonly pageSize = 10;
     private readonly page$ = new BehaviorSubject<number>(1);
     private lastPage = 1;
@@ -129,7 +140,10 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             tap(() => this.isLoadingWorkers = true),
             switchMap(() => this.managerService.getOutreachWorkers()),
             map((workers) => Array.isArray(workers) ? workers.filter(w => ['ACTIVE', 'INACTIVE'].includes(w.status)) : []),
-            tap(() => this.isLoadingWorkers = false),
+            tap((workers) => {
+                this.isLoadingWorkers = false;
+                this.workers = workers;
+            }),
             shareReplay({ bufferSize: 1, refCount: true })
         );
 
@@ -162,6 +176,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             tap((vm) => {
                 this.lastPage = vm.page;
                 this.lastTotalPages = vm.totalPages;
+                this.currentWorkers = vm.items;
             }),
             shareReplay({ bufferSize: 1, refCount: true })
         );
@@ -224,6 +239,34 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         const raw = (worker as any)?.mobile ?? (worker as any)?.mobileNumber ?? (worker as any)?.phone ?? '';
         const value = raw == null ? '' : raw.toString().trim();
         return value || '-';
+    }
+
+    shareWorkers(): void {
+        const workers = this.currentWorkers;
+        if (!workers.length) {
+            toast.warning('No worker data to share.');
+            return;
+        }
+        const headers = ['Name', 'Email', 'Mobile', 'Account Code', 'Status', 'Projects'];
+        const rows = workers.map(w => [
+            w.name,
+            w.email,
+            this.getWorkerMobile(w),
+            w.usercode || '-',
+            w.status,
+            this.getWorkerProjectsLabel(w),
+        ]);
+        const csvContent = [headers, ...rows]
+            .map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `outreach-workers-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Worker data exported successfully.');
     }
 
     formatLocationLabel(l: any): string {
@@ -617,6 +660,89 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
                 const errorMessage = err?.error?.message || err?.message || 'Failed to remove from project';
                 toast.error(errorMessage);
                 this.removingProjectLoading.set(false);
+            }
+        });
+    }
+
+    openShareDialog() {
+        this.shareFromWorkerId = null;
+        this.shareToWorkerId = null;
+        
+        // Build workerOptions from this.workers
+        this.workerOptions = (this.workers || []).map(w => ({
+            label: `${w.name} (${w.usercode || 'N/A'})`,
+            value: String(w.id)
+        }));
+
+        this.loadActiveShares();
+
+        this.shareDialogRef = this.dialog.create({
+            zTitle: 'Account Sharing',
+            zContent: this.shareDialog,
+            zWidth: '500px',
+            zCancelText: 'Close',
+            zOkText: null
+        });
+    }
+
+    loadActiveShares() {
+        this.isLoadingShares = true;
+        this.managerService.getAccountShares().subscribe({
+            next: (shares) => {
+                this.activeShares = shares || [];
+                this.isLoadingShares = false;
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                toast.error('Failed to load active shares');
+                this.isLoadingShares = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
+    submitShare() {
+        if (!this.shareFromWorkerId || !this.shareToWorkerId) {
+            toast.error('Please select both workers');
+            return;
+        }
+
+        if (this.shareFromWorkerId === this.shareToWorkerId) {
+            toast.error('Cannot share account with the same worker');
+            return;
+        }
+
+        this.isSharing = true;
+        this.managerService.shareAccount(Number(this.shareFromWorkerId), Number(this.shareToWorkerId)).subscribe({
+            next: () => {
+                toast.success('Account shared successfully');
+                this.isSharing = false;
+                this.shareFromWorkerId = null;
+                this.shareToWorkerId = null;
+                this.loadActiveShares();
+            },
+            error: (err) => {
+                const msg = err?.error?.message || 'Failed to share account';
+                toast.error(msg);
+                this.isSharing = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
+    revokeShare(shareId: number) {
+        if (!confirm('Are you sure you want to revoke this sharing relationship?')) {
+            return;
+        }
+
+        this.managerService.revokeShare(shareId).subscribe({
+            next: () => {
+                toast.success('Sharing relationship revoked successfully');
+                this.loadActiveShares();
+            },
+            error: (err) => {
+                const msg = err?.error?.message || 'Failed to revoke sharing';
+                toast.error(msg);
             }
         });
     }
