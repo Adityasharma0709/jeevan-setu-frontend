@@ -14,7 +14,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
 
     provideHttpClient(
-      withInterceptors([tokenInterceptor]) // 🔥 REGISTER HERE
+      withInterceptors([tokenInterceptor]) // REGISTER HERE
     ),
     provideZard(),
     provideLottieOptions({

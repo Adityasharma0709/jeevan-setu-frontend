@@ -495,7 +495,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
 
         const titleMap = {
             CREATE: 'Request New Account',
-            MODIFY: 'Request Account Modification',
+            MODIFY: 'Edit Worker Credentials',
             DEACTIVATE: 'Request Account Deactivation',
             ACTIVATE: 'Request Account Activation'
         };
@@ -503,7 +503,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         this.dialogRef = this.dialog.create({
             zTitle: titleMap[action],
             zContent: this.requestDialog,
-            zOkText: 'Submit Request',
+            zOkText: action === 'MODIFY' ? 'Update' : 'Submit Request',
             zOnOk: () => {
                 this.submitRequest();
                 return false;
@@ -517,6 +517,10 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         const reasonControl = this.requestForm.get('reason');
         if (action === 'CREATE') {
             passwordControl?.setValidators([Validators.required, Validators.minLength(6)]);
+            mobileControl?.setValidators([Validators.required, Validators.pattern('^[0-9]{10}$')]);
+            reasonControl?.clearValidators();
+        } else if (action === 'MODIFY') {
+            passwordControl?.setValidators([Validators.minLength(6)]);
             mobileControl?.setValidators([Validators.required, Validators.pattern('^[0-9]{10}$')]);
             reasonControl?.clearValidators();
         } else {
@@ -562,10 +566,29 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
             requestData.name = formValue.name;
             requestData.email = formValue.email;
             requestData.mobile = formValue.mobile;
+            if (formValue.password) {
+                requestData.password = formValue.password;
+            }
         }
 
         if (this.currentAction === 'DEACTIVATE' || this.currentAction === 'ACTIVATE') {
             requestData.reason = formValue.reason;
+        }
+
+        if (this.currentAction === 'MODIFY') {
+            this.managerService.updateWorker(this.selectedWorker!.id, requestData).subscribe({
+                next: (response) => {
+                    toast.success('Worker updated successfully');
+                    this.dialogRef.close();
+                    setTimeout(() => this.loadWorkers(), 0);
+                    this.isSubmitting = false;
+                },
+                error: (err) => {
+                    toast.error(err.error?.message || 'Update failed');
+                    this.isSubmitting = false;
+                }
+            });
+            return;
         }
 
         this.managerService.submitAccountRequest(this.currentAction, requestData).subscribe({
