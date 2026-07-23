@@ -114,7 +114,7 @@
                             <z-icon zType="tag" class="mr-1" /> Tag
                         </button>
                         <button z-button zType="secondary" zSize="sm" (click)="openRequestDialog('MODIFY', worker)" class="w-full">
-                            <z-icon zType="settings" class="mr-1" /> Edit
+                            <z-icon zType="edit" class="mr-1" /> Edit
                         </button>
                         
                         <div class="col-span-2 pt-1 border-t border-gray-50 flex gap-2">
@@ -183,7 +183,7 @@
                                     <z-icon zType="trash" />
                                 </button>
                                 <button z-button zType="secondary" zSize="sm" (click)="openRequestDialog('MODIFY', worker)" title="Request Modify">
-                                    <z-icon zType="settings" />
+                                    <z-icon zType="edit" />
                                 </button>
                                 <button *ngIf="worker.status === 'ACTIVE'" z-button zType="default" zSize="sm" 
                                         (click)="openRequestDialog('DEACTIVATE', worker)" title="Request Deactivation"
@@ -292,10 +292,11 @@
             </z-form-control>
         </z-form-field>
 
-        <z-form-field *ngIf="currentAction === 'CREATE'">
-            <label z-form-label zRequired>Password</label>
+        <z-form-field *ngIf="currentAction === 'CREATE' || currentAction === 'MODIFY'">
+            <label z-form-label zRequired *ngIf="currentAction === 'CREATE'">Password</label>
+            <label z-form-label *ngIf="currentAction === 'MODIFY'">Password (optional)</label>
             <z-form-control>
-                <input z-input type="password" formControlName="password" placeholder="Minimum 6 characters" />
+                <input z-input type="password" formControlName="password" [placeholder]="currentAction === 'CREATE' ? 'Minimum 6 characters' : 'Enter new password to reset'" />
             </z-form-control>
         </z-form-field>
 

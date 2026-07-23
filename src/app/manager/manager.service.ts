@@ -118,6 +118,10 @@ export class ManagerService {
         return this.api.get(`${this.endpoint}/outreach-workers`) as Observable<OutreachWorker[]>;
     }
 
+    updateWorker(id: number, data: any): Observable<OutreachWorker> {
+        return this.api.put(`${this.endpoint}/worker/${id}`, data) as Observable<OutreachWorker>;
+    }
+
     getNextOutreachCode(): Observable<{ code: string }> {
         return this.api.get('users/next-code?role=OUTREACH', undefined, { cache: 'reload' }) as Observable<{ code: string }>;
     }

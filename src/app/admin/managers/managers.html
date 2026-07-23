@@ -63,6 +63,16 @@
                                 <z-icon zType="eye" />
                                 <span class="sr-only">View Details</span>
                             </button>
+                            <button
+                                z-button
+                                zType="secondary"
+                                zSize="sm"
+                                (click)="openEditDialog(manager)"
+                                title="Edit Manager"
+                            >
+                                <z-icon zType="edit" />
+                                <span class="sr-only">Edit Manager</span>
+                            </button>
                             <button *ngIf="manager.status === 'ACTIVE'" z-button zType="secondary" zSize="sm" (click)="openAssignDialog(manager)" title="Assign Project">
                                 <z-icon zType="layers" />
                                 <span class="sr-only">Assign Project</span>
@@ -118,6 +128,16 @@
                 >
                     <z-icon zType="eye" />
                     <span class="sr-only">View Details</span>
+                </button>
+                <button
+                    z-button
+                    zType="secondary"
+                    class="flex-1"
+                    title="Edit Manager"
+                    (click)="openEditDialog(manager)"
+                >
+                    <z-icon zType="edit" />
+                    <span class="sr-only">Edit Manager</span>
                 </button>
                 <button
                     *ngIf="manager.status === 'ACTIVE'"
