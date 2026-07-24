@@ -153,6 +153,7 @@ export interface DynamicsTableRecord {
   activity: string;
   session: string;
   reportingDate: string;
+  childNameAndAge?: string;
 }
 
 export interface OutreachDashboardStats {
@@ -345,8 +346,12 @@ export class OutreachService {
     );
   }
 
-  getReportsByBeneficiary(beneficiaryId: number): Observable<any[]> {
-    return (this.api.get(`${this.endpoint}/my-reports`, { beneficiaryId }) as Observable<any[]>).pipe(
+  getReportsByBeneficiary(beneficiaryId: number, projectId?: number): Observable<any[]> {
+    const params: any = { beneficiaryId };
+    if (projectId) {
+      params.projectId = projectId;
+    }
+    return (this.api.get(`${this.endpoint}/my-reports`, params) as Observable<any[]>).pipe(
       map((reports: any) => {
         const list = Array.isArray(reports) ? reports : (reports?.data || []);
         return list.filter((r: any) => r.beneficiaryId === beneficiaryId || r.beneficiary?.id === beneficiaryId);

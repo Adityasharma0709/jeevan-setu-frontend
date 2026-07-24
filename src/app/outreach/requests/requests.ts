@@ -16,6 +16,7 @@ import {
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardAlertDialogService } from '@/shared/components/alert-dialog';
+import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
 
 @Component({
     selector: 'app-outreach-requests',
@@ -32,6 +33,7 @@ import { ZardAlertDialogService } from '@/shared/components/alert-dialog';
         ZardIconComponent,
         OutreachPageHeaderComponent,
         LottieComponent,
+        ZardPaginationComponent,
     ],
     templateUrl: './requests.html'
 })
@@ -98,6 +100,11 @@ export class Requests {
     );
 
     constructor(private outreachService: OutreachService) { }
+
+    goToPage(page: number) {
+        const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+        this.page$.next(nextPage);
+    }
 
     nextPage(): void {
         if (this.lastPage < this.lastPageCount) {

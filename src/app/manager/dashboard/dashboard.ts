@@ -9,6 +9,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ProfileVm, emptyProfile, normalizeProfile } from '@/shared/utils/profile';
 import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
+import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
 
 type ProjectStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
@@ -36,7 +37,7 @@ interface RecentCardPagerVm<T> {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ZardIconComponent, LottieComponent, ZardComboboxComponent],
+  imports: [CommonModule, ReactiveFormsModule, ZardIconComponent, LottieComponent, ZardComboboxComponent, ZardPaginationComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

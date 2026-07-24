@@ -1,39 +1,30 @@
-<div class="flex flex-col h-dvh overflow-hidden w-full bg-[#f4f7fe]">
-  <!-- ================= TOPBAR (Desktop only) ================= -->
+<div class="flex flex-col h-dvh overflow-hidden w-full bg-[#f8fafc] md:bg-[#f4f7fe]">
+  <!-- ================= TOPBAR ================= -->
   <header
-    class="hidden md:flex items-center justify-between px-4 py-2.5 bg-[#f0f4f9] border-b border-gray-200 shrink-0 select-none">
-    <div class="flex items-center gap-3">
-      <div
-        class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-        <z-icon zType="activity"></z-icon>
-      </div>
-      <div class="flex flex-col leading-tight">
-        <span class="text-xl font-bold text-emerald-800 tracking-wide">
-          {{ (profile$ | async)?.name || 'JS-MANAGER' }}
-        </span>
-        <span class="text-xs font-medium text-emerald-700">
-          {{ (profile$ | async)?.roleLabel || 'Manager' }} · ACC CODE:
-          {{ (profile$ | async)?.usercode || (profile$ | async)?.id || '-' }}
-        </span>
-      </div>
-      <button type="button" z-button zType="ghost" (click)="toggleSidebar()"
-        class="ml-4 text-gray-500 hover:text-gray-800">
-        <z-icon zType="panel-left"></z-icon>
-      </button>
+    class="hidden md:flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200 shrink-0 select-none z-50 relative">
+    <div class="flex items-center">
+      <img src="/Landing.png" alt="Jeevan Setu" class="h-10 object-contain">
     </div>
-    <div class="flex items-center gap-5">
-      <div class="hidden sm:flex items-center gap-4 text-emerald-800 text-sm font-medium"></div>
+    
+    <div class="flex items-center">
+      <button
+        type="button"
+        class="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-slate-800 shadow-sm transition hover:bg-gray-50 active:scale-95"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'"
+      >
+        <z-icon zType="menu" class="h-6 w-6"></z-icon>
+      </button>
     </div>
   </header>
 
-  <!-- ================= MOBILE HEADER ================= -->
   @if (pageContext$ | async; as page) {
     <header class="sticky top-0 z-[75] border-b border-slate-200/70 bg-white/95 px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl md:hidden">
       <div class="grid grid-cols-[44px_1fr_44px] items-center gap-2">
         <button
           *ngIf="page.showBack"
           type="button"
-          class="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-600 text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition active:scale-95"
+          class="flex h-11 w-11 items-center justify-center rounded-full bg-[#006666] text-white shadow-[0_8px_20px_rgba(0,102,102,0.22)] transition active:scale-95"
           (click)="goBack(page.backTarget)"
           [attr.aria-label]="'Go back to previous section'"
         >
@@ -68,8 +59,8 @@
     <!-- ================= SIDEBAR ================= -->
     <z-sidebar [zWidth]="260" [zCollapsible]="true" [zCollapsed]="sidebarCollapsed" [zCollapsedWidth]="isMobile ? 0 : 76"
       (zCollapsedChange)="sidebarCollapsed = $event" 
-      class="p-0! bg-white border-r border-gray-200 shadow-sm z-[80]"
-      [class]="!sidebarCollapsed && isMobile ? 'fixed inset-y-0 left-0 shadow-2xl z-[80] transition-all duration-300' : ''">
+      class="p-0! bg-white border-r border-gray-200 shadow-sm z-[80] transition-all duration-300"
+      [class]="!sidebarCollapsed && isMobile ? 'fixed inset-y-0 left-0 shadow-2xl z-[80]' : ''">
 
       <nav class="flex h-full flex-col overflow-hidden bg-white"
         [ngClass]="sidebarCollapsed ? 'gap-1 p-2 pt-4' : 'gap-2 p-3'">
@@ -82,53 +73,43 @@
             </z-sidebar-group-label>
           }
 
-          <!-- Dashboard -->
-          <a routerLink="/manager" class="menu-link" [class.active-link]="isActiveRoute(['/manager'], true)"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Dashboard' : ''"
-            zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Dashboard</span> }
-          </a>
-
-          <div class="h-px bg-gray-100 my-1 mx-2"></div>
-
-          <!-- Requests -->
-          <a routerLink="/manager/requests" class="menu-link relative" [class.active-link]="isActiveRoute(['/manager/requests'])"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Requests' : ''" zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="inbox" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
-            @if (!sidebarCollapsed) { 
-              <span class="flex-1">Requests</span> 
-              @if ((pendingCount$ | async); as count) {
-                @if (count > 0) {
-                  <z-badge zType="destructive" zShape="pill" class="ml-auto text-[10px] px-1.5 h-4 min-w-[16px] flex items-center justify-center">
-                    {{ count }}
-                  </z-badge>
-                }
-              }
-            } @else {
-              @if ((pendingCount$ | async); as count) {
-                @if (count > 0) {
-                  <div class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border border-white"></div>
-                }
-              }
+          @for (item of navItems; track item.path; let i = $index) {
+            @if (i === 1) {
+              <div class="h-px bg-gray-100 my-1 mx-2"></div>
             }
-          </a>
 
-          <!-- Outreach Workers -->
-          <a routerLink="/manager/outreach-workers" class="menu-link" [class.active-link]="isActiveRoute(['/manager/outreach-workers'])"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Outreach Workers' : ''"
-            zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Outreach Workers</span> }
-          </a>
-
-          <!-- Beneficiaries -->
-          <a routerLink="/manager/beneficiaries" class="menu-link" [class.active-link]="isActiveRoute(['/manager/beneficiaries'])"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Beneficiaries' : ''"
-            zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="users" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">Beneficiaries</span> }
-          </a>
+            <a
+              [routerLink]="item.path"
+              class="menu-link relative"
+              [class.active-link]="isActiveRoute(item.activePaths, item.exact)"
+              [class.justify-center]="sidebarCollapsed"
+              [zTooltip]="sidebarCollapsed ? item.label : ''"
+              zPosition="right"
+              (click)="closeSidebar()"
+            >
+              <z-icon [zType]="item.icon" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
+              @if (!sidebarCollapsed) { 
+                <span class="flex-1">{{ item.label }}</span>
+                @if (item.hasBadge) {
+                  @if ((pendingCount$ | async); as count) {
+                    @if (count > 0) {
+                      <z-badge zType="destructive" zShape="pill" class="ml-auto text-[10px] px-1.5 h-4 min-w-[16px] flex items-center justify-center animate-pulse">
+                        {{ count }}
+                      </z-badge>
+                    }
+                  }
+                }
+              } @else {
+                @if (item.hasBadge) {
+                  @if ((pendingCount$ | async); as count) {
+                    @if (count > 0) {
+                      <div class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border border-white"></div>
+                    }
+                  }
+                }
+              }
+            </a>
+          }
 
         </z-sidebar-group>
 
@@ -137,7 +118,7 @@
 
           <a routerLink="/manager/profile" class="menu-link" [class.active-link]="isActiveRoute(['/manager/profile'])"
             [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Profile' : ''" zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-3 text-emerald-500'" />
+            <z-icon zType="user" [class]="sidebarCollapsed ? '' : 'mr-3 text-[#006666]'" />
             @if (!sidebarCollapsed) { <span class="flex-1 text-left">Profile</span> }
           </a>
 
@@ -152,15 +133,15 @@
 
       </nav>
     </z-sidebar>
-    
+
     <!-- Mobile Backdrop -->
     <div *ngIf="isMobile && !sidebarCollapsed" 
          (click)="sidebarCollapsed = true"
-         class="fixed inset-0 bg-black/40 z-[70] animate-in fade-in duration-300">
+         class="fixed inset-0 bg-black/40 z-40 animate-in fade-in duration-300">
     </div>
 
     <!-- ================= MAIN CONTENT ================= -->
-    <div class="flex flex-col flex-1 min-h-0 min-w-0 bg-[#f4f7fe]">
+    <div class="flex flex-col flex-1 min-h-0 min-w-0 bg-[#f8fafc] md:bg-[#f4f7fe]">
       <z-content class="flex-1 min-h-0 min-w-0 overflow-y-auto p-0 pb-24 sm:p-4 md:p-6 lg:p-8 md:pb-6 bg-transparent">
         <router-outlet></router-outlet>
       </z-content>
@@ -173,11 +154,20 @@
     @for (item of mobileNavItems; track item.path) {
       <a
         [routerLink]="item.path"
-        class="mobile-tab"
+        class="mobile-tab relative"
         [class.mobile-tab-active]="isActiveRoute(item.activePaths, item.exact)"
       >
         <z-icon [zType]="item.icon" class="mobile-tab-icon"></z-icon>
         <span>{{ item.label }}</span>
+        @if (item.label === 'Requests') {
+          @if ((pendingCount$ | async); as count) {
+            @if (count > 0) {
+              <div class="absolute top-1 right-[calc(50%-18px)] w-4.5 h-4.5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold border border-white">
+                {{ count }}
+              </div>
+            }
+          }
+        }
       </a>
     }
   </nav>

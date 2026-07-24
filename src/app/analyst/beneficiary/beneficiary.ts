@@ -1,123 +1,226 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
-import { debounceTime, startWith } from 'rxjs/operators';
-import { combineLatest, map, shareReplay, BehaviorSubject, Observable } from 'rxjs';
-import { LottieComponent, AnimationOptions } from 'ngx-lottie';
-
-import { ApiService } from '../../core/services/api';
-import { ZardButtonComponent } from '@/shared/components/button';
-import { ZardInputDirective } from '@/shared/components/input';
-import { ZardIconComponent } from '@/shared/components/icon';
+import { Component, OnDestroy, OnInit, inject, HostListener, TemplateRef, viewChild } from '@angular/core';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
-  ZardTableComponent,
-  ZardTableHeaderComponent,
+  Subscription,
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  startWith,
+  Subject,
+  switchMap,
+  BehaviorSubject,
+  shareReplay,
+  firstValueFrom,
+  of,
+} from 'rxjs';
+import { LottieComponent, AnimationOptions } from 'ngx-lottie';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import { AuthService } from '@/core/services/auth';
+import { ZardButtonComponent } from '@/shared/components/button';
+import { ZardDialogRef } from '@/shared/components/dialog/dialog-ref';
+import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
+import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
+import { ZardIconComponent } from '@/shared/components/icon';
+import { ZardInputDirective } from '@/shared/components/input';
+import { ZardCalendarComponent } from '@/shared/components/calendar/calendar.component';
+import { ZardComboboxComponent } from '@/shared/components/combobox';
+import { OutreachPageHeaderComponent } from '../../outreach/shared/page-header/page-header';
+import {
   ZardTableBodyComponent,
-  ZardTableRowComponent,
-  ZardTableHeadComponent,
   ZardTableCellComponent,
+  ZardTableComponent,
+  ZardTableHeadComponent,
+  ZardTableHeaderComponent,
+  ZardTableRowComponent,
 } from '@/shared/components/table';
+import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
 
-export interface ReportRow {
-  reportId: number;
-  beneficiaryId: string;
-  beneficiaryName: string;
-  state: string;
-  district: string;
-  block: string;
-  village: string;
-  awcCenter: string;
-  activity: string;
-  session: string;
-  reportData: any;
-  reportingDate: string;
-  reportedBy: string;
-  // Beneficiary detail fields
-  dateOfBirth?: string | null;
-  gender?: string | null;
-  guardianName?: string | null;
-  dateOfMarriage?: string | null;
-  womanAgeAtMarriage?: number | null;
-  husbandAgeAtMarriage?: number | null;
-  maritalStatus?: string | null;
-}
+import { AnalystService } from '../analyst.service';
+import { Router } from '@angular/router';
+import { Beneficiary } from '../../outreach/outreach.service';
 
 @Component({
   selector: 'app-analyst-beneficiary',
   standalone: true,
-  templateUrl: './beneficiary.html',
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
-    LottieComponent,
     ZardButtonComponent,
-    ZardInputDirective,
+    ZardDialogModule,
     ZardIconComponent,
-    ZardTableComponent,
-    ZardTableHeaderComponent,
+    ZardInputDirective,
+    ZardCalendarComponent,
+    ZardComboboxComponent,
     ZardTableBodyComponent,
-    ZardTableRowComponent,
-    ZardTableHeadComponent,
     ZardTableCellComponent,
+    ZardTableComponent,
+    ZardTableHeadComponent,
+    ZardTableHeaderComponent,
+    ZardTableRowComponent,
+    OutreachPageHeaderComponent,
+    LottieComponent,
+    ZardPaginationComponent,
   ],
+  templateUrl: './beneficiary.html',
 })
-export class AnalystBeneficiary implements OnInit {
-  readonly loading = signal(true);
-  readonly allReports = signal<ReportRow[]>([]);
-  readonly downloadLoading = signal(false);
-  readonly selectedReport = signal<ReportRow | null>(null);
+export class AnalystBeneficiary implements OnInit, OnDestroy {
+  private analystService = inject(AnalystService);
+  private dialog = inject(ZardDialogService);
+  private router = inject(Router);
 
-  readonly options: AnimationOptions = { path: '/loading.json' };
+  private refresh$ = new Subject<void>();
+  private subs = new Subscription();
 
-  // Pagination
-  readonly pageSize = 15;
+  isManager = true; // Use to hide edit/create actions
+
+  selectedColumns: { [key: string]: boolean } = {
+    uid: true,
+    name: true,
+    beneficiaryType: true,
+    age: true,
+    gender: true,
+    mobile: true,
+    guardianName: true,
+    maritalStatus: true,
+    dateOfMarriage: true,
+    womanAgeAtMarriage: true,
+    husbandAgeAtMarriage: true,
+    qualification: true,
+    religion: true,
+    caste: true,
+    monthlyIncome: true,
+    economicStatus: true,
+    primaryIncomeSource: true,
+    employmentStatus: true,
+    project: true,
+    location: true,
+    createdAt: true,
+  };
+
+  columnList = [
+    { key: 'uid', label: 'Beneficiary ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'beneficiaryType', label: 'Type' },
+    { key: 'age', label: 'Age' },
+    { key: 'gender', label: 'Gender' },
+    { key: 'mobile', label: 'Mobile' },
+    { key: 'guardianName', label: 'Guardian Name' },
+    { key: 'maritalStatus', label: 'Marital Status' },
+    { key: 'dateOfMarriage', label: 'Marriage Date' },
+    { key: 'womanAgeAtMarriage', label: 'Woman Age at Marriage' },
+    { key: 'husbandAgeAtMarriage', label: 'Husband Age at Marriage' },
+    { key: 'qualification', label: 'Qualification' },
+    { key: 'religion', label: 'Religion' },
+    { key: 'caste', label: 'Caste' },
+    { key: 'monthlyIncome', label: 'Monthly Income' },
+    { key: 'economicStatus', label: 'Economic Status' },
+    { key: 'primaryIncomeSource', label: 'Income Source' },
+    { key: 'employmentStatus', label: 'Employment Status' },
+    { key: 'project', label: 'Project' },
+    { key: 'location', label: 'Location' },
+    { key: 'createdAt', label: 'Registered Date' },
+  ];
+
+  showColumnSelector = false;
+
+  mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
+
+  dialogRef!: ZardDialogRef<any>;
+  exportDateRange: Date[] | null = null;
+  exportMode: 'ALL' | 'RANGE' = 'RANGE';
+  exportOptions = [
+    {
+      label: 'Date Range',
+      value: 'RANGE',
+    },
+    {
+      label: 'All Records',
+      value: 'ALL',
+    },
+  ];
+
+  options: AnimationOptions = { path: '/loading.json' };
+
+  readonly pageSize = 10;
   private readonly page$ = new BehaviorSubject<number>(1);
-  lastPage = 1;
-  lastTotalPages = 1;
-
-  // Search & Sort
   searchControl = new FormControl('');
-  readonly sortCol$ = new BehaviorSubject<keyof ReportRow | null>(null);
-  readonly sortDir$ = new BehaviorSubject<'asc' | 'desc'>('asc');
+  private lastPage = 1;
+  private lastPageCount = 1;
 
-  readonly filtered$: Observable<ReportRow[]> = combineLatest([
-    this.searchControl.valueChanges.pipe(startWith('')),
-    this.sortCol$,
-    this.sortDir$
+  readonly sortCol$ = new BehaviorSubject<string | null>(null);
+  readonly sortDir$ = new BehaviorSubject<'asc' | 'desc'>('asc');
+  readonly exportDialog = viewChild.required<TemplateRef<any>>('exportDialog');
+
+  private readonly rawBeneficiaries$ = this.refresh$.pipe(
+    startWith(void 0),
+    switchMap(() => this.analystService.getBeneficiaries()),
+    map((rows) => (Array.isArray(rows) ? rows : [])),
+    shareReplay(1),
+  );
+
+  private readonly search$ = this.searchControl.valueChanges.pipe(
+    startWith(''),
+    debounceTime(250),
+    distinctUntilChanged(),
+    map((s) => {
+      this.page$.next(1);
+      return (s || '').trim().toLowerCase();
+    }),
+  );
+
+  vm$ = combineLatest([
+    this.rawBeneficiaries$,
+    this.page$.asObservable(),
+    this.sortCol$.asObservable(),
+    this.sortDir$.asObservable(),
+    this.search$,
   ]).pipe(
-    debounceTime(200),
-    map(([search, sortCol, sortDir]) => {
-      const q = (search ?? '').toLowerCase().trim();
-      let rows = this.allReports();
-      
-      if (q) {
-        rows = rows.filter(r =>
-          r.beneficiaryId.toLowerCase().includes(q) ||
-          r.beneficiaryName.toLowerCase().includes(q) ||
-          r.state.toLowerCase().includes(q) ||
-          r.district.toLowerCase().includes(q) ||
-          r.block.toLowerCase().includes(q) ||
-          r.village.toLowerCase().includes(q) ||
-          r.awcCenter.toLowerCase().includes(q) ||
-          r.activity.toLowerCase().includes(q) ||
-          r.session.toLowerCase().includes(q)
+    map(([beneficiaries, page, sortCol, sortDir, search]) => {
+      let items = [...beneficiaries];
+
+      if (search) {
+        items = items.filter((b) =>
+          (b.name && b.name.toLowerCase().includes(search)) ||
+          (b.uid && b.uid.toLowerCase().includes(search)) ||
+          (b.mobileNumber && b.mobileNumber.toLowerCase().includes(search)) ||
+          (b.village && b.village.toLowerCase().includes(search)) ||
+          (b.location?.village && b.location.village.toLowerCase().includes(search)) ||
+          (b.project?.name && b.project.name.toLowerCase().includes(search))
         );
       }
 
       if (sortCol) {
-        rows = [...rows].sort((a, b) => {
+        items.sort((a: any, b: any) => {
           let aVal: any = a[sortCol];
           let bVal: any = b[sortCol];
-          
-          if (sortCol === 'reportData') {
-             aVal = this.formatReportData(aVal);
-             bVal = this.formatReportData(bVal);
-          } else if (sortCol === 'reportingDate') {
-             aVal = new Date(aVal as string).getTime();
-             bVal = new Date(bVal as string).getTime();
+
+          if (sortCol === 'project') {
+            aVal = a.project?.name || '';
+            bVal = b.project?.name || '';
+          } else if (sortCol === 'location') {
+            aVal = a.village || a.location?.village || '';
+            bVal = b.village || b.location?.village || '';
+          } else if (sortCol === 'age') {
+            aVal = a.dateOfBirth ? new Date(a.dateOfBirth).getTime() : 0;
+            bVal = b.dateOfBirth ? new Date(b.dateOfBirth).getTime() : 0;
+          } else if (sortCol === 'beneficiaryType') {
+            const hasPriorityA = !!(a.guardianName || a.qualification || a.religion || a.caste);
+            const hasPriorityB = !!(b.guardianName || b.qualification || b.religion || b.caste);
+            aVal = hasPriorityA ? 'Priority' : 'General';
+            bVal = hasPriorityB ? 'Priority' : 'General';
+          } else if (sortCol === 'monthlyIncome') {
+            aVal = Number(a.monthlyIncome) || 0;
+            bVal = Number(b.monthlyIncome) || 0;
+          } else if (sortCol === 'dateOfBirth' || sortCol === 'dateOfMarriage' || sortCol === 'createdAt') {
+            aVal = a[sortCol] ? new Date(a[sortCol]).getTime() : 0;
+            bVal = b[sortCol] ? new Date(b[sortCol]).getTime() : 0;
           } else {
-             if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-             if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+            if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+            if (typeof bVal === 'string') bVal = bVal.toLowerCase();
           }
 
           if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
@@ -126,12 +229,33 @@ export class AnalystBeneficiary implements OnInit {
         });
       }
 
-      return rows;
+      const total = items.length;
+      const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
+      const safePage = Math.min(Math.max(1, page), pageCount);
+      const startIndex = (safePage - 1) * this.pageSize;
+
+      this.lastPage = safePage;
+      this.lastPageCount = pageCount;
+
+      return {
+        items: items.slice(startIndex, startIndex + this.pageSize),
+        total,
+        page: safePage,
+        pageCount,
+        pageSize: this.pageSize,
+        startIndex,
+        endIndex: Math.min(startIndex + this.pageSize, total),
+      };
     }),
-    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  sortBy(col: keyof ReportRow) {
+  ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    this.subs.unsubscribe();
+  }
+
+  sortBy(col: string) {
     const current = this.sortCol$.value;
     const dir = this.sortDir$.value;
     if (current === col) {
@@ -143,119 +267,54 @@ export class AnalystBeneficiary implements OnInit {
     }
   }
 
-  readonly pager$ = combineLatest([this.filtered$, this.page$]).pipe(
-    map(([rows, page]) => {
-      const total = rows.length;
-      const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
-      const safePage = Math.min(Math.max(1, page), totalPages);
-      const startIndex = (safePage - 1) * this.pageSize;
-      const items = rows.slice(startIndex, startIndex + this.pageSize);
-      const from = total === 0 ? 0 : startIndex + 1;
-      const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
+  navigateToCreate(): void {}
 
-      this.lastPage = safePage;
-      this.lastTotalPages = totalPages;
-
-      return { items, page: safePage, total, totalPages, from, to };
-    }),
-    shareReplay({ bufferSize: 1, refCount: true }),
-  );
-
-  constructor(private api: ApiService) {}
-
-  ngOnInit() {
-    this.loadReports();
+  viewDetails(beneficiary: any): void {
+    this.router.navigate(['/analyst/beneficiary', beneficiary.id], { state: { beneficiary } });
   }
 
-  loadReports() {
-    this.loading.set(true);
-    this.api.get<ReportRow[]>('users/analyst/dashboard/reports', undefined, { cache: 'reload' }).subscribe({
-      next: (data) => {
-        this.allReports.set(data ?? []);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-      },
-    });
+  editRecord(beneficiary: any): void {}
+
+  goToPage(page: number) {
+    const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+    this.page$.next(nextPage);
   }
 
-  prevPage() {
-    this.page$.next(Math.max(1, this.lastPage - 1));
+  nextPage(): void {
+    if (this.lastPage < this.lastPageCount) {
+      this.page$.next(this.lastPage + 1);
+    }
   }
 
-  nextPage() {
-    this.page$.next(Math.min(this.lastTotalPages, this.lastPage + 1));
+  prevPage(): void {
+    if (this.lastPage > 1) {
+      this.page$.next(this.lastPage - 1);
+    }
   }
 
-  formatDate(d: string | Date | null | undefined): string {
-    if (!d) return '-';
-    const dt = new Date(d);
-    if (isNaN(dt.getTime())) return '-';
-    return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  trackById(_: number, item: any): number {
+    return item.id;
   }
 
-  /** Returns flat key-value pairs from reportData for badge rendering */
-  getReportEntries(data: any): { key: string; value: string }[] {
-    const entries: { key: string; value: string }[] = [];
-    
-    const flatten = (obj: any) => {
-      if (obj === null || obj === undefined) return;
-      
-      if (Array.isArray(obj)) {
-        obj.forEach(item => flatten(item));
-      } else if (typeof obj === 'object') {
-        for (const [key, val] of Object.entries(obj)) {
-          if (val === null || val === undefined || val === '') continue;
-          
-          if (typeof val === 'object') {
-            flatten(val);
-          } else {
-            entries.push({
-              key: this.camelToLabel(key),
-              value: typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val)
-            });
-          }
-        }
+  setMobileViewMode(mode: 'quickAccess' | 'table'): void {
+    this.mobileViewMode = mode;
+  }
+
+  toggleColumnSelectorDropdown() {
+    this.showColumnSelector = !this.showColumnSelector;
+  }
+
+  getColspan(): number {
+    let count = 1;
+    for (const key of Object.keys(this.selectedColumns)) {
+      if (this.selectedColumns[key]) {
+        count++;
       }
-    };
-    
-    flatten(data);
-    return entries;
+    }
+    return count;
   }
 
-  private camelToLabel(key: string): string {
-    return key
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, s => s.toUpperCase())
-      .trim();
-  }
-
-  formatReportData(data: any): string {
-    return this.getReportEntries(data)
-      .map(e => `${e.key}: ${e.value}`)
-      .join(' | ') || '-';
-  }
-
-  /** Get a specific top-level field from reportData */
-  getReportField(data: any, field: string): string {
-    if (!data || typeof data !== 'object') return '-';
-    const val = data[field];
-    if (val === null || val === undefined || val === '') return '-';
-    if (typeof val === 'boolean') return val ? 'Yes' : 'No';
-    return String(val);
-  }
-
-  /** Get a screeningDetails sub-field from reportData */
-  getScreeningDetail(data: any, field: string): string {
-    if (!data?.screeningDetails || typeof data.screeningDetails !== 'object') return '-';
-    const val = data.screeningDetails[field];
-    if (val === null || val === undefined || val === '') return '-';
-    return String(val);
-  }
-
-  /** Calculate age from ISO date string */
-  getAge(dateOfBirth: string | null | undefined): string {
+  getAge(dateOfBirth: string | Date | null | undefined): string | number {
     if (!dateOfBirth) return '-';
     const dob = new Date(dateOfBirth);
     if (isNaN(dob.getTime())) return '-';
@@ -263,85 +322,176 @@ export class AnalystBeneficiary implements OnInit {
     let age = today.getFullYear() - dob.getFullYear();
     const m = today.getMonth() - dob.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-    return String(age);
+    return age >= 0 ? age : '-';
   }
 
-  openDetail(row: ReportRow) {
-    this.selectedReport.set(row);
+  getBeneficiaryType(b: any): string {
+    const hasPriorityData = !!(b.guardianName || b.qualification || b.religion || b.caste);
+    return hasPriorityData ? 'Priority' : 'General';
   }
 
-  closeDetail() {
-    this.selectedReport.set(null);
+  private toDateTimestamp(value: any): number | null {
+    if (!value) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      const time = value.getTime();
+      return Number.isNaN(time) ? null : time;
+    }
+
+    const text = String(value).trim();
+    if (!text) {
+      return null;
+    }
+
+    const dateOnlyMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnlyMatch) {
+      const [, year, month, day] = dateOnlyMatch;
+      return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+    }
+
+    const parsed = new Date(text);
+    const time = parsed.getTime();
+    return Number.isNaN(time) ? null : time;
   }
 
-  async downloadExcel() {
-    this.downloadLoading.set(true);
-    try {
-      const rows = this.allReports();
-      if (!rows.length) {
-        this.downloadLoading.set(false);
-        return;
+  private filterBeneficiariesByDateRange(beneficiaries: any[]): any[] {
+    const range = (this.exportDateRange || []).filter(Boolean) as Date[];
+
+    if (range.length === 0) {
+      return beneficiaries;
+    }
+
+    const startDate = range[0];
+    const endDate = range[1] ?? range[0];
+    const startOfStartDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime();
+    const endOfStartDay = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).getTime();
+    const startOfEndDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()).getTime();
+    const endOfEndDay = new Date(
+      endDate.getFullYear(),
+      endDate.getMonth(),
+      endDate.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).getTime();
+    const lowerBound = Math.min(startOfStartDay, startOfEndDay);
+    const upperBound = Math.max(endOfStartDay, endOfEndDay);
+
+    return beneficiaries.filter((beneficiary) => {
+      const createdAtTimestamp = this.toDateTimestamp(beneficiary?.createdAt);
+      if (createdAtTimestamp === null) {
+        return false;
       }
 
-      // Build flat data for Excel
-      const excelData = rows.map((r, i) => ({
-        'S.No': i + 1,
-        'Beneficiary ID': r.beneficiaryId,
-        'Beneficiary Name': r.beneficiaryName,
-        'Gender': r.gender || '-',
-        'Date of Birth': r.dateOfBirth ? this.formatDate(r.dateOfBirth) : '-',
-        'Age': this.getAge(r.dateOfBirth),
-        'Guardian Name': r.guardianName || '-',
-        'Marital Status': r.maritalStatus || '-',
-        'Marriage Date': r.dateOfMarriage ? this.formatDate(r.dateOfMarriage) : '-',
-        'Age at Marriage (Woman)': r.womanAgeAtMarriage != null ? r.womanAgeAtMarriage : '-',
-        'Age at Marriage (Husband)': r.husbandAgeAtMarriage != null ? r.husbandAgeAtMarriage : '-',
-        'State': r.state,
-        'District': r.district,
-        'Block': r.block,
-        'Village': r.village,
-        'AWC Center': r.awcCenter,
-        'Activity': r.activity,
-        'Session': r.session,
-        'Screening': this.getReportField(r.reportData, 'screening'),
-        'Height (cm)': this.getScreeningDetail(r.reportData, 'height'),
-        'Weight (kg)': this.getScreeningDetail(r.reportData, 'weight'),
-        'Hb (g/dL)': this.getScreeningDetail(r.reportData, 'hb'),
-        'BP': this.getScreeningDetail(r.reportData, 'bp'),
-        'Sugar': this.getScreeningDetail(r.reportData, 'sugar'),
-        'Cervical Cancer': this.getScreeningDetail(r.reportData, 'cervicalCancer'),
-        'Breast Cancer': this.getScreeningDetail(r.reportData, 'breastCancer'),
-        'Pads': this.getScreeningDetail(r.reportData, 'pads'),
-        'Pregnancy Status': this.getReportField(r.reportData, 'pregnancyStatus'),
-        'LMP Date': this.getReportField(r.reportData, 'lmpDate'),
-        'EDD': this.getReportField(r.reportData, 'edd'),
-        'Pregnancy Event Date': (this.getReportField(r.reportData, 'pregnancyStatus') === 'Still Birth' || this.getReportField(r.reportData, 'pregnancyStatus') === 'Miscarriage/Aborted') ? (this.getReportField(r.reportData, 'date') ?? '-') : '-',
-        'Date of Delivery': this.getReportField(r.reportData, 'dod'),
-        'Baby Details': r.reportData?.babyDetails ? `${r.reportData.babyDetails.name} (${r.reportData.babyDetails.gender})` : '-',
-        'SAM/MAM Status': this.getReportField(r.reportData, 'samMamStatus'),
-        'Reporting Date': this.formatDate(r.reportingDate),
-        'Reported By': r.reportedBy,
-      }));
+      return createdAtTimestamp >= lowerBound && createdAtTimestamp <= upperBound;
+    });
+  }
 
-      // Dynamic import to avoid SSR issues
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(excelData);
-
-      // Auto-size columns
-      const colWidths = Object.keys(excelData[0]).map(key => ({
-        wch: Math.max(key.length, ...excelData.map(r => String((r as any)[key] ?? '').length)) + 2,
-      }));
-      ws['!cols'] = colWidths;
-
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Reporting Data');
-
-      const fileName = `analyst-report-${new Date().toISOString().slice(0, 10)}.xlsx`;
-      XLSX.writeFile(wb, fileName);
-    } catch (e) {
-      console.error('Excel download failed', e);
-    } finally {
-      this.downloadLoading.set(false);
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.relative.inline-block.text-left')) {
+      this.showColumnSelector = false;
     }
+  }
+
+  async exportToExcel(): Promise<void> {
+    const beneficiaries = await firstValueFrom(this.rawBeneficiaries$);
+
+    let exportBeneficiaries: any[] = [];
+
+    switch (this.exportMode) {
+      case 'ALL':
+        exportBeneficiaries = beneficiaries;
+        break;
+
+      case 'RANGE':
+        exportBeneficiaries = this.filterBeneficiariesByDateRange(beneficiaries);
+        break;
+
+      default:
+        exportBeneficiaries = beneficiaries;
+    }
+
+    const data = exportBeneficiaries.map((beneficiary: any) => {
+      const row: any = {};
+
+      if (this.selectedColumns['uid']) row['Beneficiary ID'] = beneficiary.uid || '-';
+      if (this.selectedColumns['name']) row['Name'] = beneficiary.name || '-';
+      if (this.selectedColumns['beneficiaryType']) row['Type'] = this.getBeneficiaryType(beneficiary);
+      if (this.selectedColumns['age']) row['Age'] = this.getAge(beneficiary.dateOfBirth);
+      if (this.selectedColumns['gender']) row['Gender'] = beneficiary.gender || '-';
+      if (this.selectedColumns['mobile']) row['Mobile'] = beneficiary.mobileNumber || '-';
+      if (this.selectedColumns['guardianName']) row['Guardian Name'] = beneficiary.guardianName || '-';
+      if (this.selectedColumns['maritalStatus']) row['Marital Status'] = beneficiary.maritalStatus || 'Single';
+      if (this.selectedColumns['dateOfMarriage']) {
+        row['Marriage Date'] = beneficiary.dateOfMarriage ? new Date(beneficiary.dateOfMarriage).toLocaleDateString('en-GB') : '-';
+      }
+      if (this.selectedColumns['womanAgeAtMarriage']) row['Woman Age at Marriage'] = beneficiary.womanAgeAtMarriage || '-';
+      if (this.selectedColumns['husbandAgeAtMarriage']) row['Husband Age at Marriage'] = beneficiary.husbandAgeAtMarriage || '-';
+      if (this.selectedColumns['qualification']) row['Qualification'] = beneficiary.qualification || '-';
+      if (this.selectedColumns['religion']) row['Religion'] = beneficiary.religion || '-';
+      if (this.selectedColumns['caste']) row['Caste'] = beneficiary.caste || '-';
+      if (this.selectedColumns['monthlyIncome']) row['Monthly Income'] = beneficiary.monthlyIncome || 0;
+      if (this.selectedColumns['economicStatus']) row['Economic Status'] = beneficiary.economicStatus || '-';
+      if (this.selectedColumns['primaryIncomeSource']) row['Income Source'] = beneficiary.primaryIncomeSource || '-';
+      if (this.selectedColumns['employmentStatus']) row['Employment Status'] = beneficiary.employmentStatus || '-';
+      if (this.selectedColumns['project']) row['Project'] = beneficiary.project?.name || '-';
+      if (this.selectedColumns['location']) {
+        row['Location'] = beneficiary.village || beneficiary.location?.village || '-';
+      }
+      if (this.selectedColumns['createdAt']) {
+        row['Registered Date'] = beneficiary.createdAt ? new Date(beneficiary.createdAt).toLocaleDateString('en-GB') : '-';
+      }
+
+      return row;
+    });
+
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+
+    const workbook: XLSX.WorkBook = {
+      Sheets: { Beneficiaries: worksheet },
+      SheetNames: ['Beneficiaries'],
+    };
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+
+    const blob = new Blob(
+      [excelBuffer],
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+      }
+    );
+
+    saveAs(blob, 'beneficiaries.xlsx');
+  }
+
+  openExportDialog(): void {
+    this.exportMode = 'RANGE';
+    this.exportDateRange = null;
+
+    this.dialog.create({
+      zTitle: 'Export Beneficiaries',
+      zContent: this.exportDialog(),
+      zOkText: 'Export',
+      zCancelText: null,
+      zOnOk: () => {
+        this.exportToExcel();
+      },
+    });
   }
 }

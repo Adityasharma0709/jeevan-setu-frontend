@@ -157,6 +157,10 @@ export class DashboardFacade {
     }
   }
 
+  goToPage(page: number) {
+    this.currentPageSub.next(page);
+  }
+
   selectActivityTab(index: number) {
     this.selectedActivityTabSub.next(index);
     this.currentActivityPageSub.next(0); // Reset page on tab change
@@ -170,6 +174,10 @@ export class DashboardFacade {
     if (this.currentActivityPageSub.value > 0) {
       this.currentActivityPageSub.next(this.currentActivityPageSub.value - 1);
     }
+  }
+
+  goToActivityPage(page: number) {
+    this.currentActivityPageSub.next(page);
   }
 
   private initDataStreams() {

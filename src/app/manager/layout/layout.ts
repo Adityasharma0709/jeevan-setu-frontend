@@ -49,6 +49,20 @@ export class Layout implements OnInit {
     'Beneficiary Details': 'Review detailed beneficiary information',
   } as const;
 
+  readonly navItems: readonly {
+    path: string;
+    label: string;
+    icon: ZardIcon;
+    activePaths: readonly string[];
+    exact?: boolean;
+    hasBadge?: boolean;
+  }[] = [
+    { path: '/manager', label: 'Dashboard', icon: 'house', activePaths: ['/manager'], exact: true },
+    { path: '/manager/requests', label: 'Requests', icon: 'inbox', activePaths: ['/manager/requests'], hasBadge: true },
+    { path: '/manager/outreach-workers', label: 'Outreach Workers', icon: 'users', activePaths: ['/manager/outreach-workers'] },
+    { path: '/manager/beneficiaries', label: 'Beneficiaries', icon: 'users', activePaths: ['/manager/beneficiaries'] },
+  ];
+
   readonly mobileNavItems: readonly {
     path: string;
     label: string;
@@ -115,6 +129,10 @@ export class Layout implements OnInit {
     localStorage.clear();
     this.userProfile.clearProfile();
     this.router.navigate(['/login']);
+  }
+
+  trackByPath(_: number, item: { path: string }): string {
+    return item.path;
   }
 
   private resolvePageContext(): { title: string; subtitle: string; showBack: boolean; backTarget: string } {

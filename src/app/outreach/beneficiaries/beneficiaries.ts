@@ -35,6 +35,7 @@ import {
   ZardTableHeaderComponent,
   ZardTableRowComponent,
 } from '@/shared/components/table';
+import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
 
 import { Beneficiary, OutreachService } from '../outreach.service';
 import { Router } from '@angular/router';
@@ -60,6 +61,7 @@ import { Router } from '@angular/router';
     ZardTableRowComponent,
     OutreachPageHeaderComponent,
     LottieComponent,
+    ZardPaginationComponent,
   ],
   templateUrl: './beneficiaries.html',
 })
@@ -271,6 +273,11 @@ export class Beneficiaries implements OnInit, OnDestroy {
   }
 
   // ── Pagination Helpers ───────────────────────────────────────────────────
+
+  goToPage(page: number) {
+    const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+    this.page$.next(nextPage);
+  }
 
   nextPage(): void {
     if (this.lastPage < this.lastPageCount) {
