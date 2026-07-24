@@ -12,6 +12,7 @@ import {
 } from '@/shared/components/table';
 import { DashboardFacade } from '../../dashboard.facade';
 import { OutreachAction } from '../../models/dashboard.types';
+import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-outreach-summary-widget',
@@ -25,7 +26,8 @@ import { OutreachAction } from '../../models/dashboard.types';
     ZardTableBodyComponent,
     ZardTableRowComponent,
     ZardTableHeadComponent,
-    ZardTableCellComponent
+    ZardTableCellComponent,
+    ZardPaginationComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -68,58 +70,60 @@ import { OutreachAction } from '../../models/dashboard.types';
                     <thead class="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm">
                         <tr>
                             <th z-table-head class="w-16 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex items-center justify-center gap-1">#</span></th>
-                            <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Beneficiary ID</span></th>
-                            <th z-table-head class="w-48 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Beneficiary Name</span></th>
-                            <th z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Age</span></th>
-                            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Group</span></th>
-                            <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">AWC</span></th>
-                            <th z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Activity</span></th>
-                            <th z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Session</span></th>
-                            <th z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex flex-col items-center justify-center gap-1">Date</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Beneficiary ID</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Name</span></th>
+                            <th *ngIf="(facade.selectedActionTab$ | async) === 1" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Child Name & Age</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Age</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Gender</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Guardian Name</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Location</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Project</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Reporting Date</span></th>
                         </tr>
                     </thead>
-                    <tbody z-table-body class="divide-y divide-slate-100 text-[13px]">
+                    <tbody z-table-body class="divide-y divide-slate-100 text-[13px]" *ngIf="{ page: facade.currentPage$ | async, total: facade.totalDynamicsRecords$ | async } as state">
                         <ng-container *ngIf="(facade.dynamicsTableData$ | async) as records; else loadingTable">
-                            <tr z-table-row *ngFor="let row of records; let i = index" class="align-top hover:bg-slate-50 transition-colors">
-                                <td z-table-cell class="px-2 py-3 text-center font-semibold text-slate-700">
-                                  {{ i + 1 }}
+                            <tr z-table-row *ngFor="let row of records; let idx = index" class="align-top hover:bg-slate-50 transition-colors">
+                                <td z-table-cell class="px-2 py-3 text-center font-semibold">
+                                  {{ ((state.page || 0) * 10) + idx + 1 }}
                                 </td>
-                                <td z-table-cell class="px-2 py-3 font-mono text-[12px] text-slate-600">
-                                  {{ row.id || '-' }}
+                                <td z-table-cell class="px-3 py-3 font-mono text-[12px] text-blue-600">
+                                  {{ row.id }}
                                 </td>
-                                <td z-table-cell class="px-2 py-3">
-                                  <span class="block font-semibold text-slate-900">
-                                    {{ row.name || 'Unknown' }}
-                                  </span>
+                                <td z-table-cell class="px-3 py-3 font-bold text-slate-800">
+                                  {{ row.name }}
                                 </td>
-                                <td z-table-cell class="px-2 py-3 text-slate-700">
+                                <td *ngIf="(facade.selectedActionTab$ | async) === 1" z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.childNameAndAge || '-' }}
+                                </td>
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.age || '-' }}
                                 </td>
-                                <td z-table-cell class="px-2 py-3 font-medium text-slate-700">
-                                  {{ row.group }}
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.gender || '-' }}
                                 </td>
-                                <td z-table-cell class="px-2 py-3 text-slate-700">
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.guardianName || '-' }}
+                                </td>
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.awc }}
                                 </td>
-                                <td z-table-cell class="px-2 py-3 text-slate-700">
-                                  {{ row.activity || '-' }}
-                                </td>
-                                <td z-table-cell class="px-2 py-3 text-slate-700">
-                                  {{ row.session || '-' }}
+                                <td z-table-cell class="px-3 py-3 font-semibold text-slate-800">
+                                  {{ row.project || '-' }}
                                 </td>
                                 <td z-table-cell class="px-2 py-3 whitespace-nowrap text-slate-700">
                                   {{ row.reportingDate }}
                                 </td>
                             </tr>
                             <tr z-table-row *ngIf="records.length === 0">
-                                <td z-table-cell colspan="9" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
+                                <td z-table-cell colspan="10" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
                                     No reports found for this group.
                                 </td>
                             </tr>
                         </ng-container>
                         <ng-template #loadingTable>
                             <tr z-table-row>
-                                <td z-table-cell colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                <td z-table-cell colspan="10" class="px-4 py-8 text-center text-gray-500">
                                     <z-icon zType="loader-circle" class="w-6 h-6 animate-spin mx-auto text-blue-500"></z-icon>
                                     <p class="mt-2 font-medium text-sm">Loading records...</p>
                                 </td>
@@ -134,10 +138,12 @@ import { OutreachAction } from '../../models/dashboard.types';
                         Showing {{ state.total ? ((state.page || 0) * 10) + 1 : 0 }} - {{ Math.min(((state.page || 0) + 1) * 10, state.total || 0) }} of {{ state.total || 0 }} results
                     </span>
                     <div class="flex items-center gap-2">
-                        <button (click)="facade.prevPage()" [disabled]="!state.page" 
-                            class="px-3 py-1.5 rounded-md border border-gray-200 bg-white text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
-                        <button (click)="facade.nextPage()" [disabled]="(((state.page || 0) + 1) * 10) >= (state.total || 0)"
-                            class="px-3 py-1.5 rounded-md border border-gray-200 bg-white text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                        <z-pagination
+                          [zPageIndex]="(state.page || 0) + 1"
+                          (zPageIndexChange)="facade.goToPage($event - 1)"
+                          [zTotal]="Math.ceil((state.total || 0) / 10)"
+                          [zSize]="'sm'"
+                        ></z-pagination>
                     </div>
                 </ng-container>
             </div>

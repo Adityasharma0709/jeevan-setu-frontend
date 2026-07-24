@@ -44,12 +44,12 @@
           <!-- Actions -->
           <div class="flex gap-2 shrink-0">
             <z-breadcrumb>
-              <z-breadcrumb-item [routerLink]="['/manager/beneficiaries']"
-                >Beneficiaries</z-breadcrumb-item
+              <z-breadcrumb-item [routerLink]="['/analyst/beneficiary']"
+                >Beneficiary Reports</z-breadcrumb-item
               >
               <z-breadcrumb-item
                 *ngIf="beneficiary"
-                [routerLink]="['/manager/beneficiaries', beneficiary.id.toString()]"
+                [routerLink]="['/analyst/beneficiary', beneficiary.id.toString()]"
                 [state]="{ beneficiary: beneficiary }"
                 >View Detail</z-breadcrumb-item
               >
@@ -71,7 +71,6 @@
               "
             >
               <z-icon zType="user" size="18"></z-icon>
-
               <span class="truncate">Details</span>
             </button>
 
@@ -87,9 +86,7 @@
               "
             >
               <z-icon zType="users" size="18"></z-icon>
-
               <span class="truncate">Family</span>
-
               <span
                 *ngIf="beneficiary.children?.length"
                 class="shrink-0 min-w-[24px] h-[24px] px-1.5 rounded-full flex items-center justify-center text-[11px] font-semibold"
@@ -112,7 +109,6 @@
               "
             >
               <span class="truncate">History</span>
-
               <span
                 *ngIf="activityReports.length"
                 class="shrink-0 min-w-[24px] h-[24px] px-1.5 rounded-full flex items-center justify-center text-[11px] font-semibold"

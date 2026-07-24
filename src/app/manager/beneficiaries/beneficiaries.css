@@ -1,0 +1,18 @@
+:host {
+  display: block;
+}
+
+textarea[z-input] {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.plus-to-x {
+  filter: brightness(0) invert(1);
+}
+
+.update-form-scroll {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}

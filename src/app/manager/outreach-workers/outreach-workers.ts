@@ -23,6 +23,7 @@ import { ZardFormControlComponent, ZardFormFieldComponent, ZardFormLabelComponen
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
 import { ApiService } from '../../core/services/api';
+import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
 
 @Component({
     selector: 'app-outreach-workers',
@@ -46,6 +47,7 @@ import { ApiService } from '../../core/services/api';
         ZardIconComponent,
         ZardComboboxComponent,
         LottieComponent,
+        ZardPaginationComponent,
     ],
     templateUrl: './outreach-workers.html',
     styleUrl: './outreach-workers.css',

@@ -27,7 +27,7 @@ export class AnalystService {
   }
 
   getProjectAssignments(projectId: number): Observable<{ states: any[], awcs: OutreachLocation[] }> {
-    return (this.api.get(`outreach/assigned-locations/${projectId}`) as Observable<any>).pipe(
+    return (this.api.get(`analyst/assigned-locations/${projectId}`) as Observable<any>).pipe(
       map((res) => {
         if (Array.isArray(res)) return { states: [], awcs: res };
         return {
@@ -43,7 +43,7 @@ export class AnalystService {
     const params: any = {};
     if (search) params.search = search;
     if (projectId) params.projectId = projectId;
-    return (this.api.get(`outreach/beneficiary-list`, params) as Observable<Beneficiary[]>).pipe(
+    return (this.api.get(`analyst/beneficiary-list`, params) as Observable<Beneficiary[]>).pipe(
       map((rows) => rows || []),
       catchError((error: HttpErrorResponse) => {
         if (error.status === 404) return of([]);
@@ -67,7 +67,7 @@ export class AnalystService {
     if (adminId) params.adminId = adminId;
     if (managerId) params.managerId = managerId;
     if (workerId) params.workerId = workerId;
-    return this.api.get(`users/analyst/dashboard/stats`, params);
+    return this.api.get(`analyst/dashboard/stats`, params);
   }
 
   getDynamicsReports(
@@ -84,11 +84,11 @@ export class AnalystService {
     if (adminId) params.adminId = adminId;
     if (managerId) params.managerId = managerId;
     if (workerId) params.workerId = workerId;
-    return this.api.get<DynamicsTableRecord[]>(`users/analyst/dashboard/action-details`, params);
+    return this.api.get<DynamicsTableRecord[]>(`analyst/dashboard/action-details`, params);
   }
 
   getAnalystActivities(): Observable<OutreachActivity[]> {
-    return (this.api.get(`users/analyst/dashboard/activities`) as Observable<OutreachActivity[]>).pipe(
+    return (this.api.get(`analyst/dashboard/activities`) as Observable<OutreachActivity[]>).pipe(
       map((activities) =>
         (activities || []).filter(
           (a) => (a?.status ?? '').toString().toUpperCase() === 'ACTIVE',
@@ -99,7 +99,7 @@ export class AnalystService {
   }
 
   getAnalystSessions(activityId: number): Observable<OutreachSession[]> {
-    return (this.api.get(`users/analyst/dashboard/activity/${activityId}/sessions`) as Observable<OutreachSession[]>).pipe(
+    return (this.api.get(`analyst/dashboard/activity/${activityId}/sessions`) as Observable<OutreachSession[]>).pipe(
       map((sessions) =>
         (sessions || []).filter(
           (s) => (s?.status ?? '').toString().toUpperCase() === 'ACTIVE',
@@ -110,13 +110,29 @@ export class AnalystService {
   }
 
   getAnalystReports(): Observable<any[]> {
-    return (this.api.get(`users/analyst/dashboard/reports`) as Observable<any[]>).pipe(
+    return (this.api.get(`analyst/dashboard/reports`) as Observable<any[]>).pipe(
       map((rows) => rows || []),
       catchError(() => of([]))
     );
   }
 
   getAnalystDashboardUsers(): Observable<{ admins: any[], managers: any[], workers: any[] }> {
-    return this.api.get<{ admins: any[], managers: any[], workers: any[] }>(`users/analyst/dashboard/users`);
+    return this.api.get<{ admins: any[], managers: any[], workers: any[] }>(`analyst/dashboard/users`);
+  }
+
+  getBeneficiary(id: number): Observable<any> {
+    return this.api.get(`analyst/beneficiary/${id}`);
+  }
+
+  getFamilyMembers(beneficiaryId: number): Observable<any[]> {
+    return (this.api.get(`analyst/beneficiary/${beneficiaryId}/family-members`) as Observable<any[]>).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  getReportsByBeneficiary(beneficiaryId: number): Observable<any[]> {
+    return (this.api.get(`analyst/beneficiary/${beneficiaryId}/reports`) as Observable<any[]>).pipe(
+      catchError(() => of([]))
+    );
   }
 }

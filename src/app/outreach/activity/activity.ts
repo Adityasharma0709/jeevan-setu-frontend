@@ -32,6 +32,7 @@ import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/compone
 import { UserProfileService } from '../../core/services/user-profile.service';
 import { OutreachService } from '../outreach.service';
 import { ZardDialogService } from '@/shared/components/dialog';
+import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-activity',
@@ -53,6 +54,7 @@ import { ZardDialogService } from '@/shared/components/dialog';
     ZardTableCellComponent,
     OutreachPageHeaderComponent,
     ZardComboboxComponent,
+    ZardPaginationComponent,
   ],
   templateUrl: './activity.html',
 })
@@ -341,6 +343,11 @@ export class Activity {
 
   setMobileViewMode(mode: 'quickAccess' | 'table'): void {
     this.mobileViewMode = mode;
+  }
+
+  goToPage(page: number) {
+    const nextPage = Math.max(1, Math.floor(Number(page) || 1));
+    this.page$.next(nextPage);
   }
 
   nextPage(): void {

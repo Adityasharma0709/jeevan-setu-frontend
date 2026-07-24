@@ -3,7 +3,7 @@
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-weight: 500;
   color: #4b5563;
   transition: 0.2s;
@@ -11,19 +11,19 @@
 }
 
 .menu-link:hover {
-  background: #ecfdf5;
-  color: #065f46;
+  background: linear-gradient(90deg, rgba(0, 102, 102, 0.08), rgba(0, 102, 102, 0.03));
+  color: #006666;
 }
 
 .active-link {
-  background: #dcfce7;
-  color: #166534;
-  border-left: 4px solid #16a34a;
+  background: #065b4c;
+  color: #ffffff;
+  border-left: 4px solid transparent;
   font-weight: 600;
 }
 
 .active-link z-icon {
-  color: #16a34a !important;
+  color: #ffffff !important;
 }
 
 .mobile-bottom-nav {
@@ -63,11 +63,11 @@
 }
 
 .mobile-tab-active {
-  color: #059669;
+  color: #065b4c;
 }
 
 .mobile-tab-active .mobile-tab-icon {
-  color: #059669 !important;
+  color: #065b4c !important;
   stroke-width: 2.6;
 }
 

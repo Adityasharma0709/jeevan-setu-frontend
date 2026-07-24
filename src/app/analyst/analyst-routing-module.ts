@@ -15,6 +15,7 @@ const routes: Routes = [
     children: [
       { path: '', component: AnalystDashboard, data: { pageTitle: 'Dashboard' } },
       { path: 'beneficiary', component: AnalystBeneficiary, data: { pageTitle: 'Beneficiary Reports' } },
+      { path: 'beneficiary/:id', loadComponent: () => import('./beneficiary/beneficiary-detail/beneficiary-detail').then(m => m.BeneficiaryDetail), data: { pageTitle: 'Beneficiary Detail' } },
     ],
   },
 ];

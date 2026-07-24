@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, inject, ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,14 +6,13 @@ import { Subject, takeUntil } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
-import { ManagerBeneficiary, ManagerService } from '../../manager.service';
-import { OutreachService } from '../../../outreach/outreach.service';
+import { AnalystService } from '../../analyst.service';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
 
 @Component({
-  selector: 'app-beneficiary-detail',
+  selector: 'app-analyst-beneficiary-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -30,15 +29,14 @@ import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/c
 export class BeneficiaryDetail implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private managerService = inject(ManagerService);
-  private outreachService = inject(OutreachService);
+  private analystService = inject(AnalystService);
   private cdr = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
 
-  readonly isManager = true; // Hardcoded to true for this manager detail component
+  readonly isManager = true; // Use this flag to enforce read-only details layout (hide all edits)
 
   // Data
-  beneficiary: ManagerBeneficiary | null = null;
+  beneficiary: any = null;
   activityReports: any[] = [];
   reportsLoading = false;
 
@@ -76,19 +74,19 @@ export class BeneficiaryDetail implements OnInit, OnDestroy {
       this.beneficiary = stateData;
       this.loading = false;
       this.cdr.markForCheck();
-      this.loadReports(stateData.id, stateData.projectId ?? undefined);
+      this.loadReports(stateData.id);
       this.loadFamilyMembers(stateData.id);
       return;
     }
 
-    this.managerService.getBeneficiary(Number(id))
+    this.analystService.getBeneficiary(Number(id))
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           this.beneficiary = data;
           this.loading = false;
           this.cdr.markForCheck();
-          this.loadReports(data.id, data.projectId ?? undefined);
+          this.loadReports(data.id);
           this.loadFamilyMembers(data.id);
         },
         error: () => {
@@ -105,7 +103,7 @@ export class BeneficiaryDetail implements OnInit, OnDestroy {
   }
 
   private loadFamilyMembers(beneficiaryId: number): void {
-    this.outreachService.getFamilyMembers(beneficiaryId)
+    this.analystService.getFamilyMembers(beneficiaryId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (members) => {
@@ -118,9 +116,9 @@ export class BeneficiaryDetail implements OnInit, OnDestroy {
       });
   }
 
-  private loadReports(beneficiaryId: number, projectId?: number): void {
+  private loadReports(beneficiaryId: number): void {
     this.reportsLoading = true;
-    this.outreachService.getReportsByBeneficiary(beneficiaryId, projectId)
+    this.analystService.getReportsByBeneficiary(beneficiaryId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (reports) => {
@@ -145,6 +143,6 @@ export class BeneficiaryDetail implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/manager/beneficiaries']);
+    this.router.navigate(['/analyst/beneficiary']);
   }
 }

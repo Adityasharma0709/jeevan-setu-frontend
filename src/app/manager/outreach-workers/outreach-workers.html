@@ -222,27 +222,12 @@
             </p>
 
             <div class="flex items-center gap-2">
-                <button
-                    type="button"
-                    (click)="prevPage()"
-                    [disabled]="pager.page <= 1"
-                    class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                    <z-icon zType="chevron-left" class="w-4 h-4"></z-icon> Prev
-                </button>
-
-                <span class="text-sm font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-100 whitespace-nowrap">
-                    {{ pager.page }} / {{ pager.totalPages }}
-                </span>
-
-                <button
-                    type="button"
-                    (click)="nextPage()"
-                    [disabled]="pager.page >= pager.totalPages"
-                    class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                    Next <z-icon zType="chevron-right" class="w-4 h-4"></z-icon>
-                </button>
+                <z-pagination
+                  [zPageIndex]="pager.page"
+                  (zPageIndexChange)="goToPage($event)"
+                  [zTotal]="pager.totalPages"
+                  [zSize]="'sm'"
+                ></z-pagination>
             </div>
         </div>
     </ng-container>
