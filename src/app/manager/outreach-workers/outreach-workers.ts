@@ -695,7 +695,7 @@ export class OutreachWorkers implements OnInit, AfterViewInit, OnDestroy {
         
         // Build workerOptions from this.workers
         this.workerOptions = (this.workers || []).map(w => ({
-            label: `${w.name} (${w.usercode || 'N/A'})`,
+            label: `${w.name} (${w.usercode || '-'})`,
             value: String(w.id)
         }));
 

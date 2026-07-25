@@ -10,6 +10,7 @@ import {
 } from '@/shared/components/table';
 import { DashboardFacade } from '../../dashboard.facade';
 import { OutreachAction } from '../../models/dashboard.types';
+import { ZardCardComponent } from '@/shared/components/card';
 
 @Component({
   selector: 'app-outreach-summary-widget',
@@ -21,7 +22,8 @@ import { OutreachAction } from '../../models/dashboard.types';
     ZardTableBodyComponent,
     ZardTableRowComponent,
     ZardTableHeadComponent,
-    ZardTableCellComponent
+    ZardTableCellComponent,
+    ZardCardComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -31,13 +33,16 @@ import { OutreachAction } from '../../models/dashboard.types';
         </div>
 
         <!-- Cards Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8 animate-fadeIn">
             <button *ngFor="let item of (facade.outreachActions$ | async); let i = index; trackBy: trackByLabel" 
                 (click)="facade.selectActionTab(i)"
-                [class]="getCardClass(item, i === ((facade.selectedActionTab$ | async) ?? 0))"
-                type="button">
-                <h3 class="text-3xl md:text-4xl font-black mb-2 tracking-tight">{{item.count}}</h3>
-                <p class="text-[10px] font-extrabold uppercase tracking-widest leading-snug opacity-80 mb-0">{{item.label}}</p>
+                type="button"
+                class="w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 rounded-3xl transition-transform hover:scale-[1.01]">
+                <z-card 
+                  [label]="item.label" 
+                  [count]="item.count" 
+                  [isSelected]="i === ((facade.selectedActionTab$ | async) ?? 0)">
+                </z-card>
             </button>
         </div>
 
@@ -133,48 +138,5 @@ export class OutreachSummaryWidgetComponent {
     return item.label;
   }
 
-  getCardClass(item: OutreachAction, isSelected: boolean): string {
-    const l = (item.label || '').toUpperCase();
-    let colorClasses = '';
-    
-    if (l.includes('PREGNANT')) {
-      colorClasses = isSelected
-        ? 'bg-pink-100/80 text-pink-800 border-pink-500 ring-4 ring-pink-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-pink-50 text-pink-700 border-pink-100 hover:bg-pink-100/50 hover:border-pink-300';
-    } else if (l.includes('LACTATING')) {
-      colorClasses = isSelected
-        ? 'bg-purple-100/80 text-purple-800 border-purple-500 ring-4 ring-purple-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-purple-50 text-purple-700 border-purple-100 hover:bg-purple-100/50 hover:border-purple-300';
-    } else if (l.includes('SAM')) {
-      colorClasses = isSelected
-        ? 'bg-red-100/80 text-red-800 border-red-500 ring-4 ring-red-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100/50 hover:border-red-300';
-    } else if (l.includes('ADOLESCENT') || l.includes('GIRLS')) {
-      colorClasses = isSelected
-        ? 'bg-rose-100/80 text-rose-800 border-rose-500 ring-4 ring-rose-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100/50 hover:border-rose-300';
-    } else if (l.includes('EBF')) {
-      colorClasses = isSelected
-        ? 'bg-emerald-100/80 text-emerald-800 border-emerald-500 ring-4 ring-emerald-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100/50 hover:border-emerald-300';
-    } else if (l.includes('CF PROMOTION')) {
-      colorClasses = isSelected
-        ? 'bg-sky-100/80 text-sky-800 border-sky-500 ring-4 ring-sky-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100/50 hover:border-sky-300';
-    } else if (l.includes('MAM')) {
-      colorClasses = isSelected
-        ? 'bg-yellow-100/80 text-yellow-800 border-yellow-500 ring-4 ring-yellow-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-yellow-50 text-yellow-700 border-yellow-100 hover:bg-yellow-100/50 hover:border-yellow-300';
-    } else if (l.includes('DELIVERY') || l.includes('30 DAYS')) {
-      colorClasses = isSelected
-        ? 'bg-indigo-100/80 text-indigo-800 border-indigo-500 ring-4 ring-indigo-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100/50 hover:border-indigo-300';
-    } else {
-      colorClasses = isSelected
-        ? 'bg-slate-100 text-slate-800 border-slate-500 ring-4 ring-slate-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100/50 hover:border-slate-300';
-    }
 
-    return `w-full text-center border rounded-2xl p-6 flex flex-col items-center justify-center transition-all duration-300 h-full group focus:outline-none cursor-pointer ${colorClasses}`;
-  }
 }

@@ -427,7 +427,7 @@ export class ReportActivity {
     }
 
     const childId = this.reportForm.get('childId')?.value;
-    let groupsText = 'N/A';
+    let groupsText = '-';
 
     if (childId && childId !== 'MAIN') {
       const child = ben.children?.find((c: any) => c.id.toString() === childId.toString());

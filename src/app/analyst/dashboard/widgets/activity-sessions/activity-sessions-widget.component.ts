@@ -12,6 +12,7 @@ import {
 } from '@/shared/components/table';
 import { DashboardFacade } from '../../dashboard.facade';
 import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
+import { ZardCardComponent } from '@/shared/components/card';
 
 @Component({
   selector: 'app-activity-sessions-widget',
@@ -26,7 +27,8 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
     ZardTableRowComponent,
     ZardTableHeadComponent,
     ZardTableCellComponent,
-    ZardPaginationComponent
+    ZardPaginationComponent,
+    ZardCardComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -57,20 +59,19 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
                         <z-combobox [options]="(facade.sessionOptions$ | async) || []" [formControl]="facade.sessionFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search Session..." class="w-full"></z-combobox>
                     </div>
                 </div>
-            </div>
+             </div>
 
             <!-- Clickable Cards Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8 animate-fadeIn">
                 <button *ngFor="let item of (facade.activities$ | async); let i = index; trackBy: trackByLabel" 
                     (click)="facade.selectActivityTab(i)"
-                    [class]="getCardClass(item, i === ((facade.selectedActivityTab$ | async) ?? 0))"
-                    type="button">
-                    
-                    <!-- Count -->
-                    <h3 class="text-3xl md:text-4xl font-black mb-2 tracking-tight">{{item.count}}</h3>
-                    
-                    <!-- Label -->
-                    <p class="text-[10px] font-extrabold uppercase tracking-wide leading-snug opacity-80 mb-0">{{item.label}}</p>
+                    type="button"
+                    class="w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 rounded-3xl transition-transform hover:scale-[1.01]">
+                    <z-card 
+                      [label]="item.label" 
+                      [count]="item.count" 
+                      [isSelected]="i === ((facade.selectedActivityTab$ | async) ?? 0)">
+                    </z-card>
                 </button>
             </div>
 
@@ -173,40 +174,5 @@ export class ActivitySessionsWidgetComponent {
     return item.label;
   }
 
-  getCardClass(item: any, isSelected: boolean): string {
-    const l = (item.label || '').toUpperCase();
-    let colorClasses = '';
-    
-    if (l.includes('SAM')) {
-      colorClasses = isSelected
-        ? 'bg-red-100/80 text-red-800 border-red-500 ring-4 ring-red-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100/50 hover:border-red-300';
-    } else if (l.includes('MAM')) {
-      colorClasses = isSelected
-        ? 'bg-green-100/80 text-green-800 border-green-500 ring-4 ring-green-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-green-50 text-green-700 border-green-100 hover:bg-green-100/50 hover:border-green-300';
-    } else if (l.includes('PREGNANT') || l.includes('LACTATING') || l.includes('MARRIED')) {
-      colorClasses = isSelected
-        ? 'bg-pink-100/80 text-pink-800 border-pink-500 ring-4 ring-pink-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-pink-50 text-pink-700 border-pink-100 hover:bg-pink-100/50 hover:border-pink-300';
-    } else if (l.includes('STAKEHOLDER')) {
-      colorClasses = isSelected
-        ? 'bg-indigo-100/80 text-indigo-800 border-indigo-500 ring-4 ring-indigo-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100/50 hover:border-indigo-300';
-    } else if (l.includes('BOYS')) {
-      colorClasses = isSelected
-        ? 'bg-sky-100/80 text-sky-800 border-sky-500 ring-4 ring-sky-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100/50 hover:border-sky-300';
-    } else if (l.includes('GIRLS')) {
-      colorClasses = isSelected
-        ? 'bg-rose-100/80 text-rose-800 border-rose-500 ring-4 ring-rose-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100/50 hover:border-rose-300';
-    } else {
-      colorClasses = isSelected
-        ? 'bg-slate-100 text-slate-800 border-slate-500 ring-4 ring-slate-500/20 scale-[1.02] shadow-md font-bold'
-        : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100/50 hover:border-slate-300';
-    }
 
-    return `w-full text-center border rounded-2xl p-6 flex flex-col items-center justify-center transition-all duration-300 h-full group focus:outline-none cursor-pointer ${colorClasses}`;
-  }
 }
