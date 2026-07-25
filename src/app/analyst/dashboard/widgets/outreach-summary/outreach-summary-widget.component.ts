@@ -75,6 +75,7 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Name</span></th>
                             <th *ngIf="(facade.selectedActionTab$ | async) === 1" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Child Name & Age</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Age</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Group</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Gender</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Guardian Name</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Location</span></th>
@@ -106,6 +107,9 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
                                 <td z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.age || '-' }}
                                 </td>
+                                <td z-table-cell class="px-3 py-3 font-medium text-slate-700">
+                                  {{ row.group }}
+                                </td>
                                 <td z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.gender || '-' }}
                                 </td>
@@ -120,14 +124,14 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
                                 </td>
                             </tr>
                             <tr z-table-row *ngIf="records.length === 0">
-                                <td z-table-cell colspan="9" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
+                                <td z-table-cell colspan="10" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
                                     No reports found for this group.
                                 </td>
                             </tr>
                         </ng-container>
                         <ng-template #loadingTable>
                             <tr z-table-row>
-                                <td z-table-cell colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                <td z-table-cell colspan="10" class="px-4 py-8 text-center text-gray-500">
                                     <z-icon zType="loader-circle" class="w-6 h-6 animate-spin mx-auto text-blue-500"></z-icon>
                                     <p class="mt-2 font-medium text-sm">Loading records...</p>
                                 </td>
