@@ -117,8 +117,22 @@ export class AnalystService {
 
   getOutreachDynamicsReports(
     groupName: string,
+    adminId?: number,
+    managerId?: number,
+    workerId?: number,
+    state?: string,
+    district?: string,
+    block?: string,
+    awc?: string,
   ): Observable<DynamicsTableRecord[]> {
     const params: any = { group: groupName };
+    if (adminId) params.adminId = adminId;
+    if (managerId) params.managerId = managerId;
+    if (workerId) params.workerId = workerId;
+    if (state) params.state = state;
+    if (district) params.district = district;
+    if (block) params.block = block;
+    if (awc) params.awc = awc;
     return this.api.get<DynamicsTableRecord[]>(`analyst/dashboard/outreach-dynamics-details`, params);
   }
 
