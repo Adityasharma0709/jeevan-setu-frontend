@@ -58,7 +58,14 @@ export class AnalystService {
     sessionId?: number,
     adminId?: number,
     managerId?: number,
-    workerId?: number
+    workerId?: number,
+    year?: string,
+    month?: string,
+    state?: string,
+    district?: string,
+    block?: string,
+    awc?: string,
+    unique?: boolean
   ): Observable<OutreachDashboardStats | any> {
     const params: any = {};
     if (projectId) params.projectId = projectId;
@@ -67,6 +74,13 @@ export class AnalystService {
     if (adminId) params.adminId = adminId;
     if (managerId) params.managerId = managerId;
     if (workerId) params.workerId = workerId;
+    if (year) params.year = year;
+    if (month) params.month = month;
+    if (state) params.state = state;
+    if (district) params.district = district;
+    if (block) params.block = block;
+    if (awc) params.awc = awc;
+    if (unique !== undefined) params.unique = String(unique);
     return this.api.get(`analyst/dashboard/stats`, params);
   }
 
@@ -76,7 +90,14 @@ export class AnalystService {
     sessionId?: number,
     adminId?: number,
     managerId?: number,
-    workerId?: number
+    workerId?: number,
+    year?: string,
+    month?: string,
+    state?: string,
+    district?: string,
+    block?: string,
+    awc?: string,
+    unique?: boolean
   ): Observable<DynamicsTableRecord[]> {
     const params: any = { group: groupName };
     if (activityId) params.activityId = activityId;
@@ -84,7 +105,21 @@ export class AnalystService {
     if (adminId) params.adminId = adminId;
     if (managerId) params.managerId = managerId;
     if (workerId) params.workerId = workerId;
+    if (year) params.year = year;
+    if (month) params.month = month;
+    if (state) params.state = state;
+    if (district) params.district = district;
+    if (block) params.block = block;
+    if (awc) params.awc = awc;
+    if (unique !== undefined) params.unique = String(unique);
     return this.api.get<DynamicsTableRecord[]>(`analyst/dashboard/action-details`, params);
+  }
+
+  getOutreachDynamicsReports(
+    groupName: string,
+  ): Observable<DynamicsTableRecord[]> {
+    const params: any = { group: groupName };
+    return this.api.get<DynamicsTableRecord[]>(`analyst/dashboard/outreach-dynamics-details`, params);
   }
 
   getAnalystActivities(): Observable<OutreachActivity[]> {
