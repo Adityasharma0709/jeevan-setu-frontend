@@ -46,6 +46,7 @@ export interface ManagerBeneficiaryLocation {
 export interface ManagerBeneficiary {
     id: number;
     uid?: string | null;
+    typeof?: string | null;
     name: string;
     mobileNumber?: string | null;
     dateOfBirth?: string | null;

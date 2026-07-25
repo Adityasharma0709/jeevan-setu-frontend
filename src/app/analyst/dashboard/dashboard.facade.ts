@@ -219,11 +219,32 @@ export class DashboardFacade {
       this.currentActivityPageSub.next(0);
     });
 
-    this.selectedActionTab$.pipe(
-      switchMap((index) => {
+    combineLatest([
+      this.selectedActionTab$,
+      this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
+      this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
+      this.workerFilter.valueChanges.pipe(startWith(this.workerFilter.value)),
+      this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
+      this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
+      this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
+    ]).pipe(
+      switchMap(([index, adminVal, managerVal, workerVal, stateVal, districtVal, blockVal, awcVal]) => {
         this.allDynamicsDataSub.next(null); // Set loading state
         const actionLabel = this.outreachActionsSub.value[index]?.label || '';
-        return this.analystService.getOutreachDynamicsReports(actionLabel).pipe(
+        const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
+        const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
+        const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
+        return this.analystService.getOutreachDynamicsReports(
+          actionLabel,
+          adminId,
+          managerId,
+          workerId,
+          stateVal,
+          districtVal,
+          blockVal,
+          awcVal
+        ).pipe(
           catchError(() => of([]))
         );
       })
