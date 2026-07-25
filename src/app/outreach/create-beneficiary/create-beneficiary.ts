@@ -115,7 +115,7 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     dateOfBirth:                ['', [Validators.required, Validators.pattern('^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/\\d{4}$')]],
     age:                        [''],
     guardianName:               ['', Validators.required],
-    maritalStatus:              ['Single'],
+    maritalStatus:              [''],
     dateOfMarriage:             ['', Validators.pattern('^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/\\d{4}$')],
     womanAgeAtMarriage:         [''],
     husbandAgeAtMarriage:       [''],
@@ -470,7 +470,7 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       this.form.get('dateOfBirth')!.valueChanges.pipe(startWith('')),
       this.form.get('dateOfMarriage')!.valueChanges.pipe(startWith('')),
       this.form.get('gender')!.valueChanges.pipe(startWith('')),
-      this.form.get('maritalStatus')!.valueChanges.pipe(startWith('Single')),
+      this.form.get('maritalStatus')!.valueChanges.pipe(startWith('')),
     ]).subscribe(([dob, dom, gender, maritalStatus]) => {
       if (String(maritalStatus).toLowerCase() !== 'married') return;
       const age = this.calculateAgeAtEvent(dob, dom);
@@ -563,7 +563,7 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       dateOfBirth:         this.isPriority && raw.dateOfBirth
                              ? this.parseDateStr(raw.dateOfBirth)?.toISOString() || ''
                              : new Date(new Date().getFullYear() - Number(raw.age || 0), 0, 1).toISOString(),
-      maritalStatus:       raw.maritalStatus ? String(raw.maritalStatus) : undefined,
+      maritalStatus:       this.isPriority && raw.maritalStatus ? String(raw.maritalStatus) : undefined,
       dateOfMarriage:      married && raw.dateOfMarriage
                              ? this.parseDateStr(raw.dateOfMarriage)?.toISOString() : undefined,
       womanAgeAtMarriage:  married && raw.womanAgeAtMarriage !== '' && raw.womanAgeAtMarriage !== null

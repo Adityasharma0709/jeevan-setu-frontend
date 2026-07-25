@@ -454,7 +454,7 @@ export class Beneficiaries implements OnInit, OnDestroy {
       if (this.selectedColumns['gender']) row['Gender'] = beneficiary.gender || '-';
       if (this.selectedColumns['mobile']) row['Mobile'] = beneficiary.mobileNumber || '-';
       if (this.selectedColumns['guardianName']) row['Guardian Name'] = beneficiary.guardianName || '-';
-      if (this.selectedColumns['maritalStatus']) row['Marital Status'] = beneficiary.maritalStatus || 'Single';
+      if (this.selectedColumns['maritalStatus']) row['Marital Status'] = beneficiary.maritalStatus || '-';
       if (this.selectedColumns['dateOfMarriage']) {
         row['Marriage Date'] = beneficiary.dateOfMarriage ? new Date(beneficiary.dateOfMarriage).toLocaleDateString('en-GB') : '-';
       }
