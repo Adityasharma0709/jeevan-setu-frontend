@@ -142,6 +142,15 @@ export class DashboardFacade {
     this.initDataStreams();
   }
 
+  uniqueCountSub = new BehaviorSubject<boolean>(false);
+  uniqueCount$ = this.uniqueCountSub.asObservable();
+
+  toggleUniqueCount() {
+    this.uniqueCountSub.next(!this.uniqueCountSub.value);
+    this.currentPageSub.next(0);
+    this.currentActivityPageSub.next(0);
+  }
+
   selectActionTab(index: number) {
     this.selectedActionTabSub.next(index);
     this.currentPageSub.next(0); // Reset page on tab change
@@ -210,23 +219,11 @@ export class DashboardFacade {
       this.currentActivityPageSub.next(0);
     });
 
-    combineLatest([
-      this.selectedActionTab$,
-      activity$,
-      session$,
-      this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
-      this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
-      this.workerFilter.valueChanges.pipe(startWith(this.workerFilter.value)),
-    ]).pipe(
-      switchMap(([index, actVal, sessVal, adminVal, managerVal, workerVal]) => {
+    this.selectedActionTab$.pipe(
+      switchMap((index) => {
         this.allDynamicsDataSub.next(null); // Set loading state
         const actionLabel = this.outreachActionsSub.value[index]?.label || '';
-        const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
-        const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
-        const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
-        const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
-        const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
-        return this.analystService.getDynamicsReports(actionLabel, aId, sId, adminId, managerId, workerId).pipe(
+        return this.analystService.getOutreachDynamicsReports(actionLabel).pipe(
           catchError(() => of([]))
         );
       })
@@ -254,8 +251,15 @@ export class DashboardFacade {
       this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
       this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
       this.workerFilter.valueChanges.pipe(startWith(this.workerFilter.value)),
+      this.yearFilter.valueChanges.pipe(startWith(this.yearFilter.value)),
+      this.monthFilter.valueChanges.pipe(startWith(this.monthFilter.value)),
+      this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
+      this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
+      this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
+      this.uniqueCount$,
     ]).pipe(
-      switchMap(([index, actVal, sessVal, adminVal, managerVal, workerVal]) => {
+      switchMap(([index, actVal, sessVal, adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal]) => {
         this.allActivityDataSub.next(null); // Set loading state
         const actionLabel = this.activitiesSub.value[index]?.label || '';
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
@@ -263,7 +267,7 @@ export class DashboardFacade {
         const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
         const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
         const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
-        return this.analystService.getDynamicsReports(actionLabel, aId, sId, adminId, managerId, workerId).pipe(
+        return this.analystService.getDynamicsReports(actionLabel, aId, sId, adminId, managerId, workerId, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal).pipe(
           catchError(() => of([]))
         );
       })
@@ -312,15 +316,22 @@ export class DashboardFacade {
       this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
       this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
       this.workerFilter.valueChanges.pipe(startWith(this.workerFilter.value)),
+      this.yearFilter.valueChanges.pipe(startWith(this.yearFilter.value)),
+      this.monthFilter.valueChanges.pipe(startWith(this.monthFilter.value)),
+      this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
+      this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
+      this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
+      this.uniqueCount$,
     ]).pipe(
-      switchMap(([actVal, sessVal, adminVal, managerVal, workerVal]) => {
+      switchMap(([actVal, sessVal, adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal]) => {
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
         const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
         const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
         const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
 
-        return this.analystService.getDashboardStats(undefined, aId, sId, adminId, managerId, workerId).pipe(
+        return this.analystService.getDashboardStats(undefined, aId, sId, adminId, managerId, workerId, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal).pipe(
           tap(stats => {
             if (!stats) return;
             const actions = this.outreachActionsSub.value;
@@ -603,9 +614,10 @@ export class DashboardFacade {
       this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
       this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
       this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
+      this.uniqueCount$,
     ]).pipe(
-      map(([reports, year, month, state, district, block, awc]) => {
-        return reports.filter((r: any) => {
+      map(([reports, year, month, state, district, block, awc, uniqueVal]) => {
+        const filtered = reports.filter((r: any) => {
           if (year && year !== 'ALL' && getReportYear(r) !== year) return false;
           if (month && month !== 'ALL' && getReportMonthName(r).toLowerCase() !== month.toLowerCase()) return false;
           if (state && state !== 'ALL' && (r.state || '').toLowerCase() !== state.toLowerCase()) return false;
@@ -617,6 +629,20 @@ export class DashboardFacade {
           }
           return true;
         });
+
+        if (uniqueVal) {
+          const latestMap = new Map<string, any>();
+          filtered.forEach((r: any) => {
+            const key = r.childId ? `child_${r.childId}` : `ben_${r.beneficiaryId}`;
+            const existing = latestMap.get(key);
+            if (!existing || new Date(r.date || r.createdAt) > new Date(existing.date || existing.createdAt)) {
+              latestMap.set(key, r);
+            }
+          });
+          return Array.from(latestMap.values());
+        }
+
+        return filtered;
       }),
       shareReplay(1)
     );

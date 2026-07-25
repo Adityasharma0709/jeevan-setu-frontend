@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
 import { ZardIconComponent } from '@/shared/components/icon';
 import {
@@ -78,16 +79,22 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Guardian Name</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Location</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Project</span></th>
-                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Reporting Date</span></th>
                         </tr>
                     </thead>
                     <tbody z-table-body class="divide-y divide-slate-100 text-[13px]" *ngIf="{ page: facade.currentPage$ | async, total: facade.totalDynamicsRecords$ | async } as state">
                         <ng-container *ngIf="(facade.dynamicsTableData$ | async) as records; else loadingTable">
-                            <tr z-table-row *ngFor="let row of records; let idx = index" class="align-top hover:bg-slate-50 transition-colors">
+                            <tr z-table-row *ngFor="let row of records; let idx = index" 
+                                class="align-top hover:bg-slate-50 transition-colors">
                                 <td z-table-cell class="px-2 py-3 text-center font-semibold">
                                   {{ ((state.page || 0) * 10) + idx + 1 }}
                                 </td>
-                                <td z-table-cell class="px-3 py-3 font-mono text-[12px] text-blue-600">
+                                <td z-table-cell 
+                                    (click)="row.benId && redirectToBeneficiary(row.benId)" 
+                                    [class.cursor-pointer]="row.benId"
+                                    [class.underline]="row.benId"
+                                    [class.hover:text-blue-800]="row.benId"
+                                    class="px-3 py-3 font-mono text-[12px] text-blue-600 select-none"
+                                    [title]="row.benId ? 'Click to view profile detail' : ''">
                                   {{ row.id }}
                                 </td>
                                 <td z-table-cell class="px-3 py-3 font-bold text-slate-800">
@@ -111,19 +118,16 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
                                 <td z-table-cell class="px-3 py-3 font-semibold text-slate-800">
                                   {{ row.project || '-' }}
                                 </td>
-                                <td z-table-cell class="px-2 py-3 whitespace-nowrap text-slate-700">
-                                  {{ row.reportingDate }}
-                                </td>
                             </tr>
                             <tr z-table-row *ngIf="records.length === 0">
-                                <td z-table-cell colspan="10" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
+                                <td z-table-cell colspan="9" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
                                     No reports found for this group.
                                 </td>
                             </tr>
                         </ng-container>
                         <ng-template #loadingTable>
                             <tr z-table-row>
-                                <td z-table-cell colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                <td z-table-cell colspan="9" class="px-4 py-8 text-center text-gray-500">
                                     <z-icon zType="loader-circle" class="w-6 h-6 animate-spin mx-auto text-blue-500"></z-icon>
                                     <p class="mt-2 font-medium text-sm">Loading records...</p>
                                 </td>
@@ -153,7 +157,12 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
 })
 export class OutreachSummaryWidgetComponent {
   facade = inject(DashboardFacade);
+  router = inject(Router);
   Math = Math;
+
+  redirectToBeneficiary(benId: number) {
+    this.router.navigate(['/analyst/beneficiary', benId]);
+  }
 
   trackByLabel(index: number, item: any): string {
     return item.label;

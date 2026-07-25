@@ -33,11 +33,18 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
     <div class="mb-8 pt-4">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8">
              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-100/50">
-                <div class="flex items-center gap-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                     <div>
                         <h2 class="text-xl font-bold text-gray-800">Activity / Sessions</h2>
                         <p class="text-xs text-gray-400 font-semibold mt-0.5">Filter and view outreach counts by activity categories</p>
                     </div>
+                    <button type="button" 
+                      (click)="facade.toggleUniqueCount()" 
+                      [class]="(facade.uniqueCount$ | async) ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                      class="px-4 py-2.5 text-xs font-bold border rounded-xl flex items-center gap-2 transition-all shadow-sm">
+                      <z-icon [zType]="(facade.uniqueCount$ | async) ? 'circle-check' : 'square'" class="w-4 h-4"></z-icon>
+                      Unique Beneficiaries Count
+                    </button>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-4">
