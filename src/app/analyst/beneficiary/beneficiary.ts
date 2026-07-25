@@ -121,7 +121,7 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
     { key: 'primaryIncomeSource', label: 'Income Source' },
     { key: 'employmentStatus', label: 'Employment Status' },
     { key: 'project', label: 'Project' },
-    { key: 'location', label: 'Location' },
+    { key: 'location', label: 'AWC' },
     { key: 'createdAt', label: 'Registered Date' },
   ];
 

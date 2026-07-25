@@ -381,7 +381,7 @@ export class Activity {
     if (report?.beneficiary?.groups && report.beneficiary.groups.length > 0 && !report.child) {
       return report.beneficiary.groups.map((g: any) => g.group?.name || g.name).join(', ');
     }
-    return 'N/A';
+    return '-';
   }
 
   getScreeningSummary(report: any): string {
