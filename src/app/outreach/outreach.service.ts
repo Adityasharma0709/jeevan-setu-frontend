@@ -147,6 +147,7 @@ export interface CreateReportPayload {
 
 export interface DynamicsTableRecord {
   id: string;
+  benId?: number;
   name: string;
   group: string;
   awc: string;
@@ -154,6 +155,11 @@ export interface DynamicsTableRecord {
   session: string;
   reportingDate: string;
   childNameAndAge?: string;
+  age?: string;
+  gender?: string;
+  guardianName?: string;
+  project?: string;
+  beneficiaryType?: string;
 }
 
 export interface OutreachDashboardStats {
