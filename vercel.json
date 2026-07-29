@@ -10,13 +10,20 @@
       ],
       "destination": "https://www.jeevansetu.org/:path*",
       "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "jeevansetu.org"
+        }
+      ],
+      "destination": "https://www.jeevansetu.org/:path*",
+      "permanent": true
     }
   ],
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "http://ec2-13-205-166-85.ap-south-1.compute.amazonaws.com:3000/:path*"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
