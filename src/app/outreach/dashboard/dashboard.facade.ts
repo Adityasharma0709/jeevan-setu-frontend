@@ -84,6 +84,7 @@ export class DashboardFacade {
   currentActivityPage$ = this.currentActivityPageSub.asObservable();
 
   private allActivityDataSub = new BehaviorSubject<any[] | null>(null);
+  allActivityRecords$ = this.allActivityDataSub.asObservable();
 
   activityTableData$!: Observable<any[] | null>;
   totalActivityRecords$!: Observable<number>;

@@ -14,6 +14,7 @@ import {
   shareReplay,
   firstValueFrom,
   of,
+  catchError,
 } from 'rxjs';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import * as XLSX from 'xlsx';
@@ -71,6 +72,7 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
   private analystService = inject(AnalystService);
   private dialog = inject(ZardDialogService);
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   private refresh$ = new Subject<void>();
   private subs = new Subscription();
@@ -151,13 +153,37 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
   private lastPage = 1;
   private lastPageCount = 1;
 
-  readonly sortCol$ = new BehaviorSubject<string | null>(null);
-  readonly sortDir$ = new BehaviorSubject<'asc' | 'desc'>('asc');
+  readonly sortCol$ = new BehaviorSubject<string | null>('createdAt');
+  readonly sortDir$ = new BehaviorSubject<'asc' | 'desc'>('desc');
   readonly exportDialog = viewChild.required<TemplateRef<any>>('exportDialog');
 
   private readonly rawBeneficiaries$ = this.refresh$.pipe(
     startWith(void 0),
-    switchMap(() => this.analystService.getBeneficiaries()),
+    switchMap(() => {
+      const currentUserId = Number(this.authService.getCurrentUser()?.sub) || undefined;
+      return combineLatest([
+        this.analystService.getBeneficiaries(),
+        this.analystService.getAssignedProjects(currentUserId).pipe(catchError(() => of([])))
+      ]).pipe(
+        map(([beneficiaries, projects]) => {
+          const projectMap = new Map<number, any>();
+          projects.forEach((p: any) => projectMap.set(p.id, p));
+
+          return (beneficiaries || []).map((b: any) => {
+            if (!b.project && b.projectId) {
+              const proj = projectMap.get(b.projectId);
+              if (proj) {
+                b.project = {
+                  id: proj.id,
+                  name: proj.name
+                };
+              }
+            }
+            return b;
+          });
+        })
+      );
+    }),
     map((rows) => (Array.isArray(rows) ? rows : [])),
     shareReplay(1),
   );

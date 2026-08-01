@@ -77,6 +77,7 @@ import { DashboardFacade } from '../../dashboard.facade';
           [activities]="(facade.activities$ | async) || []"
           [selectedActivityTab]="((facade.selectedActivityTab$ | async) ?? 0)"
           [activityTableData]="(facade.activityTableData$ | async)"
+          [allActivityRecords]="(facade.allActivityRecords$ | async)"
           [currentActivityPage]="((facade.currentActivityPage$ | async) ?? 0)"
           [totalActivityRecords]="((facade.totalActivityRecords$ | async) ?? 0)"
           (tabChange)="facade.selectActivityTab($event)"

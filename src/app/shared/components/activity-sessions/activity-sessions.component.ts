@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ChangeDetectorRef, inject, TemplateRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormControl, FormsModule } from '@angular/forms';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
 import { ZardIconComponent } from '@/shared/components/icon';
 import {
@@ -12,6 +12,12 @@ import {
 } from '@/shared/components/table';
 import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
 import { ZardCardComponent } from '@/shared/components/card';
+import { ZardCalendarComponent } from '@/shared/components/calendar/calendar.component';
+import { ZardDialogModule } from '@/shared/components/dialog/dialog.component';
+import { ZardDialogService } from '@/shared/components/dialog/dialog.service';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import { toast } from 'ngx-sonner';
 
 @Component({
   selector: 'z-activity-sessions',
@@ -19,6 +25,7 @@ import { ZardCardComponent } from '@/shared/components/card';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     ZardComboboxComponent,
     ZardIconComponent,
     ZardTableComponent,
@@ -27,7 +34,9 @@ import { ZardCardComponent } from '@/shared/components/card';
     ZardTableHeadComponent,
     ZardTableCellComponent,
     ZardPaginationComponent,
-    ZardCardComponent
+    ZardCardComponent,
+    ZardCalendarComponent,
+    ZardDialogModule
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -46,6 +55,14 @@ import { ZardCardComponent } from '@/shared/components/card';
                 <div class="flex flex-col gap-1 w-44">
                     <label class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest">Session</label>
                     <z-combobox *ngIf="sessionFilter" [options]="sessionOptions" [formControl]="sessionFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search Session..." class="w-full"></z-combobox>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest opacity-0 select-none">Export</label>
+                    <button type="button" (click)="openExportDialog()"
+                      class="inline-flex items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-2 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] cursor-pointer h-[38px]">
+                      <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
+                      <span class="text-xs font-semibold leading-none">Download sheet</span>
+                    </button>
                 </div>
             </div>
          </div>
@@ -176,6 +193,36 @@ import { ZardCardComponent } from '@/shared/components/card';
              </div>
          </div>
     </div>
+
+    <ng-template #exportDialog>
+       <div class="space-y-4 py-2">
+          <div class="flex flex-col gap-1.5">
+              <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Export Range Option</label>
+              <z-combobox [(ngModel)]="exportMode" [options]="exportOptions" zWidth="full" class="w-full"></z-combobox>
+          </div>
+
+          <div *ngIf="exportMode === 'RANGE'" class="space-y-3 mt-4 animate-fadeIn">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+                  <z-calendar zMode="range" [(value)]="exportDateRange" class="mx-auto"></z-calendar>
+              </div>
+
+              <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5 text-xs text-slate-600">
+                  <span class="font-bold uppercase tracking-wider text-slate-400">Selected Range</span>
+                  <span class="text-right font-bold text-slate-800">
+                      <ng-container *ngIf="exportDateRange && exportDateRange.length > 0; else noRange">
+                          <ng-container *ngIf="exportDateRange.length === 2">
+                              {{ exportDateRange[0] | date: 'dd-MM-yyyy' }} - {{ exportDateRange[1] | date: 'dd-MM-yyyy' }}
+                          </ng-container>
+                          <ng-container *ngIf="exportDateRange.length === 1">
+                              {{ exportDateRange[0] | date: 'dd-MM-yyyy' }}
+                          </ng-container>
+                      </ng-container>
+                      <ng-template #noRange>Not Selected</ng-template>
+                  </span>
+              </div>
+          </div>
+       </div>
+     </ng-template>
   `
 })
 export class ZardActivitySessionsComponent {
@@ -188,12 +235,183 @@ export class ZardActivitySessionsComponent {
   @Input() activityTableData: any[] | null = null;
   @Input() currentActivityPage: number = 0;
   @Input() totalActivityRecords: number = 0;
+  @Input() allActivityRecords: any[] | null = null;
 
   @Output() tabChange = new EventEmitter<number>();
   @Output() pageChange = new EventEmitter<number>();
   @Output() beneficiaryClick = new EventEmitter<number>();
 
   Math = Math;
+
+  private dialog = inject(ZardDialogService);
+  private cdr = inject(ChangeDetectorRef);
+
+  private _exportMode: 'ALL' | 'RANGE' = 'ALL';
+  get exportMode() { return this._exportMode; }
+  set exportMode(val: 'ALL' | 'RANGE') {
+    this._exportMode = val;
+    this.cdr.markForCheck();
+  }
+
+  private _exportDateRange: Date[] | null = null;
+  get exportDateRange() { return this._exportDateRange; }
+  set exportDateRange(val: Date[] | null) {
+    this._exportDateRange = val;
+    this.cdr.markForCheck();
+  }
+
+  exportOptions = [
+    { value: 'ALL', label: 'All Records' },
+    { value: 'RANGE', label: 'Date Range' }
+  ];
+
+  readonly exportDialog = viewChild.required<TemplateRef<any>>('exportDialog');
+
+  openExportDialog() {
+    this.exportMode = 'ALL';
+    this.exportDateRange = null;
+    this.dialog.create({
+      zTitle: 'Export Activity Reports',
+      zContent: this.exportDialog(),
+      zOkText: 'Export',
+      zCancelText: null,
+      zOnOk: () => {
+        this.exportToExcel();
+      }
+    });
+  }
+
+  exportToExcel() {
+    const reports = this.allActivityRecords || [];
+    let exportReports: any[] = [];
+
+    switch (this.exportMode) {
+      case 'ALL':
+        exportReports = reports;
+        break;
+      case 'RANGE':
+        exportReports = this.filterReportsByDateRange(reports);
+        break;
+      default:
+        exportReports = reports;
+    }
+
+    if (exportReports.length === 0) {
+      toast.error('No reports found to export.');
+      return;
+    }
+
+    const data = exportReports.map((row: any, index: number) => {
+      return {
+        '#': index + 1,
+        'Beneficiary ID': row.id || '-',
+        'Name': row.name || 'Unknown',
+        'Age': row.age || '-',
+        'Group': row.group || '-',
+        'District': row.district || '-',
+        'Block': row.block || '-',
+        'Village': row.village || '-',
+        'School': row.school || '-',
+        'AWC': row.awc || '-',
+        'Beneficiary Type': row.beneficiaryType || '-',
+        'Activity Name': row.activity || '-',
+        'Session Name': row.session || '-',
+        'Session Date': row.reportingDate || '-',
+        'Mother\'s Name': row.motherName || 'N/A'
+      };
+    });
+
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+
+    worksheet['!cols'] = Object.keys(data[0] || {}).map((key) => ({
+      wch: Math.max(key.length, ...data.map((row: any) => String(row[key] ?? '').length)) + 2,
+    }));
+
+    const workbook: XLSX.WorkBook = {
+      Sheets: { Reports: worksheet },
+      SheetNames: ['Reports'],
+    };
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+
+    const blob = new Blob(
+      [excelBuffer],
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+      }
+    );
+
+    const groupName = this.activities[this.selectedActivityTab]?.label || 'Activity';
+    saveAs(blob, `activity_sessions_${groupName.toLowerCase().replace(/\s+/g, '_')}.xlsx`);
+  }
+
+  private filterReportsByDateRange(reports: any[]): any[] {
+    const range = (this.exportDateRange || []).filter(Boolean) as Date[];
+    if (range.length === 0) {
+      return reports;
+    }
+    const startDate = range[0];
+    const endDate = range[1] ?? range[0];
+    const startOfStartDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime();
+    const endOfStartDay = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).getTime();
+    const startOfEndDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()).getTime();
+    const endOfEndDay = new Date(
+      endDate.getFullYear(),
+      endDate.getMonth(),
+      endDate.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).getTime();
+    const lowerBound = Math.min(startOfStartDay, startOfEndDay);
+    const upperBound = Math.max(endOfStartDay, endOfEndDay);
+
+    return reports.filter((report) => {
+      const timestamp = this.toDateTimestamp(report.reportingDate);
+      if (timestamp === null) {
+        return false;
+      }
+      return timestamp >= lowerBound && timestamp <= upperBound;
+    });
+  }
+
+  private toDateTimestamp(value: any): number | null {
+    if (!value) return null;
+    if (value instanceof Date) {
+      const time = value.getTime();
+      return Number.isNaN(time) ? null : time;
+    }
+    const text = String(value).trim();
+    if (!text) return null;
+
+    const dateOnlyMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnlyMatch) {
+      const [, year, month, day] = dateOnlyMatch;
+      return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+    }
+
+    const slashMatch = text.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+    if (slashMatch) {
+      const [, day, month, year] = slashMatch;
+      return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+    }
+
+    const parsed = new Date(text);
+    const time = parsed.getTime();
+    return Number.isNaN(time) ? null : time;
+  }
 
   trackByLabel(index: number, item: any): string {
     return item.label;
