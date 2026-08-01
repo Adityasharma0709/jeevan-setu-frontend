@@ -378,6 +378,28 @@ export class DashboardFacade {
               });
               this.activitiesSub.next(mappedActivities);
             }
+
+            if (stats.episodesOfCare && stats.episodesOfCare.length) {
+              const mappedEpisodes = stats.episodesOfCare.map((ep: any) => {
+                let lbl = ep.label;
+                let icon: any = 'user';
+                if (lbl.includes('Adolescents') || lbl.includes('6-9') || lbl.includes('6-10')) {
+                  icon = 'users';
+                }
+                if (lbl === 'Children (6-10 Years)') {
+                  lbl = 'Children (6-9 Years)';
+                }
+                return {
+                  label: lbl,
+                  icon: icon,
+                  male: ep.male || 0,
+                  female: ep.female || 0,
+                  others: ep.others || 0,
+                  total: ep.total || 0
+                };
+              });
+              this.episodesOfCareSub.next(mappedEpisodes);
+            }
           }),
           catchError(() => {
             return of({
@@ -670,45 +692,6 @@ export class DashboardFacade {
     );
 
     this.filteredReports$.subscribe(reports => {
-      const adults = { male: 0, female: 0, others: 0, total: 0 };
-      const adolescents = { male: 0, female: 0, others: 0, total: 0 };
-      const childrenUnder5 = { male: 0, female: 0, others: 0, total: 0 };
-      const children6To10 = { male: 0, female: 0, others: 0, total: 0 };
-
-      reports.forEach((r: any) => {
-        const dobStr = r.child?.dateOfBirth || r.beneficiary?.dateOfBirth;
-        if (!dobStr) return;
-        const dob = new Date(dobStr);
-        if (Number.isNaN(dob.getTime())) return;
-
-        const sessionDateStr = r.date || r.createdAt;
-        const sessionDate = sessionDateStr ? new Date(sessionDateStr) : new Date();
-
-        let ageYears = sessionDate.getFullYear() - dob.getFullYear();
-        const m = sessionDate.getMonth() - dob.getMonth();
-        if (m < 0 || (m === 0 && sessionDate.getDate() < dob.getDate())) ageYears--;
-
-        const genderStr = (r.child?.gender || r.beneficiary?.gender || '').trim().toLowerCase();
-        let targetGroup: any;
-
-        if (ageYears > 19) targetGroup = adults;
-        else if (ageYears >= 10 && ageYears <= 19) targetGroup = adolescents;
-        else if (ageYears < 6) targetGroup = childrenUnder5;
-        else if (ageYears >= 6 && ageYears < 10) targetGroup = children6To10;
-        else return;
-
-        targetGroup.total++;
-        if (genderStr === 'male' || genderStr === 'm') targetGroup.male++;
-        else if (genderStr === 'female' || genderStr === 'f') targetGroup.female++;
-        else targetGroup.others++;
-      });
-
-      this.episodesOfCareSub.next([
-        { label: 'Adults (>19 Years)', icon: 'user', ...adults },
-        { label: 'Adolescents (10-19 Years)', icon: 'users', ...adolescents },
-        { label: 'Children (0-5 Years)', icon: 'user', ...childrenUnder5 },
-        { label: 'Children (6-9 Years)', icon: 'users', ...children6To10 },
-      ]);
       this.filteredReportsCountSub.next(reports.length);
     });
   }

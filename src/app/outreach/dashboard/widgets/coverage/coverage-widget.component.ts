@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
+import { ZardIconComponent } from '@/shared/components/icon';
 import { DashboardFacade } from '../../dashboard.facade';
 import { ZardEpisodesOfCareComponent } from '@/shared/components/episodes-of-care';
 import { ZardActivitySessionsComponent } from '@/shared/components/activity-sessions';
@@ -10,7 +11,14 @@ import { ZardActivitySessionsComponent } from '@/shared/components/activity-sess
 @Component({
   selector: 'app-coverage-widget',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ZardComboboxComponent, ZardEpisodesOfCareComponent, ZardActivitySessionsComponent],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    ZardComboboxComponent, 
+    ZardIconComponent,
+    ZardEpisodesOfCareComponent, 
+    ZardActivitySessionsComponent
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="pt-4">
@@ -41,6 +49,15 @@ import { ZardActivitySessionsComponent } from '@/shared/components/activity-sess
             <div class="flex flex-col gap-1.5 w-48">
                 <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">AWC CENTER</label>
                 <z-combobox [options]="(facade.awcOptions$ | async) || []" [formControl]="facade.awcFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search AWC..." class="w-full"></z-combobox>
+            </div>
+            <div class="flex flex-col gap-1.5 mt-auto">
+                <button type="button" 
+                  (click)="facade.toggleUniqueCount()" 
+                  [class]="(facade.uniqueCount$ | async) ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                  class="px-4 py-2.5 text-xs font-bold border rounded-xl flex items-center gap-2 transition-all shadow-sm h-[38px] mt-auto">
+                  <z-icon [zType]="(facade.uniqueCount$ | async) ? 'circle-check' : 'square'" class="w-4 h-4"></z-icon>
+                  Unique Count
+                </button>
             </div>
         </div>
 
