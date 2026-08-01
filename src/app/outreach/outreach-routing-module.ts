@@ -20,7 +20,7 @@ const routes: Routes = [
       { path: '', component: Dashboard, data: { pageTitle: 'Dashboard' } },
       { path: 'beneficiaries', component: Beneficiaries, data: { pageTitle: 'Beneficiaries' } },
       { path: 'beneficiaries/create', data: { pageTitle: 'Create Beneficiary' }, loadComponent: () => import('./create-beneficiary/create-beneficiary').then(m => m.CreateBeneficiary) },
-      { path: 'beneficiary/:id', data: { pageTitle: 'Beneficiary Profile' }, loadComponent: () => import('./profile-view/profile-view').then(m => m.ProfileView) },
+      { path: 'beneficiary/:id', data: { pageTitle: 'Beneficiary Profile' }, loadComponent: () => import('@/shared/components/beneficiary-detail').then(m => m.BeneficiaryDetail) },
       { path: 'beneficiary/:id/request-update', data: { pageTitle: 'Request Update' }, loadComponent: () => import('./request-update/request-update').then(m => m.RequestUpdate) },
       { path: 'requests', data: { pageTitle: 'Requests' }, loadComponent: () => import('./requests/requests').then(m => m.Requests) },
       { path: 'activity', component: Activity, data: { pageTitle: 'Activity' } },

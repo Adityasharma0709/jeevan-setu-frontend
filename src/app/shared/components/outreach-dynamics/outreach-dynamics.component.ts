@@ -74,26 +74,21 @@ import { ZardCardComponent } from '@/shared/components/card';
             <div class="overflow-x-auto min-h-[300px]">
                 <table z-table class="w-full text-left border-collapse whitespace-nowrap">
                     <thead class="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm">
-                        <tr>
+                          <tr>
                             <th z-table-head class="w-16 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none"><span class="flex items-center justify-center gap-1">#</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Beneficiary ID</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Name</span></th>
-                            <th *ngIf="selectedTab === 1" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Child Name & Age</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Age</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Group</span></th>
-                            
-                            <!-- Analyst Columns -->
-                            <th *ngIf="role === 'analyst'" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Gender</span></th>
-                            <th *ngIf="role === 'analyst'" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Guardian Name</span></th>
-                            <th *ngIf="role === 'analyst'" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Location</span></th>
-                            <th *ngIf="role === 'analyst'" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Project</span></th>
-                            <th *ngIf="role === 'analyst'" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Beneficiary Type</span></th>
-
-                            <!-- Outreach Columns -->
-                            <th *ngIf="role === 'outreach'" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">AWC</span></th>
-                            <th *ngIf="role === 'outreach'" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Activity</span></th>
-                            <th *ngIf="role === 'outreach'" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Session</span></th>
-                            <th *ngIf="role === 'outreach'" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Date</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">District</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Block</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Village</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">School</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">AWC</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Beneficiary Type</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Last Session Name</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Last Session Date</span></th>
+                            <th *ngIf="selectedTab === 2 || selectedTab === 4 || selectedTab === 5 || selectedTab === 6" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Mother's Name</span></th>
                         </tr>
                     </thead>
                     <tbody z-table-body class="divide-y divide-slate-100 text-[13px]" *ngIf="{ page: page, total: totalRecords } as state">
@@ -115,56 +110,49 @@ import { ZardCardComponent } from '@/shared/components/card';
                                 <td z-table-cell class="px-3 py-3 font-bold text-slate-800">
                                   {{ row.name }}
                                 </td>
-                                <td *ngIf="selectedTab === 1" z-table-cell class="px-3 py-3 text-slate-700">
-                                  {{ row.childNameAndAge || '-' }}
-                                </td>
                                 <td z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.age || '-' }}
                                 </td>
                                 <td z-table-cell class="px-3 py-3 font-medium text-slate-700">
                                   {{ row.group }}
                                 </td>
-
-                                <!-- Analyst Fields -->
-                                <td *ngIf="role === 'analyst'" z-table-cell class="px-3 py-3 text-slate-700">
-                                  {{ row.gender || '-' }}
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.district || '-' }}
                                 </td>
-                                <td *ngIf="role === 'analyst'" z-table-cell class="px-3 py-3 text-slate-700">
-                                  {{ row.guardianName || '-' }}
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.block || '-' }}
                                 </td>
-                                <td *ngIf="role === 'analyst'" z-table-cell class="px-3 py-3 text-slate-700">
-                                  {{ row.awc }}
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.village || '-' }}
                                 </td>
-                                <td *ngIf="role === 'analyst'" z-table-cell class="px-3 py-3 font-semibold text-slate-800">
-                                  {{ row.project || '-' }}
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.school || '-' }}
                                 </td>
-                                <td *ngIf="role === 'analyst'" z-table-cell class="px-3 py-3 text-slate-700">
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.awc || '-' }}
+                                </td>
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.beneficiaryType || '-' }}
                                 </td>
-
-                                <!-- Outreach Fields -->
-                                <td *ngIf="role === 'outreach'" z-table-cell class="px-3 py-3 text-slate-700">
-                                  {{ row.awc }}
-                                </td>
-                                <td *ngIf="role === 'outreach'" z-table-cell class="px-3 py-3 text-slate-700">
-                                  {{ row.activity || '-' }}
-                                </td>
-                                <td *ngIf="role === 'outreach'" z-table-cell class="px-3 py-3 text-slate-700">
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.session || '-' }}
                                 </td>
-                                <td *ngIf="role === 'outreach'" z-table-cell class="px-3 py-3 whitespace-nowrap text-slate-700">
-                                  {{ row.reportingDate }}
+                                <td z-table-cell class="px-3 py-3 whitespace-nowrap text-slate-700">
+                                  {{ row.reportingDate || '-' }}
+                                </td>
+                                <td *ngIf="selectedTab === 2 || selectedTab === 4 || selectedTab === 5 || selectedTab === 6" z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.motherName || '-' }}
                                 </td>
                             </tr>
                             <tr z-table-row *ngIf="dataRecords.length === 0">
-                                <td z-table-cell colspan="10" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
+                                <td z-table-cell [attr.colspan]="(selectedTab === 2 || selectedTab === 4 || selectedTab === 5 || selectedTab === 6) ? 14 : 13" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
                                     No reports found for this group.
                                 </td>
                             </tr>
                         </ng-container>
                         <ng-template #loadingTable>
                             <tr z-table-row>
-                                <td z-table-cell colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                <td z-table-cell [attr.colspan]="(selectedTab === 2 || selectedTab === 4 || selectedTab === 5 || selectedTab === 6) ? 14 : 13" class="px-4 py-8 text-center text-gray-500">
                                     <z-icon zType="loader-circle" class="w-6 h-6 animate-spin mx-auto text-blue-500"></z-icon>
                                     <p class="mt-2 font-medium text-sm">Loading records...</p>
                                 </td>

@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
 import { DashboardFacade } from '../../dashboard.facade';
-import { EpisodeCardComponent } from '../../components/episode-card/episode-card.component';
+import { ZardEpisodesOfCareComponent } from '@/shared/components/episodes-of-care';
+import { ZardActivitySessionsComponent } from '@/shared/components/activity-sessions';
 
 @Component({
   selector: 'app-coverage-widget',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ZardComboboxComponent, EpisodeCardComponent],
+  imports: [CommonModule, ReactiveFormsModule, ZardComboboxComponent, ZardEpisodesOfCareComponent, ZardActivitySessionsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="pt-4">
@@ -42,32 +44,34 @@ import { EpisodeCardComponent } from '../../components/episode-card/episode-card
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8 mb-8">
-            <div class="flex items-start justify-between mb-8 pb-6 border-b border-gray-100">
-                <div class="flex items-center gap-4">
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800">Episodes of Care</h3>
-                        <p class="text-sm text-gray-500 font-medium">Total Episodes</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="text-4xl font-black text-gray-800 tracking-tight">{{facade.filteredReportsCount$ | async}}</div>
-                    <div class="text-xs font-bold text-gray-500 tracking-wide mt-1">reports logged</div>
-                </div>
-            </div>
+        <z-episodes-of-care 
+          [totalReports]="facade.filteredReportsCount$ | async" 
+          [episodes]="(facade.episodesOfCare$ | async) || []"
+        ></z-episodes-of-care>
 
-            <div class="mb-5 text-xs text-gray-400 font-bold uppercase tracking-widest pl-1">Age & Gender Distribution</div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <app-episode-card *ngFor="let item of (facade.episodesOfCare$ | async); trackBy: trackByLabel" [data]="item"></app-episode-card>
-            </div>
-        </div>
+        <z-activity-sessions
+          [activityOptions]="(facade.activityOptions$ | async) || []"
+          [sessionOptions]="(facade.sessionOptions$ | async) || []"
+          [activityFilter]="facade.activityFilter"
+          [sessionFilter]="facade.sessionFilter"
+          [activities]="(facade.activities$ | async) || []"
+          [selectedActivityTab]="((facade.selectedActivityTab$ | async) ?? 0)"
+          [activityTableData]="(facade.activityTableData$ | async)"
+          [currentActivityPage]="((facade.currentActivityPage$ | async) ?? 0)"
+          [totalActivityRecords]="((facade.totalActivityRecords$ | async) ?? 0)"
+          [selectedActivityTab]="((facade.selectedActivityTab$ | async) ?? 0)"
+          (tabChange)="facade.selectActivityTab($event)"
+          (pageChange)="facade.goToActivityPage($event)"
+          (beneficiaryClick)="redirectToBeneficiary($event)"
+        ></z-activity-sessions>
     </div>
   `
 })
 export class CoverageWidgetComponent {
   facade = inject(DashboardFacade);
+  router = inject(Router);
 
-  trackByLabel(index: number, item: any): string {
-    return item.label;
+  redirectToBeneficiary(benId: number) {
+    this.router.navigate(['/outreach/beneficiary', benId]);
   }
 }

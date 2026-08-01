@@ -1,9 +1,17 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EpisodeOfCare } from '../../models/dashboard.types';
+
+export interface EpisodeOfCare {
+  label: string;
+  male: number;
+  female: number;
+  others: number;
+  total: number;
+  icon?: any;
+}
 
 @Component({
-  selector: 'app-episode-card',
+  selector: 'z-episode-card',
   standalone: true,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,7 +58,7 @@ import { EpisodeOfCare } from '../../models/dashboard.types';
     </div>
   `
 })
-export class EpisodeCardComponent {
+export class ZardEpisodeCardComponent {
   @Input({ required: true }) data!: EpisodeOfCare;
 
   get conicGradient(): string {
@@ -63,5 +71,41 @@ export class EpisodeCardComponent {
     const stop1 = pMale;
     const stop2 = pMale + pFemale;
     return `conic-gradient(#0EA5E9 0% ${stop1}%, #F43F5E ${stop1}% ${stop2}%, #F59E0B ${stop2}% 100%)`;
+  }
+}
+
+@Component({
+  selector: 'z-episodes-of-care',
+  standalone: true,
+  imports: [CommonModule, ZardEpisodeCardComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8 mb-8 animate-fadeIn">
+        <div class="flex items-start justify-between mb-8 pb-6 border-b border-gray-100">
+            <div class="flex items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Episodes of Care</h3>
+                    <p class="text-sm text-gray-500 font-medium">Total Episodes</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-4xl font-black text-gray-800 tracking-tight">{{totalReports ?? 0}}</div>
+                <div class="text-xs font-bold text-gray-500 tracking-wide mt-1">reports logged</div>
+            </div>
+        </div>
+
+        <div class="mb-5 text-xs text-gray-400 font-bold uppercase tracking-widest pl-1">Age & Gender Distribution</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <z-episode-card *ngFor="let item of episodes; trackBy: trackByLabel" [data]="item"></z-episode-card>
+        </div>
+    </div>
+  `
+})
+export class ZardEpisodesOfCareComponent {
+  @Input() totalReports: number | null = 0;
+  @Input() episodes: EpisodeOfCare[] | null = [];
+
+  trackByLabel(index: number, item: any): string {
+    return item.label;
   }
 }

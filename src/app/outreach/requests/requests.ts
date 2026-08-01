@@ -4,7 +4,7 @@ import { OutreachService } from '../outreach.service';
 import { toast } from 'ngx-sonner';
 import { catchError, combineLatest, map, Observable, of, shareReplay, startWith, BehaviorSubject, Subject, switchMap } from 'rxjs';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
-import { OutreachPageHeaderComponent } from '../shared/page-header/page-header';
+import { OutreachPageHeaderComponent } from '@/shared/components/page-header';
 import {
     ZardTableComponent,
     ZardTableHeaderComponent,
