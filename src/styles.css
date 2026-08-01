@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 @plugin "tailwindcss-animate";
+
+html, body, app-root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  display: block;
+}
+
 .menu-link {
   @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition;
 }
