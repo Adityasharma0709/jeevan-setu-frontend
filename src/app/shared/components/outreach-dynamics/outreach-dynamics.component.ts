@@ -12,6 +12,9 @@ import {
 } from '@/shared/components/table';
 import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
 import { ZardCardComponent } from '@/shared/components/card';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import { toast } from 'ngx-sonner';
 
 @Component({
   selector: 'z-outreach-dynamics',
@@ -32,8 +35,14 @@ import { ZardCardComponent } from '@/shared/components/card';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8">
-        <div class="flex items-center gap-3 mb-6">
+        <div class="flex items-center justify-between gap-4 mb-6">
             <h2 class="text-xl font-bold text-gray-800">Outreach Dynamics</h2>
+            
+            <button type="button" (click)="exportToExcel()"
+              class="inline-flex items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-2 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] cursor-pointer h-[38px]">
+              <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
+              <span class="text-xs font-semibold leading-none">Download sheet</span>
+            </button>
         </div>
 
         <!-- Cascading Hierarchy Filters -->
@@ -181,10 +190,12 @@ import { ZardCardComponent } from '@/shared/components/card';
   `
 })
 export class OutreachDynamicsComponent {
+  // Rebuild trigger comment
   @Input() role: 'analyst' | 'outreach' = 'outreach';
   @Input() actions: any[] = [];
   @Input() selectedTab: number = 0;
   @Input() records: any[] | null = null;
+  @Input() allRecords: any[] | null = null;
   @Input() page: number = 0;
   @Input() totalRecords: number = 0;
 
@@ -242,5 +253,63 @@ export class OutreachDynamicsComponent {
       return 'info';
     }
     return 'success';
+  }
+
+  exportToExcel() {
+    const reports = this.allRecords || [];
+    if (reports.length === 0) {
+      toast.error('No reports found to export.');
+      return;
+    }
+
+    const showMotherName = this.selectedTab === 2 || this.selectedTab === 4 || this.selectedTab === 5 || this.selectedTab === 6;
+
+    const data = reports.map((row: any, index: number) => {
+      const record: any = {
+        '#': index + 1,
+        'Beneficiary ID': row.id || '-',
+        'Name': row.name || 'Unknown',
+        'Age': row.age || '-',
+        'Group': row.group || '-',
+        'District': row.district || '-',
+        'Block': row.block || '-',
+        'Village': row.village || '-',
+        'School': row.school || '-',
+        'AWC': row.awc || '-',
+        'Beneficiary Type': row.beneficiaryType || '-',
+        'Last Session Name': row.session || '-',
+        'Last Session Date': row.reportingDate || '-'
+      };
+      if (showMotherName) {
+        record["Mother's Name"] = row.motherName || '-';
+      }
+      return record;
+    });
+
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+
+    worksheet['!cols'] = Object.keys(data[0] || {}).map((key) => ({
+      wch: Math.max(key.length, ...data.map((row: any) => String(row[key] ?? '').length)) + 2,
+    }));
+
+    const workbook: XLSX.WorkBook = {
+      Sheets: { Reports: worksheet },
+      SheetNames: ['Reports'],
+    };
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+
+    const blob = new Blob(
+      [excelBuffer],
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+      }
+    );
+
+    const groupName = this.actions[this.selectedTab]?.label || 'Dynamics';
+    saveAs(blob, `outreach_dynamics_${groupName.toLowerCase().replace(/\s+/g, '_')}.xlsx`);
   }
 }

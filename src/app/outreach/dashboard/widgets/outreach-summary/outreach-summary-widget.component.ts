@@ -18,6 +18,7 @@ import { OutreachDynamicsComponent } from '@/shared/components/outreach-dynamics
       [actions]="(facade.outreachActions$ | async) || []"
       [selectedTab]="((facade.selectedActionTab$ | async) ?? 0)"
       [records]="(facade.dynamicsTableData$ | async)"
+      [allRecords]="(facade.allDynamicsRecords$ | async)"
       [page]="((facade.currentPage$ | async) ?? 0)"
       [totalRecords]="((facade.totalDynamicsRecords$ | async) ?? 0)"
       [showHierarchyFilters]="false"
