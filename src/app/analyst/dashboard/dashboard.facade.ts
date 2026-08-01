@@ -85,6 +85,7 @@ export class DashboardFacade {
   currentPage$ = this.currentPageSub.asObservable();
   
   private allDynamicsDataSub = new BehaviorSubject<any[] | null>(null);
+  allDynamicsRecords$ = this.allDynamicsDataSub.asObservable();
   
   dynamicsTableData$!: Observable<any[] | null>;
   totalDynamicsRecords$!: Observable<number>;
