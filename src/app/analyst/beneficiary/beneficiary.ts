@@ -27,7 +27,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardCalendarComponent } from '@/shared/components/calendar/calendar.component';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
-import { OutreachPageHeaderComponent } from '../../outreach/shared/page-header/page-header';
+import { OutreachPageHeaderComponent } from '@/shared/components/page-header';
 import {
   ZardTableBodyComponent,
   ZardTableCellComponent,

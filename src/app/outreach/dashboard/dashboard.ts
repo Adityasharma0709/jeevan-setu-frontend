@@ -4,10 +4,8 @@ import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ZardIconComponent } from '@/shared/components/icon';
 
 import { DashboardFacade } from './dashboard.facade';
-import { DashboardActionsWidgetComponent } from './widgets/dashboard-actions/dashboard-actions-widget.component';
 import { OutreachSummaryWidgetComponent } from './widgets/outreach-summary/outreach-summary-widget.component';
 import { CoverageWidgetComponent } from './widgets/coverage/coverage-widget.component';
-import { ActivitySessionsWidgetComponent } from './widgets/activity-sessions/activity-sessions-widget.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,10 +14,8 @@ import { ActivitySessionsWidgetComponent } from './widgets/activity-sessions/act
     CommonModule, 
     LottieComponent, 
     ZardIconComponent,
-    DashboardActionsWidgetComponent,
     OutreachSummaryWidgetComponent,
-    CoverageWidgetComponent,
-    ActivitySessionsWidgetComponent
+    CoverageWidgetComponent
   ],
   providers: [DashboardFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,

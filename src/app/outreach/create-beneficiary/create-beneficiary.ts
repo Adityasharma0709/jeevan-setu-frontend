@@ -20,7 +20,7 @@ import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/compo
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
-import { OutreachPageHeaderComponent } from '../shared/page-header/page-header';
+import { OutreachPageHeaderComponent } from '@/shared/components/page-header';
 
 import { CreateBeneficiaryPayload, OutreachLocation, OutreachService } from '../outreach.service';
 

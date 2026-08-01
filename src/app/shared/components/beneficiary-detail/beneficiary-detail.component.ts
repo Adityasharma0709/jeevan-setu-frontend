@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, inject, ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,14 +6,13 @@ import { Subject, takeUntil } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 
-import { ManagerBeneficiary, ManagerService } from '../../manager.service';
-import { OutreachService } from '../../../outreach/outreach.service';
+import { ApiService } from '@/core/services/api';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
 
 @Component({
-  selector: 'app-beneficiary-detail',
+  selector: 'z-beneficiary-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -25,20 +24,19 @@ import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/c
     ZardBreadcrumbItemComponent,
     LottieComponent,
   ],
-  templateUrl: './beneficiary-detail.html',
+  templateUrl: './beneficiary-detail.component.html',
 })
-export class BeneficiaryDetail implements OnInit, OnDestroy {
+export class ZardBeneficiaryDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private managerService = inject(ManagerService);
-  private outreachService = inject(OutreachService);
+  private api = inject(ApiService);
   private cdr = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
 
-  readonly isManager = true; // Hardcoded to true for this manager detail component
+  readonly isManager = true; // Enforce read-only details layout (hide all edits)
 
   // Data
-  beneficiary: ManagerBeneficiary | null = null;
+  beneficiary: any = null;
   activityReports: any[] = [];
   reportsLoading = false;
 
@@ -64,6 +62,27 @@ export class BeneficiaryDetail implements OnInit, OnDestroy {
     return !!(this.beneficiary.guardianName || this.beneficiary.qualification || this.beneficiary.religion || this.beneficiary.caste);
   }
 
+  get backRoute(): string {
+    const url = this.router.url;
+    if (url.includes('/outreach')) return '/outreach/beneficiaries';
+    if (url.includes('/manager')) return '/manager/beneficiaries';
+    return '/analyst/beneficiary';
+  }
+
+  get backLabel(): string {
+    const url = this.router.url;
+    if (url.includes('/outreach') || url.includes('/manager')) return 'Beneficiaries';
+    return 'Beneficiary Reports';
+  }
+
+  get rolePrefix(): string {
+    const url = this.router.url;
+    if (url.includes('/outreach')) return 'outreach';
+    if (url.includes('/manager')) return 'manager';
+    if (url.includes('/admin')) return 'admin';
+    return 'analyst';
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
     if (!id) {
@@ -76,19 +95,19 @@ export class BeneficiaryDetail implements OnInit, OnDestroy {
       this.beneficiary = stateData;
       this.loading = false;
       this.cdr.markForCheck();
-      this.loadReports(stateData.id, stateData.projectId ?? undefined);
+      this.loadReports(stateData.id);
       this.loadFamilyMembers(stateData.id);
       return;
     }
 
-    this.managerService.getBeneficiary(Number(id))
+    this.api.get(`${this.rolePrefix}/beneficiary/${id}`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (data) => {
+        next: (data: any) => {
           this.beneficiary = data;
           this.loading = false;
           this.cdr.markForCheck();
-          this.loadReports(data.id, data.projectId ?? undefined);
+          this.loadReports(data.id);
           this.loadFamilyMembers(data.id);
         },
         error: () => {
@@ -105,10 +124,10 @@ export class BeneficiaryDetail implements OnInit, OnDestroy {
   }
 
   private loadFamilyMembers(beneficiaryId: number): void {
-    this.outreachService.getFamilyMembers(beneficiaryId)
+    this.api.get(`${this.rolePrefix}/beneficiary/${beneficiaryId}/family-members`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (members) => {
+        next: (members: any) => {
           if (this.beneficiary?.id === beneficiaryId) {
             this.beneficiary.children = members;
           }
@@ -118,13 +137,13 @@ export class BeneficiaryDetail implements OnInit, OnDestroy {
       });
   }
 
-  private loadReports(beneficiaryId: number, projectId?: number): void {
+  private loadReports(beneficiaryId: number): void {
     this.reportsLoading = true;
-    this.outreachService.getReportsByBeneficiary(beneficiaryId, projectId)
+    this.api.get(`${this.rolePrefix}/beneficiary/${beneficiaryId}/reports`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (reports) => {
-          this.activityReports = reports;
+        next: (reports: any) => {
+          this.activityReports = reports || [];
           this.reportsLoading = false;
           this.cdr.markForCheck();
         },
@@ -145,6 +164,8 @@ export class BeneficiaryDetail implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/manager/beneficiaries']);
+    this.router.navigate([this.backRoute]);
   }
 }
+
+export { ZardBeneficiaryDetailComponent as BeneficiaryDetail };

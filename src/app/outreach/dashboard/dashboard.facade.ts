@@ -164,6 +164,10 @@ export class DashboardFacade {
     }
   }
 
+  goToActivityPage(page: number) {
+    this.currentActivityPageSub.next(page);
+  }
+
   private initDataStreams() {
     const activity$ = this.activityFilter.valueChanges.pipe(startWith(this.activityFilter.value), distinctUntilChanged());
     const session$ = this.sessionFilter.valueChanges.pipe(startWith(this.sessionFilter.value), distinctUntilChanged());

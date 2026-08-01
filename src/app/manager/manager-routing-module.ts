@@ -19,7 +19,7 @@ const routes: Routes = [
       { path: 'requests', component: Requests, data: { pageTitle: 'Requests' } },
       { path: 'outreach-workers', component: OutreachWorkers, data: { pageTitle: 'Outreach Workers' } },
       { path: 'beneficiaries', data: { pageTitle: 'Beneficiaries' }, loadComponent: () => import('./beneficiaries/beneficiaries').then(m => m.Beneficiaries) },
-      { path: 'beneficiaries/:id', data: { pageTitle: 'Beneficiary Details' }, loadComponent: () => import('./beneficiaries/beneficiary-detail/beneficiary-detail').then(m => m.BeneficiaryDetail) },
+      { path: 'beneficiaries/:id', data: { pageTitle: 'Beneficiary Details' }, loadComponent: () => import('@/shared/components/beneficiary-detail').then(m => m.BeneficiaryDetail) },
     ],
   },
 ];

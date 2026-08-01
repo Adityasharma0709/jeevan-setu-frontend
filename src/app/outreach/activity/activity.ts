@@ -19,7 +19,7 @@ import { saveAs } from 'file-saver';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardCalendarComponent } from '@/shared/components/calendar/calendar.component';
-import { OutreachPageHeaderComponent } from '../shared/page-header/page-header';
+import { OutreachPageHeaderComponent } from '@/shared/components/page-header';
 import {
   ZardTableComponent,
   ZardTableHeaderComponent,
