@@ -254,6 +254,26 @@
           </z-form-control>
         </z-form-field>
 
+        <!-- High Risk Pregnant (when Pregnancy = Currently Pregnant) -->
+        <z-form-field *ngIf="showPregnancy && showLmpDate">
+          <label z-form-label>
+            High Risk Pregnant
+            <span
+              class="ml-1 text-xs font-normal text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-full"
+              >Female 14+</span
+            >
+          </label>
+          <z-form-control>
+            <z-combobox
+              formControlName="highRiskPregnant"
+              [options]="highRiskPregnantOptions"
+              [searchable]="false"
+              placeholder="Select option"
+              zWidth="full"
+            />
+          </z-form-control>
+        </z-form-field>
+
         <!-- Date (when Pregnancy = Still Birth or Miscarriage outcome) -->
         <z-form-field *ngIf="showPregnancy && showPregnancyDate">
           <label z-form-label>

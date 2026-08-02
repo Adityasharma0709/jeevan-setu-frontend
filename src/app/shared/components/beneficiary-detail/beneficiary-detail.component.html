@@ -647,6 +647,7 @@
                         class="bg-pink-50 text-pink-700 border-pink-200 px-2 py-0.5 rounded-full text-[10px] font-bold border"
                       >
                         {{ r.reportData.pregnancyStatus === 'Currently Pregnant' || r.reportData.pregnancyStatus === 'Yes' ? 'Pregnant' : r.reportData.pregnancyStatus }}
+                        <span *ngIf="(r.reportData.pregnancyStatus === 'Currently Pregnant' || r.reportData.pregnancyStatus === 'Yes') && r.reportData.highRiskPregnant === 'Yes'" class="text-[9px] font-black text-red-600 ml-1 uppercase bg-red-50 border border-red-200 px-1 rounded">High Risk</span>
                       </span>
                       <span
                         *ngIf="r.reportData?.samMamStatus"
@@ -761,6 +762,7 @@
                   class="bg-pink-50 text-pink-700 border-pink-200 px-2 py-0.5 rounded-full text-[10px] font-bold border"
                 >
                   {{ r.reportData.pregnancyStatus === 'Currently Pregnant' || r.reportData.pregnancyStatus === 'Yes' ? 'Pregnant' : r.reportData.pregnancyStatus }}
+                  <span *ngIf="(r.reportData.pregnancyStatus === 'Currently Pregnant' || r.reportData.pregnancyStatus === 'Yes') && r.reportData.highRiskPregnant === 'Yes'" class="text-[9px] font-black text-red-600 ml-1 uppercase bg-red-50 border border-red-200 px-1 rounded">High Risk</span>
                 </span>
                 <span
                   *ngIf="r.reportData?.samMamStatus"
