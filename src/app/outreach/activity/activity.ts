@@ -619,6 +619,8 @@ export class Activity {
 
       row['EDD'] = reportData?.edd ?? '-';
 
+      row['High Risk Pregnant'] = (reportData?.pregnancyStatus === 'Currently Pregnant' || reportData?.pregnancyStatus === 'Yes') ? (reportData?.highRiskPregnant ?? 'No') : '-';
+
       row['Pregnancy Event Date'] = (reportData?.pregnancyStatus === 'Still Birth' || reportData?.pregnancyStatus === 'Miscarriage/Aborted') ? (reportData?.date ?? '-') : '-';
 
       row['Date of Delivery'] = reportData?.dod ?? '-';

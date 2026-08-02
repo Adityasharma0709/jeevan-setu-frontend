@@ -65,6 +65,7 @@ export class ReportActivity {
     pregnancyOutcome: [''],
     lmpDate: [''],
     edd: [''],
+    highRiskPregnant: ['No'],
     pregnancyDate: [''],
     deliveryDate: [''],
     babyDetails: this.fb.group({
@@ -133,6 +134,11 @@ export class ReportActivity {
   pregnancyStatusOptions: ZardComboboxOption[] = [
     { value: 'No', label: 'No' },
     { value: 'Currently Pregnant', label: 'Currently Pregnant' },
+  ];
+
+  highRiskPregnantOptions: ZardComboboxOption[] = [
+    { value: 'No', label: 'No' },
+    { value: 'Yes', label: 'Yes' },
   ];
 
   pregnancyOutcomeOptions: ZardComboboxOption[] = [
@@ -489,6 +495,7 @@ export class ReportActivity {
       if (reportData.pregnancyStatus === 'Currently Pregnant') {
         if (raw.lmpDate) reportData.lmpDate = raw.lmpDate;
         if (raw.edd) reportData.edd = raw.edd;
+        if (raw.highRiskPregnant) reportData.highRiskPregnant = raw.highRiskPregnant;
       } else if ((reportData.pregnancyStatus === 'Still Birth' || reportData.pregnancyStatus === 'Miscarriage/Aborted') && raw.pregnancyDate) {
         reportData.date = raw.pregnancyDate;
       } else if (reportData.pregnancyStatus === 'Baby Delivered' && raw.deliveryDate) {
@@ -673,6 +680,7 @@ export class ReportActivity {
           pregnancyOutcome: formOutcome,
           lmpDate: reportData.lmpDate || '',
           edd: reportData.edd || '',
+          highRiskPregnant: reportData.highRiskPregnant || 'No',
           pregnancyDate: reportData.date || '',
           deliveryDate: reportData.dod || '',
           babyDetails: reportData.babyDetails || { name: '', gender: '', relation: 'Son/Daughter' },

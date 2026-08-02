@@ -534,6 +534,7 @@
                 </div>
                 <span *ngIf="(report.reportData.pregnancyStatus === 'Currently Pregnant' || report.reportData.pregnancyStatus === 'Yes') && report.reportData?.lmpDate" class="font-bold italic">LMP: {{ report.reportData.lmpDate }}</span>
                 <span *ngIf="(report.reportData.pregnancyStatus === 'Currently Pregnant' || report.reportData.pregnancyStatus === 'Yes') && report.reportData?.edd" class="font-bold italic">EDD: {{ report.reportData.edd }}</span>
+                <span *ngIf="(report.reportData.pregnancyStatus === 'Currently Pregnant' || report.reportData.pregnancyStatus === 'Yes') && report.reportData?.highRiskPregnant === 'Yes'" class="font-black text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded text-[8px] tracking-wide uppercase max-w-max mt-0.5">High Risk Pregnant</span>
                 <span *ngIf="(report.reportData.pregnancyStatus === 'Still Birth' || report.reportData.pregnancyStatus === 'Miscarriage/Aborted') && report.reportData?.date" class="font-bold italic">Date: {{ report.reportData.date }}</span>
                 <span *ngIf="report.reportData.pregnancyStatus === 'Baby Delivered' && report.reportData?.dod" class="font-bold italic">DOD: {{ report.reportData.dod }}</span>
                 <span *ngIf="report.reportData.pregnancyStatus === 'Baby Delivered' && report.reportData?.babyDetails?.name" class="font-bold italic">Baby: {{ report.reportData.babyDetails.name }} ({{ report.reportData.babyDetails.gender }})</span>
