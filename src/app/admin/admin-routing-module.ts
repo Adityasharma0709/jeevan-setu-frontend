@@ -9,8 +9,9 @@ import { Activities } from './activities/activities';
 import { Sessions } from './sessions/sessions';
 import { Profile } from './profile/profile';
 import { Requests } from './requests/requests';
-import { CreateAwcComponent } from './create-awc/create-awc';
 import { AssignOutreachComponent } from './assign-outreach/assign-outreach';
+import { ClusterComponent } from './cluster/cluster';
+import { InstitutionsComponent } from './institutions/institutions';
 
 const routes: Routes = [
   {
@@ -62,11 +63,18 @@ const routes: Routes = [
         data: { pageTitle: 'Profile' },
       },
       
-      // AWC Management
+      // Cluster Management
       {
-        path: 'awcs',
-        component: CreateAwcComponent,
-        data: { pageTitle: 'AWC Management' },
+        path: 'cluster',
+        component: ClusterComponent,
+        data: { pageTitle: 'Cluster Management' },
+      },
+
+      // Institution Management
+      {
+        path: 'institutions',
+        component: InstitutionsComponent,
+        data: { pageTitle: 'Institution Management' },
       },
 
       // Assign Outreach

@@ -70,11 +70,18 @@
             @if (!sidebarCollapsed) { <span class="flex-1">Assign Outreach</span> }
           </a>
 
-          <!-- AWCs -->
-          <a routerLink="/admin/awcs" routerLinkActive="active-link" class="menu-link"
-            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'AWCs' : ''" zPosition="right" (click)="closeSidebar()">
-            <z-icon zType="map-pin" [class]="sidebarCollapsed ? '' : 'mr-3 text-red-500'" />
-            @if (!sidebarCollapsed) { <span class="flex-1">AWCs</span> }
+          <!-- Clusters -->
+          <a routerLink="/admin/cluster" routerLinkActive="active-link" class="menu-link"
+            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Clusters' : ''" zPosition="right" (click)="closeSidebar()">
+            <z-icon zType="layers" [class]="sidebarCollapsed ? '' : 'mr-3 text-red-500'" />
+            @if (!sidebarCollapsed) { <span class="flex-1">Clusters</span> }
+          </a>
+
+          <!-- Institutions -->
+          <a routerLink="/admin/institutions" routerLinkActive="active-link" class="menu-link"
+            [class.justify-center]="sidebarCollapsed" [zTooltip]="sidebarCollapsed ? 'Institutions' : ''" zPosition="right" (click)="closeSidebar()">
+            <z-icon zType="house" [class]="sidebarCollapsed ? '' : 'mr-3 text-red-500'" />
+            @if (!sidebarCollapsed) { <span class="flex-1">Institutions</span> }
           </a>
 
 

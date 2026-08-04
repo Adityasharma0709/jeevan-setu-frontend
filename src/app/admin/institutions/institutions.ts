@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, inject, signal, TemplateRef, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -15,7 +15,6 @@ import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardFormFieldComponent, ZardFormControlComponent } from '@/shared/components/form';
 import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
-// import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
 import { 
   ZardTableComponent, 
   ZardTableHeaderComponent, 
@@ -39,11 +38,12 @@ interface ProjectModel {
   status?: string;
 }
 
-interface AwcModel {
+interface InstitutionModel {
   id: number;
   projectId: number;
   locationCode: string;
-  awcName?: string;
+  name?: string;       // Dynamic: represents awcName, schoolName or healthCenterName
+  awcName?: string;    // Backend returns this for AWCs
   stateId: number;
   districtId?: number;
   stateName?: string;
@@ -78,7 +78,7 @@ interface VillageModel {
 }
 
 @Component({
-  selector: 'app-create-awc',
+  selector: 'app-institutions',
   standalone: true,
   imports: [
     CommonModule,
@@ -88,8 +88,6 @@ interface VillageModel {
     ZardFormFieldComponent,
     ZardFormControlComponent,
     ZardComboboxComponent,
-    // ZardBreadcrumbComponent,
-    // ZardBreadcrumbItemComponent,
     ZardTableComponent,
     ZardTableHeaderComponent,
     ZardTableBodyComponent,
@@ -100,21 +98,24 @@ interface VillageModel {
     ZardIconComponent,
     ZardSwitchComponent
   ],
-  templateUrl: './create-awc.html',
+  templateUrl: './institutions.html',
 })
-export class CreateAwcComponent implements OnInit {
+export class InstitutionsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   public readonly dialogService = inject(ZardDialogService);
 
-  @ViewChild('awcDialog') awcDialog!: TemplateRef<any>;
+  @ViewChild('institutionDialog') institutionDialog!: TemplateRef<any>;
   public dialogRef!: ZardDialogRef<any>;
 
   readonly isSubmitting = signal(false);
   readonly isLoading = signal(false);
-  readonly isAllIndia = signal(false);
+  
+  // Navigation & Tabs
+  readonly activeTab = signal<'AWC' | 'HEALTH_CENTER' | 'SCHOOL'>('AWC');
+  readonly activeTab$ = toObservable(this.activeTab);
   
   form: FormGroup;
   isEditMode = signal(false);
@@ -139,9 +140,9 @@ export class CreateAwcComponent implements OnInit {
   public readonly searchControl = new FormControl('');
   public readonly statusLoadingIds = signal<Set<number>>(new Set());
   
-  locations$!: Observable<AwcModel[]>;
+  institutions$!: Observable<InstitutionModel[]>;
   pager$!: Observable<{
-    items: AwcModel[];
+    items: InstitutionModel[];
     page: number;
     pageSize: number;
     total: number;
@@ -149,7 +150,10 @@ export class CreateAwcComponent implements OnInit {
     from: number;
     to: number;
   }>;
-  allLocations: AwcModel[] = [];
+  
+  allAwcs: InstitutionModel[] = [];
+  allHealthCenters: InstitutionModel[] = [];
+  allSchools: InstitutionModel[] = [];
 
   constructor() {
     this.form = this.fb.group({
@@ -158,7 +162,8 @@ export class CreateAwcComponent implements OnInit {
       districtId: [null, [Validators.required]],
       block: ['', [Validators.required]],
       village: ['', [Validators.required]],
-      awcName: ['', [Validators.required]],
+      type: ['AWC', [Validators.required]],
+      name: ['', [Validators.required]],
       locationCode: ['', [Validators.required]]
     });
   }
@@ -174,9 +179,10 @@ export class CreateAwcComponent implements OnInit {
       map(projects => projects.map(p => ({ label: p.name, value: String(p.id) })))
     );
 
-    // 2. Load and Filter AWCs
-    this.locations$ = combineLatest([
+    // 2. Load and Filter Institutions dynamically based on Active Tab
+    this.institutions$ = combineLatest([
       this.refresh$.pipe(startWith(void 0)),
+      this.activeTab$,
       this.searchControl.valueChanges.pipe(
         startWith(''),
         debounceTime(300),
@@ -184,15 +190,29 @@ export class CreateAwcComponent implements OnInit {
       )
     ]).pipe(
       tap(() => this.goToPage(1)),
-      switchMap(([_, query]) => {
+      switchMap(([_, tab, query]) => {
         this.isLoading.set(true);
-        return (this.api.get('locations') as Observable<AwcModel[]>).pipe(
-          map(locs => {
-            this.allLocations = locs || [];
-            const filtered = this.allLocations.filter(loc => {
-              const q = (query || '').toLowerCase();
+        
+        let endpoint = 'locations';
+        if (tab === 'SCHOOL') endpoint = 'locations/schools';
+        else if (tab === 'HEALTH_CENTER') endpoint = 'locations/health-centers';
+        
+        return (this.api.get(endpoint) as Observable<InstitutionModel[]>).pipe(
+          map(items => {
+            const list = (items || []).map(item => ({
+              ...item,
+              name: item.name || item.awcName // Normalize AWC / School / HC name
+            }));
+            
+            // Cache lists to helper arrays for code generation lookup
+            if (tab === 'AWC') this.allAwcs = list;
+            else if (tab === 'SCHOOL') this.allSchools = list;
+            else if (tab === 'HEALTH_CENTER') this.allHealthCenters = list;
+            
+            const q = (query || '').toLowerCase();
+            const filtered = list.filter(loc => {
               return (
-                (loc.awcName?.toLowerCase() || '').includes(q) ||
+                (loc.name?.toLowerCase() || '').includes(q) ||
                 (loc.locationCode?.toLowerCase() || '').includes(q) ||
                 (loc.village?.toLowerCase() || '').includes(q) ||
                 (loc.block?.toLowerCase() || '').includes(q) ||
@@ -206,29 +226,29 @@ export class CreateAwcComponent implements OnInit {
           }),
           catchError(() => {
             this.isLoading.set(false);
-            return of([] as AwcModel[]);
+            return of([] as InstitutionModel[]);
           })
         );
       }),
       shareReplay({ bufferSize: 1, refCount: true })
     );
 
-    // 2.1 Pagination logic
-    this.pager$ = combineLatest([this.locations$, this.page$]).pipe(
-      map(([locations, page]) => {
-        const total = (locations || []).length;
+    // Pagination VM mapping
+    this.pager$ = combineLatest([this.institutions$, this.page$]).pipe(
+      map(([items, page]) => {
+        const total = (items || []).length;
         const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
         const safePage = Math.min(Math.max(1, page), totalPages);
 
         const startIndex = (safePage - 1) * this.pageSize;
         const endIndexExclusive = Math.min(startIndex + this.pageSize, total);
-        const items = (locations || []).slice(startIndex, endIndexExclusive);
+        const slicedItems = (items || []).slice(startIndex, endIndexExclusive);
 
         const from = total === 0 ? 0 : startIndex + 1;
         const to = total === 0 ? 0 : endIndexExclusive;
 
         return {
-          items,
+          items: slicedItems,
           page: safePage,
           pageSize: this.pageSize,
           total,
@@ -244,7 +264,7 @@ export class CreateAwcComponent implements OnInit {
       shareReplay({ bufferSize: 1, refCount: true })
     );
 
-    // 3. Dynamic State Options based on Selected Project
+    // 3. States options dependent on selected Project
     this.form.get('projectId')!.valueChanges.pipe(
       startWith(undefined),
       switchMap(() => {
@@ -265,7 +285,7 @@ export class CreateAwcComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe();
 
-    // 4. Dynamic District Options based on Selected State
+    // 4. District options
     this.districtOptions$ = this.form.get('stateId')!.valueChanges.pipe(
       startWith(undefined),
       switchMap(() => {
@@ -278,8 +298,7 @@ export class CreateAwcComponent implements OnInit {
       shareReplay({ bufferSize: 1, refCount: true })
     );
 
-    
-    // 5. Dynamic Block Options
+    // 5. Block options
     this.blockOptions$ = this.form.get('districtId')!.valueChanges.pipe(
       startWith(undefined),
       switchMap(() => {
@@ -298,7 +317,7 @@ export class CreateAwcComponent implements OnInit {
       shareReplay({ bufferSize: 1, refCount: true })
     );
 
-    // 6. Dynamic Village Options
+    // 6. Village options
     this.villageOptions$ = combineLatest([
       this.form.get('districtId')!.valueChanges.pipe(startWith(undefined)),
       this.form.get('block')!.valueChanges.pipe(startWith(undefined))
@@ -314,33 +333,41 @@ export class CreateAwcComponent implements OnInit {
       shareReplay({ bufferSize: 1, refCount: true })
     );
 
-
-    // Auto-update code and AWC Name
+    // Auto-update code and default name previews
     combineLatest([
-        this.form.get('stateId')!.valueChanges.pipe(startWith(null)),
-        this.form.get('districtId')!.valueChanges.pipe(startWith(null)),
-        this.form.get('village')!.valueChanges.pipe(startWith(''))
+      this.form.get('type')!.valueChanges.pipe(startWith('AWC')),
+      this.form.get('village')!.valueChanges.pipe(startWith(''))
     ]).pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe(([stateId, districtId, village]) => {
-        if (!this.isEditMode()) {
-            this.updateAutoLocationCode();
-        }
-        
-        const awcCtrl = this.form.get('awcName');
-        if (village && (!awcCtrl?.value || awcCtrl?.value === `AWC ${village}`)) {
-            awcCtrl?.setValue(`AWC ${village}`, { emitEvent: false });
-        }
+    .subscribe(([type, village]) => {
+      if (!this.isEditMode()) {
+        this.updateAutoLocationCode();
+      }
+      
+      const nameCtrl = this.form.get('name');
+      const prefixLabel = type === 'AWC' ? 'AWC' : type === 'SCHOOL' ? 'School' : 'Health Center';
+      
+      if (village && (!nameCtrl?.value || nameCtrl?.value.startsWith('AWC ') || nameCtrl?.value.startsWith('School ') || nameCtrl?.value.startsWith('Health Center '))) {
+        nameCtrl?.setValue(`${prefixLabel} ${village}`, { emitEvent: false });
+      }
     });
+  }
+
+  selectTab(tab: 'AWC' | 'HEALTH_CENTER' | 'SCHOOL') {
+    this.activeTab.set(tab);
+    this.goToPage(1);
+    this.refresh$.next();
   }
 
   openCreateDialog() {
     this.isEditMode.set(false);
     this.editingId = null;
-    this.form.reset();
+    this.form.reset({
+      type: this.activeTab()
+    });
     this.updateAutoLocationCode();
     this.dialogRef = this.dialogService.create({ 
-      zTitle: 'Create New AWC',
-      zContent: this.awcDialog,
+      zTitle: `Create New ${this.getTypeLabel(this.form.value.type)}`,
+      zContent: this.institutionDialog,
       zWidth: '500px',
       zOkText: 'Create',
       zOnOk: () => {
@@ -350,7 +377,7 @@ export class CreateAwcComponent implements OnInit {
     });
   }
 
-  openEditDialog(loc: AwcModel) {
+  openEditDialog(loc: InstitutionModel) {
     this.isEditMode.set(true);
     this.editingId = loc.id;
     this.form.patchValue({
@@ -359,12 +386,13 @@ export class CreateAwcComponent implements OnInit {
       districtId: loc.districtId,
       block: loc.block,
       village: loc.village,
-      awcName: loc.awcName,
+      type: this.activeTab(),
+      name: loc.name,
       locationCode: loc.locationCode
     });
     this.dialogRef = this.dialogService.create({ 
-      zTitle: 'Edit AWC',
-      zContent: this.awcDialog,
+      zTitle: `Edit ${this.getTypeLabel(this.activeTab())}`,
+      zContent: this.institutionDialog,
       zWidth: '500px',
       zOkText: 'Update',
       zOnOk: () => {
@@ -382,7 +410,7 @@ export class CreateAwcComponent implements OnInit {
     const id = value ? Number(value) : null;
     this.form.get('stateId')?.setValue(id);
     if (!this.isEditMode()) {
-        this.form.get('districtId')?.setValue(null);
+      this.form.get('districtId')?.setValue(null);
     }
   }
 
@@ -405,13 +433,32 @@ export class CreateAwcComponent implements OnInit {
     this.form.get('village')?.setValue(value);
   }
 
-  private updateAutoLocationCode(): void {
-    const prefix = 'AWC';
-    let maxValue = 0;
+  onFormTypeSelect(type: 'AWC' | 'HEALTH_CENTER' | 'SCHOOL') {
+    this.form.get('type')?.setValue(type);
+    this.updateAutoLocationCode();
+  }
 
-    for (const loc of this.allLocations) {
-      const code = (loc.locationCode || '').toUpperCase();
-      const match = code.match(/^AWC(\d+)$/);
+  private updateAutoLocationCode(): void {
+    const type = this.form.get('type')?.value || 'AWC';
+    let prefix = 'AWC';
+    let cacheList: InstitutionModel[] = [];
+
+    if (type === 'SCHOOL') {
+      prefix = 'SCH';
+      cacheList = this.allSchools;
+    } else if (type === 'HEALTH_CENTER') {
+      prefix = 'HC';
+      cacheList = this.allHealthCenters;
+    } else {
+      cacheList = this.allAwcs;
+    }
+
+    let maxValue = 0;
+    const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
+
+    for (const item of cacheList) {
+      const code = (item.locationCode || '').toUpperCase();
+      const match = code.match(regex);
       if (match) {
         const val = parseInt(match[1], 10);
         if (val > maxValue) maxValue = val;
@@ -419,7 +466,7 @@ export class CreateAwcComponent implements OnInit {
     }
 
     const nextValue = maxValue + 1;
-    const nextCode = `${prefix}${nextValue.toString().padStart(2, '0')}`;
+    const nextCode = `${prefix}${nextValue.toString()}`;
     this.form.get('locationCode')?.setValue(nextCode, { emitEvent: false });
   }
 
@@ -431,19 +478,39 @@ export class CreateAwcComponent implements OnInit {
     }
 
     this.isSubmitting.set(true);
-    const payload = this.form.value;
+    const formVal = this.form.value;
+    const tab = formVal.type;
+
+    let payload: any = {
+      projectId: formVal.projectId,
+      stateId: formVal.stateId,
+      districtId: formVal.districtId,
+      block: formVal.block,
+      village: formVal.village,
+      type: formVal.type,
+      name: formVal.name,
+      locationCode: formVal.locationCode
+    };
 
     let request: Observable<any>;
 
     if (this.isEditMode()) {
-      request = this.api.put(`locations/${this.editingId}`, payload);
+      let endpoint = `locations/${this.editingId}`;
+      if (tab === 'SCHOOL') endpoint = `locations/schools/${this.editingId}`;
+      else if (tab === 'HEALTH_CENTER') endpoint = `locations/health-centers/${this.editingId}`;
+      
+      // The update payload on backend maps `awcName` for compatibility
+      payload.awcName = formVal.name;
+      request = this.api.put(endpoint, payload);
     } else {
-      request = this.api.post('locations', payload);
+      // Unified endpoint handles institution creation
+      request = this.api.post('locations/institutions', payload);
     }
 
     request.subscribe({
-      next: (res) => {
-        const msg = this.isAllIndia() ? res.message : (this.isEditMode() ? 'AWC Updated Successfully' : 'AWC Created Successfully');
+      next: () => {
+        const label = this.getTypeLabel(tab);
+        const msg = this.isEditMode() ? `${label} Updated Successfully` : `${label} Created Successfully`;
         toast.success(msg);
         this.isSubmitting.set(false);
         this.dialogRef.close();
@@ -456,30 +523,34 @@ export class CreateAwcComponent implements OnInit {
     });
   }
 
-  toggleAwcStatus(loc: AwcModel) {
-    const newStatus = loc.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+  toggleStatus(item: InstitutionModel) {
+    const newStatus = item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const tab = this.activeTab();
     
     this.statusLoadingIds.update(set => {
       const next = new Set(set);
-      next.add(loc.id);
+      next.add(item.id);
       return next;
     });
+
+    let endpoint = `locations/${item.id}/status`;
+    if (tab === 'SCHOOL') endpoint = `locations/schools/${item.id}/status`;
+    else if (tab === 'HEALTH_CENTER') endpoint = `locations/health-centers/${item.id}/status`;
     
-    // Use the correct location update endpoint: locations/:id
-    this.api.put(`locations/${loc.id}`, { status: newStatus }).subscribe({
+    this.api.patch(endpoint, { status: newStatus }).subscribe({
       next: () => {
         this.statusLoadingIds.update(set => {
           const next = new Set(set);
-          next.delete(loc.id);
+          next.delete(item.id);
           return next;
         });
-        toast.success(`AWC ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully`);
+        toast.success(`${this.getTypeLabel(tab)} status updated successfully`);
         this.refresh$.next();
       },
       error: (err) => {
         this.statusLoadingIds.update(set => {
           const next = new Set(set);
-          next.delete(loc.id);
+          next.delete(item.id);
           return next;
         });
         toast.error(err?.error?.message || 'Failed to update status');
@@ -497,6 +568,12 @@ export class CreateAwcComponent implements OnInit {
       if (control.errors?.['required']) return 'This field is required';
     }
     return '';
+  }
+
+  getTypeLabel(type: string): string {
+    if (type === 'SCHOOL') return 'School';
+    if (type === 'HEALTH_CENTER') return 'Health Center';
+    return 'AWC';
   }
 
   toString(val: any): string | null {
