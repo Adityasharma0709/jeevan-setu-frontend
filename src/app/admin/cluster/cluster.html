@@ -1,0 +1,181 @@
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-xl font-bold">Cluster Management</h1>
+    <p class="text-gray-500 mt-1">Manage geopolitical blocks and villages associated with districts.</p>
+  </div>
+
+  <!-- Selectors Panel -->
+  <div class="bg-white border rounded-lg p-5 shadow-sm mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- State Selection -->
+      <z-form-field>
+        <label z-form-label>State</label>
+        <z-form-control>
+          <z-combobox
+            [options]="stateOptions"
+            [value]="toString(selectedStateId.value)"
+            (zValueChange)="onStateSelect($event)"
+            placeholder="Select State"
+            zWidth="full"
+          ></z-combobox>
+        </z-form-control>
+      </z-form-field>
+
+      <!-- District Selection -->
+      <z-form-field>
+        <label z-form-label>District</label>
+        <z-form-control>
+          <z-combobox
+            [options]="(districtOptions$ | async) ?? []"
+            [value]="toString(selectedDistrictId.value)"
+            (zValueChange)="onDistrictSelect($event)"
+            [zDisabled]="!selectedStateId.value"
+            placeholder="Select District"
+            zWidth="full"
+          ></z-combobox>
+        </z-form-control>
+      </z-form-field>
+    </div>
+  </div>
+
+  <!-- Dual Column Management View -->
+  <div *ngIf="selectedDistrictId.value; else noDistrictSelected" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    
+    <!-- BLOCK COLUMN -->
+    <div class="bg-white border rounded-lg shadow-sm flex flex-col min-h-[450px]">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
+        <div class="flex items-center gap-2">
+          <z-icon zType="layers" class="w-5 h-5 text-gray-500"></z-icon>
+          <span class="font-bold text-gray-800">Blocks ({{ blocks.length }})</span>
+        </div>
+        <button z-button zSize="sm" (click)="openCreateBlockDialog()" class="flex items-center gap-1.5">
+          <z-icon zType="plus" class="w-3.5 h-3.5"></z-icon> Add Block
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="flex-1 p-4 overflow-y-auto max-h-[500px]">
+        <!-- Loader -->
+        <div *ngIf="isLoadingBlocks()" class="flex items-center justify-center p-12">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+
+        <!-- Block List -->
+        <div *ngIf="!isLoadingBlocks() && blocks.length > 0" class="space-y-2">
+          <button 
+            *ngFor="let block of blocks" 
+            (click)="selectBlock(block)"
+            class="w-full text-left p-3.5 rounded-lg border transition-all flex items-center justify-between group hover:bg-blue-50/50 hover:border-blue-200"
+            [ngClass]="selectedBlock()?.id === block.id ? 'bg-blue-50 border-blue-500 font-bold text-blue-700' : 'bg-white border-gray-100 text-gray-700'"
+          >
+            <span class="truncate">{{ block.name }}</span>
+            <z-icon zType="chevron-right" class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors"></z-icon>
+          </button>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!isLoadingBlocks() && blocks.length === 0" class="flex flex-col items-center justify-center py-20 text-gray-400">
+          <z-icon zType="inbox" class="w-12 h-12 mb-3 opacity-20"></z-icon>
+          <p class="text-sm">No blocks found. Click "Add Block" to create one.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VILLAGE COLUMN -->
+    <div class="bg-white border rounded-lg shadow-sm flex flex-col min-h-[450px]">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
+        <div class="flex items-center gap-2">
+          <z-icon zType="map-pin" class="w-5 h-5 text-gray-500"></z-icon>
+          <span class="font-bold text-gray-800">
+            Villages 
+            <span *ngIf="selectedBlock()" class="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded ml-2">
+              under {{ selectedBlock()?.name }}
+            </span>
+          </span>
+        </div>
+        <button 
+          z-button 
+          zSize="sm" 
+          (click)="openCreateVillageDialog()" 
+          [disabled]="!selectedBlock()"
+          class="flex items-center gap-1.5"
+        >
+          <z-icon zType="plus" class="w-3.5 h-3.5"></z-icon> Add Village
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="flex-1 p-4 overflow-y-auto max-h-[500px]">
+        <!-- Not Selected State -->
+        <div *ngIf="!selectedBlock()" class="flex flex-col items-center justify-center py-24 text-gray-400">
+          <z-icon zType="map-pin" class="w-12 h-12 mb-3 opacity-20"></z-icon>
+          <p class="text-sm text-center px-6">Select a block from the list on the left to manage its villages.</p>
+        </div>
+
+        <!-- Selected State with Loader -->
+        <div *ngIf="selectedBlock() && isLoadingVillages()" class="flex items-center justify-center p-12">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+
+        <!-- Village List -->
+        <div *ngIf="selectedBlock() && !isLoadingVillages() && villages.length > 0" class="space-y-2">
+          <div 
+            *ngFor="let village of villages" 
+            class="p-3.5 bg-white border border-gray-100 rounded-lg text-gray-700 shadow-sm flex items-center justify-between"
+          >
+            <span class="font-medium">{{ village.name }}</span>
+            <span class="text-[10px] uppercase font-bold tracking-wide text-gray-400 bg-gray-50 border px-1.5 py-0.5 rounded">Village</span>
+          </div>
+        </div>
+
+        <!-- Selected but Empty Village List -->
+        <div *ngIf="selectedBlock() && !isLoadingVillages() && villages.length === 0" class="flex flex-col items-center justify-center py-20 text-gray-400">
+          <z-icon zType="inbox" class="w-12 h-12 mb-3 opacity-20"></z-icon>
+          <p class="text-sm">No villages registered in this block yet.</p>
+          <p class="text-xs mt-1 text-gray-400">Click "Add Village" to create one.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- State where District is not selected -->
+  <ng-template #noDistrictSelected>
+    <div class="bg-gray-50 border border-dashed rounded-lg p-12 flex flex-col items-center justify-center text-gray-400 min-h-[300px]">
+      <z-icon zType="map-pin" class="w-16 h-16 mb-4 opacity-15"></z-icon>
+      <h3 class="text-base font-semibold text-gray-700">District Selection Required</h3>
+      <p class="text-sm text-gray-400 mt-1 max-w-sm text-center">Please select a State and then a District from the selectors above to view and manage its block/village cluster.</p>
+    </div>
+  </ng-template>
+</div>
+
+<!-- ====================================
+     BLOCK DIALOG TEMPLATE
+==================================== -->
+<ng-template #blockDialog>
+  <form [formGroup]="blockForm" class="py-2 space-y-4">
+    <z-form-field>
+      <label z-form-label zRequired>Block Name</label>
+      <z-form-control [errorMessage]="getErrorMessage(blockForm, 'name')">
+        <input z-input formControlName="name" placeholder="e.g. DUGDA" class="w-full uppercase" />
+      </z-form-control>
+    </z-form-field>
+  </form>
+</ng-template>
+
+<!-- ====================================
+     VILLAGE DIALOG TEMPLATE
+==================================== -->
+<ng-template #villageDialog>
+  <form [formGroup]="villageForm" class="py-2 space-y-4">
+    <z-form-field>
+      <label z-form-label zRequired>Village Name</label>
+      <z-form-control [errorMessage]="getErrorMessage(villageForm, 'name')">
+        <input z-input formControlName="name" placeholder="e.g. CHANDRAPURA" class="w-full uppercase" />
+      </z-form-control>
+    </z-form-field>
+  </form>
+</ng-template>

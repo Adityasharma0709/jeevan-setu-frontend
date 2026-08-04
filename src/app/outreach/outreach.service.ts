@@ -67,6 +67,8 @@ export interface CreateBeneficiaryPayload {
   beneficiaryType?: string;
   projectId: number;
   locationId?: number;
+  schoolId?: number;
+  healthCenterId?: number;
   mobileNumber: string;
   name: string;
   gender: string;
