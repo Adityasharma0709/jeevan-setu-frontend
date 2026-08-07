@@ -62,7 +62,7 @@ import { toast } from 'ngx-sonner';
         </div>
 
         <!-- Cards Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8 animate-fadeIn">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 mb-8 animate-fadeIn">
             <button *ngFor="let item of actions; let i = index; trackBy: trackByLabel" 
                 (click)="tabChange.emit(i)"
                 type="button"
@@ -94,10 +94,11 @@ import { toast } from 'ngx-sonner';
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Village</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">School</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">AWC</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Health Centre</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Beneficiary Type</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Last Session Name</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Last Session Date</span></th>
-                            <th *ngIf="selectedTab === 2 || selectedTab === 4 || selectedTab === 5 || selectedTab === 6" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Mother's Name</span></th>
+                            <th *ngIf="showMotherName" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Mother's Name</span></th>
                         </tr>
                     </thead>
                     <tbody z-table-body class="divide-y divide-slate-100 text-[13px]" *ngIf="{ page: page, total: totalRecords } as state">
@@ -141,6 +142,9 @@ import { toast } from 'ngx-sonner';
                                   {{ row.awc || '-' }}
                                 </td>
                                 <td z-table-cell class="px-3 py-3 text-slate-700">
+                                  {{ row.healthCenter || '-' }}
+                                </td>
+                                <td z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.beneficiaryType || '-' }}
                                 </td>
                                 <td z-table-cell class="px-3 py-3 text-slate-700">
@@ -149,19 +153,19 @@ import { toast } from 'ngx-sonner';
                                 <td z-table-cell class="px-3 py-3 whitespace-nowrap text-slate-700">
                                   {{ row.reportingDate || '-' }}
                                 </td>
-                                <td *ngIf="selectedTab === 2 || selectedTab === 4 || selectedTab === 5 || selectedTab === 6" z-table-cell class="px-3 py-3 text-slate-700">
+                                <td *ngIf="showMotherName" z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.motherName || '-' }}
                                 </td>
                             </tr>
                             <tr z-table-row *ngIf="dataRecords.length === 0">
-                                <td z-table-cell [attr.colspan]="(selectedTab === 2 || selectedTab === 4 || selectedTab === 5 || selectedTab === 6) ? 14 : 13" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
+                                <td z-table-cell [attr.colspan]="showMotherName ? 15 : 14" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
                                     No reports found for this group.
                                 </td>
                             </tr>
                         </ng-container>
                         <ng-template #loadingTable>
                             <tr z-table-row>
-                                <td z-table-cell [attr.colspan]="(selectedTab === 2 || selectedTab === 4 || selectedTab === 5 || selectedTab === 6) ? 14 : 13" class="px-4 py-8 text-center text-gray-500">
+                                <td z-table-cell [attr.colspan]="showMotherName ? 15 : 14" class="px-4 py-8 text-center text-gray-500">
                                     <z-icon zType="loader-circle" class="w-6 h-6 animate-spin mx-auto text-blue-500"></z-icon>
                                     <p class="mt-2 font-medium text-sm">Loading records...</p>
                                 </td>
@@ -214,12 +218,18 @@ export class OutreachDynamicsComponent {
 
   Math = Math;
 
+  get showMotherName(): boolean {
+    const label = (this.actions[this.selectedTab]?.label || '').toUpperCase();
+    return label.includes('SAM') || label.includes('MAM') || label.includes('INFANT') || label.includes('EBF') || label.includes('CF');
+  }
+
   trackByLabel(index: number, item: any): string {
     return item.label;
   }
 
   getTrendText(item: any): string {
     const l = (item.label || '').toUpperCase();
+    if (l.includes('HIGH RISK') || l.includes('HRP')) return 'Needs critical attention';
     if (l.includes('PREGNANT')) return 'Increased from last month';
     if (l.includes('LACTATING')) return 'Increased from last month';
     if (l.includes('SAM')) return 'Needs critical attention';
@@ -233,6 +243,7 @@ export class OutreachDynamicsComponent {
 
   getTrendValue(item: any): string {
     const l = (item.label || '').toUpperCase();
+    if (l.includes('HIGH RISK') || l.includes('HRP')) return 'Critical';
     if (l.includes('PREGNANT')) return '5 ▲';
     if (l.includes('LACTATING')) return '6 ▲';
     if (l.includes('SAM')) return 'Critical';
@@ -246,7 +257,7 @@ export class OutreachDynamicsComponent {
 
   getTrendType(item: any): 'success' | 'danger' | 'info' | 'neutral' {
     const l = (item.label || '').toUpperCase();
-    if (l.includes('SAM') || l.includes('MAM') || l.includes('DELIVERY') || l.includes('30 DAYS')) {
+    if (l.includes('HIGH RISK') || l.includes('HRP') || l.includes('SAM') || l.includes('MAM') || l.includes('DELIVERY') || l.includes('30 DAYS')) {
       return 'danger';
     }
     if (l.includes('ADOLESCENT')) {
@@ -262,7 +273,7 @@ export class OutreachDynamicsComponent {
       return;
     }
 
-    const showMotherName = this.selectedTab === 2 || this.selectedTab === 4 || this.selectedTab === 5 || this.selectedTab === 6;
+    const showMotherName = this.showMotherName;
 
     const data = reports.map((row: any, index: number) => {
       const record: any = {
@@ -276,6 +287,7 @@ export class OutreachDynamicsComponent {
         'Village': row.village || '-',
         'School': row.school || '-',
         'AWC': row.awc || '-',
+        'Health Centre': row.healthCenter || '-',
         'Beneficiary Type': row.beneficiaryType || '-',
         'Last Session Name': row.session || '-',
         'Last Session Date': row.reportingDate || '-'
