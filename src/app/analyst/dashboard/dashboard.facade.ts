@@ -68,6 +68,7 @@ export class DashboardFacade {
   // -- State Subjects --
   private outreachActionsSub = new BehaviorSubject<OutreachAction[]>([
     { label: 'Currently Active Pregnant women', count: 0, bgColor: 'bg-pink-50', textColor: 'text-pink-700', icon: 'heart' },
+    { label: 'High Risk Pregnant Women', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'heart' },
     { label: 'Currently Active Lactating Mothers', count: 0, bgColor: 'bg-purple-50', textColor: 'text-purple-700', icon: 'heart' },
     { label: 'Currently Active SAM Children', count: 0, bgColor: 'bg-red-50', textColor: 'text-red-700', icon: 'circle-alert' },
     { label: 'Adolescent Girls', count: 0, bgColor: 'bg-rose-50', textColor: 'text-rose-700', icon: 'users' },
@@ -359,13 +360,14 @@ export class DashboardFacade {
             if (!stats) return;
             const actions = this.outreachActionsSub.value;
             actions[0].count = stats.outreachActions?.activePregnantWomen || 0;
-            actions[1].count = stats.outreachActions?.activeLactatingMothers || 0;
-            actions[2].count = stats.outreachActions?.activeSamChildren || 0;
-            actions[3].count = stats.outreachActions?.adolescentGirls || 0;
-            actions[4].count = stats.outreachActions?.infantsEbfPromotion || 0;
-            actions[5].count = stats.outreachActions?.infantsCfPromotion || 0;
-            actions[6].count = stats.outreachActions?.activeMamChildren || 0;
-            actions[7].count = stats.outreachActions?.womenDueForDelivery30Days || 0;
+            actions[1].count = stats.outreachActions?.activeHighRiskPregnantWomen || 0;
+            actions[2].count = stats.outreachActions?.activeLactatingMothers || 0;
+            actions[3].count = stats.outreachActions?.activeSamChildren || 0;
+            actions[4].count = stats.outreachActions?.adolescentGirls || 0;
+            actions[5].count = stats.outreachActions?.infantsEbfPromotion || 0;
+            actions[6].count = stats.outreachActions?.infantsCfPromotion || 0;
+            actions[7].count = stats.outreachActions?.activeMamChildren || 0;
+            actions[8].count = stats.outreachActions?.womenDueForDelivery30Days || 0;
             this.outreachActionsSub.next([...actions]);
 
             if (stats.activities && stats.activities.length) {
