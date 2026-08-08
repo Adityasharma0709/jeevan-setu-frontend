@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
-import { ZardIconComponent } from '@/shared/components/icon';
-import { ZardEpisodesOfCareComponent } from '@/shared/components/episodes-of-care';
+import { ZardEpisodesOfCareComponent, ZardEpisodeCardComponent, ZardEpisodeCardFemaleComponent, ZardEpisodeCardMaleChildComponent } from '@/shared/components/episodes-of-care';
 import { ZardActivitySessionsComponent } from '@/shared/components/activity-sessions';
 import { DashboardFacade } from '../../dashboard.facade';
 
@@ -15,8 +14,10 @@ import { DashboardFacade } from '../../dashboard.facade';
     CommonModule, 
     ReactiveFormsModule, 
     ZardComboboxComponent, 
-    ZardIconComponent,
-    ZardEpisodesOfCareComponent,
+    ZardEpisodesOfCareComponent, 
+    ZardEpisodeCardComponent,
+    ZardEpisodeCardFemaleComponent,
+    ZardEpisodeCardMaleChildComponent,
     ZardActivitySessionsComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,10 +54,9 @@ import { DashboardFacade } from '../../dashboard.facade';
             </div>
             <div class="flex flex-col gap-1.5 mt-auto">
                 <button type="button" 
-                  (click)="facade.toggleUniqueCount()" 
-                  [class]="(facade.uniqueCount$ | async) ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
-                  class="px-4 py-2.5 text-xs font-bold border rounded-xl flex items-center gap-2 transition-all shadow-sm h-[38px] mt-auto">
-                  <z-icon [zType]="(facade.uniqueCount$ | async) ? 'circle-check' : 'square'" class="w-4 h-4"></z-icon>
+                  [class]="(facade.uniqueCount$ | async) ? 'px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 transition-all hover:bg-emerald-100/50' : 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-500 border border-gray-200 transition-all hover:bg-gray-100/50'"
+                  (click)="facade.toggleUniqueCount()"
+                >
                   Unique Count
                 </button>
             </div>
@@ -67,6 +67,25 @@ import { DashboardFacade } from '../../dashboard.facade';
           [totalReports]="facade.filteredReportsCount$ | async" 
           [episodes]="(facade.episodesOfCare$ | async) || []"
         ></z-episodes-of-care>
+
+        <!-- Section 1.5: Health Screenings & Distributions -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8 mb-8 animate-fadeIn">
+            <div class="flex items-start justify-between mb-8 pb-6 border-b border-gray-100">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Health Screenings & Distributions</h3>
+                    <p class="text-sm text-gray-500 font-medium">Beneficiaries reached with health services</p>
+                </div>
+            </div>
+
+            <div class="mb-5 text-xs text-gray-400 font-bold uppercase tracking-widest pl-1">Service & Gender Distribution</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <ng-container *ngFor="let item of (facade.healthScreenings$ | async); trackBy: trackByLabel">
+                    <z-episode-card *ngIf="item.male !== undefined" [data]="item"></z-episode-card>
+                    <z-episode-card-female *ngIf="item.adolescentGirl !== undefined" [data]="item"></z-episode-card-female>
+                    <z-episode-card-male-child *ngIf="item.men !== undefined" [data]="item"></z-episode-card-male-child>
+                </ng-container>
+            </div>
+        </div>
 
         <!-- Section 2: Activity / Sessions -->
         <z-activity-sessions
@@ -93,5 +112,9 @@ export class CoverageWidgetComponent {
 
   redirectToBeneficiary(benId: number) {
     this.router.navigate(['/analyst/beneficiary', benId]);
+  }
+
+  trackByLabel(index: number, item: any): string {
+    return item.label;
   }
 }

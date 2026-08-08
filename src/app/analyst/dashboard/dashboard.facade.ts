@@ -128,6 +128,14 @@ export class DashboardFacade {
   ]);
   episodesOfCare$ = this.episodesOfCareSub.asObservable();
 
+  private healthScreeningsSub = new BehaviorSubject<any[]>([
+    { label: 'Hb Screenings', icon: 'heart', male: 0, female: 0, others: 0, total: 0 },
+    { label: 'BP Screenings', icon: 'activity', male: 0, female: 0, others: 0, total: 0 },
+    { label: 'Sanitary Pads Distributed', icon: 'sparkles', adolescentGirl: 0, woman: 0, total: 0 },
+  ]);
+  healthScreenings$ = this.healthScreeningsSub.asObservable();
+
+
   private filteredReportsCountSub = new BehaviorSubject<number>(0);
   filteredReportsCount$ = this.filteredReportsCountSub.asObservable();
 
@@ -402,6 +410,45 @@ export class DashboardFacade {
                 };
               });
               this.episodesOfCareSub.next(mappedEpisodes);
+            }
+
+            if (stats.healthScreenings && stats.healthScreenings.length) {
+              const mappedScreenings = stats.healthScreenings.map((sc: any) => {
+                let icon: any = 'heart';
+                if (sc.label.includes('BP')) {
+                  icon = 'activity';
+                } else if (sc.label.includes('Pads')) {
+                  icon = 'sparkles';
+                }
+                if (sc.adolescentGirl !== undefined || sc.woman !== undefined) {
+                  return {
+                    label: sc.label,
+                    icon: icon,
+                    adolescentGirl: sc.adolescentGirl || 0,
+                    woman: sc.woman || 0,
+                    total: sc.total || 0
+                  };
+                }
+                if (sc.men !== undefined || sc.adolescentBoy !== undefined || sc.children !== undefined) {
+                  return {
+                    label: sc.label,
+                    icon: icon,
+                    men: sc.men || 0,
+                    adolescentBoy: sc.adolescentBoy || 0,
+                    children: sc.children || 0,
+                    total: sc.total || 0
+                  };
+                }
+                return {
+                  label: sc.label,
+                  icon: icon,
+                  male: sc.male || 0,
+                  female: sc.female || 0,
+                  others: sc.others || 0,
+                  total: sc.total || 0
+                };
+              });
+              this.healthScreeningsSub.next(mappedScreenings);
             }
           }),
           catchError(() => {

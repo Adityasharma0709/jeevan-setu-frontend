@@ -302,6 +302,12 @@ export class OutreachService {
     return this.api.get<DynamicsTableRecord[]>(`${this.endpoint}/dashboard/action-details`, params);
   }
 
+  getOutreachDynamicsReports(groupName: string, unique?: boolean): Observable<DynamicsTableRecord[]> {
+    const params: any = { group: groupName };
+    if (unique !== undefined) params.unique = String(unique);
+    return this.api.get<DynamicsTableRecord[]>(`${this.endpoint}/dashboard/outreach-dynamics-details`, params);
+  }
+
   // Tagging
   tagBeneficiaryGroup(id: number, groupId: number): Observable<any> {
     return this.api.post(`${this.endpoint}/beneficiary/${id}/tag-group`, { groupId });
