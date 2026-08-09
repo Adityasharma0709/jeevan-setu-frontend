@@ -150,6 +150,7 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
   readonly pageSize = 10;
   private readonly page$ = new BehaviorSubject<number>(1);
   searchControl = new FormControl('');
+  readonly typeTab$ = new BehaviorSubject<'ALL' | 'PRIORITY' | 'GENERAL' | 'STAKEHOLDER'>('ALL');
   private lastPage = 1;
   private lastPageCount = 1;
 
@@ -204,9 +205,21 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
     this.sortCol$.asObservable(),
     this.sortDir$.asObservable(),
     this.search$,
+    this.typeTab$.asObservable(),
   ]).pipe(
-    map(([beneficiaries, page, sortCol, sortDir, search]) => {
+    map(([beneficiaries, page, sortCol, sortDir, search, typeTab]) => {
       let items = [...beneficiaries];
+
+      if (typeTab !== 'ALL') {
+        items = items.filter(b => {
+          const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+          if (typeTab === 'STAKEHOLDER') return isStakeholder;
+          if (isStakeholder) return false;
+
+          const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
+          return typeTab === 'PRIORITY' ? isPriority : !isPriority;
+        });
+      }
 
       if (search) {
         items = items.filter((b) =>
@@ -263,17 +276,42 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
       this.lastPage = safePage;
       this.lastPageCount = pageCount;
 
+      // Stats calculation for the cards (matching the 4 Prodex cards)
+      const priorityCount = beneficiaries.filter(b => {
+        return !!(b.guardianName || b.qualification || b.religion || b.caste);
+      }).length;
+
+      const stakeholderCount = beneficiaries.filter(b => (b.typeof || '').toLowerCase() === 'stakeholder').length;
+
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const registeredThisMonth = beneficiaries.filter(b => {
+        if (!b.createdAt) return false;
+        const d = new Date(b.createdAt);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      }).length;
+
       return {
         items: items.slice(startIndex, startIndex + this.pageSize),
         total,
+        totalBeneficiaries: beneficiaries.length,
         page: safePage,
         pageCount,
         pageSize: this.pageSize,
         startIndex,
         endIndex: Math.min(startIndex + this.pageSize, total),
+        priorityCount,
+        stakeholderCount,
+        registeredThisMonth,
+        typeTab,
       };
     }),
   );
+
+  setTypeTab(tab: 'ALL' | 'PRIORITY' | 'GENERAL' | 'STAKEHOLDER') {
+    this.typeTab$.next(tab);
+    this.page$.next(1);
+  }
 
   ngOnInit(): void {}
 
