@@ -5,25 +5,36 @@
   <app-outreach-page-header title="Beneficiaries"
     subtitle="Manage and track health records for your assigned locations."
     mobileSubtitle="Manage and track health records" [showSearch]="true" [showMobileExtras]="true">
-    <div outreachHeaderActions *ngIf="!isManager">
-      <button z-button (click)="navigateToCreate()"
-        class="bg-[#006666] hover:bg-[#006666] text-white shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 active:translate-y-0">
+    
+    <!-- Header projections: Search bar on desktop, add button on mobile -->
+    <div outreachHeaderActions class="flex items-center gap-3">
+      <!-- Desktop Search Bar -->
+      <label class="relative hidden md:block w-64 lg:w-80">
+        <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
+        <input z-input [formControl]="searchControl" placeholder="Search by UID, name, or mobile..."
+          class="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#006666] focus:ring-2 focus:ring-teal-100" />
+      </label>
+
+      <!-- Mobile Add Button -->
+      <button *ngIf="!isManager" z-button (click)="navigateToCreate()"
+        class="md:hidden bg-[#006666] hover:bg-[#005353] text-white shadow-lg shadow-teal-100 transition-all">
         <z-icon zType="plus" class="w-4 h-4 mr-2" />
         Add New Beneficiary
       </button>
     </div>
 
-    <div outreachHeaderMeta>
+    <!-- Mobile-only Total count -->
+    <div outreachHeaderMeta class="md:hidden">
       <span
         class="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
         {{ (vm$ | async)?.total || 0 }} Total
       </span>
     </div>
 
-    <div outreachHeaderSearch>
+    <!-- Mobile-only Search input projected into header sticky block -->
+    <div outreachHeaderSearch class="md:hidden">
       <label class="relative flex-1 max-w-md">
         <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
-
         <input z-input [formControl]="searchControl" placeholder="Search by UID, name, or mobile..."
           class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
       </label>
@@ -90,54 +101,125 @@
   </ng-template>
 
   <!-- =========================================================
-
-  <!-- =========================================================
     BENEFICIARY CONTENT
   ========================================================= -->
   <ng-container *ngIf="vm$ | async as vm; else bLoader">
     <div class="hidden md:block bg-white border border-gray-100 rounded-2xl shadow-sm">
-      <div class="border-b border-slate-200 px-4 py-4">
-        <div class="flex items-center gap-3 w-full max-w-3xl">
-          <label class="relative flex-1">
-            <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
+      <!-- Unified Prodex-inspired Header/Toolbar -->
+      <div class="border-b border-slate-200 px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50/50 rounded-t-2xl">
+        <!-- Left side: Title and total count -->
+        <div class="flex items-center gap-3">
+          <h2 class="text-xl font-bold text-slate-800">All Beneficiaries</h2>
+          <span class="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700 border border-teal-200">
+            {{ vm.totalBeneficiaries || 0 }} Total
+          </span>
+        </div>
 
-            <input z-input [formControl]="searchControl" placeholder="Search by UID, name, or mobile..."
-              class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-          </label>
+        <!-- Right side: Action Buttons -->
+        <div class="flex items-center gap-3 flex-wrap md:flex-nowrap">
+          <!-- Columns Selector Trigger -->
+          <div class="relative inline-block text-left">
+            <button type="button" (click)="toggleColumnSelectorDropdown()"
+              class="flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+              <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
+              Columns
+            </button>
+
+            <!-- Column Selection Dropdown Menu -->
+            <div *ngIf="showColumnSelector"
+              class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
+              <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                Show / Hide Columns
+              </div>
+
+              <div class="space-y-2">
+                <label *ngFor="let col of columnList"
+                  class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
+                  <input type="checkbox" [(ngModel)]="selectedColumns[col.key]" (click)="$event.stopPropagation()"
+                    class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]" />
+                  <span class="text-xs font-medium text-slate-700">{{ col.label }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Excel Sheet Button -->
+          <button type="button" (click)="openExportDialog()"
+            class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[#006666] transition hover:bg-teal-50/50 hover:border-teal-200">
+            <img src="excel.png" alt="excel download button" class="h-5 w-5 object-contain" />
+            <span class="text-xs font-bold leading-none">Download sheet</span>
+          </button>
+
+          <!-- Add New Beneficiary Button -->
+          <button *ngIf="!isManager" z-button (click)="navigateToCreate()"
+            class="h-10 bg-[#006666] hover:bg-[#005353] text-white shadow-md shadow-teal-100 transition-all">
+            <z-icon zType="plus" class="w-4 h-4 mr-1.5" />
+            Add Beneficiary
+          </button>
         </div>
       </div>
 
-      <div
-        class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <button type="button" (click)="openExportDialog()"
-          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] sm:w-auto">
-          <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
-          <span class="text-sm font-semibold leading-none">Download sheet</span>
-        </button>
-
-        <div class="relative inline-block self-end text-left sm:self-auto">
-          <button type="button" (click)="toggleColumnSelectorDropdown()"
-            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-            <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
-            Columns
-          </button>
-
-          <div *ngIf="showColumnSelector"
-            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
-            <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-              Show / Hide Columns
-            </div>
-
-            <div class="space-y-2">
-              <label *ngFor="let col of columnList"
-                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
-                <input type="checkbox" [(ngModel)]="selectedColumns[col.key]" (click)="$event.stopPropagation()"
-                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]" />
-                <span class="text-xs font-medium text-slate-700">{{ col.label }}</span>
-              </label>
-            </div>
+      <!-- Statistics Cards Grid (matching Prodex layout) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-6 py-5 border-b border-slate-100 bg-slate-50/20">
+        <!-- Card 1: Total Beneficiaries -->
+        <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm flex flex-col justify-between min-h-[90px]">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Beneficiaries</span>
           </div>
+          <span class="text-2xl font-bold text-slate-900 mt-2">{{ vm.totalBeneficiaries }}</span>
         </div>
+
+        <!-- Card 2: Priority Cases -->
+        <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm flex flex-col justify-between min-h-[90px]">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Priority Cases</span>
+          </div>
+          <span class="text-2xl font-bold text-slate-900 mt-2">{{ vm.priorityCount }}</span>
+        </div>
+
+        <!-- Card 3: Stakeholders -->
+        <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm flex flex-col justify-between min-h-[90px]">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Stakeholders</span>
+          </div>
+          <span class="text-2xl font-bold text-slate-900 mt-2">{{ vm.stakeholderCount }}</span>
+        </div>
+
+        <!-- Card 4: Registered This Month -->
+        <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm flex flex-col justify-between min-h-[90px]">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Registered This Month</span>
+          </div>
+          <span class="text-2xl font-bold text-slate-900 mt-2">{{ vm.registeredThisMonth }}</span>
+        </div>
+      </div>
+
+      <!-- Type Filter Tabs (matching Prodex layout) -->
+      <div class="border-b border-slate-100 px-6 flex items-center gap-6 bg-white text-sm font-medium text-slate-500">
+        <button type="button" (click)="setTypeTab('ALL')"
+          [class]="vm.typeTab === 'ALL' ? 'text-[#006666] font-bold border-b-2 border-[#006666] py-3.5 -mb-[2px]' : 'hover:text-slate-800 py-3.5'"
+          class="transition-all select-none focus:outline-none">
+          All
+        </button>
+        <button type="button" (click)="setTypeTab('PRIORITY')"
+          [class]="vm.typeTab === 'PRIORITY' ? 'text-[#006666] font-bold border-b-2 border-[#006666] py-3.5 -mb-[2px]' : 'hover:text-slate-800 py-3.5'"
+          class="transition-all select-none focus:outline-none">
+          Priority
+        </button>
+        <button type="button" (click)="setTypeTab('GENERAL')"
+          [class]="vm.typeTab === 'GENERAL' ? 'text-[#006666] font-bold border-b-2 border-[#006666] py-3.5 -mb-[2px]' : 'hover:text-slate-800 py-3.5'"
+          class="transition-all select-none focus:outline-none">
+          General
+        </button>
+        <button type="button" (click)="setTypeTab('STAKEHOLDER')"
+          [class]="vm.typeTab === 'STAKEHOLDER' ? 'text-[#006666] font-bold border-b-2 border-[#006666] py-3.5 -mb-[2px]' : 'hover:text-slate-800 py-3.5'"
+          class="transition-all select-none focus:outline-none">
+          Stakeholder
+        </button>
       </div>
 
       <div class="w-full overflow-x-auto">

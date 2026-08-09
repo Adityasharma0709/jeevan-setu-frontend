@@ -92,8 +92,8 @@ import { toast } from 'ngx-sonner';
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">District</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Block</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Village</span></th>
-                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">School</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">AWC</span></th>
+                            <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">School</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Health Centre</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Beneficiary Type</span></th>
                             <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Last Session Name</span></th>
@@ -136,10 +136,10 @@ import { toast } from 'ngx-sonner';
                                   {{ row.village || '-' }}
                                 </td>
                                 <td z-table-cell class="px-3 py-3 text-slate-700">
-                                  {{ row.school || '-' }}
+                                  {{ row.awc || '-' }}
                                 </td>
                                 <td z-table-cell class="px-3 py-3 text-slate-700">
-                                  {{ row.awc || '-' }}
+                                  {{ row.school || '-' }}
                                 </td>
                                 <td z-table-cell class="px-3 py-3 text-slate-700">
                                   {{ row.healthCenter || '-' }}
@@ -285,8 +285,8 @@ export class OutreachDynamicsComponent {
         'District': row.district || '-',
         'Block': row.block || '-',
         'Village': row.village || '-',
-        'School': row.school || '-',
         'AWC': row.awc || '-',
+        'School': row.school || '-',
         'Health Centre': row.healthCenter || '-',
         'Beneficiary Type': row.beneficiaryType || '-',
         'Last Session Name': row.session || '-',

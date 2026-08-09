@@ -106,6 +106,7 @@ export class DashboardFacade {
   private activitiesSub = new BehaviorSubject<ActivityStat[]>([
     { label: 'YOUNG MARRIED WOMEN', count: 0, countColor: 'text-gray-900' },
     { label: 'PREGNANT WOMEN', count: 0, countColor: 'text-gray-900' },
+    { label: 'HIGH RISK PREGNANT WOMEN', count: 0, countColor: 'text-red-600' },
     { label: 'MAM (0-5)', count: 0, countColor: 'text-green-600' },
     { label: 'CHILDREN BELOW 6 (3-6 YEARS) - GIRLS', count: 0, countColor: 'text-gray-900' },
     { label: 'CHILDREN BELOW 6 (3-6 YEARS) - BOYS', count: 0, countColor: 'text-gray-900' },
