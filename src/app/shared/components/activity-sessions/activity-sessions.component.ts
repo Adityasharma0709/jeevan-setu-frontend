@@ -95,13 +95,14 @@ import { toast } from 'ngx-sonner';
                               <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">District</span></th>
                               <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Block</span></th>
                               <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Village</span></th>
-                              <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">School</span></th>
                               <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">AWC</span></th>
+                              <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">School</span></th>
+                              <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Health Centre</span></th>
                               <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Beneficiary Type</span></th>
                               <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Activity Name</span></th>
                               <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Session Name</span></th>
                               <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Session Date</span></th>
-                              <th z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Mother's Name</span></th>
+                              <th *ngIf="showMotherName" z-table-head class="border-b border-slate-300 px-3 py-2 cursor-pointer select-none"><span class="flex items-center gap-1">Mother's Name</span></th>
                           </tr>
                       </thead>
                       <tbody z-table-body class="divide-y divide-slate-100 text-[13px]" *ngIf="{ page: currentActivityPage, total: totalActivityRecords } as state">
@@ -137,11 +138,14 @@ import { toast } from 'ngx-sonner';
                                   <td z-table-cell class="px-3 py-3 text-slate-700">
                                     {{ row.village || '-' }}
                                   </td>
+                                  <td z-table-cell class="px-3 py-3 text-slate-700">
+                                    {{ row.awc || '-' }}
+                                  </td>
                                   <td z-table-cell class="px-3 py-3 text-slate-700 font-semibold text-slate-500">
                                     {{ row.school || '-' }}
                                   </td>
                                   <td z-table-cell class="px-3 py-3 text-slate-700">
-                                    {{ row.awc || '-' }}
+                                    {{ row.healthCenter || '-' }}
                                   </td>
                                   <td z-table-cell class="px-3 py-3 text-slate-700">
                                     {{ row.beneficiaryType || '-' }}
@@ -155,19 +159,19 @@ import { toast } from 'ngx-sonner';
                                   <td z-table-cell class="px-3 py-3 whitespace-nowrap text-slate-700">
                                     {{ row.reportingDate }}
                                   </td>
-                                  <td z-table-cell class="px-3 py-3 text-slate-700">
-                                    {{ row.motherName || 'N/A' }}
+                                  <td *ngIf="showMotherName" z-table-cell class="px-3 py-3 text-slate-700">
+                                    {{ row.motherName || '-' }}
                                   </td>
                               </tr>
                               <tr z-table-row *ngIf="records.length === 0">
-                                  <td z-table-cell [attr.colspan]="15" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
+                                  <td z-table-cell [attr.colspan]="showMotherName ? 16 : 15" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
                                       No reports found for this group.
                                   </td>
                               </tr>
                           </ng-container>
                           <ng-template #loadingTable>
                               <tr z-table-row>
-                                  <td z-table-cell [attr.colspan]="15" class="px-4 py-8 text-center text-gray-500">
+                                  <td z-table-cell [attr.colspan]="showMotherName ? 16 : 15" class="px-4 py-8 text-center text-gray-500">
                                       <z-icon zType="loader-circle" class="w-6 h-6 animate-spin mx-auto text-blue-500"></z-icon>
                                       <p class="mt-2 font-medium text-sm">Loading records...</p>
                                   </td>
@@ -243,6 +247,11 @@ export class ZardActivitySessionsComponent {
 
   Math = Math;
 
+  get showMotherName(): boolean {
+    const label = (this.activities[this.selectedActivityTab]?.label || '').toUpperCase();
+    return label.includes('SAM') || label.includes('MAM') || label.includes('INFANT') || label.includes('EBF') || label.includes('CF') || label.includes('TODDLER') || label.includes('CHILD');
+  }
+
   private dialog = inject(ZardDialogService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -302,7 +311,7 @@ export class ZardActivitySessionsComponent {
     }
 
     const data = exportReports.map((row: any, index: number) => {
-      return {
+      const record: any = {
         '#': index + 1,
         'Beneficiary ID': row.id || '-',
         'Name': row.name || 'Unknown',
@@ -311,14 +320,18 @@ export class ZardActivitySessionsComponent {
         'District': row.district || '-',
         'Block': row.block || '-',
         'Village': row.village || '-',
-        'School': row.school || '-',
         'AWC': row.awc || '-',
+        'School': row.school || '-',
+        'Health Centre': row.healthCenter || '-',
         'Beneficiary Type': row.beneficiaryType || '-',
         'Activity Name': row.activity || '-',
         'Session Name': row.session || '-',
-        'Session Date': row.reportingDate || '-',
-        'Mother\'s Name': row.motherName || 'N/A'
+        'Session Date': row.reportingDate || '-'
       };
+      if (this.showMotherName) {
+        record["Mother's Name"] = row.motherName || '-';
+      }
+      return record;
     });
 
     const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);

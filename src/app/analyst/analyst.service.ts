@@ -9,46 +9,77 @@ import { OutreachProject, OutreachLocation, Beneficiary, OutreachActivity, Outre
   providedIn: 'root',
 })
 export class AnalystService {
+  private cache = new Map<string, any>();
+
   constructor(private api: ApiService) {}
+
+  private checkCache<T>(key: string, fetchObs: Observable<T>): Observable<T> {
+    if (this.cache.has(key)) {
+      return of(this.cache.get(key));
+    }
+    return fetchObs.pipe(
+      map((data) => {
+        this.cache.set(key, data);
+        return data;
+      })
+    );
+  }
+
+  // Clear cache if needed (e.g. on log out or force refresh)
+  clearCache(): void {
+    this.cache.clear();
+  }
 
   getAssignedProjects(userId?: number): Observable<OutreachProject[]> {
     if (!userId) return of([]);
-    return (this.api.get(`projects/user/${userId}`) as Observable<OutreachProject[]>).pipe(
-      map((projects) =>
-        (projects || []).filter(
-          (p) => (p?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+    const cacheKey = `projects_${userId}`;
+    return this.checkCache(
+      cacheKey,
+      (this.api.get(`projects/user/${userId}`) as Observable<OutreachProject[]>).pipe(
+        map((projects) =>
+          (projects || []).filter(
+            (p) => (p?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+          ),
         ),
-      ),
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 404) return of([]);
-        return throwError(() => error);
-      })
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) return of([]);
+          return throwError(() => error);
+        })
+      )
     );
   }
 
   getProjectAssignments(projectId: number): Observable<{ states: any[], awcs: OutreachLocation[] }> {
-    return (this.api.get(`analyst/assigned-locations/${projectId}`) as Observable<any>).pipe(
-      map((res) => {
-        if (Array.isArray(res)) return { states: [], awcs: res };
-        return {
-          states: res?.states || [],
-          awcs: res?.awcs || []
-        };
-      }),
-      catchError(() => of({ states: [], awcs: [] }))
+    const cacheKey = `project_assignments_${projectId}`;
+    return this.checkCache(
+      cacheKey,
+      (this.api.get(`analyst/assigned-locations/${projectId}`) as Observable<any>).pipe(
+        map((res) => {
+          if (Array.isArray(res)) return { states: [], awcs: res };
+          return {
+            states: res?.states || [],
+            awcs: res?.awcs || []
+          };
+        }),
+        catchError(() => of({ states: [], awcs: [] }))
+      )
     );
   }
 
   getBeneficiaries(search?: string, projectId?: number): Observable<Beneficiary[]> {
+    const cacheKey = `beneficiaries_${search || ''}_${projectId || ''}`;
     const params: any = {};
     if (search) params.search = search;
     if (projectId) params.projectId = projectId;
-    return (this.api.get(`analyst/beneficiary-list`, params) as Observable<Beneficiary[]>).pipe(
-      map((rows) => rows || []),
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 404) return of([]);
-        return throwError(() => error);
-      })
+    return this.checkCache(
+      cacheKey,
+      (this.api.get(`analyst/beneficiary-list`, params) as Observable<Beneficiary[]>).pipe(
+        map((rows) => rows || []),
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) return of([]);
+          return throwError(() => error);
+        })
+      )
     );
   }
 
@@ -81,7 +112,12 @@ export class AnalystService {
     if (block) params.block = block;
     if (awc) params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
-    return this.api.get(`analyst/dashboard/stats`, params);
+    
+    const cacheKey = `dashboard_stats_${JSON.stringify(params)}`;
+    return this.checkCache(
+      cacheKey,
+      this.api.get(`analyst/dashboard/stats`, params)
+    );
   }
 
   getDynamicsReports(
@@ -112,7 +148,12 @@ export class AnalystService {
     if (block) params.block = block;
     if (awc) params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
-    return this.api.get<DynamicsTableRecord[]>(`analyst/dashboard/action-details`, params);
+
+    const cacheKey = `dynamics_reports_${JSON.stringify(params)}`;
+    return this.checkCache(
+      cacheKey,
+      this.api.get<DynamicsTableRecord[]>(`analyst/dashboard/action-details`, params)
+    );
   }
 
   getOutreachDynamicsReports(
@@ -133,55 +174,88 @@ export class AnalystService {
     if (district) params.district = district;
     if (block) params.block = block;
     if (awc) params.awc = awc;
-    return this.api.get<DynamicsTableRecord[]>(`analyst/dashboard/outreach-dynamics-details`, params);
+
+    const cacheKey = `outreach_dynamics_reports_${JSON.stringify(params)}`;
+    return this.checkCache(
+      cacheKey,
+      this.api.get<DynamicsTableRecord[]>(`analyst/dashboard/outreach-dynamics-details`, params)
+    );
   }
 
   getAnalystActivities(): Observable<OutreachActivity[]> {
-    return (this.api.get(`analyst/dashboard/activities`) as Observable<OutreachActivity[]>).pipe(
-      map((activities) =>
-        (activities || []).filter(
-          (a) => (a?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+    const cacheKey = 'activities';
+    return this.checkCache(
+      cacheKey,
+      (this.api.get(`analyst/dashboard/activities`) as Observable<OutreachActivity[]>).pipe(
+        map((activities) =>
+          (activities || []).filter(
+            (a) => (a?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+          ),
         ),
-      ),
-      catchError(() => of([])),
+        catchError(() => of([])),
+      )
     );
   }
 
   getAnalystSessions(activityId: number): Observable<OutreachSession[]> {
-    return (this.api.get(`analyst/dashboard/activity/${activityId}/sessions`) as Observable<OutreachSession[]>).pipe(
-      map((sessions) =>
-        (sessions || []).filter(
-          (s) => (s?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+    const cacheKey = `sessions_${activityId}`;
+    return this.checkCache(
+      cacheKey,
+      (this.api.get(`analyst/dashboard/activity/${activityId}/sessions`) as Observable<OutreachSession[]>).pipe(
+        map((sessions) =>
+          (sessions || []).filter(
+            (s) => (s?.status ?? '').toString().toUpperCase() === 'ACTIVE',
+          ),
         ),
-      ),
-      catchError(() => of([])),
+        catchError(() => of([])),
+      )
     );
   }
 
   getAnalystReports(): Observable<any[]> {
-    return (this.api.get(`analyst/dashboard/reports`) as Observable<any[]>).pipe(
-      map((rows) => rows || []),
-      catchError(() => of([]))
+    const cacheKey = 'reports';
+    return this.checkCache(
+      cacheKey,
+      (this.api.get(`analyst/dashboard/reports`) as Observable<any[]>).pipe(
+        map((rows) => rows || []),
+        catchError(() => of([]))
+      )
     );
   }
 
   getAnalystDashboardUsers(): Observable<{ admins: any[], managers: any[], workers: any[] }> {
-    return this.api.get<{ admins: any[], managers: any[], workers: any[] }>(`analyst/dashboard/users`);
+    const cacheKey = 'dashboard_users';
+    return this.checkCache(
+      cacheKey,
+      this.api.get<{ admins: any[], managers: any[], workers: any[] }>(`analyst/dashboard/users`)
+    );
   }
 
   getBeneficiary(id: number): Observable<any> {
-    return this.api.get(`analyst/beneficiary/${id}`);
+    const cacheKey = `beneficiary_${id}`;
+    return this.checkCache(
+      cacheKey,
+      this.api.get(`analyst/beneficiary/${id}`)
+    );
   }
 
   getFamilyMembers(beneficiaryId: number): Observable<any[]> {
-    return (this.api.get(`analyst/beneficiary/${beneficiaryId}/family-members`) as Observable<any[]>).pipe(
-      catchError(() => of([]))
+    const cacheKey = `family_members_${beneficiaryId}`;
+    return this.checkCache(
+      cacheKey,
+      (this.api.get(`analyst/beneficiary/${beneficiaryId}/family-members`) as Observable<any[]>).pipe(
+        catchError(() => of([]))
+      )
     );
   }
 
   getReportsByBeneficiary(beneficiaryId: number): Observable<any[]> {
-    return (this.api.get(`analyst/beneficiary/${beneficiaryId}/reports`) as Observable<any[]>).pipe(
-      catchError(() => of([]))
+    const cacheKey = `reports_by_beneficiary_${beneficiaryId}`;
+    return this.checkCache(
+      cacheKey,
+      (this.api.get(`analyst/beneficiary/${beneficiaryId}/reports`) as Observable<any[]>).pipe(
+        catchError(() => of([]))
+      )
     );
   }
 }
