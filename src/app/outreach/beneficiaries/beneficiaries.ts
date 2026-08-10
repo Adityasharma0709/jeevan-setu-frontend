@@ -74,6 +74,8 @@ export class Beneficiaries implements OnInit, OnDestroy {
   private refresh$ = new Subject<void>();
   private subs = new Subscription();
 
+  isManager = false;
+
   selectedColumns: { [key: string]: boolean } = {
     uid: true,
     name: true,
@@ -153,6 +155,7 @@ export class Beneficiaries implements OnInit, OnDestroy {
   // Sorting
   readonly sortCol$ = new BehaviorSubject<string | null>(null);
   readonly sortDir$ = new BehaviorSubject<'asc' | 'desc'>('asc');
+  readonly typeTab$ = new BehaviorSubject<'ALL' | 'PRIORITY' | 'GENERAL' | 'STAKEHOLDER'>('ALL');
   readonly exportDialog = viewChild.required<TemplateRef<any>>('exportDialog');
 
   // ── Reactive streams ──────────────────────────────────────────────────────
@@ -178,10 +181,23 @@ export class Beneficiaries implements OnInit, OnDestroy {
     this.rawBeneficiaries$,
     this.page$.asObservable(),
     this.sortCol$.asObservable(),
-    this.sortDir$.asObservable()
+    this.sortDir$.asObservable(),
+    this.typeTab$.asObservable(),
   ]).pipe(
-    map(([beneficiaries, page, sortCol, sortDir]) => {
+    map(([beneficiaries, page, sortCol, sortDir, typeTab]) => {
       let items = [...beneficiaries];
+
+      if (typeTab !== 'ALL') {
+        items = items.filter(b => {
+          const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+          if (typeTab === 'STAKEHOLDER') return isStakeholder;
+          if (isStakeholder) return false;
+
+          const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
+          return typeTab === 'PRIORITY' ? isPriority : !isPriority;
+        });
+      }
+
       if (sortCol) {
         items.sort((a: any, b: any) => {
           let aVal: any = a[sortCol];
@@ -226,14 +242,44 @@ export class Beneficiaries implements OnInit, OnDestroy {
       this.lastPage = safePage;
       this.lastPageCount = pageCount;
 
+      // Stats calculation for the cards
+      const priorityCount = beneficiaries.filter(b => {
+        const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+        if (isStakeholder) return false;
+        return !!(b.guardianName || b.qualification || b.religion || b.caste);
+      }).length;
+
+      const stakeholderCount = beneficiaries.filter(b => (b.typeof || '').toLowerCase() === 'stakeholder').length;
+
+      const generalCount = beneficiaries.filter(b => {
+        const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+        if (isStakeholder) return false;
+        const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
+        return !isPriority;
+      }).length;
+
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const registeredThisMonth = beneficiaries.filter(b => {
+        if (!b.createdAt) return false;
+        const d = new Date(b.createdAt);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      }).length;
+
       return {
         items: items.slice(startIndex, startIndex + this.pageSize),
         total,
+        totalBeneficiaries: beneficiaries.length,
         page: safePage,
         pageCount,
         pageSize: this.pageSize,
         startIndex,
         endIndex: Math.min(startIndex + this.pageSize, total),
+        priorityCount,
+        stakeholderCount,
+        generalCount,
+        registeredThisMonth,
+        typeTab,
       };
     }),
   );
@@ -258,6 +304,11 @@ export class Beneficiaries implements OnInit, OnDestroy {
       this.sortCol$.next(col);
       this.sortDir$.next('asc');
     }
+  }
+
+  setTypeTab(tab: 'ALL' | 'PRIORITY' | 'GENERAL' | 'STAKEHOLDER') {
+    this.typeTab$.next(tab);
+    this.page$.next(1);
   }
 
   navigateToCreate(): void {
@@ -305,6 +356,9 @@ export class Beneficiaries implements OnInit, OnDestroy {
 
   getColspan(): number {
     let count = 1; // Index column is always shown
+    if (!this.isManager) {
+      count++; // Action column is shown
+    }
     for (const key of Object.keys(this.selectedColumns)) {
       if (this.selectedColumns[key]) {
         count++;
