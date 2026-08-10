@@ -246,11 +246,8 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
           } else if (sortCol === 'age') {
             aVal = a.dateOfBirth ? new Date(a.dateOfBirth).getTime() : 0;
             bVal = b.dateOfBirth ? new Date(b.dateOfBirth).getTime() : 0;
-          } else if (sortCol === 'beneficiaryType') {
-            const hasPriorityA = !!(a.guardianName || a.qualification || a.religion || a.caste);
-            const hasPriorityB = !!(b.guardianName || b.qualification || b.religion || b.caste);
-            aVal = hasPriorityA ? 'Priority' : 'General';
-            bVal = hasPriorityB ? 'Priority' : 'General';
+            aVal = this.getBeneficiaryType(a);
+            bVal = this.getBeneficiaryType(b);
           } else if (sortCol === 'monthlyIncome') {
             aVal = Number(a.monthlyIncome) || 0;
             bVal = Number(b.monthlyIncome) || 0;
@@ -278,10 +275,19 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
 
       // Stats calculation for the cards (matching the 4 Prodex cards)
       const priorityCount = beneficiaries.filter(b => {
+        const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+        if (isStakeholder) return false;
         return !!(b.guardianName || b.qualification || b.religion || b.caste);
       }).length;
 
       const stakeholderCount = beneficiaries.filter(b => (b.typeof || '').toLowerCase() === 'stakeholder').length;
+
+      const generalCount = beneficiaries.filter(b => {
+        const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+        if (isStakeholder) return false;
+        const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
+        return !isPriority;
+      }).length;
 
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
@@ -302,6 +308,7 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
         endIndex: Math.min(startIndex + this.pageSize, total),
         priorityCount,
         stakeholderCount,
+        generalCount,
         registeredThisMonth,
         typeTab,
       };
@@ -390,6 +397,10 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
   }
 
   getBeneficiaryType(b: any): string {
+    const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+    if (isStakeholder) {
+      return 'Stakeholder';
+    }
     const hasPriorityData = !!(b.guardianName || b.qualification || b.religion || b.caste);
     return hasPriorityData ? 'Priority' : 'General';
   }
