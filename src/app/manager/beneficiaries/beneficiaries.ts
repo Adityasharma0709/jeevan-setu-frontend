@@ -373,9 +373,6 @@ export class Beneficiaries implements OnInit, OnDestroy {
 
   getColspan(): number {
     let count = 1; // Index column is always shown
-    if (!this.isManager) {
-      count++; // Action column is shown
-    }
     for (const key of Object.keys(this.selectedColumns)) {
       if (this.selectedColumns[key]) {
         count++;

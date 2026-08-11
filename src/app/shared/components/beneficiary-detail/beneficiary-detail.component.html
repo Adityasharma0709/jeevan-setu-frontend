@@ -278,15 +278,23 @@
                   </div>
                 </div>
 
-                <!-- Row: Date of Marriage + Registered On -->
-                <div class="grid grid-cols-2 divide-x divide-gray-50" *ngIf="beneficiary.dateOfMarriage">
+                <!-- Row: Date of Marriage -->
+                <div class="grid grid-cols-1 divide-x divide-gray-50" *ngIf="beneficiary.dateOfMarriage">
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Date of Marriage</p>
                     <p class="text-sm font-semibold text-gray-800">{{ beneficiary.dateOfMarriage | date: 'mediumDate' }}</p>
                   </div>
+                </div>
+
+                <!-- Row: Registration Info -->
+                <div class="grid grid-cols-2 divide-x divide-gray-50">
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Registered On</p>
                     <p class="text-sm font-semibold text-gray-800">{{ beneficiary.createdAt | date: 'mediumDate' }}</p>
+                  </div>
+                  <div class="px-6 py-4">
+                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Registered By</p>
+                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.createdBy?.name || '-' }}</p>
                   </div>
                 </div>
 
@@ -359,10 +367,6 @@
                   <h2 class="text-2xl font-black text-gray-900 leading-tight">{{ beneficiary.name }}</h2>
                   <p class="text-xs text-gray-400 mt-1 font-mono">{{ beneficiary.uid }}</p>
                 </div>
-                <div class="shrink-0 text-right">
-                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Registered On</p>
-                  <p class="text-sm font-semibold text-gray-800">{{ beneficiary.createdAt | date: 'mediumDate' }}</p>
-                </div>
               </div>
 
               <div class="divide-y divide-gray-50">
@@ -374,6 +378,18 @@
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Gender</p>
                     <p class="text-sm font-semibold text-gray-800 capitalize">{{ beneficiary.gender || '—' }}</p>
+                  </div>
+                </div>
+
+                <!-- Row: Registration Info -->
+                <div class="grid grid-cols-2 divide-x divide-gray-50">
+                  <div class="px-6 py-4">
+                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Registered On</p>
+                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.createdAt | date: 'mediumDate' }}</p>
+                  </div>
+                  <div class="px-6 py-4">
+                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Registered By</p>
+                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.createdBy?.name || '-' }}</p>
                   </div>
                 </div>
                 <div class="grid grid-cols-2 divide-x divide-gray-50" *ngIf="beneficiary.typeof">
