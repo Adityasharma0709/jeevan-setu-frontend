@@ -101,6 +101,7 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
     project: true,
     location: true,
     createdAt: true,
+    createdBy: true,
   };
 
   columnList = [
@@ -125,6 +126,7 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
     { key: 'project', label: 'Project' },
     { key: 'location', label: 'AWC' },
     { key: 'createdAt', label: 'Registered Date' },
+    { key: 'createdBy', label: 'Registered By' },
   ];
 
   showColumnSelector = false;
