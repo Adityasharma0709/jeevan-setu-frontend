@@ -109,6 +109,7 @@ export class Activity {
     screening: true,
     date: true,
     details: true,
+    reportedBy: true,
   };
   columnList = [
     { key: 'beneficiaryId', label: 'Beneficiary ID' },
@@ -119,6 +120,7 @@ export class Activity {
     { key: 'screening', label: 'Screening' },
     { key: 'date', label: 'Date' },
     { key: 'details', label: 'Details' },
+    { key: 'reportedBy', label: 'Reported By' },
   ];
 
   showColumnSelector = false;
@@ -326,6 +328,13 @@ export class Activity {
     this.router.navigate(['/outreach/report-activity'], { queryParams: { reportId } });
   }
 
+  viewDetails(report: any): void {
+    const targetId = report.beneficiary?.id || report.child?.beneficiaryId;
+    if (targetId) {
+      this.router.navigate(['/outreach/beneficiary', targetId]);
+    }
+  }
+
   reload() {
     this.refresh$.next();
   }
@@ -335,6 +344,12 @@ export class Activity {
       this.screeningFilter === 'ALL' ? 'YES' : this.screeningFilter === 'YES' ? 'NO' : 'ALL';
     this.page$.next(1);
     this.screeningFilter$.next(this.screeningFilter);
+  }
+
+  setScreeningFilter(filter: 'ALL' | 'YES' | 'NO'): void {
+    this.screeningFilter = filter;
+    this.page$.next(1);
+    this.screeningFilter$.next(filter);
   }
 
   get screeningFilterLabel(): string {

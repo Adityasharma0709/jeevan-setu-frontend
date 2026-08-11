@@ -258,4 +258,12 @@ export class AnalystService {
       )
     );
   }
+
+  getProfile(): Observable<any> {
+    return this.api.get('auth/me', undefined, { cache: 'reload' });
+  }
+
+  updateProfile(data: any): Observable<any> {
+    return this.api.put('users/profile', data);
+  }
 }

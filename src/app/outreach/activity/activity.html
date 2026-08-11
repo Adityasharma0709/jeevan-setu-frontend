@@ -2,22 +2,46 @@
   <app-outreach-page-header title="Activity Reports"
     subtitle="Manage and track health records for your assigned locations."
     mobileSubtitle="Manage and track health records" [showSearch]="true" [showMobileExtras]="true">
-    <div outreachHeaderActions>
+    
+    <!-- Header projections: Search bar on desktop, add button on mobile -->
+    <div outreachHeaderActions class="flex items-center gap-3">
+      <!-- Desktop Search Bar -->
+      <label class="relative hidden md:block w-64 lg:w-80">
+        <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
+        <input z-input [formControl]="searchControl" placeholder="Search by UID, name, or activity..."
+          class="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#006666] focus:ring-2 focus:ring-teal-100" />
+      </label>
+
+      <!-- Desktop Filter Button -->
+      <button type="button" (click)="cycleScreeningFilter()"
+        class="relative hidden md:flex h-10 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 active:bg-teal-50/50"
+        [class.border-[#006666]]="screeningFilter !== 'ALL'" [class.text-[#006666]]="screeningFilter !== 'ALL'"
+        [attr.aria-label]="'Screening filter: ' + screeningFilterLabel">
+        <z-icon zType="list-filter-plus" class="h-4 w-4"></z-icon>
+        <span *ngIf="screeningFilter !== 'ALL'"
+          class="absolute -right-1 -top-1 rounded-full bg-[#006666] px-1.5 py-0.5 text-[9px] font-bold text-white">
+          {{ screeningFilterLabel }}
+        </span>
+      </button>
+
+      <!-- Desktop Add button -->
       <button z-button (click)="addReport()"
-        class="bg-[#006666] hover:bg-[#006666] text-white shadow-lg shadow-indigo-100 transition-all hover:-translate-y-0.5">
+        class="hidden md:flex bg-[#006666] hover:bg-[#005353] text-white shadow-lg shadow-teal-100 transition-all">
         <z-icon zType="plus" class="w-4 h-4 mr-2" />
         Submit New Report
       </button>
     </div>
 
-    <div outreachHeaderSearch>
+    <!-- Mobile-only Search input projected into header sticky block -->
+    <div outreachHeaderSearch class="md:hidden">
       <div class="flex items-center gap-3 w-full">
-        <label class="relative flex-1">
+        <label class="relative flex-1 max-w-md">
           <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
-          <input type="search" [formControl]="searchControl" placeholder="Search by UID, name, or activity..."
+          <input z-input [formControl]="searchControl" placeholder="Search by UID, name, or activity..."
             class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
         </label>
 
+        <!-- Mobile Filter Button -->
         <button type="button" (click)="cycleScreeningFilter()"
           class="relative flex h-11 w-12 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50 active:bg-indigo-50"
           [class.border-[#0F766E]]="screeningFilter !== 'ALL'" [class.text-[#0F766E]]="screeningFilter !== 'ALL'"
@@ -32,7 +56,7 @@
     </div>
 
     <div outreachHeaderMobileExtras
-      class="md:hidden space-y-3 overflow-hidden rounded-md border border-[#F3F4F6] bg-white p-3">
+      class="md:hidden overflow-hidden rounded-md border border-[#F3F4F6] bg-white p-3 space-y-3">
       <button type="button" (click)="addReport()"
         class="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[#006666] px-4 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.18)] transition hover:bg-[#005353] active:scale-[0.99]">
         <z-icon zType="plus" class="h-5 w-5"></z-icon>
@@ -92,63 +116,52 @@
   <!-- Reports Content -->
   <ng-container *ngIf="vm$ | async as vm; else loadingTpl">
     <!-- Large Screens: Modernized Table View -->
-    <div class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-      <div class="border-b border-slate-200 px-4 py-4">
-        <div class="flex items-center gap-3 w-full max-w-3xl">
-          <label class="relative flex-1">
-            <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
-            <input type="search" [formControl]="searchControl" placeholder="Search by UID, name, or activity..."
-              class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-          </label>
-
-          <button type="button" (click)="cycleScreeningFilter()"
-            class="relative flex h-11 w-12 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50 active:bg-indigo-50"
-            [class.border-[#0F766E]]="screeningFilter !== 'ALL'" [class.text-[#0F766E]]="screeningFilter !== 'ALL'"
-            [attr.aria-label]="'Screening filter: ' + screeningFilterLabel">
-            <z-icon zType="list-filter-plus" class="h-5 w-5"></z-icon>
-            <span *ngIf="screeningFilter !== 'ALL'"
-              class="absolute -right-1 -top-1 rounded-full bg-[#0F766E] px-1.5 py-0.5 text-[9px] font-bold text-white">
-              {{ screeningFilterLabel }}
-            </span>
-          </button>
+    <div class="hidden md:block bg-white border border-gray-100 rounded-2xl shadow-sm">
+      <!-- Unified Prodex-inspired Header/Toolbar -->
+      <div class="border-b border-slate-200 px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50/50 rounded-t-2xl">
+        <!-- Left side: Title -->
+        <div class="flex items-center gap-3">
+          <h2 class="text-xl font-bold text-slate-800">All Activity Reports</h2>
         </div>
-      </div>
 
-      <div
-        class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <button type="button" (click)="openExportDialog()"
-          class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] sm:w-auto">
-          <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
-          <span class="text-[15px] font-semibold leading-none">Download sheet</span>
-        </button>
+        <!-- Right side: Action Buttons -->
+        <div class="flex items-center gap-3 flex-wrap md:flex-nowrap">
+          <!-- Columns Selector Trigger -->
+          <div class="relative inline-block text-left">
+            <button type="button" (click)="toggleColumnSelectorDropdown()"
+              class="flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+              <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
+              Columns
+            </button>
 
-        <div class="relative inline-block self-end text-left sm:self-auto">
-          <button type="button" (click)="toggleColumnSelectorDropdown()"
-            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-            <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
-            Columns
-          </button>
+            <!-- Column Selection Dropdown Menu -->
+            <div *ngIf="showColumnSelector"
+              class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
+              <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                Show / Hide Columns
+              </div>
 
-          <div *ngIf="showColumnSelector"
-            class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
-            <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-              Show / Hide Columns
-            </div>
-
-            <div class="space-y-2">
-              <label *ngFor="let col of columnList"
-                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
-                <input type="checkbox" [(ngModel)]="selectedColumns[col.key]" (click)="$event.stopPropagation()"
-                  class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]" />
-
-                <span class="text-xs font-medium text-slate-700">
-                  {{ col.label }}
-                </span>
-              </label>
+              <div class="space-y-2">
+                <label *ngFor="let col of columnList"
+                  class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
+                  <input type="checkbox" [(ngModel)]="selectedColumns[col.key]" (click)="$event.stopPropagation()"
+                    class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]" />
+                  <span class="text-xs font-medium text-slate-700">{{ col.label }}</span>
+                </label>
+              </div>
             </div>
           </div>
+
+          <!-- Download Excel Sheet Button -->
+          <button type="button" (click)="openExportDialog()"
+            class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[#006666] transition hover:bg-teal-50/50 hover:border-teal-200">
+            <img src="excel.png" alt="excel download button" class="h-5 w-5 object-contain" />
+            <span class="text-xs font-bold leading-none">Download sheet</span>
+          </button>
         </div>
       </div>
+
+
 
       <div class="w-full overflow-x-auto">
         <table z-table zType="grid" class="w-full min-w-[1200px] table-fixed border-collapse text-left text-[13px] text-slate-900">
@@ -327,9 +340,26 @@
                 </span>
               </div>
             </th>
-            <th z-table-head
-              class="w-24 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors">
-              <span class="flex items-center gap-1">Actions</span>
+
+            <th *ngIf="selectedColumns['reportedBy']" z-table-head
+              class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+              (click)="sortBy('reportedBy')">
+              <div class="flex flex-col items-center justify-center gap-1">
+                <span class="flex items-center gap-1">
+                  Reported By
+                  <z-icon [zType]="
+                      (sortCol$ | async) === 'reportedBy'
+                        ? (sortDir$ | async) === 'asc'
+                          ? 'chevron-up'
+                          : 'chevron-down'
+                        : 'chevrons-up-down'
+                    " [class]="
+                      (sortCol$ | async) === 'reportedBy'
+                        ? 'w-3 h-3 text-[#006666] shrink-0'
+                        : 'w-3 h-3 text-slate-400 shrink-0 hover:text-[#006666] transition-colors'
+                    "></z-icon>
+                </span>
+              </div>
             </th>
           </tr>
         </thead>
@@ -342,9 +372,19 @@
               {{ vm.startIndex + i + 1 }}
             </td>
 
-            <td *ngIf="selectedColumns['beneficiaryId']" z-table-cell
-              class="px-2 py-3 font-mono text-[12px] text-slate-600">
-              {{ report.child?.uid || report.beneficiary?.uid || '-' }}
+            <td *ngIf="selectedColumns['beneficiaryId']" z-table-cell class="px-2 py-3 select-none text-center">
+              <div class="inline-flex items-center justify-center gap-1.5 font-mono text-[12px]">
+                <span (click)="viewDetails(report); $event.stopPropagation()"
+                  class="text-blue-600 cursor-pointer underline hover:text-blue-800"
+                  title="Click to view profile detail">
+                  {{ report.child?.uid || report.beneficiary?.uid || '-' }}
+                </span>
+                <button type="button" (click)="editReport(report.id); $event.stopPropagation()"
+                  class="flex items-center justify-center rounded-full p-1 text-[#005353] hover:bg-[#005353]/10 transition active:scale-95"
+                  title="Edit Report">
+                  <z-icon zType="edit" class="h-3.5 w-3.5 fill-current"></z-icon>
+                </button>
+              </div>
             </td>
 
             <td *ngIf="selectedColumns['beneficiaryName']" z-table-cell class="px-2 py-3">
@@ -389,18 +429,14 @@
               <span class="block text-[11px] leading-snug text-slate-500" [innerHTML]="getScreeningSummary(report)">
               </span>
             </td>
-            <td>
-              <button type="button"
-                class="flex items-center justify-center gap-3 rounded-[22px] border-2 border-[#005353] px-2 py-2 text-[#005353] transition active:scale-[0.99]"
-                (click)="editReport(report.id)" aria-label="Edit report">
-                <z-icon zType="edit" class="h-3 w-3"></z-icon>
-                <span class="text-sm font-semibold leading-none">Edit</span>
-              </button>
+
+            <td *ngIf="selectedColumns['reportedBy']" z-table-cell class="px-2 py-3 text-slate-600 text-center">
+              {{ report.reportedBy?.name || '-' }}
             </td>
           </tr>
 
           <tr z-table-row *ngIf="vm.items.length === 0">
-            <td z-table-cell colspan="8" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
+            <td z-table-cell [attr.colspan]="getColspan()" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
               No activity reports recorded yet.
             </td>
           </tr>
@@ -419,11 +455,15 @@
               {{ report.child?.name || report.beneficiary?.name || 'Unknown' }}
             </h3>
             <p class="mt-2 text-sm leading-snug text-slate-600">
-              <span class="font-medium uppercase tracking-wide text-slate-600">
+              <span (click)="viewDetails(report); $event.stopPropagation()"
+                class="font-medium uppercase tracking-wide text-blue-600 cursor-pointer underline hover:text-blue-800"
+                title="Click to view profile detail">
                 {{ report.child?.uid || report.beneficiary?.uid || '-' }}
               </span>
               <span class="mx-1.5 text-slate-300">•</span>
               <span>Reported On: {{ report.date | date: 'dd-MM-yyyy' }}</span>
+              <span class="mx-1.5 text-slate-300">•</span>
+              <span>Reported By: {{ report.reportedBy?.name || '-' }}</span>
             </p>
             <p *ngIf="report.child" class="mt-1 text-xs italic leading-tight text-slate-500">
               Child of {{ report.beneficiary?.name }}
@@ -793,8 +833,19 @@
               {{ vm.startIndex + i + 1 }}
             </td>
 
-            <td z-table-cell class="px-2 py-3 font-mono text-[12px] text-slate-600">
-              {{ report.child?.uid || report.beneficiary?.uid || '-' }}
+            <td z-table-cell class="px-2 py-3 select-none text-center">
+              <div class="inline-flex items-center justify-center gap-1.5 font-mono text-[12px]">
+                <span (click)="viewDetails(report); $event.stopPropagation()"
+                  class="text-blue-600 cursor-pointer underline hover:text-blue-800"
+                  title="Click to view profile detail">
+                  {{ report.child?.uid || report.beneficiary?.uid || '-' }}
+                </span>
+                <button type="button" (click)="editReport(report.id); $event.stopPropagation()"
+                  class="flex items-center justify-center rounded-full p-1 text-[#005353] hover:bg-[#005353]/10 transition active:scale-95"
+                  title="Edit Report">
+                  <z-icon zType="edit" class="h-3.5 w-3.5 fill-current"></z-icon>
+                </button>
+              </div>
             </td>
 
             <td z-table-cell class="px-2 py-3">
