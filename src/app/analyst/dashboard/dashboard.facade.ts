@@ -205,6 +205,11 @@ export class DashboardFacade {
     const activity$ = this.activityFilter.valueChanges.pipe(startWith(this.activityFilter.value), distinctUntilChanged());
     const session$ = this.sessionFilter.valueChanges.pipe(startWith(this.sessionFilter.value), distinctUntilChanged());
 
+    const users$ = this.analystService.getAnalystDashboardUsers().pipe(
+      catchError(() => of({ admins: [], managers: [], workers: [] })),
+      shareReplay(1)
+    );
+
     // Reset pagination to 0 on filter changes
     activity$.subscribe(() => {
       this.currentPageSub.next(0);
@@ -467,7 +472,7 @@ export class DashboardFacade {
     );
 
     // Fetch user hierarchy and setup cascading options
-    this.analystService.getAnalystDashboardUsers().subscribe(res => {
+    users$.subscribe(res => {
       const allAdmins = res.admins || [];
       const allManagers = res.managers || [];
       const allWorkers = res.workers || [];
@@ -560,16 +565,32 @@ export class DashboardFacade {
     );
 
     // 3. Enrich Reports & Calculate Location Hierarchy
-    this.enrichedReports$ = combineLatest([this.myReports$, this.myBeneficiaries$]).pipe(
-      map(([reports, beneficiaries]) => {
+    this.enrichedReports$ = combineLatest([this.myReports$, this.myBeneficiaries$, users$]).pipe(
+      map(([reports, beneficiaries, users]) => {
         const benMap = new Map<number, any>();
         beneficiaries.forEach((b: any) => benMap.set(b.id, b));
+        
+        const workers = users.workers || [];
+        const managers = users.managers || [];
+        
+        const workerMap = new Map<number, any>();
+        workers.forEach((w: any) => workerMap.set(w.id, w));
+
+        const managerMap = new Map<number, any>();
+        managers.forEach((m: any) => managerMap.set(m.id, m));
+
         return reports.map((r: any) => {
           const beneficiary = benMap.get(r.beneficiaryId) || r.beneficiary;
           let child = r.child;
           if (!child && r.childId && beneficiary?.children) {
             child = beneficiary.children.find((c: any) => c.id === r.childId || c.id.toString() === r.childId.toString());
           }
+
+          const worker = workerMap.get(r.reportedById);
+          const mId = worker ? worker.createdByAdminId : null;
+          const manager = mId ? managerMap.get(mId) : null;
+          const aId = manager ? manager.createdByAdminId : null;
+
           return {
             ...r,
             beneficiary,
@@ -577,6 +598,9 @@ export class DashboardFacade {
             state: beneficiary?.state || null,
             district: beneficiary?.district || null,
             block: beneficiary?.block || null,
+            workerId: r.reportedById,
+            managerId: mId,
+            adminId: aId
           };
         });
       }),
@@ -709,9 +733,12 @@ export class DashboardFacade {
       this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
       this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
       this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
+      this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
+      this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
+      this.workerFilter.valueChanges.pipe(startWith(this.workerFilter.value)),
       this.uniqueCount$,
     ]).pipe(
-      map(([reports, year, month, state, district, block, awc, uniqueVal]) => {
+      map(([reports, year, month, state, district, block, awc, admin, manager, worker, uniqueVal]) => {
         const filtered = reports.filter((r: any) => {
           if (year && year !== 'ALL' && getReportYear(r) !== year) return false;
           if (month && month !== 'ALL' && getReportMonthName(r).toLowerCase() !== month.toLowerCase()) return false;
@@ -722,6 +749,9 @@ export class DashboardFacade {
             const rAwc = r.beneficiary?.location?.awcName || r.beneficiary?.location?.village || r.beneficiary?.village || r.awcCenter || r.awc || '';
             if (rAwc.toLowerCase().trim() !== awc.toLowerCase().trim()) return false;
           }
+          if (admin && admin !== 'ALL' && r.adminId !== Number(admin)) return false;
+          if (manager && manager !== 'ALL' && r.managerId !== Number(manager)) return false;
+          if (worker && worker !== 'ALL' && r.reportedById !== Number(worker)) return false;
           return true;
         });
 
