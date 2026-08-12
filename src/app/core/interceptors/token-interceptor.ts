@@ -1,32 +1,11 @@
-// import { Injectable } from '@angular/core';
-// import {
-//   HttpInterceptor,
-//   HttpRequest,
-//   HttpHandler
-// } from '@angular/common/http';
-
-// @Injectable()
-// export class TokenInterceptor implements HttpInterceptor {
-
-//   intercept(req: HttpRequest<any>, next: HttpHandler) {
-
-//     const token = localStorage.getItem('token');
-
-//     if (token) {
-//       req = req.clone({
-//         setHeaders: {
-//           Authorization: `Bearer ${token}`
-//         }
-//       });
-//     }
-
-//     return next.handle(req);
-//   }
-// }
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
-
+  const router = inject(Router);
   const token = localStorage.getItem('token');
 
   if (token) {
@@ -37,5 +16,13 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
     });
   }
 
-  return next(req);
+  return next(req).pipe(
+    catchError((error: any) => {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        localStorage.clear();
+        router.navigate(['/login']);
+      }
+      return throwError(() => error);
+    })
+  );
 };

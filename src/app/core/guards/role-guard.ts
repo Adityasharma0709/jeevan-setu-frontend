@@ -1,15 +1,33 @@
-import { CanActivateFn } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
 import { decodeJwtPayload } from '../utils/jwt';
 
 export const roleGuard: CanActivateFn = (route, state) => {
-
+  const router = inject(Router);
   const token = localStorage.getItem('token');
-  if (!token) return false;
+  
+  if (!token) {
+    router.navigate(['/login']);
+    return false;
+  }
 
-  const payload = decodeJwtPayload<{ roles?: string[] }>(token);
+  const payload = decodeJwtPayload<{ exp?: number; roles?: string[] }>(token);
+  
+  // Check if token has expired
+  if (payload?.exp && Date.now() >= payload.exp * 1000) {
+    localStorage.clear();
+    router.navigate(['/login']);
+    return false;
+  }
+
   const userRoles = payload?.roles ?? [];
-
   const allowedRoles = route.data['roles'] as string[];
 
-  return allowedRoles.some(r => userRoles.includes(r));
+  const isAllowed = allowedRoles.some(r => userRoles.includes(r));
+  if (!isAllowed) {
+    router.navigate(['/login']);
+    return false;
+  }
+
+  return true;
 };
