@@ -357,6 +357,7 @@ export class DashboardFacade {
                     icon: icon,
                     adolescentGirl: sc.adolescentGirl || 0,
                     woman: sc.woman || 0,
+                    children: sc.children,
                     total: sc.total || 0
                   };
                 }
