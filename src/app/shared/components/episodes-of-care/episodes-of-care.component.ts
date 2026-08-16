@@ -14,6 +14,7 @@ export interface EpisodeOfCareFemale {
   label: string;
   adolescentGirl: number;
   woman: number;
+  children?: number;
   total: number;
   icon?: any;
 }
@@ -130,6 +131,13 @@ export class ZardEpisodeCardComponent {
                 </div>
                 <span class="font-bold text-gray-800">{{data.woman}}</span>
             </div>
+            <div *ngIf="data.children !== undefined" class="flex items-center justify-between text-xs font-semibold text-gray-600">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#14B8A6] block"></span>
+                    <span>Children (< 10y)</span>
+                </div>
+                <span class="font-bold text-gray-800">{{data.children}}</span>
+            </div>
         </div>
     </div>
   `
@@ -143,6 +151,12 @@ export class ZardEpisodeCardFemaleComponent {
       return 'conic-gradient(#E5E7EB 0% 100%)';
     }
     const pAdolescent = (this.data.adolescentGirl / total) * 100;
+    if (this.data.children !== undefined) {
+      const pWoman = (this.data.woman / total) * 100;
+      const stop1 = pAdolescent;
+      const stop2 = pAdolescent + pWoman;
+      return `conic-gradient(#EC4899 0% ${stop1}%, #8B5CF6 ${stop1}% ${stop2}%, #14B8A6 ${stop2}% 100%)`;
+    }
     return `conic-gradient(#EC4899 0% ${pAdolescent}%, #8B5CF6 ${pAdolescent}% 100%)`;
   }
 }
