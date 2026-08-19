@@ -12,6 +12,8 @@ import {
   startWith,
   switchMap,
   tap,
+  forkJoin,
+  catchError
 } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { ApiService } from '../../core/services/api';
@@ -171,9 +173,25 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   projectAssignments$ = this.form.get('projectId')!.valueChanges.pipe(
     startWith(this.form.get('projectId')!.value),
-    switchMap((projectId) =>
-      projectId ? this.outreachService.getProjectAssignments(Number(projectId)) : of({ states: [], awcs: [] })
-    ),
+    switchMap((projectId) => {
+      if (!projectId) return of({ states: [], awcs: [], schools: [], healthCenters: [] });
+      return forkJoin({
+        assignments: this.outreachService.getProjectAssignments(Number(projectId)),
+        schools: this.api.get(`locations/schools?projectId=${projectId}`) as Observable<any[]>,
+        healthCenters: this.api.get(`locations/health-centers?projectId=${projectId}`) as Observable<any[]>,
+      }).pipe(
+        map(({ assignments, schools, healthCenters }) => ({
+          states: assignments.states,
+          awcs: assignments.awcs,
+          schools,
+          healthCenters
+        })),
+        catchError((err) => {
+          console.error('Error loading project assignments/locations:', err);
+          return of({ states: [], awcs: [], schools: [], healthCenters: [] });
+        })
+      );
+    }),
     shareReplay(1)
   );
 
@@ -187,7 +205,9 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
         districtSelect: '', 
         blockSelect: '', 
         villageSelect: '', 
-        locationId: '' 
+        locationId: '',
+        schoolId: '',
+        healthCenterId: ''
       }, { emitEvent: true });
     }),
     shareReplay(1)
@@ -280,20 +300,12 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     })
   ));
 
-  schoolsByProject$ = this.form.get('projectId')!.valueChanges.pipe(
-    startWith(this.form.get('projectId')!.value),
-    switchMap((projectId) =>
-      projectId ? (this.api.get(`locations/schools?projectId=${projectId}`) as Observable<any[]>) : of([])
-    ),
-    shareReplay(1)
+  schoolsByProject$ = this.projectAssignments$.pipe(
+    map(res => res.schools || [])
   );
 
-  healthCentersByProject$ = this.form.get('projectId')!.valueChanges.pipe(
-    startWith(this.form.get('projectId')!.value),
-    switchMap((projectId) =>
-      projectId ? (this.api.get(`locations/health-centers?projectId=${projectId}`) as Observable<any[]>) : of([])
-    ),
-    shareReplay(1)
+  healthCentersByProject$ = this.projectAssignments$.pipe(
+    map(res => res.healthCenters || [])
   );
 
   assignmentSchools$ = defer(() => combineLatest([
@@ -307,10 +319,10 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       if (!state || !district || !block || !village) return [] as ZardComboboxOption[];
       return (schools || [])
         .filter((l: any) => 
-          l.stateName === state && 
-          l.districtName === district && 
-          l.block === block && 
-          l.village === village &&
+          l.stateName?.trim().toLowerCase() === state.trim().toLowerCase() && 
+          l.districtName?.trim().toLowerCase() === district.trim().toLowerCase() && 
+          l.block?.trim().toLowerCase() === block.trim().toLowerCase() && 
+          l.village?.trim().toLowerCase() === village.trim().toLowerCase() &&
           l.status === 'ACTIVE'
         )
         .map((l: any) => {
@@ -331,10 +343,10 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       if (!state || !district || !block || !village) return [] as ZardComboboxOption[];
       return (hcs || [])
         .filter((l: any) => 
-          l.stateName === state && 
-          l.districtName === district && 
-          l.block === block && 
-          l.village === village &&
+          l.stateName?.trim().toLowerCase() === state.trim().toLowerCase() && 
+          l.districtName?.trim().toLowerCase() === district.trim().toLowerCase() && 
+          l.block?.trim().toLowerCase() === block.trim().toLowerCase() && 
+          l.village?.trim().toLowerCase() === village.trim().toLowerCase() &&
           l.status === 'ACTIVE'
         )
         .map((l: any) => {
