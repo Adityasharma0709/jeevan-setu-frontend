@@ -36,7 +36,7 @@ import { toast } from 'ngx-sonner';
   template: `
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8">
         <div class="flex items-center justify-between gap-4 mb-6">
-            <h2 class="text-xl font-bold text-gray-800">Outreach Dynamics</h2>
+            <h2 class="text-xl font-bold text-gray-800">Current Beneficiary Cohorts</h2>
             
             <button type="button" (click)="exportToExcel()"
               class="inline-flex items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-2 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353] cursor-pointer h-[38px]">

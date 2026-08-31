@@ -23,7 +23,7 @@ import { ZardActivitySessionsComponent } from '@/shared/components/activity-sess
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="pt-4">
-        <h2 class="text-2xl font-bold text-gray-800 mb-1">Coverage Dashboard</h2>
+        <h2 class="text-2xl font-bold text-gray-800 mb-1">Project Reach</h2>
         <p class="text-gray-500 text-sm mb-6">Track reach and episodes of care</p>
 
         <div class="flex flex-wrap items-center gap-4 mb-6">
