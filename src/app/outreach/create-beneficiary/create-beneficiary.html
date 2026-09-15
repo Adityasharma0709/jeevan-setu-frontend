@@ -91,9 +91,22 @@
               </z-form-control>
             </z-form-field>
 
-            <!-- Priority: AWC is mandatory -->
-            <z-form-field *ngIf="isPriority">
-              <label z-form-label zRequired>AWC</label>
+            <!-- Institution Selection (AWC, School, Health Center) -->
+            <z-form-field>
+              <label z-form-label [zRequired]="isPriority">Institution Type</label>
+              <z-form-control>
+                <z-combobox 
+                  formControlName="institutionTypeSelect" 
+                  [options]="institutionTypeOptions"
+                  [searchable]="false"
+                  placeholder="Select institution type"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field *ngIf="form.get('institutionTypeSelect')?.value === 'AWC' || (!form.get('institutionTypeSelect')?.value && isPriority)">
+              <label z-form-label [zRequired]="isPriority">AWC</label>
               <z-form-control>
                 <z-combobox 
                   formControlName="locationId" 
@@ -105,60 +118,31 @@
               </z-form-control>
             </z-form-field>
 
-            <!-- General: Optional institution linkage (only one of AWC / School / Health Center) -->
-            <ng-container *ngIf="isGeneral">
-              <z-form-field>
-                <label z-form-label>Institution Type</label>
-                <z-form-control>
-                  <z-combobox 
-                    formControlName="institutionTypeSelect" 
-                    [options]="institutionTypeOptions"
-                    [searchable]="false"
-                    placeholder="Select institution type"
-                    zWidth="full"
-                  />
-                </z-form-control>
-              </z-form-field>
+            <z-form-field *ngIf="form.get('institutionTypeSelect')?.value === 'SCHOOL'">
+              <label z-form-label [zRequired]="isPriority">School</label>
+              <z-form-control>
+                <z-combobox 
+                  formControlName="schoolId" 
+                  [options]="(assignmentSchools$ | async) || []" 
+                  [zDisabled]="!form.get('villageSelect')?.value"
+                  placeholder="Select School"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
 
-              <z-form-field *ngIf="form.get('institutionTypeSelect')?.value === 'AWC'">
-                <label z-form-label>AWC</label>
-                <z-form-control>
-                  <z-combobox 
-                    formControlName="locationId" 
-                    [options]="(assignmentAwcs$ | async) || []" 
-                    [zDisabled]="!form.get('villageSelect')?.value"
-                    placeholder="Select AWC"
-                    zWidth="full"
-                  />
-                </z-form-control>
-              </z-form-field>
-
-              <z-form-field *ngIf="form.get('institutionTypeSelect')?.value === 'SCHOOL'">
-                <label z-form-label>School</label>
-                <z-form-control>
-                  <z-combobox 
-                    formControlName="schoolId" 
-                    [options]="(assignmentSchools$ | async) || []" 
-                    [zDisabled]="!form.get('villageSelect')?.value"
-                    placeholder="Select School"
-                    zWidth="full"
-                  />
-                </z-form-control>
-              </z-form-field>
-
-              <z-form-field *ngIf="form.get('institutionTypeSelect')?.value === 'HEALTH_CENTER'">
-                <label z-form-label>Health Center</label>
-                <z-form-control>
-                  <z-combobox 
-                    formControlName="healthCenterId" 
-                    [options]="(assignmentHealthCenters$ | async) || []" 
-                    [zDisabled]="!form.get('villageSelect')?.value"
-                    placeholder="Select Health Center"
-                    zWidth="full"
-                  />
-                </z-form-control>
-              </z-form-field>
-            </ng-container>
+            <z-form-field *ngIf="form.get('institutionTypeSelect')?.value === 'HEALTH_CENTER'">
+              <label z-form-label [zRequired]="isPriority">Health Center</label>
+              <z-form-control>
+                <z-combobox 
+                  formControlName="healthCenterId" 
+                  [options]="(assignmentHealthCenters$ | async) || []" 
+                  [zDisabled]="!form.get('villageSelect')?.value"
+                  placeholder="Select Health Center"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
           </div>
         </div>
 

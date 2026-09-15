@@ -215,10 +215,10 @@ import { toast } from 'ngx-sonner';
                   <span class="text-right font-bold text-slate-800">
                       <ng-container *ngIf="exportDateRange && exportDateRange.length > 0; else noRange">
                           <ng-container *ngIf="exportDateRange.length === 2">
-                              {{ exportDateRange[0] | date: 'dd-MM-yyyy' }} - {{ exportDateRange[1] | date: 'dd-MM-yyyy' }}
+                              {{ exportDateRange[0] | date: 'dd/MM/yyyy' }} - {{ exportDateRange[1] | date: 'dd/MM/yyyy' }}
                           </ng-container>
                           <ng-container *ngIf="exportDateRange.length === 1">
-                              {{ exportDateRange[0] | date: 'dd-MM-yyyy' }}
+                              {{ exportDateRange[0] | date: 'dd/MM/yyyy' }}
                           </ng-container>
                       </ng-container>
                       <ng-template #noRange>Not Selected</ng-template>

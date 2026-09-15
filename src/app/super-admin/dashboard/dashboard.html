@@ -223,7 +223,7 @@
                <z-icon zType="clock" class="w-3 h-3 text-gray-400"></z-icon>
                {{
                  ($any(p).createdAt || $any(p).created_at)
-                   ? (($any(p).createdAt || $any(p).created_at) | date:'shortDate')
+                   ? (($any(p).createdAt || $any(p).created_at) | date:'dd/MM/yyyy')
                    : '-'
                }}
              </span>

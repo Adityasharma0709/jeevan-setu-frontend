@@ -81,9 +81,9 @@
 
           <span class="text-right font-semibold text-slate-800">
             @if (exportDateRange?.length === 2) {
-            {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }} - {{ exportDateRange?.[1] | date: 'dd-MM-yyyy' }}
+            {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }} - {{ exportDateRange?.[1] | date: 'dd/MM/yyyy' }}
             } @else if (exportDateRange?.length === 1) {
-            {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }}
+            {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }}
             } @else {
             Not selected
             }

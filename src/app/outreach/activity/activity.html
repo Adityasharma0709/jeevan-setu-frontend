@@ -101,9 +101,9 @@
      
           <span class="text-right font-semibold text-slate-800">
             @if (exportDateRange?.length === 2) {
-            {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }} - {{ exportDateRange?.[1] | date: 'dd-MM-yyyy' }}
+            {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }} - {{ exportDateRange?.[1] | date: 'dd/MM/yyyy' }}
             } @else if (exportDateRange?.length === 1) {
-            {{ exportDateRange?.[0] | date: 'dd-MM-yyyy' }}
+            {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }}
             } @else {
             Not selected
             }
@@ -422,7 +422,7 @@
             </td>
 
             <td *ngIf="selectedColumns['date']" z-table-cell class="px-2 py-3 whitespace-nowrap">
-              {{ report.date | date: 'dd-MM-yyyy' }}
+              {{ report.date | date: 'dd/MM/yyyy' }}
             </td>
 
             <td *ngIf="selectedColumns['details']" z-table-cell class="px-2 py-3">
@@ -461,7 +461,7 @@
                 {{ report.child?.uid || report.beneficiary?.uid || '-' }}
               </span>
               <span class="mx-1.5 text-slate-300">•</span>
-              <span>Reported On: {{ report.date | date: 'dd-MM-yyyy' }}</span>
+              <span>Reported On: {{ report.date | date: 'dd/MM/yyyy' }}</span>
               <span class="mx-1.5 text-slate-300">•</span>
               <span>Reported By: {{ report.reportedBy?.name || '-' }}</span>
             </p>
@@ -883,7 +883,7 @@
             </td>
 
             <td z-table-cell class="px-2 py-3 whitespace-nowrap">
-              {{ report.date | date: 'dd-MM-yyyy' }}
+              {{ report.date | date: 'dd/MM/yyyy' }}
             </td>
 
             <td z-table-cell class="px-2 py-3">

@@ -318,15 +318,21 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     map(([schools, state, district, block, village]): ZardComboboxOption[] => {
       if (!state || !district || !block || !village) return [] as ZardComboboxOption[];
       return (schools || [])
-        .filter((l: any) => 
-          l.stateName?.trim().toLowerCase() === state.trim().toLowerCase() && 
-          l.districtName?.trim().toLowerCase() === district.trim().toLowerCase() && 
-          l.block?.trim().toLowerCase() === block.trim().toLowerCase() && 
-          l.village?.trim().toLowerCase() === village.trim().toLowerCase() &&
-          l.status === 'ACTIVE'
-        )
+        .filter((l: any) => {
+          const sState = this.extractName(l, 'state') || l.stateName || '';
+          const sDist = this.extractName(l, 'district') || l.districtName || '';
+          const sBlock = this.extractName(l, 'block') || l.blockName || '';
+          const sVill = this.extractName(l, 'village') || l.villageName || '';
+          return (
+            sState.trim().toLowerCase() === state.trim().toLowerCase() &&
+            sDist.trim().toLowerCase() === district.trim().toLowerCase() &&
+            sBlock.trim().toLowerCase() === block.trim().toLowerCase() &&
+            sVill.trim().toLowerCase() === village.trim().toLowerCase() &&
+            (l.status === undefined || l.status === 'ACTIVE')
+          );
+        })
         .map((l: any) => {
-          const label = l.name ? `${l.locationCode} - ${l.name}` : `${l.locationCode} - ${l.village}`;
+          const label = l.name ? `${l.locationCode} - ${l.name}` : `${l.locationCode} - ${this.extractName(l, 'village') || l.villageName}`;
           return { value: l.id.toString(), label } as ZardComboboxOption;
         });
     })
@@ -342,15 +348,21 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
     map(([hcs, state, district, block, village]): ZardComboboxOption[] => {
       if (!state || !district || !block || !village) return [] as ZardComboboxOption[];
       return (hcs || [])
-        .filter((l: any) => 
-          l.stateName?.trim().toLowerCase() === state.trim().toLowerCase() && 
-          l.districtName?.trim().toLowerCase() === district.trim().toLowerCase() && 
-          l.block?.trim().toLowerCase() === block.trim().toLowerCase() && 
-          l.village?.trim().toLowerCase() === village.trim().toLowerCase() &&
-          l.status === 'ACTIVE'
-        )
+        .filter((l: any) => {
+          const sState = this.extractName(l, 'state') || l.stateName || '';
+          const sDist = this.extractName(l, 'district') || l.districtName || '';
+          const sBlock = this.extractName(l, 'block') || l.blockName || '';
+          const sVill = this.extractName(l, 'village') || l.villageName || '';
+          return (
+            sState.trim().toLowerCase() === state.trim().toLowerCase() &&
+            sDist.trim().toLowerCase() === district.trim().toLowerCase() &&
+            sBlock.trim().toLowerCase() === block.trim().toLowerCase() &&
+            sVill.trim().toLowerCase() === village.trim().toLowerCase() &&
+            (l.status === undefined || l.status === 'ACTIVE')
+          );
+        })
         .map((l: any) => {
-          const label = l.name ? `${l.locationCode} - ${l.name}` : `${l.locationCode} - ${l.village}`;
+          const label = l.name ? `${l.locationCode} - ${l.name}` : `${l.locationCode} - ${this.extractName(l, 'village') || l.villageName}`;
           return { value: l.id.toString(), label } as ZardComboboxOption;
         });
     })
@@ -418,6 +430,15 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
         this.form.patchValue({ locationId: '', schoolId: '', healthCenterId: '' }, { emitEvent: false });
       })
     );
+
+    // Default institution type to AWC for Priority beneficiaries if empty
+    this.subs.add(
+      this.form.get('beneficiaryType')!.valueChanges.subscribe((type) => {
+        if (type === 'Priority' && !this.form.get('institutionTypeSelect')?.value) {
+          this.form.patchValue({ institutionTypeSelect: 'AWC' }, { emitEvent: true });
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -428,22 +449,25 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
 
   private parseDateStr(dateStr: string): Date | null {
     if (!dateStr) return null;
-    if (dateStr.includes('/')) {
-      const p = dateStr.split('/');
-      if (p.length === 3) {
-        const day = Number(p[0]);
-        const month = Number(p[1]) - 1;
-        const year = Number(p[2]);
+    const trimmed = dateStr.trim();
+    const parts = trimmed.split(/[/|-]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        const year = Number(parts[0]);
+        const month = Number(parts[1]) - 1;
+        const day = Number(parts[2]);
         const d = new Date(year, month, day);
-        if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) {
-           return d;
-        }
+        if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) return d;
+      } else {
+        const day = Number(parts[0]);
+        const month = Number(parts[1]) - 1;
+        const year = Number(parts[2]);
+        const d = new Date(year, month, day);
+        if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) return d;
       }
-    } else {
-       const d = new Date(dateStr);
-       if (!isNaN(d.getTime())) return d;
     }
-    return null;
+    const fallback = new Date(trimmed);
+    return isNaN(fallback.getTime()) ? null : fallback;
   }
 
   formatDateInput(event: Event, controlName: string) {
@@ -529,9 +553,10 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       'employmentStatus'
     ];
 
-    const sub = this.form.get('beneficiaryType')!.valueChanges.pipe(
-      startWith(this.form.get('beneficiaryType')!.value)
-    ).subscribe(type => {
+    const sub = combineLatest([
+      this.form.get('beneficiaryType')!.valueChanges.pipe(startWith(this.form.get('beneficiaryType')!.value)),
+      this.form.get('institutionTypeSelect')!.valueChanges.pipe(startWith(this.form.get('institutionTypeSelect')!.value))
+    ]).subscribe(([type, instType]) => {
       const isPriority = type === 'Priority';
       
       priorityFields.forEach(field => {
@@ -561,22 +586,28 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       dobCtrl.updateValueAndValidity({ emitEvent: false });
       ageCtrl.updateValueAndValidity({ emitEvent: false });
 
-      // AWC (locationId) — required only for Priority
+      // Dynamic Location Validators (AWC, School, Health Center)
       const locCtrl = this.form.get('locationId')!;
-      if (isPriority) {
-        locCtrl.setValidators(Validators.required);
-      } else {
-        locCtrl.clearValidators();
-      }
-      locCtrl.updateValueAndValidity({ emitEvent: false });
+      const schoolCtrl = this.form.get('schoolId')!;
+      const hcCtrl = this.form.get('healthCenterId')!;
 
-      // Reset institution-related fields when type changes
-      this.form.patchValue({
-        institutionTypeSelect: '',
-        locationId: '',
-        schoolId: '',
-        healthCenterId: ''
-      }, { emitEvent: false });
+      locCtrl.clearValidators();
+      schoolCtrl.clearValidators();
+      hcCtrl.clearValidators();
+
+      if (isPriority) {
+        if (instType === 'SCHOOL') {
+          schoolCtrl.setValidators(Validators.required);
+        } else if (instType === 'HEALTH_CENTER') {
+          hcCtrl.setValidators(Validators.required);
+        } else {
+          locCtrl.setValidators(Validators.required);
+        }
+      }
+
+      locCtrl.updateValueAndValidity({ emitEvent: false });
+      schoolCtrl.updateValueAndValidity({ emitEvent: false });
+      hcCtrl.updateValueAndValidity({ emitEvent: false });
     });
     this.subs.add(sub);
   }
@@ -664,12 +695,14 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       }
     }
 
+    const instType = raw.institutionTypeSelect || (this.isPriority ? 'AWC' : 'NONE');
+
     const payload: CreateBeneficiaryPayload = {
       beneficiaryType:     String(raw.beneficiaryType),
       projectId:           Number(raw.projectId),
-      locationId:          this.isPriority ? Number(raw.locationId) : (this.isGeneral && raw.institutionTypeSelect === 'AWC' && raw.locationId ? Number(raw.locationId) : undefined),
-      schoolId:            this.isGeneral && raw.institutionTypeSelect === 'SCHOOL' && raw.schoolId ? Number(raw.schoolId) : undefined,
-      healthCenterId:      this.isGeneral && raw.institutionTypeSelect === 'HEALTH_CENTER' && raw.healthCenterId ? Number(raw.healthCenterId) : undefined,
+      locationId:          instType === 'AWC' && raw.locationId ? Number(raw.locationId) : undefined,
+      schoolId:            instType === 'SCHOOL' && raw.schoolId ? Number(raw.schoolId) : undefined,
+      healthCenterId:      instType === 'HEALTH_CENTER' && raw.healthCenterId ? Number(raw.healthCenterId) : undefined,
       state:               raw.stateSelect || undefined,
       district:            raw.districtSelect || undefined,
       block:               raw.blockSelect || undefined,
@@ -679,11 +712,11 @@ export class CreateBeneficiary implements OnInit, OnDestroy {
       gender:              String(raw.gender),
       guardianName:        this.isPriority ? String(raw.guardianName).trim() : undefined,
       dateOfBirth:         this.isPriority && raw.dateOfBirth
-                             ? this.parseDateStr(raw.dateOfBirth)?.toISOString() || ''
+                             ? String(raw.dateOfBirth).trim()
                              : new Date(new Date().getFullYear() - Number(raw.age || 0), 0, 1).toISOString(),
       maritalStatus:       this.isPriority && raw.maritalStatus ? String(raw.maritalStatus) : undefined,
       dateOfMarriage:      married && raw.dateOfMarriage
-                             ? this.parseDateStr(raw.dateOfMarriage)?.toISOString() : undefined,
+                             ? String(raw.dateOfMarriage).trim() : undefined,
       womanAgeAtMarriage:  married && raw.womanAgeAtMarriage !== '' && raw.womanAgeAtMarriage !== null
                              ? Number(raw.womanAgeAtMarriage) : undefined,
       husbandAgeAtMarriage: married && raw.husbandAgeAtMarriage !== '' && raw.husbandAgeAtMarriage !== null

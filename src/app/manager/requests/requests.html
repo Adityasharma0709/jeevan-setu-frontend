@@ -276,7 +276,7 @@
                 <div class="flex items-center justify-between pt-3 border-t border-gray-50">
                     <div class="flex items-center gap-1.5">
                         <z-icon zType="clock" class="w-3.5 h-3.5 text-gray-400" />
-                        <span class="text-[10px] text-gray-500">{{ request.createdAt | date:'shortDate' }} at {{ request.createdAt | date:'shortTime' }}</span>
+                        <span class="text-[10px] text-gray-500">{{ request.createdAt | date:'dd/MM/yyyy' }} at {{ request.createdAt | date:'shortTime' }}</span>
                     </div>
                     <button *ngIf="request.status === 'PENDING'"
                         z-button zType="default" zSize="sm"

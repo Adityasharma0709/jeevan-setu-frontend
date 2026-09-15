@@ -42,7 +42,7 @@
                   beneficiary.uid
                 }}</span>
                 <span class="text-gray-500 text-[12px] flex items-center gap-1 shrink-0">
-                  Reg: {{ beneficiary.createdAt | date: 'mediumDate' }}
+                  Reg: {{ beneficiary.createdAt | date: 'dd/MM/yyyy' }}
                 </span>
                 <span
                   class="px-2 py-0.5 text-[12px] font-bold uppercase shrink-0"
@@ -270,7 +270,7 @@
                 <div class="grid grid-cols-2 divide-x divide-gray-50">
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Birth Date</p>
-                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.dateOfBirth | date: 'mediumDate' }}</p>
+                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.dateOfBirth | date: 'dd/MM/yyyy' }}</p>
                   </div>
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Marital Status</p>
@@ -282,7 +282,7 @@
                 <div class="grid grid-cols-1 divide-x divide-gray-50" *ngIf="beneficiary.dateOfMarriage">
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Date of Marriage</p>
-                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.dateOfMarriage | date: 'mediumDate' }}</p>
+                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.dateOfMarriage | date: 'dd/MM/yyyy' }}</p>
                   </div>
                 </div>
 
@@ -290,7 +290,7 @@
                 <div class="grid grid-cols-2 divide-x divide-gray-50">
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Registered On</p>
-                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.createdAt | date: 'mediumDate' }}</p>
+                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.createdAt | date: 'dd/MM/yyyy' }}</p>
                   </div>
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Registered By</p>
@@ -385,7 +385,7 @@
                 <div class="grid grid-cols-2 divide-x divide-gray-50">
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Registered On</p>
-                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.createdAt | date: 'mediumDate' }}</p>
+                    <p class="text-sm font-semibold text-gray-800">{{ beneficiary.createdAt | date: 'dd/MM/yyyy' }}</p>
                   </div>
                   <div class="px-6 py-4">
                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Registered By</p>
@@ -471,7 +471,7 @@
                 <td class="px-6 py-3.5 font-bold text-gray-900">{{ child.name }}</td>
                 <td class="px-6 py-3.5 text-gray-500">{{ child.relationship }}</td>
                 <td class="px-6 py-3.5 text-gray-500">
-                  {{ child.dateOfBirth | date: 'mediumDate' }}
+                  {{ child.dateOfBirth | date: 'dd/MM/yyyy' }}
                 </td>
                 <td class="px-6 py-3.5">
                   <span
@@ -533,7 +533,7 @@
               <div>
                 <p class="text-gray-400 uppercase font-bold text-[9px]">Birth Date</p>
                 <p class="text-gray-700 font-medium">
-                  {{ child.dateOfBirth | date: 'mediumDate' }}
+                  {{ child.dateOfBirth | date: 'dd/MM/yyyy' }}
                 </p>
               </div>
               <div class="col-span-2">
@@ -650,7 +650,7 @@
                   <span *ngIf="!r.child" class="text-[10px] text-gray-400 italic">Self</span>
                 </td>
                 <td class="px-5 py-4 text-gray-500 whitespace-nowrap">
-                  {{ r.date || r.createdAt | date: 'dd-MM-yyyy' }}
+                  {{ r.date || r.createdAt | date: 'dd/MM/yyyy' }}
                 </td>
                 <td class="px-5 py-4 text-gray-600 font-medium whitespace-nowrap">
                   {{ r.reportedBy?.name || '—' }}
@@ -764,7 +764,7 @@
               <span
                 class="bg-white px-2 py-1 border border-gray-100 rounded text-[10px] text-gray-400 font-semibold uppercase tracking-wide whitespace-nowrap shrink-0 shadow-sm mt-0.5"
               >
-                {{ r.date || r.createdAt | date: 'dd-MM-yyyy' }}
+                {{ r.date || r.createdAt | date: 'dd/MM/yyyy' }}
               </span>
             </div>
 

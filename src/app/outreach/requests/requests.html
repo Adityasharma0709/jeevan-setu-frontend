@@ -137,7 +137,7 @@
             <td z-table-cell class="border-r border-gray-100">
               <div class="flex flex-col items-end">
                 <span class="text-xs font-medium text-gray-900">{{
-                  req.createdAt | date: 'mediumDate'
+                  req.createdAt | date: 'dd/MM/yyyy'
                 }}</span>
                 <span class="text-[10px] text-gray-400">{{
                   req.createdAt | date: 'shortTime'
@@ -258,7 +258,7 @@
           <div class="flex items-center gap-1.5">
             <z-icon zType="clock" class="w-3.5 h-3.5 text-gray-400" />
             <span class="text-xs text-gray-500"
-              >{{ req.createdAt | date: 'shortDate' }} at
+              >{{ req.createdAt | date: 'dd/MM/yyyy' }} at
               {{ req.createdAt | date: 'shortTime' }}</span
             >
           </div>

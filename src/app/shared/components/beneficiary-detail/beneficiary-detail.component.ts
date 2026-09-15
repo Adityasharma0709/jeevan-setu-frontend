@@ -344,22 +344,25 @@ export class ZardBeneficiaryDetailComponent implements OnInit, OnDestroy {
 
   private parseDateStr(dateStr: string): Date | null {
     if (!dateStr) return null;
-    if (dateStr.includes('/')) {
-      const p = dateStr.split('/');
-      if (p.length === 3) {
-        const day = Number(p[0]);
-        const month = Number(p[1]) - 1;
-        const year = Number(p[2]);
+    const trimmed = dateStr.trim();
+    const parts = trimmed.split(/[/|-]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        const year = Number(parts[0]);
+        const month = Number(parts[1]) - 1;
+        const day = Number(parts[2]);
         const d = new Date(year, month, day);
-        if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) {
-          return d;
-        }
+        if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) return d;
+      } else {
+        const day = Number(parts[0]);
+        const month = Number(parts[1]) - 1;
+        const year = Number(parts[2]);
+        const d = new Date(year, month, day);
+        if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) return d;
       }
-    } else {
-      const d = new Date(dateStr);
-      if (!isNaN(d.getTime())) return d;
     }
-    return null;
+    const fallback = new Date(trimmed);
+    return isNaN(fallback.getTime()) ? null : fallback;
   }
 
   formatDateInput(event: Event, controlName: string) {
