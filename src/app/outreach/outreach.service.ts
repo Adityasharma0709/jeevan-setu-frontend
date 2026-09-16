@@ -285,25 +285,70 @@ export class OutreachService {
     return this.api.delete(`${this.endpoint}/my-requests/${requestId}`);
   }
 
-  getDashboardStats(projectId?: number, activityId?: number, sessionId?: number, unique?: boolean): Observable<OutreachDashboardStats | any> {
+  getDashboardStats(
+    projectId?: number,
+    activityId?: number,
+    sessionId?: number,
+    unique?: boolean,
+    year?: string,
+    month?: string,
+    state?: string,
+    district?: string,
+    block?: string,
+    awc?: string,
+  ): Observable<OutreachDashboardStats | any> {
     const params: any = {};
     if (projectId) params.projectId = projectId;
     if (activityId) params.activityId = activityId;
     if (sessionId) params.sessionId = sessionId;
+    if (year && year !== 'ALL') params.year = year;
+    if (month && month !== 'ALL') params.month = month;
+    if (state && state !== 'ALL') params.state = state;
+    if (district && district !== 'ALL') params.district = district;
+    if (block && block !== 'ALL') params.block = block;
+    if (awc && awc !== 'ALL') params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
     return this.api.get(`${this.endpoint}/dashboard/stats`, params);
   }
 
-  getDynamicsReports(groupName: string, activityId?: number, sessionId?: number, unique?: boolean): Observable<DynamicsTableRecord[]> {
+  getDynamicsReports(
+    groupName: string,
+    activityId?: number,
+    sessionId?: number,
+    unique?: boolean,
+    year?: string,
+    month?: string,
+    state?: string,
+    district?: string,
+    block?: string,
+    awc?: string,
+  ): Observable<DynamicsTableRecord[]> {
     const params: any = { group: groupName };
     if (activityId) params.activityId = activityId;
     if (sessionId) params.sessionId = sessionId;
+    if (year && year !== 'ALL') params.year = year;
+    if (month && month !== 'ALL') params.month = month;
+    if (state && state !== 'ALL') params.state = state;
+    if (district && district !== 'ALL') params.district = district;
+    if (block && block !== 'ALL') params.block = block;
+    if (awc && awc !== 'ALL') params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
     return this.api.get<DynamicsTableRecord[]>(`${this.endpoint}/dashboard/action-details`, params);
   }
 
-  getOutreachDynamicsReports(groupName: string, unique?: boolean): Observable<DynamicsTableRecord[]> {
+  getOutreachDynamicsReports(
+    groupName: string,
+    unique?: boolean,
+    state?: string,
+    district?: string,
+    block?: string,
+    awc?: string,
+  ): Observable<DynamicsTableRecord[]> {
     const params: any = { group: groupName };
+    if (state && state !== 'ALL') params.state = state;
+    if (district && district !== 'ALL') params.district = district;
+    if (block && block !== 'ALL') params.block = block;
+    if (awc && awc !== 'ALL') params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
     return this.api.get<DynamicsTableRecord[]>(`${this.endpoint}/dashboard/outreach-dynamics-details`, params);
   }

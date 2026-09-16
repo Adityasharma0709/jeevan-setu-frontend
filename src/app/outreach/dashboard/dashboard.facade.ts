@@ -105,6 +105,8 @@ export class DashboardFacade {
     { label: 'ADOLESCENT BOYS', count: 0, countColor: 'text-gray-900' },
     { label: 'SAM (0-5)', count: 0, countColor: 'text-red-600' },
     { label: 'CHILDREN ABOVE 6 (6-9 YEARS) - BOYS', count: 0, countColor: 'text-green-600' },
+    { label: 'INFANT', count: 0, countColor: 'text-gray-900' },
+    { label: 'TODDLER', count: 0, countColor: 'text-gray-900' },
     { label: 'OTHER BENEFICIARIES', count: 0, countColor: 'text-gray-900' },
   ]);
   activities$ = this.activitiesSub.asObservable();
@@ -195,11 +197,9 @@ export class DashboardFacade {
 
     // Reset pagination to 0 on filter changes
     activity$.subscribe(() => {
-      this.currentPageSub.next(0);
       this.currentActivityPageSub.next(0);
     });
     session$.subscribe(() => {
-      this.currentPageSub.next(0);
       this.currentActivityPageSub.next(0);
     });
     this.awcFilter.valueChanges.subscribe(() => {
@@ -209,12 +209,16 @@ export class DashboardFacade {
 
     combineLatest([
       this.selectedActionTab$,
+      this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
+      this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
+      this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
       this.uniqueCount$
     ]).pipe(
-      switchMap(([index, uniqueVal]) => {
+      switchMap(([index, stateVal, districtVal, blockVal, awcVal, uniqueVal]) => {
         this.allDynamicsDataSub.next(null); // Set loading state
         const actionLabel = this.outreachActionsSub.value[index]?.label || '';
-        return this.outreachService.getOutreachDynamicsReports(actionLabel, uniqueVal).pipe(
+        return this.outreachService.getOutreachDynamicsReports(actionLabel, uniqueVal, stateVal, districtVal, blockVal, awcVal).pipe(
           catchError(() => of([]))
         );
       })
@@ -239,14 +243,20 @@ export class DashboardFacade {
       this.selectedActivityTab$,
       activity$,
       session$,
+      this.yearFilter.valueChanges.pipe(startWith(this.yearFilter.value)),
+      this.monthFilter.valueChanges.pipe(startWith(this.monthFilter.value)),
+      this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
+      this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
+      this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
       this.uniqueCount$
     ]).pipe(
-      switchMap(([index, actVal, sessVal, uniqueVal]) => {
+      switchMap(([index, actVal, sessVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal]) => {
         this.allActivityDataSub.next(null); // Set loading state
         const actionLabel = this.activitiesSub.value[index]?.label || '';
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
-        return this.outreachService.getDynamicsReports(actionLabel, aId, sId, uniqueVal).pipe(
+        return this.outreachService.getDynamicsReports(actionLabel, aId, sId, uniqueVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal).pipe(
           catchError(() => of([]))
         );
       })
@@ -266,6 +276,38 @@ export class DashboardFacade {
         return data.slice(start, start + 10);
       })
     );
+
+    combineLatest([
+      activity$,
+      session$,
+      this.yearFilter.valueChanges.pipe(startWith(this.yearFilter.value)),
+      this.monthFilter.valueChanges.pipe(startWith(this.monthFilter.value)),
+      this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
+      this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
+      this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
+      this.uniqueCount$,
+    ]).pipe(
+      switchMap(([actVal, sessVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal]) => {
+        const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
+        const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
+
+        return this.outreachService.getDashboardStats(undefined, aId, sId, uniqueVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal).pipe(
+          catchError(() => of(null))
+        );
+      })
+    ).subscribe(stats => {
+      if (!stats || !stats.activities || !stats.activities.length) return;
+      const mappedActivities = stats.activities.map((act: any) => {
+        let lbl = act.label;
+        if (lbl === 'CHILDREN BELOW 6 (0-5 YEARS) - GIRLS') lbl = 'CHILDREN BELOW 6 (3-6 YEARS) - GIRLS';
+        if (lbl === 'CHILDREN BELOW 6 (0-5 YEARS) - BOYS') lbl = 'CHILDREN BELOW 6 (3-6 YEARS) - BOYS';
+        if (lbl === 'CHILDREN ABOVE 6 (6-10 YEARS) - GIRLS') lbl = 'CHILDREN ABOVE 6 (6-9 YEARS) - GIRLS';
+        if (lbl === 'CHILDREN ABOVE 6 (6-10 YEARS) - BOYS') lbl = 'CHILDREN ABOVE 6 (6-9 YEARS) - BOYS';
+        return { ...act, label: lbl };
+      });
+      this.activitiesSub.next(mappedActivities);
+    });
 
     // 1. Base API Calls
     this.outreachService.getOutreachActivities().subscribe(activities => {
@@ -289,14 +331,22 @@ export class DashboardFacade {
       }
     });
 
-    this.stats$ = combineLatest([activity$, session$, this.uniqueCount$]).pipe(
-      switchMap(([actVal, sessVal, uniqueVal]) => {
-        const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
-        const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
-
-        return this.outreachService.getDashboardStats(undefined, aId, sId, uniqueVal).pipe(
+    this.stats$ = combineLatest([
+      this.yearFilter.valueChanges.pipe(startWith(this.yearFilter.value)),
+      this.monthFilter.valueChanges.pipe(startWith(this.monthFilter.value)),
+      this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
+      this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
+      this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
+      this.uniqueCount$,
+    ]).pipe(
+      switchMap(([yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal]) => {
+        return this.outreachService.getDashboardStats(undefined, undefined, undefined, uniqueVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal).pipe(
           tap(stats => {
             if (!stats) return;
+            if (stats.totalReports !== undefined) {
+              this.filteredReportsCountSub.next(stats.totalReports);
+            }
             const actions = this.outreachActionsSub.value;
             actions[0].count = stats.outreachActions?.activePregnantWomen || 0;
             actions[1].count = stats.outreachActions?.activeHighRiskPregnantWomen || 0;
@@ -308,18 +358,6 @@ export class DashboardFacade {
             actions[7].count = stats.outreachActions?.activeMamChildren || 0;
             actions[8].count = stats.outreachActions?.womenDueForDelivery30Days || 0;
             this.outreachActionsSub.next([...actions]);
-
-            if (stats.activities && stats.activities.length) {
-              const mappedActivities = stats.activities.map((act: any) => {
-                let lbl = act.label;
-                if (lbl === 'CHILDREN BELOW 6 (0-5 YEARS) - GIRLS') lbl = 'CHILDREN BELOW 6 (3-6 YEARS) - GIRLS';
-                if (lbl === 'CHILDREN BELOW 6 (0-5 YEARS) - BOYS') lbl = 'CHILDREN BELOW 6 (3-6 YEARS) - BOYS';
-                if (lbl === 'CHILDREN ABOVE 6 (6-10 YEARS) - GIRLS') lbl = 'CHILDREN ABOVE 6 (6-9 YEARS) - GIRLS';
-                if (lbl === 'CHILDREN ABOVE 6 (6-10 YEARS) - BOYS') lbl = 'CHILDREN ABOVE 6 (6-9 YEARS) - BOYS';
-                return { ...act, label: lbl };
-              });
-              this.activitiesSub.next(mappedActivities);
-            }
 
             if (stats.episodesOfCare && stats.episodesOfCare.length) {
               const mappedEpisodes = stats.episodesOfCare.map((ep: any) => {
