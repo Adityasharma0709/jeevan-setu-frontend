@@ -295,6 +295,8 @@ export class OutreachService {
     state?: string,
     district?: string,
     block?: string,
+    village?: string,
+    institution?: string,
     awc?: string,
   ): Observable<OutreachDashboardStats | any> {
     const params: any = {};
@@ -306,6 +308,8 @@ export class OutreachService {
     if (state && state !== 'ALL') params.state = state;
     if (district && district !== 'ALL') params.district = district;
     if (block && block !== 'ALL') params.block = block;
+    if (village && village !== 'ALL') params.village = village;
+    if (institution && institution !== 'ALL') params.institution = institution;
     if (awc && awc !== 'ALL') params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
     return this.api.get(`${this.endpoint}/dashboard/stats`, params);
@@ -321,6 +325,8 @@ export class OutreachService {
     state?: string,
     district?: string,
     block?: string,
+    village?: string,
+    institution?: string,
     awc?: string,
   ): Observable<DynamicsTableRecord[]> {
     const params: any = { group: groupName };
@@ -331,6 +337,8 @@ export class OutreachService {
     if (state && state !== 'ALL') params.state = state;
     if (district && district !== 'ALL') params.district = district;
     if (block && block !== 'ALL') params.block = block;
+    if (village && village !== 'ALL') params.village = village;
+    if (institution && institution !== 'ALL') params.institution = institution;
     if (awc && awc !== 'ALL') params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
     return this.api.get<DynamicsTableRecord[]>(`${this.endpoint}/dashboard/action-details`, params);
@@ -342,12 +350,16 @@ export class OutreachService {
     state?: string,
     district?: string,
     block?: string,
+    village?: string,
+    institution?: string,
     awc?: string,
   ): Observable<DynamicsTableRecord[]> {
     const params: any = { group: groupName };
     if (state && state !== 'ALL') params.state = state;
     if (district && district !== 'ALL') params.district = district;
     if (block && block !== 'ALL') params.block = block;
+    if (village && village !== 'ALL') params.village = village;
+    if (institution && institution !== 'ALL') params.institution = institution;
     if (awc && awc !== 'ALL') params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
     return this.api.get<DynamicsTableRecord[]>(`${this.endpoint}/dashboard/outreach-dynamics-details`, params);
