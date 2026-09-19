@@ -44,12 +44,18 @@ interface InstitutionModel {
   locationCode: string;
   name?: string;       // Dynamic: represents awcName, schoolName or healthCenterName
   awcName?: string;    // Backend returns this for AWCs
+  schoolName?: string;
+  healthCenterName?: string;
   stateId: number;
   districtId?: number;
   stateName?: string;
   districtName?: string;
-  block?: string;
-  village?: string;
+  block?: any;
+  blockName?: string;
+  village?: any;
+  villageName?: string;
+  state?: any;
+  district?: any;
   status: string;
   project?: {
     id: number;
@@ -193,16 +199,45 @@ export class InstitutionsComponent implements OnInit {
       switchMap(([_, tab, query]) => {
         this.isLoading.set(true);
         
-        let endpoint = 'locations';
+        let endpoint = 'locations/awcs';
         if (tab === 'SCHOOL') endpoint = 'locations/schools';
         else if (tab === 'HEALTH_CENTER') endpoint = 'locations/health-centers';
         
         return (this.api.get(endpoint) as Observable<InstitutionModel[]>).pipe(
           map(items => {
-            const list = (items || []).map(item => ({
-              ...item,
-              name: item.name || item.awcName // Normalize AWC / School / HC name
-            }));
+            const extractStr = (val: any): string => {
+              if (val === null || val === undefined) return '';
+              if (typeof val === 'object') {
+                return val.name || val.awcName || val.schoolName || val.healthCenterName || val.locationCode || '';
+              }
+              return String(val);
+            };
+
+            const list = (items || []).map(item => {
+              const name = item.name || item.awcName || (item as any).schoolName || (item as any).healthCenterName || 'Unnamed Center';
+              const block = extractStr(item.block) || extractStr(item.blockName) || '';
+              const village = extractStr(item.village) || extractStr(item.villageName) || '';
+              const stateName = extractStr(item.stateName) || extractStr(item.state) || '';
+              const districtName = extractStr(item.districtName) || extractStr(item.district) || '';
+              const projectId = item.projectId || (typeof item.project === 'object' ? item.project?.id : item.project);
+              const stateId = item.stateId || (typeof (item as any).state === 'object' ? (item as any).state?.id : (item as any).state);
+              const districtId = item.districtId || (typeof (item as any).district === 'object' ? (item as any).district?.id : (item as any).district);
+
+              return {
+                ...item,
+                id: Number(item.id),
+                projectId: projectId ? Number(projectId) : item.projectId,
+                stateId: stateId ? Number(stateId) : item.stateId,
+                districtId: districtId ? Number(districtId) : item.districtId,
+                name: String(name).trim(),
+                block: String(block).trim(),
+                village: String(village).trim(),
+                stateName: String(stateName).trim(),
+                districtName: String(districtName).trim(),
+                blockName: String(block).trim(),
+                villageName: String(village).trim(),
+              };
+            });
             
             // Cache lists to helper arrays for code generation lookup
             if (tab === 'AWC') this.allAwcs = list;
@@ -362,7 +397,14 @@ export class InstitutionsComponent implements OnInit {
     this.isEditMode.set(false);
     this.editingId = null;
     this.form.reset({
-      type: this.activeTab()
+      type: this.activeTab(),
+      projectId: null,
+      stateId: null,
+      districtId: null,
+      block: '',
+      village: '',
+      name: '',
+      locationCode: ''
     });
     this.updateAutoLocationCode();
     this.dialogRef = this.dialogService.create({ 
@@ -380,15 +422,28 @@ export class InstitutionsComponent implements OnInit {
   openEditDialog(loc: InstitutionModel) {
     this.isEditMode.set(true);
     this.editingId = loc.id;
+
+    const extractStr = (val: any): string => {
+      if (!val) return '';
+      if (typeof val === 'object') return val.name || val.awcName || val.schoolName || val.healthCenterName || '';
+      return String(val);
+    };
+
+    const blockVal = extractStr(loc.block) || extractStr(loc.blockName) || '';
+    const villageVal = extractStr(loc.village) || extractStr(loc.villageName) || '';
+    const projId = loc.projectId || (typeof loc.project === 'object' ? loc.project?.id : null);
+    const stId = loc.stateId || (typeof (loc as any).state === 'object' ? (loc as any).state?.id : null);
+    const distId = loc.districtId || (typeof (loc as any).district === 'object' ? (loc as any).district?.id : null);
+
     this.form.patchValue({
-      projectId: loc.projectId,
-      stateId: loc.stateId,
-      districtId: loc.districtId,
-      block: loc.block,
-      village: loc.village,
+      projectId: projId ? Number(projId) : null,
+      stateId: stId ? Number(stId) : null,
+      districtId: distId ? Number(distId) : null,
+      block: blockVal,
+      village: villageVal,
       type: this.activeTab(),
-      name: loc.name,
-      locationCode: loc.locationCode
+      name: loc.name || loc.awcName || (loc as any).schoolName || (loc as any).healthCenterName || '',
+      locationCode: loc.locationCode || ''
     });
     this.dialogRef = this.dialogService.create({ 
       zTitle: `Edit ${this.getTypeLabel(this.activeTab())}`,
@@ -479,31 +534,46 @@ export class InstitutionsComponent implements OnInit {
 
     this.isSubmitting.set(true);
     const formVal = this.form.value;
-    const tab = formVal.type;
+    const tab = formVal.type || this.activeTab();
+
+    const extractNameOrVal = (val: any): string => {
+      if (!val) return '';
+      if (typeof val === 'object') return val.name || val.awcName || val.schoolName || val.healthCenterName || '';
+      return String(val).trim();
+    };
 
     let payload: any = {
-      projectId: formVal.projectId,
-      stateId: formVal.stateId,
-      districtId: formVal.districtId,
-      block: formVal.block,
-      village: formVal.village,
-      type: formVal.type,
-      name: formVal.name,
-      locationCode: formVal.locationCode
+      projectId: Number(formVal.projectId),
+      stateId: Number(formVal.stateId),
+      districtId: Number(formVal.districtId),
+      block: extractNameOrVal(formVal.block),
+      village: extractNameOrVal(formVal.village),
+      type: tab,
+      name: String(formVal.name || '').trim(),
+      locationCode: String(formVal.locationCode || '').trim()
     };
 
     let request: Observable<any>;
 
     if (this.isEditMode()) {
-      let endpoint = `locations/${this.editingId}`;
-      if (tab === 'SCHOOL') endpoint = `locations/schools/${this.editingId}`;
-      else if (tab === 'HEALTH_CENTER') endpoint = `locations/health-centers/${this.editingId}`;
+      let endpoint = `locations/awcs/${this.editingId}`;
+      if (tab === 'SCHOOL') {
+        endpoint = `locations/schools/${this.editingId}`;
+        payload.schoolName = payload.name;
+      } else if (tab === 'HEALTH_CENTER') {
+        endpoint = `locations/health-centers/${this.editingId}`;
+        payload.healthCenterName = payload.name;
+      } else {
+        payload.awcName = payload.name;
+      }
       
-      // The update payload on backend maps `awcName` for compatibility
-      payload.awcName = formVal.name;
       request = this.api.put(endpoint, payload);
     } else {
       // Unified endpoint handles institution creation
+      if (tab === 'SCHOOL') payload.schoolName = payload.name;
+      else if (tab === 'HEALTH_CENTER') payload.healthCenterName = payload.name;
+      else payload.awcName = payload.name;
+
       request = this.api.post('locations/institutions', payload);
     }
 
@@ -513,7 +583,9 @@ export class InstitutionsComponent implements OnInit {
         const msg = this.isEditMode() ? `${label} Updated Successfully` : `${label} Created Successfully`;
         toast.success(msg);
         this.isSubmitting.set(false);
-        this.dialogRef.close();
+        if (this.dialogRef) {
+          this.dialogRef.close();
+        }
         this.refresh$.next();
       },
       error: (err) => {
@@ -533,7 +605,7 @@ export class InstitutionsComponent implements OnInit {
       return next;
     });
 
-    let endpoint = `locations/${item.id}/status`;
+    let endpoint = `locations/awcs/${item.id}/status`;
     if (tab === 'SCHOOL') endpoint = `locations/schools/${item.id}/status`;
     else if (tab === 'HEALTH_CENTER') endpoint = `locations/health-centers/${item.id}/status`;
     
@@ -577,7 +649,14 @@ export class InstitutionsComponent implements OnInit {
   }
 
   toString(val: any): string | null {
-    return val !== null && val !== undefined ? String(val) : null;
+    if (val === null || val === undefined) return null;
+    if (typeof val === 'object') {
+      if (val.id !== undefined && val.id !== null) return String(val.id);
+      if (val.name !== undefined && val.name !== null) return String(val.name);
+      return null;
+    }
+    const str = String(val).trim();
+    return str ? str : null;
   }
 
   cancel() {

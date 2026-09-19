@@ -154,10 +154,10 @@
               <div class="space-y-3">
                 <div>
                   <span class="text-xl font-bold text-gray-900">{{
-                    beneficiary.village || beneficiary.location?.village || '—'
+                    getLocationPart(beneficiary.village || beneficiary.location?.village)
                   }}</span>
                   <p class="text-sm text-gray-500 mt-0.5">
-                    {{ beneficiary.block || beneficiary.location?.block || '—' }}
+                    {{ getLocationPart(beneficiary.block || beneficiary.location?.block) }}
                   </p>
                 </div>
                 <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50">

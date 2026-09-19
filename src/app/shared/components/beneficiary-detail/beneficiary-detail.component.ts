@@ -244,8 +244,13 @@ export class ZardBeneficiaryDetailComponent implements OnInit, OnDestroy {
   }
 
   getLocationPart(val: any): string {
-    if (!val) return '—';
-    return (val?.name || val).toString();
+    if (val === null || val === undefined) return '—';
+    if (typeof val === 'object') {
+      const extracted = val.name || val.awcName || val.schoolName || val.healthCenterName || val.locationCode || '';
+      return extracted ? String(extracted) : '—';
+    }
+    const str = String(val).trim();
+    return str ? str : '—';
   }
 
   onSchoolingStatusChange(status: string | null): void {

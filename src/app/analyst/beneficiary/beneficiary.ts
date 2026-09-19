@@ -201,6 +201,115 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
     }),
   );
 
+  selectedVillageControl = new FormControl('ALL');
+  selectedInstitutionControl = new FormControl('ALL');
+
+  readonly assignedLocations$ = this.refresh$.pipe(
+    startWith(void 0),
+    switchMap(() => {
+      const currentUserId = Number(this.authService.getCurrentUser()?.sub) || undefined;
+      return this.analystService.getAssignedProjects(currentUserId).pipe(
+        switchMap((projects: any[]) => {
+          if (!projects || !projects.length) return of({ states: [], awcs: [] });
+          const firstProjId = projects[0].id;
+          return this.analystService.getProjectAssignments(firstProjId);
+        }),
+        catchError(() => of({ states: [], awcs: [] }))
+      );
+    }),
+    map((res: any) => res?.awcs || []),
+    shareReplay(1)
+  );
+
+  readonly villageOptions$ = combineLatest([
+    this.assignedLocations$,
+    this.rawBeneficiaries$
+  ]).pipe(
+    map(([locs, beneficiaries]) => {
+      const villageSet = new Set<string>();
+      (locs || []).forEach((l: any) => {
+        const vName = l.villageName || l.village?.name || (typeof l.village === 'string' ? l.village : '');
+        if (vName && vName.trim()) villageSet.add(vName.trim());
+      });
+      (beneficiaries || []).forEach((b: any) => {
+        const vName = b.village || b.location?.village || b.location?.villageName;
+        if (vName && vName.trim()) villageSet.add(vName.trim());
+      });
+
+      const sorted = Array.from(villageSet).sort();
+      return [
+        { value: 'ALL', label: 'All Villages' },
+        ...sorted.map(v => ({ value: v, label: v }))
+      ];
+    }),
+    shareReplay(1)
+  );
+
+  readonly institutionOptions$ = combineLatest([
+    this.assignedLocations$,
+    this.selectedVillageControl.valueChanges.pipe(startWith(this.selectedVillageControl.value))
+  ]).pipe(
+    map(([locs, selectedVillage]) => {
+      let filtered = (locs || []);
+      if (selectedVillage && selectedVillage !== 'ALL') {
+        filtered = filtered.filter((l: any) => {
+          const vName = l.villageName || l.village?.name || (typeof l.village === 'string' ? l.village : '');
+          return vName.trim().toLowerCase() === String(selectedVillage).trim().toLowerCase();
+        });
+      }
+
+      const options = filtered.map((l: any) => {
+        const typeStr = l.institutionType === 'SCHOOL' ? 'School' : (l.institutionType === 'HEALTH_CENTER' ? 'Health Center' : 'AWC');
+        const nameStr = l.schoolName || l.healthCenterName || l.awcName || l.name || '';
+        const codeStr = l.locationCode ? ` (${l.locationCode})` : '';
+        const idVal = String(l.id || l.locationCode || nameStr);
+        return {
+          value: idVal,
+          label: `[${typeStr}] ${nameStr}${codeStr}`
+        };
+      });
+
+      return [
+        { value: 'ALL', label: 'All Institutions (AWC / School / Health Center)' },
+        ...options
+      ];
+    }),
+    shareReplay(1)
+  );
+
+  private readonly selectedVillage$ = this.selectedVillageControl.valueChanges.pipe(
+    startWith(this.selectedVillageControl.value),
+    map(v => {
+      this.page$.next(1);
+      return v || 'ALL';
+    })
+  );
+
+  private readonly selectedInstitution$ = this.selectedInstitutionControl.valueChanges.pipe(
+    startWith(this.selectedInstitutionControl.value),
+    map(inst => {
+      this.page$.next(1);
+      return inst || 'ALL';
+    })
+  );
+
+  ngOnInit() {
+    this.subs.add(
+      this.selectedVillageControl.valueChanges.subscribe(() => {
+        this.selectedInstitutionControl.setValue('ALL', { emitEvent: true });
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subs.unsubscribe();
+  }
+
+  clearLocationFilters() {
+    this.selectedVillageControl.setValue('ALL');
+    this.selectedInstitutionControl.setValue('ALL');
+  }
+
   vm$ = combineLatest([
     this.rawBeneficiaries$,
     this.page$.asObservable(),
@@ -208,8 +317,10 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
     this.sortDir$.asObservable(),
     this.search$,
     this.typeTab$.asObservable(),
+    this.selectedVillage$,
+    this.selectedInstitution$,
   ]).pipe(
-    map(([beneficiaries, page, sortCol, sortDir, search, typeTab]) => {
+    map(([beneficiaries, page, sortCol, sortDir, search, typeTab, selectedVillage, selectedInstitution]) => {
       let items = [...beneficiaries];
 
       if (typeTab !== 'ALL') {
@@ -220,6 +331,24 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
 
           const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
           return typeTab === 'PRIORITY' ? isPriority : !isPriority;
+        });
+      }
+
+      if (selectedVillage && selectedVillage !== 'ALL') {
+        const targetVill = String(selectedVillage).trim().toLowerCase();
+        items = items.filter(b => {
+          const bVill = String(b.village || b.location?.village || b.location?.villageName || '').trim().toLowerCase();
+          return bVill === targetVill;
+        });
+      }
+
+      if (selectedInstitution && selectedInstitution !== 'ALL') {
+        const targetInst = String(selectedInstitution).trim().toLowerCase();
+        items = items.filter(b => {
+          const bLocId = String(b.locationId || b.awcId || b.schoolId || b.healthCenterId || b.location?.id || '');
+          const bLocCode = String(b.locationCode || b.location?.locationCode || '').toLowerCase();
+          const bName = String(b.locationName || b.awcName || b.schoolName || b.healthCenterName || b.location?.name || '').toLowerCase();
+          return bLocId === selectedInstitution || bLocCode === targetInst || bName.includes(targetInst);
         });
       }
 
@@ -320,12 +449,6 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
   setTypeTab(tab: 'ALL' | 'PRIORITY' | 'GENERAL' | 'STAKEHOLDER') {
     this.typeTab$.next(tab);
     this.page$.next(1);
-  }
-
-  ngOnInit(): void {}
-
-  ngOnDestroy(): void {
-    this.subs.unsubscribe();
   }
 
   sortBy(col: string) {

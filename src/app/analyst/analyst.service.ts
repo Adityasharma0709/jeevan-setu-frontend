@@ -95,6 +95,8 @@ export class AnalystService {
     state?: string,
     district?: string,
     block?: string,
+    village?: string,
+    institution?: string,
     awc?: string,
     unique?: boolean
   ): Observable<OutreachDashboardStats | any> {
@@ -110,6 +112,8 @@ export class AnalystService {
     if (state) params.state = state;
     if (district) params.district = district;
     if (block) params.block = block;
+    if (village) params.village = village;
+    if (institution) params.institution = institution;
     if (awc) params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
     
@@ -132,6 +136,8 @@ export class AnalystService {
     state?: string,
     district?: string,
     block?: string,
+    village?: string,
+    institution?: string,
     awc?: string,
     unique?: boolean
   ): Observable<DynamicsTableRecord[]> {
@@ -146,6 +152,8 @@ export class AnalystService {
     if (state) params.state = state;
     if (district) params.district = district;
     if (block) params.block = block;
+    if (village) params.village = village;
+    if (institution) params.institution = institution;
     if (awc) params.awc = awc;
     if (unique !== undefined) params.unique = String(unique);
 
@@ -164,6 +172,8 @@ export class AnalystService {
     state?: string,
     district?: string,
     block?: string,
+    village?: string,
+    institution?: string,
     awc?: string,
   ): Observable<DynamicsTableRecord[]> {
     const params: any = { group: groupName };
@@ -173,6 +183,8 @@ export class AnalystService {
     if (state) params.state = state;
     if (district) params.district = district;
     if (block) params.block = block;
+    if (village) params.village = village;
+    if (institution) params.institution = institution;
     if (awc) params.awc = awc;
 
     const cacheKey = `outreach_dynamics_reports_${JSON.stringify(params)}`;

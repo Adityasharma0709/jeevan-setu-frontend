@@ -198,6 +198,35 @@
         </div>
       </div>
 
+      <!-- Location Filter Toolbar (Village & Institution: AWC, School, Health Center) -->
+      <div class="border-b border-slate-100 px-6 py-3.5 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3 flex-wrap flex-1">
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[80px]">
+            <z-icon zType="map-pin" class="w-4 h-4 text-[#006666]"></z-icon>
+            <span>Location:</span>
+          </div>
+
+          <!-- Village Dropdown -->
+          <div class="w-60">
+            <z-combobox [formControl]="selectedVillageControl" [options]="(villageOptions$ | async) || []" placeholder="Select Village">
+            </z-combobox>
+          </div>
+
+          <!-- Institution Dropdown (AWCs, Schools, Health Centers) -->
+          <div class="w-80">
+            <z-combobox [formControl]="selectedInstitutionControl" [options]="(institutionOptions$ | async) || []" placeholder="Select Institution">
+            </z-combobox>
+          </div>
+        </div>
+
+        <button *ngIf="selectedVillageControl.value !== 'ALL' || selectedInstitutionControl.value !== 'ALL'"
+          type="button" (click)="clearLocationFilters()"
+          class="text-xs font-semibold text-[#006666] hover:underline flex items-center gap-1">
+          <z-icon zType="x" class="w-3.5 h-3.5"></z-icon>
+          Reset Location Filters
+        </button>
+      </div>
+
       <!-- Type Filter Tabs (matching Prodex layout) -->
       <div class="border-b border-slate-100 px-6 flex items-center gap-6 bg-white text-sm font-medium text-slate-500">
         <button type="button" (click)="setTypeTab('ALL')"

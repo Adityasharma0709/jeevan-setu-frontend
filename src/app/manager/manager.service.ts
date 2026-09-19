@@ -145,7 +145,7 @@ export class ManagerService {
     }
 
     getLocations(projectId: number): Observable<any[]> {
-        return (this.api.get(`locations?projectId=${projectId}`) as Observable<any[]>).pipe(
+        return (this.api.get(`locations/institutions?projectId=${projectId}`) as Observable<any[]>).pipe(
             map((locations) =>
                 (locations || []).filter(
                     (l) => (l?.status ?? '').toString().toUpperCase() === 'ACTIVE',

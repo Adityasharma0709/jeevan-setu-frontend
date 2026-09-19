@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
+import { ZardSwitchComponent } from '@/shared/components/switch';
 import { ZardEpisodesOfCareComponent, ZardEpisodeCardComponent, ZardEpisodeCardFemaleComponent, ZardEpisodeCardMaleChildComponent } from '@/shared/components/episodes-of-care';
 import { ZardActivitySessionsComponent } from '@/shared/components/activity-sessions';
 import { DashboardFacade } from '../../dashboard.facade';
@@ -14,6 +15,7 @@ import { DashboardFacade } from '../../dashboard.facade';
     CommonModule, 
     ReactiveFormsModule, 
     ZardComboboxComponent, 
+    ZardSwitchComponent,
     ZardEpisodesOfCareComponent, 
     ZardEpisodeCardComponent,
     ZardEpisodeCardFemaleComponent,
@@ -26,7 +28,7 @@ import { DashboardFacade } from '../../dashboard.facade';
         <h2 class="text-2xl font-bold text-gray-800 mb-1">Project Reach</h2>
         <p class="text-gray-500 text-sm mb-6">Track reach and episodes of care</p>
 
-        <!-- Filters Row with Year, Month, State, District, Block, AWC Center and Unique Beneficiaries Count -->
+        <!-- Filters Row with Year, Month, State, District, Block, Village, Institution and Unique Beneficiaries Count -->
         <div class="flex flex-wrap items-center gap-4 mb-6">
             <div class="flex flex-col gap-1.5 w-40">
                 <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">YEAR</label>
@@ -49,16 +51,23 @@ import { DashboardFacade } from '../../dashboard.facade';
                 <z-combobox [options]="(facade.blockOptions$ | async) || []" [formControl]="facade.blockFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search Block..." class="w-full"></z-combobox>
             </div>
             <div class="flex flex-col gap-1.5 w-48">
-                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">AWC CENTER</label>
-                <z-combobox [options]="(facade.awcOptions$ | async) || []" [formControl]="facade.awcFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search AWC..." class="w-full"></z-combobox>
+                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">VILLAGE</label>
+                <z-combobox [options]="(facade.villageOptions$ | async) || []" [formControl]="facade.villageFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search Village..." class="w-full"></z-combobox>
+            </div>
+            <div class="flex flex-col gap-1.5 w-48">
+                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">INSTITUTION</label>
+                <z-combobox [options]="(facade.institutionOptions$ | async) || []" [formControl]="facade.institutionFilter" zWidth="full" [searchable]="true" searchPlaceholder="Search Institution..." class="w-full"></z-combobox>
             </div>
             <div class="flex flex-col gap-1.5 mt-auto">
-                <button type="button" 
-                  [class]="(facade.uniqueCount$ | async) ? 'px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 transition-all hover:bg-emerald-100/50' : 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-500 border border-gray-200 transition-all hover:bg-gray-100/50'"
-                  (click)="facade.toggleUniqueCount()"
-                >
-                  Unique Count
-                </button>
+                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">UNIQUE COUNT</label>
+                <div class="flex items-center h-[38px] px-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50/80 transition-colors">
+                  <z-switch 
+                    [zChecked]="((facade.uniqueCount$ | async) ?? false)"
+                    (zCheckedChange)="facade.toggleUniqueCount()"
+                  >
+                    <span class="text-xs font-semibold text-gray-700 select-none cursor-pointer">Unique</span>
+                  </z-switch>
+                </div>
             </div>
         </div>
 

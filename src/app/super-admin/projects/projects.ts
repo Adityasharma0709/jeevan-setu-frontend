@@ -914,13 +914,27 @@ export class ProjectsComponent {
 
   getLocationDisplayName(l: any): string {
     if (!l) return '-';
-    return (l.village || l.block || l.district?.name || l.district || l.state?.name || l.state || '-').toString();
+    const village = typeof l.village === 'object' && l.village ? l.village.name : l.village;
+    const block = typeof l.block === 'object' && l.block ? l.block.name : l.block;
+    const district = typeof l.district === 'object' && l.district ? l.district.name : (l.districtName || l.district);
+    const state = typeof l.state === 'object' && l.state ? l.state.name : (l.stateName || l.state);
+    const val = village || block || district || state || '-';
+    return typeof val === 'object' && val ? (val.name || '-') : String(val);
   }
 
   formatFullAddress(l?: any): string {
     if (!l) return '-';
-    const parts = [l.village, l.block, l.district?.name || l.district, l.state?.name || l.state]
-      .map(p => (p || '').toString().trim()).filter(Boolean);
+    const village = typeof l.village === 'object' && l.village ? l.village.name : l.village;
+    const block = typeof l.block === 'object' && l.block ? l.block.name : l.block;
+    const district = typeof l.district === 'object' && l.district ? l.district.name : (l.districtName || l.district);
+    const state = typeof l.state === 'object' && l.state ? l.state.name : (l.stateName || l.state);
+    const parts = [village, block, district, state]
+      .map(p => {
+        if (!p) return '';
+        if (typeof p === 'object') return p.name || '';
+        return String(p).trim();
+      })
+      .filter(Boolean);
     return parts.join(', ') || '-';
   }
 

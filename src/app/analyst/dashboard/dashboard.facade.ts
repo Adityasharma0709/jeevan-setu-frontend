@@ -26,6 +26,8 @@ export class DashboardFacade {
   stateFilter = new FormControl('ALL', { nonNullable: true });
   districtFilter = new FormControl('ALL', { nonNullable: true });
   blockFilter = new FormControl('ALL', { nonNullable: true });
+  villageFilter = new FormControl('ALL', { nonNullable: true });
+  institutionFilter = new FormControl('ALL', { nonNullable: true });
   awcFilter = new FormControl('ALL', { nonNullable: true });
   adminFilter = new FormControl('ALL', { nonNullable: true });
   managerFilter = new FormControl('ALL', { nonNullable: true });
@@ -55,6 +57,12 @@ export class DashboardFacade {
 
   private blockOptionsSub = new BehaviorSubject<ZardComboboxOption[]>([{ value: 'ALL', label: 'All Blocks' }]);
   blockOptions$ = this.blockOptionsSub.asObservable();
+
+  private villageOptionsSub = new BehaviorSubject<ZardComboboxOption[]>([{ value: 'ALL', label: 'All Villages' }]);
+  villageOptions$ = this.villageOptionsSub.asObservable();
+
+  private institutionOptionsSub = new BehaviorSubject<ZardComboboxOption[]>([{ value: 'ALL', label: 'All Institutions' }]);
+  institutionOptions$ = this.institutionOptionsSub.asObservable();
 
   private awcOptionsSub = new BehaviorSubject<ZardComboboxOption[]>([{ value: 'ALL', label: 'All AWC Centers' }]);
   awcOptions$ = this.awcOptionsSub.asObservable();
@@ -219,6 +227,14 @@ export class DashboardFacade {
     session$.subscribe(() => {
       this.currentActivityPageSub.next(0);
     });
+    this.villageFilter.valueChanges.subscribe(() => {
+      this.currentPageSub.next(0);
+      this.currentActivityPageSub.next(0);
+    });
+    this.institutionFilter.valueChanges.subscribe(() => {
+      this.currentPageSub.next(0);
+      this.currentActivityPageSub.next(0);
+    });
     this.awcFilter.valueChanges.subscribe(() => {
       this.currentPageSub.next(0);
       this.currentActivityPageSub.next(0);
@@ -244,9 +260,11 @@ export class DashboardFacade {
       this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
       this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
       this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.villageFilter.valueChanges.pipe(startWith(this.villageFilter.value)),
+      this.institutionFilter.valueChanges.pipe(startWith(this.institutionFilter.value)),
       this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
     ]).pipe(
-      switchMap(([index, adminVal, managerVal, workerVal, stateVal, districtVal, blockVal, awcVal]) => {
+      switchMap(([index, adminVal, managerVal, workerVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal]) => {
         this.allDynamicsDataSub.next(null); // Set loading state
         const actionLabel = this.outreachActionsSub.value[index]?.label || '';
         const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
@@ -260,6 +278,8 @@ export class DashboardFacade {
           stateVal,
           districtVal,
           blockVal,
+          villageVal,
+          instVal,
           awcVal
         ).pipe(
           catchError(() => of([]))
@@ -294,10 +314,12 @@ export class DashboardFacade {
       this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
       this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
       this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.villageFilter.valueChanges.pipe(startWith(this.villageFilter.value)),
+      this.institutionFilter.valueChanges.pipe(startWith(this.institutionFilter.value)),
       this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
       this.uniqueCount$,
     ]).pipe(
-      switchMap(([index, actVal, sessVal, adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal]) => {
+      switchMap(([index, actVal, sessVal, adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal]) => {
         this.allActivityDataSub.next(null); // Set loading state
         const actionLabel = this.activitiesSub.value[index]?.label || '';
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
@@ -305,7 +327,7 @@ export class DashboardFacade {
         const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
         const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
         const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
-        return this.analystService.getDynamicsReports(actionLabel, aId, sId, adminId, managerId, workerId, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal).pipe(
+        return this.analystService.getDynamicsReports(actionLabel, aId, sId, adminId, managerId, workerId, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal).pipe(
           catchError(() => of([]))
         );
       })
@@ -337,17 +359,19 @@ export class DashboardFacade {
       this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
       this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
       this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.villageFilter.valueChanges.pipe(startWith(this.villageFilter.value)),
+      this.institutionFilter.valueChanges.pipe(startWith(this.institutionFilter.value)),
       this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
       this.uniqueCount$,
     ]).pipe(
-      switchMap(([actVal, sessVal, adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal]) => {
+      switchMap(([actVal, sessVal, adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal]) => {
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
         const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
         const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
         const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
 
-        return this.analystService.getDashboardStats(undefined, aId, sId, adminId, managerId, workerId, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal).pipe(
+        return this.analystService.getDashboardStats(undefined, aId, sId, adminId, managerId, workerId, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal).pipe(
           catchError(() => of(null))
         );
       })
@@ -395,15 +419,17 @@ export class DashboardFacade {
       this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
       this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
       this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.villageFilter.valueChanges.pipe(startWith(this.villageFilter.value)),
+      this.institutionFilter.valueChanges.pipe(startWith(this.institutionFilter.value)),
       this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
       this.uniqueCount$,
     ]).pipe(
-      switchMap(([adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal]) => {
+      switchMap(([adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal]) => {
         const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
         const managerId = managerVal && managerVal !== 'ALL' ? Number(managerVal) : undefined;
         const workerId = workerVal && workerVal !== 'ALL' ? Number(workerVal) : undefined;
 
-        return this.analystService.getDashboardStats(undefined, undefined, undefined, adminId, managerId, workerId, yearVal, monthVal, stateVal, districtVal, blockVal, awcVal, uniqueVal).pipe(
+        return this.analystService.getDashboardStats(undefined, undefined, undefined, adminId, managerId, workerId, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal).pipe(
           tap(stats => {
             if (!stats) return;
             if (stats.totalReports !== undefined) {
@@ -635,31 +661,35 @@ export class DashboardFacade {
 
     const locationHierarchy$ = combineLatest([this.enrichedProjects$, this.myBeneficiaries$]).pipe(
       map(([projects, beneficiaries]) => {
-        const paths = new Map<string, { state: string, district: string, block: string, awc: string }>();
-        const addPath = (state: string, district: string, block: string, awc: string) => {
+        const paths = new Map<string, { state: string, district: string, block: string, village: string, institution: string }>();
+        const addPath = (state: string, district: string, block: string, village: string, institution: string) => {
           const s = (state || '').trim();
           const d = (district || '').trim();
           const b = (block || '').trim();
-          const a = (awc || '').trim();
+          const v = (village || '').trim();
+          const i = (institution || '').trim();
           if (!s) return;
-          const key = `${s.toLowerCase()}||${d.toLowerCase()}||${b.toLowerCase()}||${a.toLowerCase()}`;
-          if (!paths.has(key)) paths.set(key, { state: s, district: d, block: b, awc: a });
+          const key = `${s.toLowerCase()}||${d.toLowerCase()}||${b.toLowerCase()}||${v.toLowerCase()}||${i.toLowerCase()}`;
+          if (!paths.has(key)) paths.set(key, { state: s, district: d, block: b, village: v, institution: i });
         };
 
         projects.forEach((p: any) => {
           (p.locations || []).forEach((loc: any) => {
-            const sName = loc.state?.name || loc.state || '';
-            const dName = loc.district?.name || loc.district || '';
-            const bName = loc.block?.name || loc.block || '';
-            const aName = loc.awcName || loc.village || '';
-            if (sName) addPath(sName, dName, bName, aName);
+            const sName = loc.state?.name || loc.stateName || loc.state || '';
+            const dName = loc.district?.name || loc.districtName || loc.district || '';
+            const bName = loc.block?.name || loc.blockName || loc.block || '';
+            const vName = loc.village?.name || loc.villageName || (typeof loc.village === 'string' ? loc.village : '');
+            const typeStr = loc.type || loc.institutionType || 'AWC';
+            const instName = loc.name || loc.awcName || loc.schoolName || loc.healthCenterName || (loc.locationCode ? `[${typeStr}] ${loc.locationCode}` : '');
+            if (sName) addPath(sName, dName, bName, vName, instName);
           });
         });
 
         beneficiaries.forEach((b: any) => {
           if (b.state) {
-            const aName = b.location?.awcName || b.location?.village || b.village || '';
-            addPath(b.state, b.district || '', b.block || '', aName);
+            const vName = b.village || b.location?.village || b.location?.villageName || '';
+            const instName = b.locationName || b.location?.name || b.location?.awcName || b.location?.schoolName || b.location?.healthCenterName || b.awcName || '';
+            addPath(b.state, b.district || '', b.block || '', vName, instName);
           }
         });
 
@@ -674,7 +704,9 @@ export class DashboardFacade {
       this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
       this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
       this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
-    ]).subscribe(([hierarchy, selectedState, selectedDistrict, selectedBlock]) => {
+      this.villageFilter.valueChanges.pipe(startWith(this.villageFilter.value)),
+      this.institutionFilter.valueChanges.pipe(startWith(this.institutionFilter.value)),
+    ]).subscribe(([hierarchy, selectedState, selectedDistrict, selectedBlock, selectedVillage, selectedInstitution]) => {
       const states = Array.from(new Set(hierarchy.map((h: any) => h.state).filter(Boolean))).sort();
       this.stateOptionsSub.next([{ value: 'ALL', label: 'All States' }, ...states.map((s: any) => ({ value: s, label: s }))]);
 
@@ -703,15 +735,34 @@ export class DashboardFacade {
         selectedBlockVal = 'ALL';
       }
 
-      let filteredAwcs = filteredBlocks;
+      let filteredVillages = filteredBlocks;
       if (selectedBlockVal && selectedBlockVal !== 'ALL') {
-        filteredAwcs = filteredBlocks.filter((h: any) => h.block.toLowerCase() === selectedBlockVal.toLowerCase());
+        filteredVillages = filteredBlocks.filter((h: any) => h.block.toLowerCase() === selectedBlockVal.toLowerCase());
       }
-      const awcs = Array.from(new Set(filteredAwcs.map((h: any) => h.awc).filter(Boolean))).sort();
-      this.awcOptionsSub.next([{ value: 'ALL', label: 'All AWC Centers' }, ...awcs.map((a: any) => ({ value: a, label: a }))]);
+      const villages = Array.from(new Set(filteredVillages.map((h: any) => h.village).filter(Boolean))).sort();
+      this.villageOptionsSub.next([{ value: 'ALL', label: 'All Villages' }, ...villages.map((v: any) => ({ value: v, label: v }))]);
+
+      let selectedVillageVal = this.villageFilter.value;
+      if (selectedVillageVal && selectedVillageVal !== 'ALL' && !villages.includes(selectedVillageVal)) {
+        this.villageFilter.setValue('ALL', { emitEvent: false });
+        selectedVillageVal = 'ALL';
+      }
+
+      let filteredInstitutions = filteredVillages;
+      if (selectedVillageVal && selectedVillageVal !== 'ALL') {
+        filteredInstitutions = filteredVillages.filter((h: any) => h.village.toLowerCase() === selectedVillageVal.toLowerCase());
+      }
+      const institutions = Array.from(new Set(filteredInstitutions.map((h: any) => h.institution).filter(Boolean))).sort();
+      this.institutionOptionsSub.next([{ value: 'ALL', label: 'All Institutions' }, ...institutions.map((i: any) => ({ value: i, label: i }))]);
+      this.awcOptionsSub.next([{ value: 'ALL', label: 'All AWC Centers' }, ...institutions.map((a: any) => ({ value: a, label: a }))]);
+
+      const selectedInst = this.institutionFilter.value;
+      if (selectedInst && selectedInst !== 'ALL' && !institutions.includes(selectedInst)) {
+        this.institutionFilter.setValue('ALL', { emitEvent: false });
+      }
 
       const selectedAwc = this.awcFilter.value;
-      if (selectedAwc && selectedAwc !== 'ALL' && !awcs.includes(selectedAwc)) {
+      if (selectedAwc && selectedAwc !== 'ALL' && !institutions.includes(selectedAwc)) {
         this.awcFilter.setValue('ALL', { emitEvent: false });
       }
     });
@@ -758,19 +809,29 @@ export class DashboardFacade {
       this.stateFilter.valueChanges.pipe(startWith(this.stateFilter.value)),
       this.districtFilter.valueChanges.pipe(startWith(this.districtFilter.value)),
       this.blockFilter.valueChanges.pipe(startWith(this.blockFilter.value)),
+      this.villageFilter.valueChanges.pipe(startWith(this.villageFilter.value)),
+      this.institutionFilter.valueChanges.pipe(startWith(this.institutionFilter.value)),
       this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
       this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
       this.managerFilter.valueChanges.pipe(startWith(this.managerFilter.value)),
       this.workerFilter.valueChanges.pipe(startWith(this.workerFilter.value)),
       this.uniqueCount$,
     ]).pipe(
-      map(([reports, year, month, state, district, block, awc, admin, manager, worker, uniqueVal]) => {
+      map(([reports, year, month, state, district, block, village, institution, awc, admin, manager, worker, uniqueVal]) => {
         const filtered = reports.filter((r: any) => {
           if (year && year !== 'ALL' && getReportYear(r) !== year) return false;
           if (month && month !== 'ALL' && getReportMonthName(r).toLowerCase() !== month.toLowerCase()) return false;
           if (state && state !== 'ALL' && (r.state || '').toLowerCase() !== state.toLowerCase()) return false;
           if (district && district !== 'ALL' && (r.district || '').toLowerCase() !== district.toLowerCase()) return false;
           if (block && block !== 'ALL' && (r.block || '').toLowerCase() !== block.toLowerCase()) return false;
+          if (village && village !== 'ALL') {
+            const rVil = r.beneficiary?.village || r.beneficiary?.location?.village || r.beneficiary?.location?.villageName || r.village || '';
+            if (rVil.toLowerCase().trim() !== village.toLowerCase().trim()) return false;
+          }
+          if (institution && institution !== 'ALL') {
+            const rInst = r.beneficiary?.locationName || r.beneficiary?.location?.name || r.beneficiary?.location?.awcName || r.beneficiary?.location?.schoolName || r.beneficiary?.location?.healthCenterName || r.awcCenter || r.awc || '';
+            if (rInst.toLowerCase().trim() !== institution.toLowerCase().trim()) return false;
+          }
           if (awc && awc !== 'ALL') {
             const rAwc = r.beneficiary?.location?.awcName || r.beneficiary?.location?.village || r.beneficiary?.village || r.awcCenter || r.awc || '';
             if (rAwc.toLowerCase().trim() !== awc.toLowerCase().trim()) return false;
