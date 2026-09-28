@@ -1,10 +1,5 @@
 <ng-container *ngIf="facade.stats$ | async as stats; else loader" class="fade-in">
     <div class="max-w-7xl mx-auto space-y-6">
-        <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl flex items-center gap-3 shadow-sm mb-4">
-            <z-icon zType="circle-alert" class="w-5 h-5 text-amber-600"></z-icon>
-            <p class="text-sm font-semibold m-0">Development is under process for the dashboard section.</p>
-        </div>
-
         <app-outreach-summary-widget></app-outreach-summary-widget>
         <app-coverage-widget></app-coverage-widget>
 

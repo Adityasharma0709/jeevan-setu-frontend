@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
-import { ZardIconComponent } from '@/shared/components/icon';
-
 import { DashboardFacade } from './dashboard.facade';
 import { OutreachSummaryWidgetComponent } from './widgets/outreach-summary/outreach-summary-widget.component';
 import { CoverageWidgetComponent } from './widgets/coverage/coverage-widget.component';
@@ -13,7 +11,6 @@ import { CoverageWidgetComponent } from './widgets/coverage/coverage-widget.comp
   imports: [
     CommonModule, 
     LottieComponent, 
-    ZardIconComponent,
     OutreachSummaryWidgetComponent,
     CoverageWidgetComponent
   ],

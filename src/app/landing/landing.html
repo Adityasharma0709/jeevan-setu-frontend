@@ -1,54 +1,116 @@
 <main class="landing-page">
 
-  <div class="landing-container animate-fade-in">
-    <!-- Visual Pane: Left Side (Desktop) / Background Overlay (Mobile) -->
-    <div class="visual-grid-pane">
-      <!-- Decorative tilted card mosaic (3 columns) -->
-      <div class="tilted-cards-grid" aria-hidden="true">
-        <div
-          class="tilted-cards-cell"
-          *ngFor="let card of backgroundCards; index as i; trackBy: trackByIndex"
-        >
-          <app-landing-card [bgImage]="card.bgImage" [showGlow]="true">
-            <ng-container [ngSwitch]="card.kind">
-              <div *ngSwitchCase="'image'" class="doctor-overlay"></div>
-              <div *ngSwitchDefault class="mosaic-blank"></div>
-            </ng-container>
-          </app-landing-card>
+  <!-- Full-Width Top Navigation Bar (Both Desktop & Mobile) -->
+  <header class="landing-navbar">
+    <div class="navbar-container">
+      <div class="navbar-brand">
+        <img src="Landing.png" alt="Jeevan Setu Logo" class="navbar-logo" />
+      </div>
+      <div class="navbar-actions">
+        <button type="button" class="nav-login-btn" (click)="navigateToLogin()">
+          <span>Login</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="landing-card-wrapper animate-fade-in">
+
+    <!-- LEFT PANEL: Single Image (Desktop Only) -->
+    <div class="hero-panel desktop-only">
+      <img 
+        src="landingpageimage.png" 
+        alt="Jeevan Setu - People. Care. Stronger Communities." 
+        class="hero-full-img"
+      />
+    </div>
+
+    <!-- RIGHT PANEL: Clean Auth Section -->
+    <div class="auth-panel">
+      <div class="auth-content">
+
+        <!-- Headings -->
+        <div class="heading-block">
+          <h2 class="welcome-heading">Welcome to <span class="teal-highlight">Jeevan Setu</span></h2>
+          <p class="welcome-tagline">A Bridge to Better Health &amp; Wellbeing</p>
         </div>
-      </div>
-    </div>
 
-    <!-- Content Pane: Right Side (Desktop) / Foreground (Mobile) -->
-    <div class="content-pane">
-      <div class="content-inner">
-        <!-- Brand Logo Block -->
-        <section class="brand-logo-section animate-fade-in">
-          <div class="logo-wrapper">
-            <img src="Landing.png" alt="Jeevan Setu Logo" class="logo-image" />
+        <!-- Mobile Hero Image (Mobile Only) -->
+        <div class="mobile-hero-container mobile-only">
+          <img 
+            src="landingpageimage.png" 
+            alt="People. Care. Stronger Communities." 
+            class="mobile-hero-img"
+          />
+        </div>
+
+        <!-- 4 Feature Pillars (Desktop Only) -->
+        <div class="features-pill-row desktop-only">
+          <div class="feature-badge">
+            <div class="badge-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </div>
+            <span class="badge-label">Maternal &amp;<br/>Child Health</span>
           </div>
-        </section>
 
-        <!-- Headings / Text -->
-        <header class="branding-header">
-          <h1 class="welcome-title">Welcome to Jeevan Setu</h1>
-          <p class="welcome-subtitle">A Bridge to Better Health &amp; Wellbeing</p>
-        </header>
+          <div class="pill-divider"></div>
 
-        <!-- Dynamic Action Stack -->
-        <footer class="action-footer">
-          <button 
-            class="action-btn btn-login" 
-            type="button" 
-            (click)="navigateToLogin()" 
-            aria-label="Navigate to Login"
-          >
-            Login
-          </button>
+          <div class="feature-badge">
+            <div class="badge-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+              </svg>
+            </div>
+            <span class="badge-label">Community<br/>Outreach</span>
+          </div>
 
-          <p class="platform-text">Community Healthcare Platform</p>
-        </footer>
+          <div class="pill-divider"></div>
+
+          <div class="feature-badge">
+            <div class="badge-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+            </div>
+            <span class="badge-label">Beneficiary<br/>Management</span>
+          </div>
+
+          <div class="pill-divider"></div>
+
+          <div class="feature-badge">
+            <div class="badge-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-5.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+              </svg>
+            </div>
+            <span class="badge-label">Stronger<br/>Impact</span>
+          </div>
+        </div>
+
+        <!-- Login CTA Button -->
+        <button 
+          class="login-btn" 
+          type="button" 
+          (click)="navigateToLogin()" 
+          aria-label="Navigate to Login"
+        >
+          <svg class="login-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          <span>Login</span>
+        </button>
+
+        <!-- Sub-footer Platform Caption -->
+        <p class="platform-caption">Community Healthcare Platform</p>
+
       </div>
     </div>
+
   </div>
 </main>
