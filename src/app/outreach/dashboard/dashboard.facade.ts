@@ -259,6 +259,7 @@ export class DashboardFacade {
 
     combineLatest([
       this.selectedActivityTab$,
+      this.activities$,
       activity$,
       session$,
       this.yearFilter.valueChanges.pipe(startWith(this.yearFilter.value)),
@@ -271,9 +272,9 @@ export class DashboardFacade {
       this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
       this.uniqueCount$
     ]).pipe(
-      switchMap(([index, actVal, sessVal, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal]) => {
+      switchMap(([index, activitiesList, actVal, sessVal, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal]) => {
         this.allActivityDataSub.next(null); // Set loading state
-        const actionLabel = this.activitiesSub.value[index]?.label || '';
+        const actionLabel = activitiesList[index]?.label || '';
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
         return this.outreachService.getDynamicsReports(actionLabel, aId, sId, uniqueVal, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal).pipe(

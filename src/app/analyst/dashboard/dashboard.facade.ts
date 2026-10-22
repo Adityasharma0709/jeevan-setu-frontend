@@ -304,6 +304,7 @@ export class DashboardFacade {
 
     combineLatest([
       this.selectedActivityTab$,
+      this.activities$,
       activity$,
       session$,
       this.adminFilter.valueChanges.pipe(startWith(this.adminFilter.value)),
@@ -319,9 +320,9 @@ export class DashboardFacade {
       this.awcFilter.valueChanges.pipe(startWith(this.awcFilter.value)),
       this.uniqueCount$,
     ]).pipe(
-      switchMap(([index, actVal, sessVal, adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal]) => {
+      switchMap(([index, activitiesList, actVal, sessVal, adminVal, managerVal, workerVal, yearVal, monthVal, stateVal, districtVal, blockVal, villageVal, instVal, awcVal, uniqueVal]) => {
         this.allActivityDataSub.next(null); // Set loading state
-        const actionLabel = this.activitiesSub.value[index]?.label || '';
+        const actionLabel = activitiesList[index]?.label || '';
         const aId = actVal && actVal !== 'All activity' ? Number(actVal) : undefined;
         const sId = sessVal && sessVal !== 'All session' ? Number(sessVal) : undefined;
         const adminId = adminVal && adminVal !== 'ALL' ? Number(adminVal) : undefined;
