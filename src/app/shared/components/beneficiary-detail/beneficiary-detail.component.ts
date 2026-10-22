@@ -57,6 +57,7 @@ export class ZardBeneficiaryDetailComponent implements OnInit, OnDestroy {
 
   showFamilyModal = false;
   savingFamily = false;
+  editingFamilyMemberId: number | null = null;
   familyForm = {
     name: '',
     relationship: '',
@@ -259,19 +260,40 @@ export class ZardBeneficiaryDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  openFamilyModal(): void {
-    this.familyForm = {
-      name: '',
-      relationship: '',
-      dateOfBirth: '',
-      gender: 'Female',
-      schoolingStatus: '',
-      employmentStatus: '',
-      qualification: ''
-    };
-    
+  navigateToEdit(): void {
+    if (!this.beneficiary) return;
+    this.router.navigate(['/outreach/beneficiary', this.beneficiary.id, 'request-update'], {
+      state: { beneficiary: this.beneficiary }
+    });
+  }
+
+  openFamilyModal(member?: any): void {
+    if (member) {
+      this.editingFamilyMemberId = member.id;
+      this.familyForm = {
+        name: member.name || '',
+        relationship: member.relationship || '',
+        dateOfBirth: member.dateOfBirth ? this.toDDMMYYYY(member.dateOfBirth) : '',
+        gender: member.gender || 'Female',
+        schoolingStatus: member.schoolingStatus || '',
+        employmentStatus: member.employmentStatus || '',
+        qualification: member.qualification || ''
+      };
+    } else {
+      this.editingFamilyMemberId = null;
+      this.familyForm = {
+        name: '',
+        relationship: '',
+        dateOfBirth: '',
+        gender: 'Female',
+        schoolingStatus: '',
+        employmentStatus: '',
+        qualification: ''
+      };
+    }
+
     this.dialogRef = this.dialog.create({
-      zTitle: 'Add Family Member',
+      zTitle: this.editingFamilyMemberId ? 'Edit Family Member' : 'Add Family Member',
       zContent: this.familyModalTemplate,
       zWidth: '500px',
       zViewContainerRef: this.viewContainerRef,
@@ -280,6 +302,7 @@ export class ZardBeneficiaryDetailComponent implements OnInit, OnDestroy {
   }
 
   closeFamilyModal(): void {
+    this.editingFamilyMemberId = null;
     if (this.dialogRef) {
       this.dialogRef.close();
       this.dialogRef = null;
@@ -327,22 +350,40 @@ export class ZardBeneficiaryDetailComponent implements OnInit, OnDestroy {
     this.savingFamily = true;
     this.cdr.markForCheck();
 
-    this.api.post(`${this.rolePrefix}/beneficiary/${this.beneficiary.id}/family-member`, payload)
+    const request$ = this.editingFamilyMemberId
+      ? this.api.patch(`${this.rolePrefix}/family-member/${this.editingFamilyMemberId}`, payload)
+      : this.api.post(`${this.rolePrefix}/beneficiary/${this.beneficiary.id}/family-member`, payload);
+
+    request$
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          toast.success('Family member added successfully');
+          toast.success(this.editingFamilyMemberId ? 'Family member updated successfully' : 'Family member added successfully');
           this.loadFamilyMembers(this.beneficiary!.id);
           this.closeFamilyModal();
           this.savingFamily = false;
+          this.editingFamilyMemberId = null;
           this.cdr.markForCheck();
         },
         error: (err) => {
-          toast.error(err.error?.message || 'Failed to add family member');
+          toast.error(err.error?.message || (this.editingFamilyMemberId ? 'Failed to update family member' : 'Failed to add family member'));
           this.savingFamily = false;
           this.cdr.markForCheck();
         }
       });
+  }
+
+  private toDDMMYYYY(value: string): string {
+    if (!value) return '';
+    try {
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return '';
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      return `${dd}/${mm}/${d.getFullYear()}`;
+    } catch {
+      return '';
+    }
   }
 
   // ── Date Helpers ─────────────────────────────────────────────────────────

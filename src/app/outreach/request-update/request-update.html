@@ -1,57 +1,12 @@
-<div class="bg-white px-4 sm:px-6 pt-5 pb-0 border-b border-gray-100 shadow-sm">
-  <!-- Header -->
-  <div
-    class="sticky top-0 z-40 -mx-5 -mt-5 space-y-5 rounded-b-3xl border-x border-b border-white/70 bg-white/70 px-5 py-4 shadow-[0_10px_32px_rgba(15,23,42,0.08)] backdrop-blur-2xl ring-1 ring-slate-200/40 md:hidden"
-  >
-    <div class="flex items-center gap-4">
-      <div class="min-w-0" *ngIf="beneficiary">
-        <h1
-          class="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight wrap-break-word truncate"
-        >
-          {{ beneficiary.name }}
-        </h1>
-        <div class="flex flex-wrap items-center gap-2 mt-1.5">
-          <span class="text-[12px] font-mono text-gray-600 px-2 py-0.5 shrink-0">{{
-            beneficiary.uid
-          }}</span>
-          <span class="text-gray-500 text-[12px] flex items-center gap-1 shrink-0">
-            Reg: {{ beneficiary.createdAt | date: 'dd/MM/yyyy' }}
-          </span>
-          <span
-            class="px-2 py-0.5 text-[12px] font-bold uppercase shrink-0"
-            [ngClass]="beneficiary.gender === 'female' ? ' text-pink-700' : ' text-blue-700'"
-          >
-            {{ beneficiary.gender }}
-          </span>
-        </div>
-      </div>
-      <!-- <p class="text-sm text-gray-500" *ngIf="beneficiary">
-        {{ beneficiary.name }} · {{ beneficiary.uid }}
-      </p> -->
-    </div>
-    <z-breadcrumb>
-      <z-breadcrumb-item [routerLink]="['/outreach/beneficiaries']"
-        >Beneficiaries</z-breadcrumb-item
-      >
-      <z-breadcrumb-item
-        *ngIf="beneficiary"
-        [routerLink]="['/outreach/beneficiary', beneficiary.id.toString()]"
-        [state]="{ beneficiary: beneficiary }"
-        >View Detail</z-breadcrumb-item
-      >
-      <z-breadcrumb-item *ngIf="!beneficiary">View Detail</z-breadcrumb-item>
-      <z-breadcrumb-item>Request Update</z-breadcrumb-item>
-    </z-breadcrumb>
-  </div>
-
+<div class="min-h-screen bg-gray-50/60 pb-20">
   <!-- Loading -->
   <div *ngIf="loading" class="flex items-center justify-center py-20">
     <div class="text-gray-400 text-sm animate-pulse">Loading beneficiary details...</div>
   </div>
 
   <!-- Form -->
-  <div *ngIf="!loading && beneficiary" class="max-w-3xl mx-auto px-6 py-8">
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
+  <div *ngIf="!loading && beneficiary" class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sm:p-8">
       <p class="text-sm text-gray-500 mb-6">
         Make changes below. Only modified fields will be sent for manager approval.
       </p>
@@ -70,7 +25,124 @@
           </z-form-control>
         </z-form-field>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Location Information -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Location Information</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <z-form-field>
+              <label z-form-label>State</label>
+              <z-form-control>
+                <z-combobox
+                  formControlName="stateSelect"
+                  [options]="(assignmentStates$ | async) || []"
+                  placeholder="Select state"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label>District</label>
+              <z-form-control>
+                <z-combobox
+                  formControlName="districtSelect"
+                  [options]="(assignmentDistricts$ | async) || []"
+                  [zDisabled]="!form.get('stateSelect')?.value"
+                  placeholder="Select district"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label>Block</label>
+              <z-form-control>
+                <z-combobox
+                  formControlName="blockSelect"
+                  [options]="(assignmentBlocks$ | async) || []"
+                  [zDisabled]="!form.get('districtSelect')?.value"
+                  placeholder="Select block"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <z-form-field>
+              <label z-form-label>Village</label>
+              <z-form-control>
+                <z-combobox
+                  formControlName="villageSelect"
+                  [options]="(assignmentVillages$ | async) || []"
+                  [zDisabled]="!form.get('blockSelect')?.value"
+                  placeholder="Select village"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Institution Type -->
+            <z-form-field>
+              <label z-form-label>Institution Type</label>
+              <z-form-control>
+                <z-combobox
+                  formControlName="institutionTypeSelect"
+                  [options]="institutionTypeOptions"
+                  (ngModelChange)="onInstitutionTypeChange($event)"
+                  [searchable]="false"
+                  placeholder="Select institution type"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <!-- AWC picker -->
+            <z-form-field *ngIf="form.get('institutionTypeSelect')?.value === 'AWC'">
+              <label z-form-label>Anganwadi Center (AWC)</label>
+              <z-form-control>
+                <z-combobox
+                  formControlName="locationId"
+                  [options]="(assignmentAwcs$ | async) || []"
+                  [zDisabled]="!form.get('villageSelect')?.value"
+                  placeholder="Select AWC"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <!-- School picker -->
+            <z-form-field *ngIf="form.get('institutionTypeSelect')?.value === 'SCHOOL'">
+              <label z-form-label>School</label>
+              <z-form-control>
+                <z-combobox
+                  formControlName="schoolId"
+                  [options]="(assignmentSchools$ | async) || []"
+                  [zDisabled]="!form.get('villageSelect')?.value"
+                  placeholder="Select School"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Health Center picker -->
+            <z-form-field *ngIf="form.get('institutionTypeSelect')?.value === 'HEALTH_CENTER'">
+              <label z-form-label>Health Center</label>
+              <z-form-control>
+                <z-combobox
+                  formControlName="healthCenterId"
+                  [options]="(assignmentHealthCenters$ | async) || []"
+                  [zDisabled]="!form.get('villageSelect')?.value"
+                  placeholder="Select Health Center"
+                  zWidth="full"
+                />
+              </z-form-control>
+            </z-form-field>
+          </div>
+        </div>
+
+        <!-- Personal Information -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Personal Information</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <z-form-field>
             <label z-form-label>Name</label>
             <z-form-control><input z-input formControlName="name" /></z-form-control>
@@ -317,6 +389,8 @@
           </ng-container>
         </div>
         <!-- grid div close -->
+      </div>
+      <!-- personal info section close -->
 
         <!-- Actions -->
         <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">

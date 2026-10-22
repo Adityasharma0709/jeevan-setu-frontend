@@ -1,16 +1,18 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toast } from 'ngx-sonner';
+import { forkJoin, of, Observable, BehaviorSubject, defer, combineLatest } from 'rxjs';
+import { catchError, map, startWith } from 'rxjs/operators';
 
+import { ApiService } from '@/core/services/api';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { ZardFormControlComponent, ZardFormFieldComponent } from '@/shared/components/form';
 import { ZardInputDirective } from '@/shared/components/input';
 
-import { ZardBreadcrumbComponent, ZardBreadcrumbItemComponent } from '@/shared/components/breadcrumb/breadcrumb.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@/shared/components/combobox';
-import { OutreachService, Beneficiary } from '../outreach.service';
+import { OutreachService, Beneficiary, OutreachLocation } from '../outreach.service';
 
 @Component({
   selector: 'app-request-update',
@@ -22,8 +24,6 @@ import { OutreachService, Beneficiary } from '../outreach.service';
     ZardFormControlComponent,
     ZardFormFieldComponent,
     ZardInputDirective,
-    ZardBreadcrumbComponent,
-    ZardBreadcrumbItemComponent,
     ZardComboboxComponent
   ],
   templateUrl: './request-update.html',
@@ -33,10 +33,19 @@ export class RequestUpdate implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private outreachService = inject(OutreachService);
+  private api = inject(ApiService);
+  private cdr = inject(ChangeDetectorRef);
 
   beneficiary: Beneficiary | null = null;
   loading = true;
   isSubmitting = false;
+  private isHydrating = false;
+
+  // ── Datasets ─────────────────────────────────────────────────────────────
+  private locations$ = new BehaviorSubject<OutreachLocation[]>([]);
+  private schools$ = new BehaviorSubject<any[]>([]);
+  private healthCenters$ = new BehaviorSubject<any[]>([]);
+  private states$ = new BehaviorSubject<ZardComboboxOption[]>([]);
 
   form: FormGroup = this.fb.group({
     beneficiaryType: ['General', Validators.required],
@@ -57,12 +66,29 @@ export class RequestUpdate implements OnInit {
     economicStatus: [''],
     primaryIncomeSource: [''],
     employmentStatus: [''],
+
+    // Location Fields
+    stateSelect: [''],
+    districtSelect: [''],
+    blockSelect: [''],
+    villageSelect: [''],
+    institutionTypeSelect: ['NONE'],
+    locationId: [''],
+    schoolId: [''],
+    healthCenterId: [''],
   });
 
   readonly genderOptions: ZardComboboxOption[] = [
     { value: 'Male', label: 'Male' },
     { value: 'Female', label: 'Female' },
     { value: 'Other', label: 'Other' }
+  ];
+
+  readonly institutionTypeOptions: ZardComboboxOption[] = [
+    { value: 'NONE', label: 'None' },
+    { value: 'AWC', label: 'Anganwadi Center (AWC)' },
+    { value: 'SCHOOL', label: 'School' },
+    { value: 'HEALTH_CENTER', label: 'Health Center' }
   ];
 
   private mapStringsToOptions = (opts: string[]): ZardComboboxOption[] => 
@@ -95,20 +121,153 @@ export class RequestUpdate implements OnInit {
     { value: 'Divorced', label: 'Divorced' }
   ];
 
+  // ── Cascading Reactive Streams ──────────────────────────────────────────
+
+  assignmentStates$ = this.states$.asObservable();
+
+  assignmentDistricts$ = defer(() => combineLatest([
+    this.locations$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value))
+  ]).pipe(
+    map(([locs, state]): ZardComboboxOption[] => {
+      if (!state) return [];
+      const districts = Array.from(new Set(
+        locs.filter(l => this.extractName(l, 'state') === state)
+            .map(l => this.extractName(l, 'district'))
+            .filter(Boolean)
+      ));
+      return districts.sort().map(d => ({ value: d, label: d }));
+    })
+  ));
+
+  assignmentBlocks$ = defer(() => combineLatest([
+    this.locations$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value)),
+    this.form.get('districtSelect')!.valueChanges.pipe(startWith(this.form.get('districtSelect')!.value))
+  ]).pipe(
+    map(([locs, state, district]): ZardComboboxOption[] => {
+      if (!state || !district) return [];
+      const blocks = Array.from(new Set(
+        locs.filter(l => this.extractName(l, 'state') === state && this.extractName(l, 'district') === district)
+            .map(l => this.extractName(l, 'block'))
+            .filter(Boolean)
+      ));
+      return blocks.sort().map(b => ({ value: b, label: b }));
+    })
+  ));
+
+  assignmentVillages$ = defer(() => combineLatest([
+    this.locations$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value)),
+    this.form.get('districtSelect')!.valueChanges.pipe(startWith(this.form.get('districtSelect')!.value)),
+    this.form.get('blockSelect')!.valueChanges.pipe(startWith(this.form.get('blockSelect')!.value))
+  ]).pipe(
+    map(([locs, state, district, block]): ZardComboboxOption[] => {
+      if (!state || !district || !block) return [];
+      const villages = Array.from(new Set(
+        locs.filter(l => this.extractName(l, 'state') === state && this.extractName(l, 'district') === district && this.extractName(l, 'block') === block)
+            .map(l => this.extractName(l, 'village'))
+            .filter(Boolean)
+      ));
+      return villages.sort().map(v => ({ value: v, label: v }));
+    })
+  ));
+
+  assignmentAwcs$ = defer(() => combineLatest([
+    this.locations$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value)),
+    this.form.get('districtSelect')!.valueChanges.pipe(startWith(this.form.get('districtSelect')!.value)),
+    this.form.get('blockSelect')!.valueChanges.pipe(startWith(this.form.get('blockSelect')!.value)),
+    this.form.get('villageSelect')!.valueChanges.pipe(startWith(this.form.get('villageSelect')!.value))
+  ]).pipe(
+    map(([locs, state, district, block, village]): ZardComboboxOption[] => {
+      if (!state || !district || !block || !village) return [];
+      return locs
+        .filter(l => 
+          this.extractName(l, 'state') === state && 
+          this.extractName(l, 'district') === district && 
+          this.extractName(l, 'block') === block && 
+          this.extractName(l, 'village') === village
+        )
+        .map(l => {
+          const awcName = (l as any).awcName || '';
+          const label = awcName ? `${l.locationCode} - ${awcName}` : `${l.locationCode} - ${this.extractName(l, 'village')}`;
+          return { value: l.id.toString(), label };
+        });
+    })
+  ));
+
+  assignmentSchools$ = defer(() => combineLatest([
+    this.schools$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value)),
+    this.form.get('districtSelect')!.valueChanges.pipe(startWith(this.form.get('districtSelect')!.value)),
+    this.form.get('blockSelect')!.valueChanges.pipe(startWith(this.form.get('blockSelect')!.value)),
+    this.form.get('villageSelect')!.valueChanges.pipe(startWith(this.form.get('villageSelect')!.value))
+  ]).pipe(
+    map(([schools, state, district, block, village]): ZardComboboxOption[] => {
+      if (!state || !district || !block || !village) return [];
+      return (schools || [])
+        .filter((l: any) => {
+          const sState = this.extractName(l, 'state') || l.stateName || '';
+          const sDist = this.extractName(l, 'district') || l.districtName || '';
+          const sBlock = this.extractName(l, 'block') || l.blockName || '';
+          const sVill = this.extractName(l, 'village') || l.villageName || '';
+          return (
+            sState.trim().toLowerCase() === state.trim().toLowerCase() &&
+            sDist.trim().toLowerCase() === district.trim().toLowerCase() &&
+            sBlock.trim().toLowerCase() === block.trim().toLowerCase() &&
+            sVill.trim().toLowerCase() === village.trim().toLowerCase() &&
+            (l.status === undefined || l.status === 'ACTIVE')
+          );
+        })
+        .map((l: any) => {
+          const label = l.name ? `${l.locationCode} - ${l.name}` : `${l.locationCode} - ${this.extractName(l, 'village') || l.villageName}`;
+          return { value: l.id.toString(), label };
+        });
+    })
+  ));
+
+  assignmentHealthCenters$ = defer(() => combineLatest([
+    this.healthCenters$,
+    this.form.get('stateSelect')!.valueChanges.pipe(startWith(this.form.get('stateSelect')!.value)),
+    this.form.get('districtSelect')!.valueChanges.pipe(startWith(this.form.get('districtSelect')!.value)),
+    this.form.get('blockSelect')!.valueChanges.pipe(startWith(this.form.get('blockSelect')!.value)),
+    this.form.get('villageSelect')!.valueChanges.pipe(startWith(this.form.get('villageSelect')!.value))
+  ]).pipe(
+    map(([hcs, state, district, block, village]): ZardComboboxOption[] => {
+      if (!state || !district || !block || !village) return [];
+      return (hcs || [])
+        .filter((l: any) => {
+          const sState = this.extractName(l, 'state') || l.stateName || '';
+          const sDist = this.extractName(l, 'district') || l.districtName || '';
+          const sBlock = this.extractName(l, 'block') || l.blockName || '';
+          const sVill = this.extractName(l, 'village') || l.villageName || '';
+          return (
+            sState.trim().toLowerCase() === state.trim().toLowerCase() &&
+            sDist.trim().toLowerCase() === district.trim().toLowerCase() &&
+            sBlock.trim().toLowerCase() === block.trim().toLowerCase() &&
+            sVill.trim().toLowerCase() === village.trim().toLowerCase() &&
+            (l.status === undefined || l.status === 'ACTIVE')
+          );
+        })
+        .map((l: any) => {
+          const label = l.name ? `${l.locationCode} - ${l.name}` : `${l.locationCode} - ${this.extractName(l, 'village') || l.villageName}`;
+          return { value: l.id.toString(), label };
+        });
+    })
+  ));
+
   ngOnInit() {
+    this.setupCascadingListeners();
     const id = +this.route.snapshot.params['id'];
     const stateData = history.state?.beneficiary;
 
-    if (stateData) {
-      this.beneficiary = stateData;
-      this.patchForm(stateData);
-      this.loading = false;
+    if (stateData && stateData.id === id) {
+      this.loadProjectLocationsAndPatch(stateData);
     } else {
       this.outreachService.getBeneficiary(id).subscribe({
         next: (b) => {
-          this.beneficiary = b;
-          this.patchForm(b);
-          this.loading = false;
+          this.loadProjectLocationsAndPatch(b);
         },
         error: () => {
           toast.error('Beneficiary not found');
@@ -116,6 +275,104 @@ export class RequestUpdate implements OnInit {
         }
       });
     }
+  }
+
+  private loadProjectLocationsAndPatch(b: Beneficiary): void {
+    this.beneficiary = b;
+    this.loading = true;
+
+    forkJoin({
+      assignments: this.outreachService.getProjectAssignments(b.projectId).pipe(catchError(() => of({ states: [], awcs: [] }))),
+      schools: (this.api.get(`locations/schools?projectId=${b.projectId}`) as Observable<any[]>).pipe(catchError(() => of([]))),
+      healthCenters: (this.api.get(`locations/health-centers?projectId=${b.projectId}`) as Observable<any[]>).pipe(catchError(() => of([])))
+    }).subscribe({
+      next: ({ assignments, schools, healthCenters }) => {
+        const rawLocations = assignments.awcs || [];
+        this.locations$.next(rawLocations);
+        this.schools$.next(schools || []);
+        this.healthCenters$.next(healthCenters || []);
+
+        let stateOptions = (assignments.states || []).map((s: any) => this.extractName(s, 'name')).filter(Boolean);
+        if (stateOptions.length === 0) {
+          stateOptions = Array.from(new Set(rawLocations.map((l: any) => this.extractName(l, 'state')).filter(Boolean)));
+        }
+        this.states$.next(stateOptions.sort().map((s: string) => ({ value: s, label: s })));
+
+        this.patchForm(b);
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.patchForm(b);
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private setupCascadingListeners(): void {
+    this.form.get('stateSelect')!.valueChanges.subscribe(() => {
+      if (this.isHydrating) return;
+      this.form.patchValue({
+        districtSelect: '',
+        blockSelect: '',
+        villageSelect: '',
+        locationId: '',
+        schoolId: '',
+        healthCenterId: ''
+      });
+    });
+
+    this.form.get('districtSelect')!.valueChanges.subscribe(() => {
+      if (this.isHydrating) return;
+      this.form.patchValue({
+        blockSelect: '',
+        villageSelect: '',
+        locationId: '',
+        schoolId: '',
+        healthCenterId: ''
+      });
+    });
+
+    this.form.get('blockSelect')!.valueChanges.subscribe(() => {
+      if (this.isHydrating) return;
+      this.form.patchValue({
+        villageSelect: '',
+        locationId: '',
+        schoolId: '',
+        healthCenterId: ''
+      });
+    });
+
+    this.form.get('villageSelect')!.valueChanges.subscribe(() => {
+      if (this.isHydrating) return;
+      this.form.patchValue({
+        locationId: '',
+        schoolId: '',
+        healthCenterId: ''
+      });
+    });
+  }
+
+  onInstitutionTypeChange(newType: string): void {
+    if (this.isHydrating) return;
+    this.form.patchValue({
+      locationId: '',
+      schoolId: '',
+      healthCenterId: ''
+    });
+  }
+
+  private extractName(item: any, field: string): string {
+    if (!item) return '';
+    let val = item[field];
+    if (!val && item.location) val = item.location[field];
+    if (!val && item.awc) val = item.awc[field];
+    if (field === 'state' && !val && item.stateId) val = item.state;
+
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    return val.name || val.awcName || val.locationCode || '';
   }
 
   isMarried(): boolean {
@@ -203,8 +460,24 @@ export class RequestUpdate implements OnInit {
   }
 
   private patchForm(b: Beneficiary) {
+    this.isHydrating = true;
+
     const hasPriorityData = !!(b.guardianName || b.qualification || b.religion || b.caste);
-    const type = hasPriorityData ? 'Priority' : 'General';
+    const type = b.typeof ? b.typeof : (hasPriorityData ? 'Priority' : 'General');
+
+    const existingInstType = b.locationId || (b as any).awcId ? 'AWC' 
+      : (b as any).schoolId ? 'SCHOOL' 
+      : (b as any).healthCenterId ? 'HEALTH_CENTER' 
+      : 'NONE';
+
+    const awcVal = b.locationId || (b as any).awcId ? String(b.locationId || (b as any).awcId) : '';
+    const schoolVal = (b as any).schoolId ? String((b as any).schoolId) : '';
+    const hcVal = (b as any).healthCenterId ? String((b as any).healthCenterId) : '';
+
+    const stateVal = b.state || this.extractName(b.location, 'state') || '';
+    const districtVal = b.district || this.extractName(b.location, 'district') || '';
+    const blockVal = b.block || this.extractName(b.location, 'block') || '';
+    const villageVal = b.village || this.extractName(b.location, 'village') || '';
 
     this.form.patchValue({
       beneficiaryType: type,
@@ -212,7 +485,6 @@ export class RequestUpdate implements OnInit {
       mobileNumber: b.mobileNumber || '',
       gender: b.gender || '',
       guardianName: b.guardianName || '',
-      // Convert ISO DB date → DD/MM/YYYY for the custom date picker
       dateOfBirth: b.dateOfBirth ? this.toDDMMYYYY(b.dateOfBirth) : '',
       age: b.dateOfBirth ? this.calculateAge(b.dateOfBirth) : '',
       maritalStatus: b.maritalStatus || '',
@@ -226,7 +498,18 @@ export class RequestUpdate implements OnInit {
       economicStatus: b.economicStatus || '',
       primaryIncomeSource: b.primaryIncomeSource || '',
       employmentStatus: b.employmentStatus || '',
-    });
+
+      stateSelect: stateVal,
+      districtSelect: districtVal,
+      blockSelect: blockVal,
+      villageSelect: villageVal,
+      institutionTypeSelect: existingInstType,
+      locationId: awcVal,
+      schoolId: schoolVal,
+      healthCenterId: hcVal,
+    }, { emitEvent: false });
+
+    this.isHydrating = false;
   }
 
   goBack() { history.back(); }
@@ -240,6 +523,10 @@ export class RequestUpdate implements OnInit {
     if (raw.name && raw.name !== b.name) changes['name'] = String(raw.name);
     if (raw.mobileNumber && raw.mobileNumber !== b.mobileNumber) changes['mobileNumber'] = String(raw.mobileNumber);
     if (raw.gender && raw.gender !== b.gender) changes['gender'] = String(raw.gender);
+    if (raw.beneficiaryType && raw.beneficiaryType !== b.typeof) {
+      changes['beneficiaryType'] = String(raw.beneficiaryType);
+      changes['typeof'] = String(raw.beneficiaryType);
+    }
     
     // DOB / Age handling - always normalize to ISO before submit
     if (this.isPriority) {
@@ -276,6 +563,37 @@ export class RequestUpdate implements OnInit {
         if (raw.womanAgeAtMarriage !== '' && Number(raw.womanAgeAtMarriage) !== Number(b.womanAgeAtMarriage)) changes['womanAgeAtMarriage'] = Number(raw.womanAgeAtMarriage);
         if (raw.husbandAgeAtMarriage !== '' && Number(raw.husbandAgeAtMarriage) !== Number(b.husbandAgeAtMarriage)) changes['husbandAgeAtMarriage'] = Number(raw.husbandAgeAtMarriage);
       }
+    }
+
+    // Location diffing
+    const origState = b.state || this.extractName(b.location, 'state') || '';
+    const origDist = b.district || this.extractName(b.location, 'district') || '';
+    const origBlock = b.block || this.extractName(b.location, 'block') || '';
+    const origVill = b.village || this.extractName(b.location, 'village') || '';
+
+    if (raw.stateSelect && raw.stateSelect !== origState) changes['state'] = String(raw.stateSelect);
+    if (raw.districtSelect && raw.districtSelect !== origDist) changes['district'] = String(raw.districtSelect);
+    if (raw.blockSelect && raw.blockSelect !== origBlock) changes['block'] = String(raw.blockSelect);
+    if (raw.villageSelect && raw.villageSelect !== origVill) changes['village'] = String(raw.villageSelect);
+
+    const instType = raw.institutionTypeSelect;
+    const newAwcId = (instType === 'AWC' && raw.locationId) ? Number(raw.locationId) : null;
+    const oldAwcId = (b.locationId || (b as any).awcId) ? Number(b.locationId || (b as any).awcId) : null;
+    if (newAwcId !== oldAwcId) {
+      changes['locationId'] = newAwcId;
+      changes['awcId'] = newAwcId;
+    }
+
+    const newSchoolId = (instType === 'SCHOOL' && raw.schoolId) ? Number(raw.schoolId) : null;
+    const oldSchoolId = (b as any).schoolId ? Number((b as any).schoolId) : null;
+    if (newSchoolId !== oldSchoolId) {
+      changes['schoolId'] = newSchoolId;
+    }
+
+    const newHcId = (instType === 'HEALTH_CENTER' && raw.healthCenterId) ? Number(raw.healthCenterId) : null;
+    const oldHcId = (b as any).healthCenterId ? Number((b as any).healthCenterId) : null;
+    if (newHcId !== oldHcId) {
+      changes['healthCenterId'] = newHcId;
     }
 
     if (!Object.keys(changes).length) {
