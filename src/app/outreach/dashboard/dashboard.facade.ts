@@ -490,8 +490,8 @@ export class DashboardFacade {
       shareReplay(1)
     );
 
-    this.myReports$ = this.outreachService.getMyReports().pipe(
-      map((rows) => Array.isArray(rows) ? rows : []),
+    this.myReports$ = this.outreachService.getMyReports({ all: 'true' }).pipe(
+      map((res: any) => (Array.isArray(res) ? res : res?.data || [])),
       catchError(() => of([])),
       shareReplay(1)
     );

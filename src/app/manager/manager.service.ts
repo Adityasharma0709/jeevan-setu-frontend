@@ -199,8 +199,8 @@ export class ManagerService {
         if (reason) payload.reason = reason;
         return this.api.patch(`${this.endpoint}/profile-requests/${id}`, payload);
     }
-    getBeneficiaries(): Observable<any[]> {
-        return this.api.get(`${this.endpoint}/beneficiaries`) as Observable<ManagerBeneficiary[]>;
+    getBeneficiaries(params?: any): Observable<any> {
+        return this.api.get(`${this.endpoint}/beneficiaries`, params);
     }
 
     getBeneficiary(id: number): Observable<ManagerBeneficiary> {

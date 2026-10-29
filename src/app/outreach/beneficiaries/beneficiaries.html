@@ -63,33 +63,71 @@
     </div>
   </app-outreach-page-header>
 
-  <ng-template #exportDialog>
-    <div class="space-y-4">
-      <z-combobox [(ngModel)]="exportMode" [options]="exportOptions" placeholder="Select Export Type">
-      </z-combobox>
+  <!-- Export Beneficiaries Popover Template -->
+  <ng-template #exportPopoverContent>
+    <z-popover class="p-3 sm:p-4 w-[calc(100vw-24px)] max-w-sm sm:w-96 space-y-3 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <img src="excel.png" alt="Excel icon" class="h-4 w-4 object-contain" />
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Export Beneficiaries</h3>
+        </div>
+        <button
+          *ngIf="exportMode === 'RANGE' && exportDateRange?.length"
+          type="button"
+          (click)="exportDateRange = null"
+          class="text-[11px] font-semibold text-rose-600 hover:text-rose-700">
+          Reset
+        </button>
+      </div>
 
+      <!-- Scope Selector -->
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Export Scope</label>
+        <z-combobox [(ngModel)]="exportMode" [options]="exportOptions" placeholder="Select Export Scope" zWidth="full">
+        </z-combobox>
+      </div>
+
+      <!-- Calendar for Date Range -->
       @if (exportMode === 'RANGE') {
-      <div class="space-y-3">
-        <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-1 sm:p-2 flex justify-center overflow-x-auto">
           <z-calendar zMode="range" [(value)]="exportDateRange" class="mx-auto"></z-calendar>
         </div>
 
-        <div class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm text-slate-600">
-          <span class="font-semibold uppercase tracking-wider text-slate-400">Selected range</span>
-
-          <span class="text-right font-semibold text-slate-800">
+        <div class="flex items-center justify-between text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-lg gap-2">
+          <span class="text-slate-400 font-medium shrink-0">Selected:</span>
+          <span class="font-bold text-slate-800 text-right truncate">
             @if (exportDateRange?.length === 2) {
-            {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }} - {{ exportDateRange?.[1] | date: 'dd/MM/yyyy' }}
+              {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }} - {{ exportDateRange?.[1] | date: 'dd/MM/yyyy' }}
             } @else if (exportDateRange?.length === 1) {
-            {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }}
+              {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }}
             } @else {
-            Not selected
+              No dates selected
             }
           </span>
         </div>
-      </div>
       }
-    </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+        <button
+          type="button"
+          z-button
+          zType="outline"
+          (click)="closeExportPopover()"
+          class="h-8 px-3 text-xs">
+          Cancel
+        </button>
+        <button
+          type="button"
+          z-button
+          (click)="confirmExport()"
+          class="h-8 px-4 text-xs bg-[#006666] hover:bg-[#005353] text-white flex items-center gap-1.5">
+          <z-icon zType="download" class="h-3.5 w-3.5"></z-icon>
+          Export
+        </button>
+      </div>
+    </z-popover>
   </ng-template>
 
   <!-- =========================================================
@@ -135,8 +173,13 @@
             </div>
           </div>
 
-          <!-- Download Excel Sheet Button -->
-          <button type="button" (click)="openExportDialog()"
+          <!-- Download Excel Sheet Button with Popover -->
+          <button
+            type="button"
+            zPopover
+            [zContent]="exportPopoverContent"
+            #desktopExportPopover="zPopover"
+            (click)="onOpenExportPopover(desktopExportPopover)"
             class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[#006666] transition hover:bg-teal-50/50 hover:border-teal-200">
             <img src="excel.png" alt="excel download button" class="h-5 w-5 object-contain" />
             <span class="text-xs font-bold leading-none">Download sheet</span>
@@ -223,7 +266,10 @@
         </button>
       </div>
 
-      <div class="w-full overflow-x-auto">
+      <div class="relative w-full overflow-x-auto min-h-[350px]">
+        <!-- Standard Circular Loading Overlay during Pagination / Search -->
+        <z-table-loader [zLoading]="isPageLoading$ | async" zText="Loading beneficiaries..."></z-table-loader>
+
         <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
         <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>
@@ -713,7 +759,12 @@
     <div *ngIf="mobileViewMode === 'table'"
       class="md:hidden bg-white border border-gray-100 rounded-2xl shadow-sm">
       <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4">
-        <button type="button" (click)="openExportDialog()"
+        <button
+          type="button"
+          zPopover
+          [zContent]="exportPopoverContent"
+          #mobileExportPopover="zPopover"
+          (click)="onOpenExportPopover(mobileExportPopover)"
           class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353]">
           <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
           <span class="text-[15px] font-semibold leading-none">Download sheet</span>
@@ -744,7 +795,10 @@
         </div>
       </div>
 
-      <div class="w-full overflow-x-auto">
+      <div class="relative w-full overflow-x-auto min-h-[350px]">
+        <!-- Standard Circular Loading Overlay during Pagination / Search -->
+        <z-table-loader [zLoading]="isPageLoading$ | async" zText="Loading beneficiaries..."></z-table-loader>
+
         <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
         <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>

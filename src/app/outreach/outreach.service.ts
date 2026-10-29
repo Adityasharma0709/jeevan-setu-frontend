@@ -221,12 +221,13 @@ export class OutreachService {
     );
   }
 
-  getBeneficiaries(search?: string, projectId?: number): Observable<Beneficiary[]> {
-    const params: any = {};
-    if (search) params.search = search;
-    if (projectId) params.projectId = projectId;
-    return (this.api.get(`${this.endpoint}/beneficiary-list`, params) as Observable<Beneficiary[]>).pipe(
-      map((rows) => rows || []),
+  getBeneficiaries(params?: any, projectId?: number): Observable<any> {
+    const queryParams: any = typeof params === 'object' && params !== null
+      ? { ...params }
+      : { ...(params ? { search: params } : {}), ...(projectId ? { projectId } : {}) };
+
+    return (this.api.get(`${this.endpoint}/beneficiary-list`, queryParams) as Observable<any>).pipe(
+      map((res) => res || []),
       catchError((error: HttpErrorResponse) => {
         if (error.status === 404) return of([]);
         return throwError(() => error);
@@ -410,12 +411,14 @@ export class OutreachService {
     );
   }
 
-  getMyReports(projectId?: number): Observable<any[]> {
-    const params: any = {};
-    if (projectId) params.projectId = projectId;
-    return (this.api.get(`${this.endpoint}/my-reports`, params) as Observable<any[]>).pipe(
-      map(reports => reports || []),
-      catchError(() => of([]))
+  getMyReports(params?: any, projectId?: number): Observable<any> {
+    const queryParams: any = typeof params === 'object' && params !== null
+      ? { ...params }
+      : { ...(params ? { search: params } : {}), ...(projectId ? { projectId } : {}) };
+
+    return (this.api.get(`${this.endpoint}/my-reports`, queryParams) as Observable<any>).pipe(
+      map((reports) => reports || []),
+      catchError(() => of([])),
     );
   }
 

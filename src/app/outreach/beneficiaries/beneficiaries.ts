@@ -26,6 +26,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardCalendarComponent } from '@/shared/components/calendar/calendar.component';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
+import { ZardPopoverComponent, ZardPopoverDirective } from '@/shared/components/popover';
 import { OutreachPageHeaderComponent } from '@/shared/components/page-header';
 import {
   ZardTableBodyComponent,
@@ -34,11 +35,30 @@ import {
   ZardTableHeadComponent,
   ZardTableHeaderComponent,
   ZardTableRowComponent,
+  ZardTableLoaderComponent,
 } from '@/shared/components/table';
+import { calculatePaginationIndices } from '@/shared/models';
 import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
+import { Observable } from 'rxjs';
 
 import { Beneficiary, OutreachService } from '../outreach.service';
 import { Router } from '@angular/router';
+
+export interface OutreachBeneficiariesVm {
+  items: Beneficiary[];
+  total: number;
+  totalBeneficiaries: number;
+  page: number;
+  pageCount: number;
+  pageSize: number;
+  startIndex: number;
+  endIndex: number;
+  priorityCount: number;
+  stakeholderCount: number;
+  generalCount: number;
+  registeredThisMonth: number;
+  typeTab: 'ALL' | 'PRIORITY' | 'GENERAL' | 'STAKEHOLDER';
+}
 
 @Component({
   selector: 'app-beneficiaries',
@@ -53,12 +73,15 @@ import { Router } from '@angular/router';
     ZardInputDirective,
     ZardCalendarComponent,
     ZardComboboxComponent,
+    ZardPopoverComponent,
+    ZardPopoverDirective,
     ZardTableBodyComponent,
     ZardTableCellComponent,
     ZardTableComponent,
     ZardTableHeadComponent,
     ZardTableHeaderComponent,
     ZardTableRowComponent,
+    ZardTableLoaderComponent,
     OutreachPageHeaderComponent,
     LottieComponent,
     ZardPaginationComponent,
@@ -160,129 +183,173 @@ export class Beneficiaries implements OnInit, OnDestroy {
   readonly typeTab$ = new BehaviorSubject<'ALL' | 'PRIORITY' | 'GENERAL' | 'STAKEHOLDER'>('ALL');
   readonly exportDialog = viewChild.required<TemplateRef<any>>('exportDialog');
 
+  // ── Loading indicator for pagination ─────────────────────────────────────
+  readonly isPageLoading$ = new BehaviorSubject<boolean>(false);
+
   // ── Reactive streams ──────────────────────────────────────────────────────
 
-  private readonly rawBeneficiaries$ = combineLatest([
-    this.refresh$.pipe(startWith(void 0)),
-    this.searchControl.valueChanges.pipe(
-      startWith(''),
-      debounceTime(250),
-      distinctUntilChanged(),
-      map((s) => {
-        this.page$.next(1); // Reset to page 1 on search
-        return (s || '').trim();
-      }),
-    ),
-  ]).pipe(
-    switchMap(([_, search]) => this.outreachService.getBeneficiaries(search)),
-    map((rows) => (Array.isArray(rows) ? rows : [])),
-    shareReplay(1),
+  private readonly search$ = this.searchControl.valueChanges.pipe(
+    startWith(''),
+    debounceTime(300),
+    distinctUntilChanged(),
+    map((s) => {
+      this.page$.next(1); // Reset to page 1 on search
+      return (s || '').trim();
+    }),
   );
 
-  vm$ = combineLatest([
-    this.rawBeneficiaries$,
+  vm$: Observable<OutreachBeneficiariesVm> = combineLatest([
+    this.refresh$.pipe(startWith(void 0)),
     this.page$.asObservable(),
     this.sortCol$.asObservable(),
     this.sortDir$.asObservable(),
+    this.search$,
     this.typeTab$.asObservable(),
   ]).pipe(
-    map(([beneficiaries, page, sortCol, sortDir, typeTab]) => {
-      let items = [...beneficiaries];
+    switchMap(([_, page, sortCol, sortDir, search, typeTab]) => {
+      this.isPageLoading$.next(true);
+      const params: any = {
+        page,
+        limit: this.pageSize,
+        typeTab,
+        sortBy: sortCol || 'createdAt',
+        sortDir: sortDir || 'desc',
+      };
+      if (search) params.search = search;
 
-      if (typeTab !== 'ALL') {
-        items = items.filter(b => {
-          const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
-          if (typeTab === 'STAKEHOLDER') return isStakeholder;
-          if (isStakeholder) return false;
+      return this.outreachService.getBeneficiaries(params).pipe(
+        map((res: any) => {
+          this.isPageLoading$.next(false);
+          // If response is the paginated envelope { data, meta, stats }
+          if (res && res.data && res.meta) {
+            const data = Array.isArray(res.data) ? res.data : [];
+            const meta = res.meta;
+            const stats = res.stats || {};
+            const total = meta.total ?? data.length;
+            const pageCount = meta.totalPages ?? Math.max(1, Math.ceil(total / this.pageSize));
+            const safePage = meta.page ?? page;
+            const { startIndex, endIndex } = calculatePaginationIndices(safePage, meta.limit ?? this.pageSize, total);
 
-          const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
-          return typeTab === 'PRIORITY' ? isPriority : !isPriority;
-        });
-      }
+            this.lastPage = safePage;
+            this.lastPageCount = pageCount;
 
-      if (sortCol) {
-        items.sort((a: any, b: any) => {
-          let aVal: any = a[sortCol];
-          let bVal: any = b[sortCol];
-
-          if (sortCol === 'project') {
-            aVal = a.project?.name || '';
-            bVal = b.project?.name || '';
-          } else if (sortCol === 'location') {
-            aVal = a.village || a.location?.village || '';
-            bVal = b.village || b.location?.village || '';
-          } else if (sortCol === 'age') {
-            aVal = a.dateOfBirth ? new Date(a.dateOfBirth).getTime() : 0;
-            bVal = b.dateOfBirth ? new Date(b.dateOfBirth).getTime() : 0;
-          } else if (sortCol === 'beneficiaryType') {
-            const hasPriorityA = !!(a.guardianName || a.qualification || a.religion || a.caste);
-            const hasPriorityB = !!(b.guardianName || b.qualification || b.religion || b.caste);
-            aVal = hasPriorityA ? 'Priority' : 'General';
-            bVal = hasPriorityB ? 'Priority' : 'General';
-          } else if (sortCol === 'monthlyIncome') {
-            aVal = Number(a.monthlyIncome) || 0;
-            bVal = Number(b.monthlyIncome) || 0;
-          } else if (sortCol === 'dateOfBirth' || sortCol === 'dateOfMarriage' || sortCol === 'createdAt') {
-            aVal = a[sortCol] ? new Date(a[sortCol]).getTime() : 0;
-            bVal = b[sortCol] ? new Date(b[sortCol]).getTime() : 0;
-          } else {
-            if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-            if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+            return {
+              items: data,
+              total,
+              totalBeneficiaries: stats.totalBeneficiaries ?? total,
+              page: safePage,
+              pageCount,
+              pageSize: meta.limit ?? this.pageSize,
+              startIndex,
+              endIndex,
+              priorityCount: stats.priorityCount ?? 0,
+              stakeholderCount: stats.stakeholderCount ?? 0,
+              generalCount: stats.generalCount ?? 0,
+              registeredThisMonth: stats.registeredThisMonth ?? 0,
+              typeTab,
+            };
           }
 
-          if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
-          if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
-          return 0;
-        });
-      }
+          // Fallback if res is a plain array
+          const beneficiaries = Array.isArray(res) ? res : [];
+          let items = [...beneficiaries];
 
-      const total = items.length;
-      const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
-      const safePage = Math.min(Math.max(1, page), pageCount);
-      const startIndex = (safePage - 1) * this.pageSize;
+          if (typeTab !== 'ALL') {
+            items = items.filter(b => {
+              const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+              if (typeTab === 'STAKEHOLDER') return isStakeholder;
+              if (isStakeholder) return false;
 
-      this.lastPage = safePage;
-      this.lastPageCount = pageCount;
+              const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
+              return typeTab === 'PRIORITY' ? isPriority : !isPriority;
+            });
+          }
 
-      // Stats calculation for the cards
-      const priorityCount = beneficiaries.filter(b => {
-        const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
-        if (isStakeholder) return false;
-        return !!(b.guardianName || b.qualification || b.religion || b.caste);
-      }).length;
+          if (sortCol) {
+            items.sort((a: any, b: any) => {
+              let aVal: any = a[sortCol];
+              let bVal: any = b[sortCol];
 
-      const stakeholderCount = beneficiaries.filter(b => (b.typeof || '').toLowerCase() === 'stakeholder').length;
+              if (sortCol === 'project') {
+                aVal = a.project?.name || '';
+                bVal = b.project?.name || '';
+              } else if (sortCol === 'location') {
+                aVal = a.village || a.location?.village || '';
+                bVal = b.village || b.location?.village || '';
+              } else if (sortCol === 'age') {
+                aVal = a.dateOfBirth ? new Date(a.dateOfBirth).getTime() : 0;
+                bVal = b.dateOfBirth ? new Date(b.dateOfBirth).getTime() : 0;
+              } else if (sortCol === 'beneficiaryType') {
+                const hasPriorityA = !!(a.guardianName || a.qualification || a.religion || a.caste);
+                const hasPriorityB = !!(b.guardianName || b.qualification || b.religion || b.caste);
+                aVal = hasPriorityA ? 'Priority' : 'General';
+                bVal = hasPriorityB ? 'Priority' : 'General';
+              } else if (sortCol === 'monthlyIncome') {
+                aVal = Number(a.monthlyIncome) || 0;
+                bVal = Number(b.monthlyIncome) || 0;
+              } else if (sortCol === 'dateOfBirth' || sortCol === 'dateOfMarriage' || sortCol === 'createdAt') {
+                aVal = a[sortCol] ? new Date(a[sortCol]).getTime() : 0;
+                bVal = b[sortCol] ? new Date(b[sortCol]).getTime() : 0;
+              } else {
+                if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+                if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+              }
 
-      const generalCount = beneficiaries.filter(b => {
-        const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
-        if (isStakeholder) return false;
-        const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
-        return !isPriority;
-      }).length;
+              if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+              if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+              return 0;
+            });
+          }
 
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const registeredThisMonth = beneficiaries.filter(b => {
-        if (!b.createdAt) return false;
-        const d = new Date(b.createdAt);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      }).length;
+          const total = items.length;
+          const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
+          const safePage = Math.min(Math.max(1, page), pageCount);
+          const startIndex = (safePage - 1) * this.pageSize;
 
-      return {
-        items: items.slice(startIndex, startIndex + this.pageSize),
-        total,
-        totalBeneficiaries: beneficiaries.length,
-        page: safePage,
-        pageCount,
-        pageSize: this.pageSize,
-        startIndex,
-        endIndex: Math.min(startIndex + this.pageSize, total),
-        priorityCount,
-        stakeholderCount,
-        generalCount,
-        registeredThisMonth,
-        typeTab,
-      };
+          this.lastPage = safePage;
+          this.lastPageCount = pageCount;
+
+          // Stats calculation for the cards
+          const priorityCount = beneficiaries.filter(b => {
+            const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+            if (isStakeholder) return false;
+            return !!(b.guardianName || b.qualification || b.religion || b.caste);
+          }).length;
+
+          const stakeholderCount = beneficiaries.filter(b => (b.typeof || '').toLowerCase() === 'stakeholder').length;
+
+          const generalCount = beneficiaries.filter(b => {
+            const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+            if (isStakeholder) return false;
+            const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
+            return !isPriority;
+          }).length;
+
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+          const registeredThisMonth = beneficiaries.filter(b => {
+            if (!b.createdAt) return false;
+            const d = new Date(b.createdAt);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+          }).length;
+
+          return {
+            items: items.slice(startIndex, startIndex + this.pageSize),
+            total,
+            totalBeneficiaries: beneficiaries.length,
+            page: safePage,
+            pageCount,
+            pageSize: this.pageSize,
+            startIndex,
+            endIndex: Math.min(startIndex + this.pageSize, total),
+            priorityCount,
+            stakeholderCount,
+            generalCount,
+            registeredThisMonth,
+            typeTab,
+          };
+        }),
+      );
     }),
   );
 
@@ -460,7 +527,13 @@ export class Beneficiaries implements OnInit, OnDestroy {
 
   //====================Excel=================================
   async exportToExcel(): Promise<void> {
-    const beneficiaries = await firstValueFrom(this.rawBeneficiaries$);
+    const search = (this.searchControl.value || '').trim();
+    const typeTab = this.typeTab$.value;
+    const params: any = { all: 'true', typeTab };
+    if (search) params.search = search;
+
+    const res = await firstValueFrom(this.outreachService.getBeneficiaries(params));
+    const beneficiaries: Beneficiary[] = Array.isArray(res) ? res : (res?.data || []);
 
     let exportBeneficiaries: Beneficiary[] = [];
 
@@ -531,6 +604,27 @@ export class Beneficiaries implements OnInit, OnDestroy {
     );
 
     saveAs(blob, 'beneficiaries.xlsx');
+  }
+
+  currentExportPopover: any = null;
+
+  onOpenExportPopover(popover?: any): void {
+    this.currentExportPopover = popover;
+    this.exportMode = 'RANGE';
+    this.exportDateRange = null;
+  }
+
+  closeExportPopover(popover?: any): void {
+    const target = popover || this.currentExportPopover;
+    if (target && typeof target.hide === 'function') {
+      target.hide();
+    }
+    this.currentExportPopover = null;
+  }
+
+  confirmExport(popover?: any): void {
+    this.closeExportPopover(popover);
+    this.exportToExcel();
   }
 
   openExportDialog(): void {

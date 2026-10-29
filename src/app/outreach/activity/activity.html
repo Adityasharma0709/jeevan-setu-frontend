@@ -12,44 +12,71 @@
           class="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#006666] focus:ring-2 focus:ring-teal-100" />
       </label>
 
-      <!-- Desktop Filter Button -->
-      <button type="button" (click)="cycleScreeningFilter()"
-        class="relative hidden md:flex h-10 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 active:bg-teal-50/50"
-        [class.border-[#006666]]="screeningFilter !== 'ALL'" [class.text-[#006666]]="screeningFilter !== 'ALL'"
-        [attr.aria-label]="'Screening filter: ' + screeningFilterLabel">
-        <z-icon zType="list-filter-plus" class="h-4 w-4"></z-icon>
-        <span *ngIf="screeningFilter !== 'ALL'"
-          class="absolute -right-1 -top-1 rounded-full bg-[#006666] px-1.5 py-0.5 text-[9px] font-bold text-white">
-          {{ screeningFilterLabel }}
-        </span>
-      </button>
-
-      <!-- Desktop Add button -->
+      <!-- Mobile Add Button -->
       <button z-button (click)="addReport()"
-        class="hidden md:flex bg-[#006666] hover:bg-[#005353] text-white shadow-lg shadow-teal-100 transition-all">
+        class="md:hidden bg-[#006666] hover:bg-[#005353] text-white shadow-lg shadow-teal-100 transition-all">
         <z-icon zType="plus" class="w-4 h-4 mr-2" />
         Submit New Report
       </button>
     </div>
 
-    <!-- Mobile-only Search input projected into header sticky block -->
-    <div outreachHeaderSearch class="md:hidden">
-      <div class="flex items-center gap-3 w-full">
-        <label class="relative flex-1 max-w-md">
-          <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
-          <input z-input [formControl]="searchControl" placeholder="Search by UID, name, or activity..."
-            class="h-11 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-        </label>
+    <!-- Mobile-only Search and Filters projected into header sticky block -->
+    <div outreachHeaderSearch class="md:hidden space-y-2.5 w-full">
+      <!-- Search Input -->
+      <label class="relative block w-full">
+        <z-icon zType="search" class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
+        <input z-input [formControl]="searchControl" placeholder="Search by UID, name, or activity..."
+          class="h-10 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#006666] focus:ring-2 focus:ring-teal-100" />
+      </label>
 
-        <!-- Mobile Filter Button -->
-        <button type="button" (click)="cycleScreeningFilter()"
-          class="relative flex h-11 w-12 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50 active:bg-indigo-50"
-          [class.border-[#0F766E]]="screeningFilter !== 'ALL'" [class.text-[#0F766E]]="screeningFilter !== 'ALL'"
-          [attr.aria-label]="'Screening filter: ' + screeningFilterLabel">
-          <z-icon zType="list-filter-plus" class="h-5 w-5"></z-icon>
-          <span *ngIf="screeningFilter !== 'ALL'"
-            class="absolute -right-1 -top-1 rounded-full bg-[#0F766E] px-1.5 py-0.5 text-[9px] font-bold text-white">
-            {{ screeningFilterLabel }}
+      <!-- Row 2: Screening Filter & Date Range Filter -->
+      <div class="grid grid-cols-2 gap-2 w-full">
+        <!-- Screening Filter Popover Button -->
+        <button
+          type="button"
+          zPopover
+          [zContent]="screeningPopoverContent"
+          #mobileScreeningPopover="zPopover"
+          (click)="onOpenScreeningPopover(mobileScreeningPopover)"
+          class="flex h-10 w-full items-center justify-between gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition min-w-0"
+          [class]="isScreeningFilterActive ? 'border-[#006666] bg-teal-50/50 text-[#006666]' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'"
+          title="Filter by screening">
+          <div class="flex items-center gap-1.5 min-w-0 truncate">
+            <z-icon zType="activity" class="h-3.5 w-3.5 shrink-0" [class]="isScreeningFilterActive ? 'text-[#006666]' : 'text-slate-400'"></z-icon>
+            <span class="truncate text-xs">{{ screeningMobileFilterLabel }}</span>
+          </div>
+          <div class="flex items-center gap-0.5 shrink-0">
+            <span
+              *ngIf="isScreeningFilterActive"
+              (click)="selectScreeningFilter('ALL', mobileScreeningPopover); $event.stopPropagation()"
+              class="rounded-full p-0.5 hover:bg-teal-200/50 text-[#006666] cursor-pointer"
+              title="Reset screening filter">
+              <z-icon zType="x" class="h-3 w-3"></z-icon>
+            </span>
+            <z-icon zType="chevron-down" class="h-3 w-3 text-slate-400"></z-icon>
+          </div>
+        </button>
+
+        <!-- Date Range Popover Button -->
+        <button
+          type="button"
+          zPopover
+          [zContent]="dateRangePopoverContent"
+          #mobileDatePopover="zPopover"
+          (click)="onOpenDatePopover(mobileDatePopover)"
+          class="flex h-10 w-full items-center justify-between gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition min-w-0"
+          [class]="isDateFilterActive ? 'border-[#006666] bg-teal-50/50 text-[#006666]' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'"
+          title="Filter by date">
+          <div class="flex items-center gap-1.5 min-w-0 truncate">
+            <z-icon zType="calendar" class="h-3.5 w-3.5 shrink-0" [class]="isDateFilterActive ? 'text-[#006666]' : 'text-slate-400'"></z-icon>
+            <span class="truncate text-xs">{{ isDateFilterActive ? dateFilterLabel : 'Date Range' }}</span>
+          </div>
+          <span
+            *ngIf="isDateFilterActive"
+            (click)="clearDateFilter(mobileDatePopover); $event.stopPropagation()"
+            class="shrink-0 rounded-full p-0.5 hover:bg-teal-200/50 text-[#006666] cursor-pointer"
+            title="Clear date filter">
+            <z-icon zType="x" class="h-3 w-3"></z-icon>
           </span>
         </button>
       </div>
@@ -85,34 +112,199 @@
       </div>
     </div>
   </app-outreach-page-header>
-  <ng-template #exportDialog>
-    <div class="space-y-4">
-      <z-combobox [(ngModel)]="exportMode" [options]="exportOptions" placeholder="Select Export Type">
-      </z-combobox>
 
+  <!-- Screening Filter Popover Template -->
+  <ng-template #screeningPopoverContent>
+    <z-popover class="p-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden space-y-1">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100">
+        <div class="flex items-center gap-1.5">
+          <z-icon zType="activity" class="h-3.5 w-3.5 text-[#006666]"></z-icon>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-700">Screening Status</span>
+        </div>
+        <button
+          *ngIf="isScreeningFilterActive"
+          type="button"
+          (click)="selectScreeningFilter('ALL')"
+          class="text-[11px] font-semibold text-rose-600 hover:text-rose-700 cursor-pointer">
+          Reset
+        </button>
+      </div>
+
+      <!-- Options List -->
+      <div class="space-y-1 pt-0.5">
+        <!-- All Option -->
+        <button
+          type="button"
+          (click)="selectScreeningFilter('ALL')"
+          class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer text-left"
+          [class]="screeningFilter === 'ALL' ? 'bg-teal-50 text-[#006666] font-semibold ring-1 ring-teal-200/60' : 'text-slate-700 hover:bg-slate-50'">
+          <div class="flex items-center gap-2.5">
+            <span class="h-2 w-2 rounded-full bg-slate-300 shrink-0"></span>
+            <div>
+              <span class="block leading-tight font-semibold">All Reports</span>
+              <span class="text-[10px] text-slate-400 font-normal">Show all records</span>
+            </div>
+          </div>
+          <z-icon *ngIf="screeningFilter === 'ALL'" zType="check" class="h-3.5 w-3.5 text-[#006666] shrink-0"></z-icon>
+        </button>
+
+        <!-- Screened Option -->
+        <button
+          type="button"
+          (click)="selectScreeningFilter('YES')"
+          class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer text-left"
+          [class]="screeningFilter === 'YES' ? 'bg-teal-50 text-[#006666] font-semibold ring-1 ring-teal-200/60' : 'text-slate-700 hover:bg-slate-50'">
+          <div class="flex items-center gap-2.5">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <div>
+              <span class="block leading-tight font-semibold">Screened</span>
+              <span class="text-[10px] text-slate-400 font-normal">Screening completed (Yes)</span>
+            </div>
+          </div>
+          <z-icon *ngIf="screeningFilter === 'YES'" zType="check" class="h-3.5 w-3.5 text-[#006666] shrink-0"></z-icon>
+        </button>
+
+        <!-- Not Screened Option -->
+        <button
+          type="button"
+          (click)="selectScreeningFilter('NO')"
+          class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer text-left"
+          [class]="screeningFilter === 'NO' ? 'bg-teal-50 text-[#006666] font-semibold ring-1 ring-teal-200/60' : 'text-slate-700 hover:bg-slate-50'">
+          <div class="flex items-center gap-2.5">
+            <span class="h-2 w-2 rounded-full bg-rose-500 shrink-0"></span>
+            <div>
+              <span class="block leading-tight font-semibold">Not Screened</span>
+              <span class="text-[10px] text-slate-400 font-normal">No screening recorded (No)</span>
+            </div>
+          </div>
+          <z-icon *ngIf="screeningFilter === 'NO'" zType="check" class="h-3.5 w-3.5 text-[#006666] shrink-0"></z-icon>
+        </button>
+      </div>
+    </z-popover>
+  </ng-template>
+
+  <!-- Date Range Filter Popover Template -->
+  <ng-template #dateRangePopoverContent>
+    <z-popover class="p-3 sm:p-4 w-[calc(100vw-24px)] max-w-sm sm:w-96 space-y-3 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <z-icon zType="calendar" class="h-4 w-4 text-[#006666]"></z-icon>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Filter by Date Range</h3>
+        </div>
+        <button
+          *ngIf="tempFilterDateRange?.length"
+          type="button"
+          (click)="tempFilterDateRange = null"
+          class="text-[11px] font-semibold text-rose-600 hover:text-rose-700">
+          Reset
+        </button>
+      </div>
+
+      <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-1 sm:p-2 flex justify-center overflow-x-auto">
+        <z-calendar zMode="range" [(value)]="tempFilterDateRange" class="mx-auto"></z-calendar>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-lg gap-2">
+        <span class="text-slate-400 font-medium shrink-0">Selected:</span>
+        <span class="font-bold text-slate-800 text-right truncate">
+          @if (tempFilterDateRange?.length === 2) {
+            {{ tempFilterDateRange?.[0] | date: 'dd/MM/yyyy' }} - {{ tempFilterDateRange?.[1] | date: 'dd/MM/yyyy' }}
+          } @else if (tempFilterDateRange?.length === 1) {
+            {{ tempFilterDateRange?.[0] | date: 'dd/MM/yyyy' }}
+          } @else {
+            No dates selected
+          }
+        </span>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+        <button
+          type="button"
+          z-button
+          zType="outline"
+          (click)="clearDateFilter()"
+          class="h-8 px-3 text-xs">
+          Clear
+        </button>
+        <button
+          type="button"
+          z-button
+          (click)="applyDateFilter()"
+          class="h-8 px-4 text-xs bg-[#006666] hover:bg-[#005353] text-white">
+          Apply Filter
+        </button>
+      </div>
+    </z-popover>
+  </ng-template>
+
+  <!-- Export Report Popover Template -->
+  <ng-template #exportPopoverContent>
+    <z-popover class="p-3 sm:p-4 w-[calc(100vw-24px)] max-w-sm sm:w-96 space-y-3 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <img src="excel.png" alt="Excel icon" class="h-4 w-4 object-contain" />
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Export to Excel</h3>
+        </div>
+        <button
+          *ngIf="exportMode === 'RANGE' && exportDateRange?.length"
+          type="button"
+          (click)="exportDateRange = null"
+          class="text-[11px] font-semibold text-rose-600 hover:text-rose-700">
+          Reset
+        </button>
+      </div>
+
+      <!-- Scope Selector -->
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Export Scope</label>
+        <z-combobox [(ngModel)]="exportMode" [options]="exportOptions" placeholder="Select Export Scope" zWidth="full">
+        </z-combobox>
+      </div>
+
+      <!-- Calendar for Date Range -->
       @if (exportMode === 'RANGE') {
-      <div class="space-y-3">
-        <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-1 sm:p-2 flex justify-center overflow-x-auto">
           <z-calendar zMode="range" [(value)]="exportDateRange" class="mx-auto"></z-calendar>
         </div>
 
-        <div class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm text-slate-600">
-          <span class="font-medium uppercase tracking-wider text-slate-400">Selected range</span>
-     
-          <span class="text-right font-semibold text-slate-800">
+        <div class="flex items-center justify-between text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-lg gap-2">
+          <span class="text-slate-400 font-medium shrink-0">Selected:</span>
+          <span class="font-bold text-slate-800 text-right truncate">
             @if (exportDateRange?.length === 2) {
-            {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }} - {{ exportDateRange?.[1] | date: 'dd/MM/yyyy' }}
+              {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }} - {{ exportDateRange?.[1] | date: 'dd/MM/yyyy' }}
             } @else if (exportDateRange?.length === 1) {
-            {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }}
+              {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }}
             } @else {
-            Not selected
+              No dates selected
             }
           </span>
         </div>
-      </div>
       }
-    </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+        <button
+          type="button"
+          z-button
+          zType="outline"
+          (click)="closeExportPopover()"
+          class="h-8 px-3 text-xs">
+          Cancel
+        </button>
+        <button
+          type="button"
+          z-button
+          (click)="confirmExport()"
+          class="h-8 px-4 text-xs bg-[#006666] hover:bg-[#005353] text-white flex items-center gap-1.5">
+          <z-icon zType="download" class="h-3.5 w-3.5"></z-icon>
+          Export
+        </button>
+      </div>
+    </z-popover>
   </ng-template>
+
   <!-- Reports Content -->
   <ng-container *ngIf="vm$ | async as vm; else loadingTpl">
     <!-- Large Screens: Modernized Table View -->
@@ -126,18 +318,63 @@
 
         <!-- Right side: Action Buttons -->
         <div class="flex items-center gap-3 flex-wrap md:flex-nowrap">
+          <!-- Screening Filter Popover Button -->
+          <div class="relative inline-block">
+            <button
+              type="button"
+              zPopover
+              [zContent]="screeningPopoverContent"
+              #desktopScreeningPopover="zPopover"
+              (click)="onOpenScreeningPopover(desktopScreeningPopover)"
+              class="flex h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold shadow-sm transition hover:bg-slate-50 cursor-pointer"
+              [class]="isScreeningFilterActive ? 'border-[#006666] bg-teal-50/50 text-[#006666]' : 'border-slate-200 bg-white text-slate-700'">
+              <z-icon zType="activity" class="h-4 w-4" [class]="isScreeningFilterActive ? 'text-[#006666]' : 'text-slate-400'"></z-icon>
+              <span class="whitespace-nowrap">{{ screeningFilterLabel }}</span>
+              <z-icon zType="chevron-down" class="h-3 w-3 text-slate-400"></z-icon>
+              <span
+                *ngIf="isScreeningFilterActive"
+                (click)="selectScreeningFilter('ALL', desktopScreeningPopover); $event.stopPropagation()"
+                class="ml-0.5 rounded-full p-0.5 hover:bg-teal-200/50 text-[#006666] cursor-pointer"
+                title="Reset screening filter">
+                <z-icon zType="x" class="h-3 w-3"></z-icon>
+              </span>
+            </button>
+          </div>
+
+          <!-- Date Range Popover Button -->
+          <div class="relative inline-block">
+            <button
+              type="button"
+              zPopover
+              [zContent]="dateRangePopoverContent"
+              #desktopDatePopover="zPopover"
+              (click)="onOpenDatePopover(desktopDatePopover)"
+              class="flex h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold shadow-sm transition"
+              [class]="isDateFilterActive ? 'border-[#006666] bg-teal-50/50 text-[#006666]' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'">
+              <z-icon zType="calendar" class="h-4 w-4" [class]="isDateFilterActive ? 'text-[#006666]' : 'text-slate-400'"></z-icon>
+              <span class="whitespace-nowrap">{{ dateFilterLabel }}</span>
+              <span
+                *ngIf="isDateFilterActive"
+                (click)="clearDateFilter(desktopDatePopover); $event.stopPropagation()"
+                class="ml-0.5 rounded-full p-0.5 hover:bg-teal-200/50 text-[#006666] cursor-pointer"
+                title="Clear date filter">
+                <z-icon zType="x" class="h-3 w-3"></z-icon>
+              </span>
+            </button>
+          </div>
+
           <!-- Columns Selector Trigger -->
           <div class="relative inline-block text-left">
             <button type="button" (click)="toggleColumnSelectorDropdown()"
-              class="flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+              class="inline-flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300">
               <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
               Columns
             </button>
 
             <!-- Column Selection Dropdown Menu -->
             <div *ngIf="showColumnSelector"
-              class="absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
-              <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+              class="absolute right-0 mt-2 w-64 max-h-[300px] overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50">
+              <div class="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">
                 Show / Hide Columns
               </div>
 
@@ -152,18 +389,33 @@
             </div>
           </div>
 
-          <!-- Download Excel Sheet Button -->
-          <button type="button" (click)="openExportDialog()"
+          <!-- Download Excel Sheet Button with Popover -->
+          <button
+            type="button"
+            zPopover
+            [zContent]="exportPopoverContent"
+            #desktopExportPopover="zPopover"
+            (click)="onOpenExportPopover(desktopExportPopover)"
             class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[#006666] transition hover:bg-teal-50/50 hover:border-teal-200">
             <img src="excel.png" alt="excel download button" class="h-5 w-5 object-contain" />
             <span class="text-xs font-bold leading-none">Download sheet</span>
+          </button>
+
+          <!-- Submit New Report Button -->
+          <button z-button (click)="addReport()"
+            class="h-10 bg-[#006666] hover:bg-[#005353] text-white shadow-md shadow-teal-100 transition-all flex items-center">
+            <z-icon zType="plus" class="w-4 h-4 mr-1.5" />
+            Submit New Report
           </button>
         </div>
       </div>
 
 
 
-      <div class="w-full overflow-x-auto">
+      <div class="relative w-full overflow-x-auto min-h-[350px]">
+        <!-- Standard Circular Loading Overlay during Pagination / Search -->
+        <z-table-loader [zLoading]="isPageLoading$ | async" zText="Loading activity reports..."></z-table-loader>
+
         <table z-table zType="grid" class="w-full min-w-[1200px] table-fixed border-collapse text-left text-[13px] text-slate-900">
           <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>
@@ -610,7 +862,12 @@
     <div *ngIf="mobileViewMode === 'table'"
       class="md:hidden rounded-md border-b-4 border-blue-500 bg-white shadow-sm">
       <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4">
-        <button type="button" (click)="openExportDialog()"
+        <button
+          type="button"
+          zPopover
+          [zContent]="exportPopoverContent"
+          #mobileExportPopover="zPopover"
+          (click)="onOpenExportPopover(mobileExportPopover)"
           class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#006666] px-5 py-3 text-white shadow-[0_14px_28px_rgba(0,102,102,0.24)] transition hover:bg-[#005353]">
           <img src="excel.png" alt="excel download button" class="h-6 w-6 object-contain" />
           <span class="text-sm font-semibold leading-none">Download sheet</span>
@@ -644,7 +901,10 @@
         </div>
       </div>
 
-      <div class="w-full overflow-x-auto">
+      <div class="relative w-full overflow-x-auto min-h-[350px]">
+        <!-- Standard Circular Loading Overlay during Pagination / Search -->
+        <z-table-loader [zLoading]="isPageLoading$ | async" zText="Loading activity reports..."></z-table-loader>
+
         <table z-table zType="grid"
           class="w-full min-w-[1200px] table-fixed border-collapse text-left text-[13px] text-slate-900">
         <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">

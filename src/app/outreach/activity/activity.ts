@@ -12,6 +12,7 @@ import {
   debounceTime,
   distinctUntilChanged,
   firstValueFrom,
+  Observable,
 } from 'rxjs';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import * as XLSX from 'xlsx';
@@ -27,12 +28,25 @@ import {
   ZardTableRowComponent,
   ZardTableHeadComponent,
   ZardTableCellComponent,
+  ZardTableLoaderComponent,
 } from '@/shared/components/table';
+import { calculatePaginationIndices } from '@/shared/models';
 import { ZardComboboxComponent, type ZardComboboxOption } from '@/shared/components/combobox';
+import { ZardPopoverComponent, ZardPopoverDirective } from '@/shared/components/popover';
 import { UserProfileService } from '../../core/services/user-profile.service';
 import { OutreachService } from '../outreach.service';
 import { ZardDialogService } from '@/shared/components/dialog';
 import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
+
+export interface ActivityReportsVm {
+  items: any[];
+  total: number;
+  page: number;
+  pageCount: number;
+  pageSize: number;
+  startIndex: number;
+  endIndex: number;
+}
 
 @Component({
   selector: 'app-activity',
@@ -44,6 +58,8 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
     ZardButtonComponent,
     ZardIconComponent,
     ZardCalendarComponent,
+    ZardPopoverComponent,
+    ZardPopoverDirective,
     LottieComponent,
     // RouterLink,
     ZardTableComponent,
@@ -52,6 +68,7 @@ import { ZardPaginationComponent } from '@/shared/components/pagination/paginati
     ZardTableRowComponent,
     ZardTableHeadComponent,
     ZardTableCellComponent,
+    ZardTableLoaderComponent,
     OutreachPageHeaderComponent,
     ZardComboboxComponent,
     ZardPaginationComponent,
@@ -85,6 +102,11 @@ export class Activity {
   isLoading = true;
   expandedReportId: number | null = null;
   screeningFilter: 'ALL' | 'YES' | 'NO' = 'ALL';
+  readonly screeningFilterOptions: ZardComboboxOption[] = [
+    { value: 'ALL', label: 'Screening: All' },
+    { value: 'YES', label: 'Screening: Yes' },
+    { value: 'NO', label: 'Screening: No' },
+  ];
   mobileViewMode: 'quickAccess' | 'table' = 'quickAccess';
   exportMode: 'ALL' | 'RANGE' = 'RANGE'; //export choice given to the user
 
@@ -125,33 +147,80 @@ export class Activity {
 
   showColumnSelector = false;
 
-  reports$ = combineLatest([
+  // ── Date filter state ────────────────────────────────────────────────────
+  filterDateRange: Date[] | null = null;
+  tempFilterDateRange: Date[] | null = null;
+  readonly dateFilter$ = new BehaviorSubject<{ startDate?: string; endDate?: string } | null>(null);
+
+  // ── Loading indicator for pagination ─────────────────────────────────────
+  readonly isPageLoading$ = new BehaviorSubject<boolean>(false);
+
+  // ── Reactive streams ──────────────────────────────────────────────────────
+  private readonly search$ = this.searchControl.valueChanges.pipe(
+    startWith(''),
+    debounceTime(300),
+    distinctUntilChanged(),
+    map((value) => {
+      this.page$.next(1);
+      return (value || '').trim();
+    }),
+  );
+
+  vm$: Observable<ActivityReportsVm> = combineLatest([
     this.refresh$.pipe(startWith(undefined)),
-
-    this.searchControl.valueChanges.pipe(
-      startWith(''),
-      debounceTime(300),
-      distinctUntilChanged(),
-      map((value) => {
-        this.page$.next(1);
-        return (value || '').trim().toLowerCase();
-      }),
-    ),
-
+    this.page$.asObservable(),
+    this.search$,
     this.screeningFilter$.asObservable(),
+    this.dateFilter$.asObservable(),
+    this.sortCol$.asObservable(),
+    this.sortDir$.asObservable(),
   ]).pipe(
-    switchMap(([_, search, screeningFilter]) => {
-      this.isLoading = true;
+    switchMap(([_, page, search, screeningFilter, dateFilter, sortCol, sortDir]) => {
+      this.isPageLoading$.next(true);
+      const params: any = {
+        page,
+        limit: this.pageSize,
+        screening: screeningFilter,
+        sortBy: sortCol || 'createdAt',
+        sortDir: sortDir || 'desc',
+      };
+      if (search) params.search = search;
+      if (dateFilter?.startDate) params.startDate = dateFilter.startDate;
+      if (dateFilter?.endDate) params.endDate = dateFilter.endDate;
 
-      return this.outreachService.getMyReports().pipe(
-        map((reports) => {
-          const filteredReports = reports.filter((report) => {
+      return this.outreachService.getMyReports(params).pipe(
+        map((res: any) => {
+          this.isPageLoading$.next(false);
+          this.isLoading = false;
+
+          if (res && res.data && res.meta) {
+            const data = Array.isArray(res.data) ? res.data : [];
+            const meta = res.meta;
+            const total = meta.total ?? data.length;
+            const pageCount = meta.totalPages ?? Math.max(1, Math.ceil(total / this.pageSize));
+            const safePage = meta.page ?? page;
+            const { startIndex, endIndex } = calculatePaginationIndices(safePage, meta.limit ?? this.pageSize, total);
+
+            this.lastPage = safePage;
+            this.lastPageCount = pageCount;
+
+            return {
+              items: data,
+              total,
+              page: safePage,
+              pageCount,
+              pageSize: meta.limit ?? this.pageSize,
+              startIndex,
+              endIndex,
+            };
+          }
+
+          // Fallback if plain array
+          const reports = Array.isArray(res) ? res : [];
+          let filteredReports = reports.filter((report) => {
             const screening = String(report?.reportData?.screening || 'No').toUpperCase();
-
             const passesScreening = screeningFilter === 'ALL' || screening === screeningFilter;
-
             if (!passesScreening) return false;
-
             if (!search) return true;
 
             const searchableText = [
@@ -168,130 +237,65 @@ export class Activity {
               .join(' ')
               .toLowerCase();
 
-            return searchableText.includes(search);
+            return searchableText.includes(search.toLowerCase());
           });
 
-          return filteredReports.sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          );
-        }),
-      );
-    }),
+          let sortedReports = [...filteredReports];
+          if (sortCol) {
+            sortedReports.sort((a: any, b: any) => {
+              let aVal: any = a[sortCol];
+              let bVal: any = b[sortCol];
+              if (sortCol === 'beneficiaryId') {
+                aVal = a.child?.uid || a.beneficiary?.uid || '';
+                bVal = b.child?.uid || b.beneficiary?.uid || '';
+              } else if (sortCol === 'beneficiaryName') {
+                aVal = a.child?.name || a.beneficiary?.name || '';
+                bVal = b.child?.name || b.beneficiary?.name || '';
+              } else if (sortCol === 'group') {
+                aVal = this.getReportGroup(a) || '';
+                bVal = this.getReportGroup(b) || '';
+              } else if (sortCol === 'activity') {
+                aVal = a.activity?.name || '';
+                bVal = b.activity?.name || '';
+              } else if (sortCol === 'session') {
+                aVal = a.session?.name || '';
+                bVal = b.session?.name || '';
+              } else if (sortCol === 'screening') {
+                aVal = a.reportData?.screening || '';
+                bVal = b.reportData?.screening || '';
+              } else if (sortCol === 'date') {
+                aVal = new Date(a.date).getTime() || 0;
+                bVal = new Date(b.date).getTime() || 0;
+              }
 
-    map((reports) => {
-      this.isLoading = false;
-      return reports;
-    }),
+              if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+              if (typeof bVal === 'string') bVal = bVal.toLowerCase();
 
-    shareReplay(1),
-  );
-
-  vm$ = combineLatest([
-    this.reports$,
-    this.page$.asObservable(),
-    this.searchControl.valueChanges.pipe(
-      startWith(''),
-      debounceTime(300),
-      distinctUntilChanged(),
-      map((value) => (value || '').trim().toLowerCase()),
-    ),
-    this.screeningFilter$.asObservable(),
-    this.sortCol$.asObservable(),
-    this.sortDir$.asObservable(),
-  ]).pipe(
-    map(([reports, page, search, screeningFilter, sortCol, sortDir]) => {
-      const filteredReports = reports.filter((report) => {
-        const screening = String(report?.reportData?.screening || 'No').toUpperCase();
-
-        const passesScreening = screeningFilter === 'ALL' || screening === screeningFilter;
-
-        if (!passesScreening) return false;
-
-        if (!search) return true;
-
-        const searchableText = [
-          report.child?.name,
-          report.beneficiary?.name,
-          report.child?.uid,
-          report.beneficiary?.uid,
-          report.activity?.name,
-          report.session?.name,
-          report.date,
-          this.getScreeningSummary(report),
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-
-        return searchableText.includes(search);
-      });
-
-      let sortedReports = [...filteredReports];
-      if (sortCol) {
-        sortedReports.sort((a: any, b: any) => {
-          let aVal: any;
-          let bVal: any;
-
-          if (sortCol === 'beneficiaryId') {
-            aVal = a.child?.uid || a.beneficiary?.uid || '';
-            bVal = b.child?.uid || b.beneficiary?.uid || '';
-          } else if (sortCol === 'beneficiaryName') {
-            aVal = a.child?.name || a.beneficiary?.name || '';
-            bVal = b.child?.name || b.beneficiary?.name || '';
-          } else if (sortCol === 'group') {
-            aVal = this.getReportGroup(a) || '';
-            bVal = this.getReportGroup(b) || '';
-          } else if (sortCol === 'activity') {
-            aVal = a.activity?.name || '';
-            bVal = b.activity?.name || '';
-          } else if (sortCol === 'session') {
-            aVal = a.session?.name || '';
-            bVal = b.session?.name || '';
-          } else if (sortCol === 'screening') {
-            aVal = a.reportData?.screening || '';
-            bVal = b.reportData?.screening || '';
-          } else if (sortCol === 'date') {
-            aVal = new Date(a.date).getTime() || 0;
-            bVal = new Date(b.date).getTime() || 0;
-          } else if (sortCol === 'details') {
-            aVal = this.getScreeningSummary(a) || '';
-            bVal = this.getScreeningSummary(b) || '';
-          } else {
-            aVal = a[sortCol];
-            bVal = b[sortCol];
+              if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+              if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+              return 0;
+            });
           }
 
-          if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-          if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+          const total = sortedReports.length;
+          const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
+          const safePage = Math.min(Math.max(1, page), pageCount);
+          const startIndex = (safePage - 1) * this.pageSize;
 
-          if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
-          if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
-          return 0;
-        });
-      }
+          this.lastPage = safePage;
+          this.lastPageCount = pageCount;
 
-      const total = sortedReports.length;
-
-      const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
-
-      const safePage = Math.min(Math.max(1, page), pageCount);
-
-      const startIndex = (safePage - 1) * this.pageSize;
-
-      this.lastPage = safePage;
-      this.lastPageCount = pageCount;
-
-      return {
-        items: sortedReports.slice(startIndex, startIndex + this.pageSize),
-
-        total,
-        page: safePage,
-        pageCount,
-        pageSize: this.pageSize,
-        startIndex,
-
-        endIndex: Math.min(startIndex + this.pageSize, total),
-      };
+          return {
+            items: sortedReports.slice(startIndex, startIndex + this.pageSize),
+            total,
+            page: safePage,
+            pageCount,
+            pageSize: this.pageSize,
+            startIndex,
+            endIndex: Math.min(startIndex + this.pageSize, total),
+          };
+        }),
+      );
     }),
   );
 
@@ -346,6 +350,98 @@ export class Activity {
     this.screeningFilter$.next(this.screeningFilter);
   }
 
+  onScreeningFilterChange(value: 'ALL' | 'YES' | 'NO' | string): void {
+    const val = (value as 'ALL' | 'YES' | 'NO') || 'ALL';
+    this.screeningFilter = val;
+    this.page$.next(1);
+    this.screeningFilter$.next(val);
+  }
+
+  currentScreeningPopover: any = null;
+
+  onOpenScreeningPopover(popover?: any): void {
+    this.currentScreeningPopover = popover;
+  }
+
+  selectScreeningFilter(val: 'ALL' | 'YES' | 'NO', popover?: any): void {
+    const target = popover || this.currentScreeningPopover;
+    this.onScreeningFilterChange(val);
+    if (target && typeof target.hide === 'function') {
+      target.hide();
+    }
+    this.currentScreeningPopover = null;
+  }
+
+  get isScreeningFilterActive(): boolean {
+    return this.screeningFilter !== 'ALL';
+  }
+
+  currentDatePopover: any = null;
+
+  onOpenDatePopover(popover?: any): void {
+    this.currentDatePopover = popover;
+    this.tempFilterDateRange = this.filterDateRange ? [...this.filterDateRange] : null;
+  }
+
+  applyDateFilter(popover?: any, secondaryPopover?: any): void {
+    const target = popover || this.currentDatePopover;
+    const range = (this.tempFilterDateRange || []).filter(Boolean) as Date[];
+    this.filterDateRange = range.length > 0 ? range : null;
+
+    if (this.filterDateRange && this.filterDateRange.length > 0) {
+      const start = this.filterDateRange[0];
+      const end = this.filterDateRange[1] ?? this.filterDateRange[0];
+      const startDate = start.toISOString();
+      const endDate = end.toISOString();
+      this.page$.next(1);
+      this.dateFilter$.next({ startDate, endDate });
+    } else {
+      this.clearDateFilter(target, secondaryPopover);
+      return;
+    }
+
+    if (target && typeof target.hide === 'function') {
+      target.hide();
+    }
+    if (secondaryPopover && typeof secondaryPopover.hide === 'function') {
+      secondaryPopover.hide();
+    }
+    this.currentDatePopover = null;
+  }
+
+  clearDateFilter(popover?: any, secondaryPopover?: any): void {
+    const target = popover || this.currentDatePopover;
+    this.filterDateRange = null;
+    this.tempFilterDateRange = null;
+    this.page$.next(1);
+    this.dateFilter$.next(null);
+
+    if (target && typeof target.hide === 'function') {
+      target.hide();
+    }
+    if (secondaryPopover && typeof secondaryPopover.hide === 'function') {
+      secondaryPopover.hide();
+    }
+    this.currentDatePopover = null;
+  }
+
+  get isDateFilterActive(): boolean {
+    return !!(this.filterDateRange && this.filterDateRange.length > 0);
+  }
+
+  get dateFilterLabel(): string {
+    if (!this.filterDateRange || this.filterDateRange.length === 0) {
+      return 'Date Range';
+    }
+    const start = this.filterDateRange[0];
+    const end = this.filterDateRange[1] ?? start;
+    const format = (d: Date) => d.toLocaleDateString('en-GB');
+    if (start.getTime() === end.getTime()) {
+      return format(start);
+    }
+    return `${format(start)} - ${format(end)}`;
+  }
+
   setScreeningFilter(filter: 'ALL' | 'YES' | 'NO'): void {
     this.screeningFilter = filter;
     this.page$.next(1);
@@ -353,7 +449,25 @@ export class Activity {
   }
 
   get screeningFilterLabel(): string {
-    return this.screeningFilter === 'ALL' ? 'All' : this.screeningFilter;
+    switch (this.screeningFilter) {
+      case 'YES':
+        return 'Screened (Yes)';
+      case 'NO':
+        return 'Not Screened (No)';
+      default:
+        return 'Screening: All';
+    }
+  }
+
+  get screeningMobileFilterLabel(): string {
+    switch (this.screeningFilter) {
+      case 'YES':
+        return 'Screened';
+      case 'NO':
+        return 'Not Screened';
+      default:
+        return 'Screening';
+    }
   }
 
   setMobileViewMode(mode: 'quickAccess' | 'table'): void {
@@ -546,7 +660,13 @@ export class Activity {
   }
 
   async getReportsForExport() {
-    const reports = await firstValueFrom(this.reports$);
+    const search = (this.searchControl.value || '').trim();
+    const screening = this.screeningFilter$.value;
+    const params: any = { all: 'true', screening };
+    if (search) params.search = search;
+
+    const res = await firstValueFrom(this.outreachService.getMyReports(params));
+    const reports = Array.isArray(res) ? res : (res?.data || []);
 
     switch (this.exportMode) {
       case 'ALL':
@@ -561,7 +681,16 @@ export class Activity {
   }
 
   async exportToExcel(): Promise<void> {
-    const reports = await firstValueFrom(this.reports$);
+    const search = (this.searchControl.value || '').trim();
+    const screening = this.screeningFilter$.value;
+    const dateFilter = this.dateFilter$.value;
+    const params: any = { all: 'true', screening };
+    if (search) params.search = search;
+    if (dateFilter?.startDate) params.startDate = dateFilter.startDate;
+    if (dateFilter?.endDate) params.endDate = dateFilter.endDate;
+
+    const res = await firstValueFrom(this.outreachService.getMyReports(params));
+    const reports = Array.isArray(res) ? res : (res?.data || []);
 
     let exportReports: any[] = [];
 
@@ -676,6 +805,27 @@ export class Activity {
     });
 
     saveAs(blob, 'activity-reports.xlsx');
+  }
+
+  currentExportPopover: any = null;
+
+  onOpenExportPopover(popover?: any): void {
+    this.currentExportPopover = popover;
+    this.exportMode = 'RANGE';
+    this.exportDateRange = null;
+  }
+
+  closeExportPopover(popover?: any): void {
+    const target = popover || this.currentExportPopover;
+    if (target && typeof target.hide === 'function') {
+      target.hide();
+    }
+    this.currentExportPopover = null;
+  }
+
+  confirmExport(popover?: any): void {
+    this.closeExportPopover(popover);
+    this.exportToExcel();
   }
 
   openExportDialog() {

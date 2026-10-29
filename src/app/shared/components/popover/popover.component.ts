@@ -172,9 +172,9 @@ export class ZardPopoverDirective implements OnInit, OnDestroy {
       const positionStrategy = this.overlayPositionBuilder
         .flexibleConnectedTo(this.nativeElement)
         .withPositions(this.getPositions())
-        .withPush(false)
+        .withPush(true)
         .withFlexibleDimensions(false)
-        .withViewportMargin(8);
+        .withViewportMargin(12);
 
       this.overlayRef = this.overlay.create({
         positionStrategy,
@@ -238,11 +238,45 @@ export class ZardPopoverDirective implements OnInit, OnDestroy {
     // Fallback positions for better positioning when primary doesn't fit
     switch (placement) {
       case 'bottom':
-        // Try top if bottom doesn't fit
+        // Try bottom-end (aligns overlay right edge to trigger right edge, key when trigger is near right edge)
+        positions.push({
+          originX: 'end',
+          originY: 'bottom',
+          overlayX: 'end',
+          overlayY: 'top',
+          offsetX: 0,
+          offsetY: 8,
+        });
+        // Try bottom-start (aligns overlay left edge to trigger left edge)
+        positions.push({
+          originX: 'start',
+          originY: 'bottom',
+          overlayX: 'start',
+          overlayY: 'top',
+          offsetX: 0,
+          offsetY: 8,
+        });
+        // Try top variants if bottom doesn't fit
         positions.push({
           originX: 'center',
           originY: 'top',
           overlayX: 'center',
+          overlayY: 'bottom',
+          offsetX: 0,
+          offsetY: -8,
+        });
+        positions.push({
+          originX: 'end',
+          originY: 'top',
+          overlayX: 'end',
+          overlayY: 'bottom',
+          offsetX: 0,
+          offsetY: -8,
+        });
+        positions.push({
+          originX: 'start',
+          originY: 'top',
+          overlayX: 'start',
           overlayY: 'bottom',
           offsetX: 0,
           offsetY: -8,
@@ -267,11 +301,43 @@ export class ZardPopoverDirective implements OnInit, OnDestroy {
         });
         break;
       case 'top':
+        positions.push({
+          originX: 'end',
+          originY: 'top',
+          overlayX: 'end',
+          overlayY: 'bottom',
+          offsetX: 0,
+          offsetY: -8,
+        });
+        positions.push({
+          originX: 'start',
+          originY: 'top',
+          overlayX: 'start',
+          overlayY: 'bottom',
+          offsetX: 0,
+          offsetY: -8,
+        });
         // Try bottom if top doesn't fit
         positions.push({
           originX: 'center',
           originY: 'bottom',
           overlayX: 'center',
+          overlayY: 'top',
+          offsetX: 0,
+          offsetY: 8,
+        });
+        positions.push({
+          originX: 'end',
+          originY: 'bottom',
+          overlayX: 'end',
+          overlayY: 'top',
+          offsetX: 0,
+          offsetY: 8,
+        });
+        positions.push({
+          originX: 'start',
+          originY: 'bottom',
+          overlayX: 'start',
           overlayY: 'top',
           offsetX: 0,
           offsetY: 8,

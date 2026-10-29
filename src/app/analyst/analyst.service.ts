@@ -66,20 +66,17 @@ export class AnalystService {
     );
   }
 
-  getBeneficiaries(search?: string, projectId?: number): Observable<Beneficiary[]> {
-    const cacheKey = `beneficiaries_${search || ''}_${projectId || ''}`;
-    const params: any = {};
-    if (search) params.search = search;
-    if (projectId) params.projectId = projectId;
-    return this.checkCache(
-      cacheKey,
-      (this.api.get(`analyst/beneficiary-list`, params) as Observable<Beneficiary[]>).pipe(
-        map((rows) => rows || []),
-        catchError((error: HttpErrorResponse) => {
-          if (error.status === 404) return of([]);
-          return throwError(() => error);
-        })
-      )
+  getBeneficiaries(params?: any, projectId?: number): Observable<any> {
+    const queryParams: any = typeof params === 'object' && params !== null 
+      ? { ...params } 
+      : { ...(params ? { search: params } : {}), ...(projectId ? { projectId } : {}) };
+
+    return (this.api.get(`analyst/beneficiary-list`, queryParams) as Observable<any>).pipe(
+      map((res) => res || []),
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) return of([]);
+        return throwError(() => error);
+      })
     );
   }
 

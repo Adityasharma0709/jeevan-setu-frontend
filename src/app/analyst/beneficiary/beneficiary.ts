@@ -28,6 +28,7 @@ import { ZardIconComponent } from '@/shared/components/icon';
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardCalendarComponent } from '@/shared/components/calendar/calendar.component';
 import { ZardComboboxComponent } from '@/shared/components/combobox';
+import { ZardPopoverComponent, ZardPopoverDirective } from '@/shared/components/popover';
 import { OutreachPageHeaderComponent } from '@/shared/components/page-header';
 import {
   ZardTableBodyComponent,
@@ -36,12 +37,31 @@ import {
   ZardTableHeadComponent,
   ZardTableHeaderComponent,
   ZardTableRowComponent,
+  ZardTableLoaderComponent,
 } from '@/shared/components/table';
+import { calculatePaginationIndices } from '@/shared/models';
 import { ZardPaginationComponent } from '@/shared/components/pagination/pagination.component';
+import { Observable } from 'rxjs';
 
 import { AnalystService } from '../analyst.service';
 import { Router } from '@angular/router';
 import { Beneficiary } from '../../outreach/outreach.service';
+
+export interface AnalystBeneficiariesVm {
+  items: any[];
+  total: number;
+  totalBeneficiaries: number;
+  page: number;
+  pageCount: number;
+  pageSize: number;
+  startIndex: number;
+  endIndex: number;
+  priorityCount: number;
+  stakeholderCount: number;
+  generalCount: number;
+  registeredThisMonth: number;
+  typeTab: 'ALL' | 'PRIORITY' | 'GENERAL' | 'STAKEHOLDER';
+}
 
 @Component({
   selector: 'app-analyst-beneficiary',
@@ -56,12 +76,15 @@ import { Beneficiary } from '../../outreach/outreach.service';
     ZardInputDirective,
     ZardCalendarComponent,
     ZardComboboxComponent,
+    ZardPopoverComponent,
+    ZardPopoverDirective,
     ZardTableBodyComponent,
     ZardTableCellComponent,
     ZardTableComponent,
     ZardTableHeadComponent,
     ZardTableHeaderComponent,
     ZardTableRowComponent,
+    ZardTableLoaderComponent,
     OutreachPageHeaderComponent,
     LottieComponent,
     ZardPaginationComponent,
@@ -160,40 +183,12 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
   readonly sortDir$ = new BehaviorSubject<'asc' | 'desc'>('desc');
   readonly exportDialog = viewChild.required<TemplateRef<any>>('exportDialog');
 
-  private readonly rawBeneficiaries$ = this.refresh$.pipe(
-    startWith(void 0),
-    switchMap(() => {
-      const currentUserId = Number(this.authService.getCurrentUser()?.sub) || undefined;
-      return combineLatest([
-        this.analystService.getBeneficiaries(),
-        this.analystService.getAssignedProjects(currentUserId).pipe(catchError(() => of([])))
-      ]).pipe(
-        map(([beneficiaries, projects]) => {
-          const projectMap = new Map<number, any>();
-          projects.forEach((p: any) => projectMap.set(p.id, p));
-
-          return (beneficiaries || []).map((b: any) => {
-            if (!b.project && b.projectId) {
-              const proj = projectMap.get(b.projectId);
-              if (proj) {
-                b.project = {
-                  id: proj.id,
-                  name: proj.name
-                };
-              }
-            }
-            return b;
-          });
-        })
-      );
-    }),
-    map((rows) => (Array.isArray(rows) ? rows : [])),
-    shareReplay(1),
-  );
+  // Loading indicator for pagination & filtering
+  readonly isPageLoading$ = new BehaviorSubject<boolean>(false);
 
   private readonly search$ = this.searchControl.valueChanges.pipe(
     startWith(''),
-    debounceTime(250),
+    debounceTime(300),
     distinctUntilChanged(),
     map((s) => {
       this.page$.next(1);
@@ -201,249 +196,133 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
     }),
   );
 
-  selectedVillageControl = new FormControl('ALL');
-  selectedInstitutionControl = new FormControl('ALL');
-
-  readonly assignedLocations$ = this.refresh$.pipe(
-    startWith(void 0),
-    switchMap(() => {
-      const currentUserId = Number(this.authService.getCurrentUser()?.sub) || undefined;
-      return this.analystService.getAssignedProjects(currentUserId).pipe(
-        switchMap((projects: any[]) => {
-          if (!projects || !projects.length) return of({ states: [], awcs: [] });
-          const firstProjId = projects[0].id;
-          return this.analystService.getProjectAssignments(firstProjId);
-        }),
-        catchError(() => of({ states: [], awcs: [] }))
-      );
-    }),
-    map((res: any) => res?.awcs || []),
-    shareReplay(1)
-  );
-
-  readonly villageOptions$ = combineLatest([
-    this.assignedLocations$,
-    this.rawBeneficiaries$
-  ]).pipe(
-    map(([locs, beneficiaries]) => {
-      const villageSet = new Set<string>();
-      (locs || []).forEach((l: any) => {
-        const vName = l.villageName || l.village?.name || (typeof l.village === 'string' ? l.village : '');
-        if (vName && vName.trim()) villageSet.add(vName.trim());
-      });
-      (beneficiaries || []).forEach((b: any) => {
-        const vName = b.village || b.location?.village || b.location?.villageName;
-        if (vName && vName.trim()) villageSet.add(vName.trim());
-      });
-
-      const sorted = Array.from(villageSet).sort();
-      return [
-        { value: 'ALL', label: 'All Villages' },
-        ...sorted.map(v => ({ value: v, label: v }))
-      ];
-    }),
-    shareReplay(1)
-  );
-
-  readonly institutionOptions$ = combineLatest([
-    this.assignedLocations$,
-    this.selectedVillageControl.valueChanges.pipe(startWith(this.selectedVillageControl.value))
-  ]).pipe(
-    map(([locs, selectedVillage]) => {
-      let filtered = (locs || []);
-      if (selectedVillage && selectedVillage !== 'ALL') {
-        filtered = filtered.filter((l: any) => {
-          const vName = l.villageName || l.village?.name || (typeof l.village === 'string' ? l.village : '');
-          return vName.trim().toLowerCase() === String(selectedVillage).trim().toLowerCase();
-        });
-      }
-
-      const options = filtered.map((l: any) => {
-        const typeStr = l.institutionType === 'SCHOOL' ? 'School' : (l.institutionType === 'HEALTH_CENTER' ? 'Health Center' : 'AWC');
-        const nameStr = l.schoolName || l.healthCenterName || l.awcName || l.name || '';
-        const codeStr = l.locationCode ? ` (${l.locationCode})` : '';
-        const idVal = String(l.id || l.locationCode || nameStr);
-        return {
-          value: idVal,
-          label: `[${typeStr}] ${nameStr}${codeStr}`
-        };
-      });
-
-      return [
-        { value: 'ALL', label: 'All Institutions (AWC / School / Health Center)' },
-        ...options
-      ];
-    }),
-    shareReplay(1)
-  );
-
-  private readonly selectedVillage$ = this.selectedVillageControl.valueChanges.pipe(
-    startWith(this.selectedVillageControl.value),
-    map(v => {
-      this.page$.next(1);
-      return v || 'ALL';
-    })
-  );
-
-  private readonly selectedInstitution$ = this.selectedInstitutionControl.valueChanges.pipe(
-    startWith(this.selectedInstitutionControl.value),
-    map(inst => {
-      this.page$.next(1);
-      return inst || 'ALL';
-    })
-  );
-
-  ngOnInit() {
-    this.subs.add(
-      this.selectedVillageControl.valueChanges.subscribe(() => {
-        this.selectedInstitutionControl.setValue('ALL', { emitEvent: true });
-      })
-    );
-  }
+  ngOnInit() {}
 
   ngOnDestroy() {
     this.subs.unsubscribe();
   }
 
-  clearLocationFilters() {
-    this.selectedVillageControl.setValue('ALL');
-    this.selectedInstitutionControl.setValue('ALL');
-  }
-
-  vm$ = combineLatest([
-    this.rawBeneficiaries$,
+  vm$: Observable<AnalystBeneficiariesVm> = combineLatest([
+    this.refresh$.pipe(startWith(void 0)),
     this.page$.asObservable(),
     this.sortCol$.asObservable(),
     this.sortDir$.asObservable(),
     this.search$,
     this.typeTab$.asObservable(),
-    this.selectedVillage$,
-    this.selectedInstitution$,
   ]).pipe(
-    map(([beneficiaries, page, sortCol, sortDir, search, typeTab, selectedVillage, selectedInstitution]) => {
-      let items = [...beneficiaries];
+    switchMap(([_, page, sortCol, sortDir, search, typeTab]) => {
+      this.isPageLoading$.next(true);
+      const params: any = {
+        page,
+        limit: this.pageSize,
+        typeTab,
+        sortBy: sortCol || 'createdAt',
+        sortDir: sortDir || 'desc',
+      };
+      if (search) params.search = search;
 
-      if (typeTab !== 'ALL') {
-        items = items.filter(b => {
-          const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
-          if (typeTab === 'STAKEHOLDER') return isStakeholder;
-          if (isStakeholder) return false;
+      return this.analystService.getBeneficiaries(params).pipe(
+        map((res: any) => {
+          this.isPageLoading$.next(false);
+          // Standard server pagination response
+          if (res && res.data && res.meta) {
+            const data = Array.isArray(res.data) ? res.data : [];
+            const meta = res.meta;
+            const stats = res.stats || {};
+            const total = meta.total ?? data.length;
+            const pageCount = meta.totalPages ?? Math.max(1, Math.ceil(total / this.pageSize));
+            const safePage = meta.page ?? page;
+            const { startIndex, endIndex } = calculatePaginationIndices(safePage, meta.limit ?? this.pageSize, total);
 
-          const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
-          return typeTab === 'PRIORITY' ? isPriority : !isPriority;
-        });
-      }
+            this.lastPage = safePage;
+            this.lastPageCount = pageCount;
 
-      if (selectedVillage && selectedVillage !== 'ALL') {
-        const targetVill = String(selectedVillage).trim().toLowerCase();
-        items = items.filter(b => {
-          const bVill = String(b.village || b.location?.village || b.location?.villageName || '').trim().toLowerCase();
-          return bVill === targetVill;
-        });
-      }
-
-      if (selectedInstitution && selectedInstitution !== 'ALL') {
-        const targetInst = String(selectedInstitution).trim().toLowerCase();
-        items = items.filter(b => {
-          const bLocId = String(b.locationId || b.awcId || b.schoolId || b.healthCenterId || b.location?.id || '');
-          const bLocCode = String(b.locationCode || b.location?.locationCode || '').toLowerCase();
-          const bName = String(b.locationName || b.awcName || b.schoolName || b.healthCenterName || b.location?.name || '').toLowerCase();
-          return bLocId === selectedInstitution || bLocCode === targetInst || bName.includes(targetInst);
-        });
-      }
-
-      if (search) {
-        items = items.filter((b) =>
-          (b.name && b.name.toLowerCase().includes(search)) ||
-          (b.uid && b.uid.toLowerCase().includes(search)) ||
-          (b.mobileNumber && b.mobileNumber.toLowerCase().includes(search)) ||
-          (b.village && b.village.toLowerCase().includes(search)) ||
-          (b.location?.village && b.location.village.toLowerCase().includes(search)) ||
-          (b.project?.name && b.project.name.toLowerCase().includes(search))
-        );
-      }
-
-      if (sortCol) {
-        items.sort((a: any, b: any) => {
-          let aVal: any = a[sortCol];
-          let bVal: any = b[sortCol];
-
-          if (sortCol === 'project') {
-            aVal = a.project?.name || '';
-            bVal = b.project?.name || '';
-          } else if (sortCol === 'location') {
-            aVal = a.village || a.location?.village || '';
-            bVal = b.village || b.location?.village || '';
-          } else if (sortCol === 'age') {
-            aVal = a.dateOfBirth ? new Date(a.dateOfBirth).getTime() : 0;
-            bVal = b.dateOfBirth ? new Date(b.dateOfBirth).getTime() : 0;
-            aVal = this.getBeneficiaryType(a);
-            bVal = this.getBeneficiaryType(b);
-          } else if (sortCol === 'monthlyIncome') {
-            aVal = Number(a.monthlyIncome) || 0;
-            bVal = Number(b.monthlyIncome) || 0;
-          } else if (sortCol === 'dateOfBirth' || sortCol === 'dateOfMarriage' || sortCol === 'createdAt') {
-            aVal = a[sortCol] ? new Date(a[sortCol]).getTime() : 0;
-            bVal = b[sortCol] ? new Date(b[sortCol]).getTime() : 0;
-          } else {
-            if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-            if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+            return {
+              items: data,
+              total,
+              totalBeneficiaries: stats.totalBeneficiaries ?? total,
+              page: safePage,
+              pageCount,
+              pageSize: meta.limit ?? this.pageSize,
+              startIndex,
+              endIndex,
+              priorityCount: stats.priorityCount ?? 0,
+              stakeholderCount: stats.stakeholderCount ?? 0,
+              generalCount: stats.generalCount ?? 0,
+              registeredThisMonth: stats.registeredThisMonth ?? 0,
+              typeTab,
+            };
           }
 
-          if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
-          if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
-          return 0;
-        });
-      }
+          // Fallback if res is a plain array
+          const beneficiaries = Array.isArray(res) ? res : [];
+          let items = [...beneficiaries];
 
-      const total = items.length;
-      const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
-      const safePage = Math.min(Math.max(1, page), pageCount);
-      const startIndex = (safePage - 1) * this.pageSize;
+          if (typeTab !== 'ALL') {
+            items = items.filter(b => {
+              const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
+              if (typeTab === 'STAKEHOLDER') return isStakeholder;
+              if (isStakeholder) return false;
+              const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
+              return typeTab === 'PRIORITY' ? isPriority : !isPriority;
+            });
+          }
 
-      this.lastPage = safePage;
-      this.lastPageCount = pageCount;
+          if (search) {
+            items = items.filter((b) =>
+              (b.name && b.name.toLowerCase().includes(search)) ||
+              (b.uid && b.uid.toLowerCase().includes(search)) ||
+              (b.mobileNumber && b.mobileNumber.toLowerCase().includes(search)) ||
+              (b.village && b.village.toLowerCase().includes(search)) ||
+              (b.location?.village && b.location.village.toLowerCase().includes(search)) ||
+              (b.project?.name && b.project.name.toLowerCase().includes(search))
+            );
+          }
 
-      // Stats calculation for the cards (matching the 4 Prodex cards)
-      const priorityCount = beneficiaries.filter(b => {
-        const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
-        if (isStakeholder) return false;
-        return !!(b.guardianName || b.qualification || b.religion || b.caste);
-      }).length;
+          const total = items.length;
+          const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
+          const safePage = Math.min(Math.max(1, page), pageCount);
+          const { startIndex, endIndex } = calculatePaginationIndices(safePage, this.pageSize, total);
 
-      const stakeholderCount = beneficiaries.filter(b => (b.typeof || '').toLowerCase() === 'stakeholder').length;
+          this.lastPage = safePage;
+          this.lastPageCount = pageCount;
 
-      const generalCount = beneficiaries.filter(b => {
-        const isStakeholder = (b.typeof || '').toLowerCase() === 'stakeholder';
-        if (isStakeholder) return false;
-        const isPriority = !!(b.guardianName || b.qualification || b.religion || b.caste);
-        return !isPriority;
-      }).length;
-
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const registeredThisMonth = beneficiaries.filter(b => {
-        if (!b.createdAt) return false;
-        const d = new Date(b.createdAt);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      }).length;
-
-      return {
-        items: items.slice(startIndex, startIndex + this.pageSize),
-        total,
-        totalBeneficiaries: beneficiaries.length,
-        page: safePage,
-        pageCount,
-        pageSize: this.pageSize,
-        startIndex,
-        endIndex: Math.min(startIndex + this.pageSize, total),
-        priorityCount,
-        stakeholderCount,
-        generalCount,
-        registeredThisMonth,
-        typeTab,
-      };
-    }),
+          return {
+            items: items.slice(startIndex, startIndex + this.pageSize),
+            total,
+            totalBeneficiaries: beneficiaries.length,
+            page: safePage,
+            pageCount,
+            pageSize: this.pageSize,
+            startIndex,
+            endIndex,
+            priorityCount: 0,
+            stakeholderCount: 0,
+            generalCount: 0,
+            registeredThisMonth: 0,
+            typeTab,
+          };
+        }),
+        catchError((err: any) => {
+          this.isPageLoading$.next(false);
+          return of({
+            items: [],
+            total: 0,
+            totalBeneficiaries: 0,
+            page: 1,
+            pageCount: 1,
+            pageSize: this.pageSize,
+            startIndex: 0,
+            endIndex: 0,
+            priorityCount: 0,
+            stakeholderCount: 0,
+            generalCount: 0,
+            registeredThisMonth: 0,
+            typeTab,
+          });
+        })
+      );
+    })
   );
 
   setTypeTab(tab: 'ALL' | 'PRIORITY' | 'GENERAL' | 'STAKEHOLDER') {
@@ -607,7 +486,15 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
   }
 
   async exportToExcel(): Promise<void> {
-    const beneficiaries = await firstValueFrom(this.rawBeneficiaries$);
+    const search = (this.searchControl.value || '').trim();
+    const typeTab = this.typeTab$.value;
+
+    const params: any = { all: 'true' };
+    if (search) params.search = search;
+    if (typeTab && typeTab !== 'ALL') params.typeTab = typeTab;
+
+    const res = await firstValueFrom(this.analystService.getBeneficiaries(params));
+    const beneficiaries: any[] = Array.isArray(res) ? res : (res?.data || []);
 
     let exportBeneficiaries: any[] = [];
 
@@ -678,6 +565,27 @@ export class AnalystBeneficiary implements OnInit, OnDestroy {
     );
 
     saveAs(blob, 'beneficiaries.xlsx');
+  }
+
+  currentExportPopover: any = null;
+
+  onOpenExportPopover(popover?: any): void {
+    this.currentExportPopover = popover;
+    this.exportMode = 'RANGE';
+    this.exportDateRange = null;
+  }
+
+  closeExportPopover(popover?: any): void {
+    const target = popover || this.currentExportPopover;
+    if (target && typeof target.hide === 'function') {
+      target.hide();
+    }
+    this.currentExportPopover = null;
+  }
+
+  confirmExport(popover?: any): void {
+    this.closeExportPopover(popover);
+    this.exportToExcel();
   }
 
   openExportDialog(): void {

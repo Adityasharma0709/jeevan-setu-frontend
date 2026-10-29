@@ -91,15 +91,16 @@ export class ReportActivity {
       if (!search) return of([]);
       return this.outreachService.getBeneficiaries(search);
     }),
-    map(beneficiaries => {
+    map((res: any) => {
+      const list: any[] = Array.isArray(res) ? res : (res?.data || []);
       const flattened: any[] = [];
-      beneficiaries.forEach(ben => {
+      list.forEach((ben: any) => {
         // Add the main beneficiary
         flattened.push({ ...ben, isChild: false });
         
         // Add children as selectable entities
         if (ben.children && ben.children.length > 0) {
-          ben.children.forEach(child => {
+          ben.children.forEach((child: any) => {
             flattened.push({
               ...child,
               isChild: true,
