@@ -59,43 +59,48 @@ export class Requests {
         endIndex: number;
         pageSize: number;
     }> = combineLatest([
-        this.refresh$.pipe(startWith(void 0), switchMap(() => this.outreachService.getMyRequests())),
+        this.refresh$.pipe(startWith(void 0)),
         this.page$.asObservable()
     ]).pipe(
-        map(([data, page]) => {
-            const requests = Array.isArray(data) ? data.map(req => this.normalizeRequest(req)) : [];
-            const total = requests.length;
-            const pageCount = Math.max(1, Math.ceil(total / this.pageSize));
-            const safePage = Math.min(Math.max(1, page), pageCount);
-            const startIndex = (safePage - 1) * this.pageSize;
-            const items = requests.slice(startIndex, startIndex + this.pageSize);
+        switchMap(([_, page]) =>
+            this.outreachService.getMyRequests({ page, limit: this.pageSize }).pipe(
+                map((res: any) => {
+                    const rawItems = res?.data ?? (Array.isArray(res) ? res : []);
+                    const items = rawItems.map((req: any) => this.normalizeRequest(req));
+                    const total = res?.meta?.total ?? items.length;
+                    const pageCount = res?.meta?.totalPages ?? Math.max(1, Math.ceil(total / this.pageSize));
+                    const safePage = res?.meta?.page ?? page;
+                    const startIndex = (safePage - 1) * this.pageSize;
+                    const endIndex = Math.min(startIndex + this.pageSize, total);
 
-            this.lastPage = safePage;
-            this.lastPageCount = pageCount;
+                    this.lastPage = safePage;
+                    this.lastPageCount = pageCount;
 
-            return {
-                items,
-                total,
-                page: safePage,
-                pageCount,
-                startIndex,
-                endIndex: Math.min(startIndex + this.pageSize, total),
-                pageSize: this.pageSize
-            };
-        }),
-        catchError((err) => {
-            toast.error('Failed to load requests');
-            console.error(err);
-            return of({
-                items: [],
-                total: 0,
-                page: 1,
-                pageCount: 1,
-                startIndex: 0,
-                endIndex: 0,
-                pageSize: this.pageSize
-            });
-        }),
+                    return {
+                        items,
+                        total,
+                        page: safePage,
+                        pageCount,
+                        startIndex,
+                        endIndex,
+                        pageSize: this.pageSize
+                    };
+                }),
+                catchError((err) => {
+                    toast.error('Failed to load requests');
+                    console.error(err);
+                    return of({
+                        items: [],
+                        total: 0,
+                        page: 1,
+                        pageCount: 1,
+                        startIndex: 0,
+                        endIndex: 0,
+                        pageSize: this.pageSize
+                    });
+                })
+            )
+        ),
         shareReplay(1)
     );
 

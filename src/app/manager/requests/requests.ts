@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BehaviorSubject, Observable, combineLatest, forkJoin, map, shareReplay, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, forkJoin, map, shareReplay, switchMap, tap, catchError, of } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { ManagerService } from '../manager.service';
@@ -83,122 +83,117 @@ export class Requests implements OnInit {
   }
 
   private initPagers() {
-    const baseIncoming$ = this.refreshIncoming$.pipe(
-      tap(() => this.isLoading = true),
-      switchMap(() => forkJoin({
-        beneficiary: this.managerService.getBeneficiaryRequests(),
-        profile: this.managerService.getPendingRequests()
-      })),
-      map((res: any) => {
-        const ben = Array.isArray(res.beneficiary) ? res.beneficiary : [];
-        const prof = Array.isArray(res.profile) ? res.profile : [];
-        const requests = [...ben, ...prof];
-        
-        // Deduplicate by ID
-        const unique = Array.from(new Map(requests.map(r => [r.id, r])).values());
-        
-        return unique
-          .filter((request) => String(request?.status || 'PENDING').toUpperCase() === 'PENDING')
-          .map((request) => this.normalizeIncomingRequest(request))
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    this.incomingPager$ = combineLatest([this.incomingPage$, this.refreshIncoming$]).pipe(
+      tap(() => {
+        this.isLoading = true;
       }),
-      tap(() => this.isLoading = false),
+      switchMap(([page]: [number, void]) =>
+        this.managerService.getIncomingRequests({ page, limit: this.pageSize }).pipe(
+          map((res: any) => {
+            const rawItems = res?.data ?? (Array.isArray(res) ? res : []);
+            const items = rawItems.map((request: any) => this.normalizeIncomingRequest(request));
+            const total = res?.meta?.total ?? items.length;
+            const totalPages = res?.meta?.totalPages ?? Math.max(1, Math.ceil(total / this.pageSize));
+            const safePage = res?.meta?.page ?? page;
+            const startIndex = (safePage - 1) * this.pageSize;
+            const from = total === 0 ? 0 : startIndex + 1;
+            const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
+
+            this.lastIncomingPage = safePage;
+            this.lastIncomingTotalPages = totalPages;
+            this.isLoading = false;
+            this.cdr.detectChanges();
+
+            return { items, page: safePage, pageSize: this.pageSize, total, totalPages, from, to };
+          }),
+          catchError((err: any) => {
+            this.isLoading = false;
+            this.cdr.detectChanges();
+            toast.error(err?.error?.message || 'Failed to load incoming requests');
+            return of({ items: [], page: 1, pageSize: this.pageSize, total: 0, totalPages: 1, from: 0, to: 0 });
+          })
+        )
+      ),
       shareReplay({ bufferSize: 1, refCount: true })
     );
 
-    this.incomingPager$ = combineLatest([baseIncoming$, this.incomingPage$]).pipe(
-      map(([requests, page]) => {
-        const total = requests.length;
-        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
-        const safePage = Math.min(Math.max(1, page), totalPages);
-        const startIndex = (safePage - 1) * this.pageSize;
-        const items = requests.slice(startIndex, startIndex + this.pageSize);
-        const from = total === 0 ? 0 : startIndex + 1;
-        const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
-        return { items, page: safePage, pageSize: this.pageSize, total, totalPages, from, to };
-      }),
-      tap((vm) => {
-        this.lastIncomingPage = vm.page;
-        this.lastIncomingTotalPages = vm.totalPages;
-        this.cdr.detectChanges();
-      }),
+    this.myPager$ = combineLatest([this.myPage$, this.refreshMy$]).pipe(
+      switchMap(([page]: [number, void]) =>
+        this.managerService.getMyRequests({ page, limit: this.pageSize }).pipe(
+          map((res: any) => {
+            const rawItems = res?.data ?? (Array.isArray(res) ? res : []);
+            const items = rawItems.map((request: any) => this.normalizeMyRequest(request));
+            const total = res?.meta?.total ?? items.length;
+            const totalPages = res?.meta?.totalPages ?? Math.max(1, Math.ceil(total / this.pageSize));
+            const safePage = res?.meta?.page ?? page;
+            const startIndex = (safePage - 1) * this.pageSize;
+            const from = total === 0 ? 0 : startIndex + 1;
+            const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
+
+            this.lastMyPage = safePage;
+            this.lastMyTotalPages = totalPages;
+            this.cdr.detectChanges();
+
+            return { items, page: safePage, pageSize: this.pageSize, total, totalPages, from, to };
+          }),
+          catchError((err: any) => {
+            this.cdr.detectChanges();
+            toast.error(err?.error?.message || 'Failed to load my requests');
+            return of({ items: [], page: 1, pageSize: this.pageSize, total: 0, totalPages: 1, from: 0, to: 0 });
+          })
+        )
+      ),
       shareReplay({ bufferSize: 1, refCount: true })
     );
+  }
 
-    const baseMy$ = this.refreshMy$.pipe(
-      switchMap(() => this.managerService.getMyRequests()),
-      map((requests: any) => {
-        const safeRequests = Array.isArray(requests) ? requests : [];
-        return safeRequests.map((request: any) => {
-            const payload = request?.payload || request?.data || {};
-            const displayPayload = this.extractDisplayPayload(payload);
-            const changesPreview = this.buildChangesPreview(displayPayload);
-            const reqType = this.getRequestType(request);
-            const targetAdmin = request?.targetAdmin || request?.approvedBy || null;
+  private normalizeMyRequest(request: any): any {
+    const payload = request?.payload || request?.data || {};
+    const displayPayload = this.extractDisplayPayload(payload);
+    const changesPreview = this.buildChangesPreview(displayPayload);
+    const reqType = this.getRequestType(request);
+    const targetAdmin = request?.targetAdmin || request?.approvedBy || null;
 
-            let targetLabel = '-';
-            let targetSubLabel = '';
+    let targetLabel = '-';
+    let targetSubLabel = '';
 
-            if (reqType === 'BENEFICIARY_UPDATE') {
-              const ben = request?.beneficiary;
-              if (ben?.name) {
-                targetLabel = ben.name;
-                targetSubLabel = ben.uid ? `UID: ${ben.uid}` : '';
-              } else {
-                const id = payload?.beneficiaryId || request?.beneficiaryId || '-';
-                targetLabel = id !== '-' ? `Beneficiary #${id}` : '-';
-              }
-            } else if (['CREATE_REQUEST', 'PROFILE_UPDATE', 'DEACTIVATE_REQUEST', 'ACTIVATE_WORKER', 'DEACTIVATE_WORKER'].includes(reqType)) {
-              const worker = request?.worker;
-              if (worker?.name) {
-                targetLabel = worker.name;
-                targetSubLabel = worker.email || worker.usercode || '';
-              } else if (payload?.name) {
-                targetLabel = payload.name;
-                targetSubLabel = payload.email || '';
-              } else if (payload?.email) {
-                targetLabel = payload.email;
-              } else {
-                targetLabel = 'Worker Account';
-              }
-            }
+    if (reqType === 'BENEFICIARY_UPDATE') {
+      const ben = request?.beneficiary;
+      if (ben?.name) {
+        targetLabel = ben.name;
+        targetSubLabel = ben.uid ? `UID: ${ben.uid}` : '';
+      } else {
+        const id = payload?.beneficiaryId || request?.beneficiaryId || '-';
+        targetLabel = id !== '-' ? `Beneficiary #${id}` : '-';
+      }
+    } else if (['CREATE_REQUEST', 'PROFILE_UPDATE', 'DEACTIVATE_REQUEST', 'ACTIVATE_WORKER', 'DEACTIVATE_WORKER'].includes(reqType)) {
+      const worker = request?.worker;
+      if (worker?.name) {
+        targetLabel = worker.name;
+        targetSubLabel = worker.email || worker.usercode || '';
+      } else if (payload?.name) {
+        targetLabel = payload.name;
+        targetSubLabel = payload.email || '';
+      } else if (payload?.email) {
+        targetLabel = payload.email;
+      } else {
+        targetLabel = 'Worker Account';
+      }
+    }
 
-            return {
-              ...request,
-              type: reqType,
-              sentToName: targetAdmin?.name || 'Admin',
-              sentToEmail: targetAdmin?.email || '',
-              targetLabel,
-              targetSubLabel,
-              createdAt: request?.createdAt || new Date().toISOString(),
-              payloadText: this.getPayloadText(request),
-              changesPreview,
-              changes: payload?.changes || payload?.data || payload || {},
-              beneficiaryId: payload?.beneficiaryId || request?.beneficiaryId || '-'
-            };
-        });
-      }),
-      shareReplay({ bufferSize: 1, refCount: true })
-    );
-
-    this.myPager$ = combineLatest([baseMy$, this.myPage$]).pipe(
-      map(([requests, page]) => {
-        const total = requests.length;
-        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
-        const safePage = Math.min(Math.max(1, page), totalPages);
-        const startIndex = (safePage - 1) * this.pageSize;
-        const items = requests.slice(startIndex, startIndex + this.pageSize);
-        const from = total === 0 ? 0 : startIndex + 1;
-        const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
-        return { items, page: safePage, pageSize: this.pageSize, total, totalPages, from, to };
-      }),
-      tap((vm) => {
-        this.lastMyPage = vm.page;
-        this.lastMyTotalPages = vm.totalPages;
-        this.cdr.detectChanges();
-      }),
-      shareReplay({ bufferSize: 1, refCount: true })
-    );
+    return {
+      ...request,
+      type: reqType,
+      sentToName: targetAdmin?.name || 'Admin',
+      sentToEmail: targetAdmin?.email || '',
+      targetLabel,
+      targetSubLabel,
+      createdAt: request?.createdAt || new Date().toISOString(),
+      payloadText: this.getPayloadText(request),
+      changesPreview,
+      changes: payload?.changes || payload?.data || payload || {},
+      beneficiaryId: payload?.beneficiaryId || request?.beneficiaryId || '-'
+    };
   }
 
   ngOnInit() {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { toast } from 'ngx-sonner';
 import { LottieComponent, AnimationOptions } from 'ngx-lottie';
 import { AdminService } from '../admin.service';
-import { BehaviorSubject, combineLatest, forkJoin, map, Observable, of, shareReplay, tap, catchError } from 'rxjs';
+import { BehaviorSubject, combineLatest, forkJoin, map, Observable, of, shareReplay, tap, catchError, switchMap } from 'rxjs';
 import { ZardButtonComponent } from '@/shared/components/button';
 import {
   ZardTableComponent,
@@ -52,7 +52,7 @@ export class Requests implements OnInit {
 
   readonly pageSize = 10;
   private readonly page$ = new BehaviorSubject<number>(1);
-  private readonly requests$ = new BehaviorSubject<any[]>([]);
+  private readonly refresh$ = new BehaviorSubject<void>(undefined);
   private lastPage = 1;
   private lastTotalPages = 1;
 
@@ -62,35 +62,54 @@ export class Requests implements OnInit {
     private cdr: ChangeDetectorRef,
     private requestCountService: RequestCountService
   ) {
-    this.pager$ = combineLatest([this.requests$, this.page$]).pipe(
-      map(([requests, page]) => {
-        const total = (requests || []).length;
-        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
-        const safePage = Math.min(Math.max(1, page), totalPages);
-
-        const startIndex = (safePage - 1) * this.pageSize;
-        const endIndexExclusive = Math.min(startIndex + this.pageSize, total);
-        const items = (requests || []).slice(startIndex, endIndexExclusive);
-
-        const from = total === 0 ? 0 : startIndex + 1;
-        const to = total === 0 ? 0 : endIndexExclusive;
-
-        return {
-          items,
-          page: safePage,
-          pageSize: this.pageSize,
-          total,
-          totalPages,
-          from,
-          to,
-        };
+    this.pager$ = combineLatest([this.page$, this.refresh$]).pipe(
+      tap(() => {
+        this.isLoading = true;
       }),
-      tap((vm) => {
-        if (vm.page !== this.page$.getValue()) this.page$.next(vm.page);
-        this.lastPage = vm.page;
-        this.lastTotalPages = vm.totalPages;
-      }),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      switchMap(([page]: [number, void]) =>
+        this.adminService.getBeneficiaryRequests({ page, limit: this.pageSize }).pipe(
+          map((res: any) => {
+            const rawItems = res?.data ?? (Array.isArray(res) ? res : []);
+            const items = rawItems.map((r: any) => this.normalizeRequest(r));
+            const total = res?.meta?.total ?? items.length;
+            const totalPages = res?.meta?.totalPages ?? Math.max(1, Math.ceil(total / this.pageSize));
+            const safePage = res?.meta?.page ?? page;
+            const startIndex = (safePage - 1) * this.pageSize;
+            const from = total === 0 ? 0 : startIndex + 1;
+            const to = total === 0 ? 0 : Math.min(startIndex + this.pageSize, total);
+
+            this.lastPage = safePage;
+            this.lastTotalPages = totalPages;
+            this.isLoading = false;
+            this.cdr.detectChanges();
+
+            return {
+              items,
+              page: safePage,
+              pageSize: this.pageSize,
+              total,
+              totalPages,
+              from,
+              to,
+            };
+          }),
+          catchError((err) => {
+            this.isLoading = false;
+            this.cdr.detectChanges();
+            toast.error(err?.error?.message || 'Failed to load requests');
+            return of({
+              items: [],
+              page: 1,
+              pageSize: this.pageSize,
+              total: 0,
+              totalPages: 1,
+              from: 0,
+              to: 0,
+            });
+          })
+        )
+      ),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
   }
 
@@ -99,35 +118,7 @@ export class Requests implements OnInit {
   }
 
   loadRequests() {
-    this.isLoading = true;
-    forkJoin({
-      beneficiary: this.adminService.getBeneficiaryRequests().pipe(catchError(() => of([]))),
-      account: this.adminService.getAccountRequests().pipe(catchError(() => of([])))
-    }).subscribe({
-      next: (results) => {
-        const benReqs = Array.isArray(results.beneficiary) ? results.beneficiary : [];
-        const accReqs = Array.isArray(results.account) ? results.account : [];
-        const combined = [...benReqs, ...accReqs];
-        
-        // Deduplicate by ID
-        const unique = Array.from(new Map(combined.map(r => [r.id, r])).values());
-        
-        const normalized = unique.map(r => this.normalizeRequest(r));
-        const sorted = normalized.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        
-        this.goToPage(1);
-        this.requests$.next(sorted);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.goToPage(1);
-        this.requests$.next([]);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        toast.error(err?.error?.message || 'Failed to load requests');
-      }
-    });
+    this.refresh$.next();
   }
 
   private normalizeRequest(request: any): any {

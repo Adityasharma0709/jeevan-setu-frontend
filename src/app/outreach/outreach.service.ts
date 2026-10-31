@@ -251,8 +251,8 @@ export class OutreachService {
     return this.api.post(`${this.endpoint}/beneficiary/${id}/request-update`, { changes });
   }
 
-  getMyRequests(): Observable<any[]> {
-    return this.api.get(`${this.endpoint}/my-requests`) as Observable<any[]>;
+  getMyRequests(params?: any): Observable<any> {
+    return this.api.get(`${this.endpoint}/my-requests`, params);
   }
 
 

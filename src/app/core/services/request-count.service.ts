@@ -25,8 +25,8 @@ export class RequestCountService {
           this.adminService.getAccountRequests().pipe(catchError(() => of([])))
         ]).pipe(
           map(([ben, acc]) => {
-            const benArr = Array.isArray(ben) ? ben : [];
-            const accArr = Array.isArray(acc) ? acc : [];
+            const benArr = Array.isArray(ben) ? ben : (ben?.data || []);
+            const accArr = Array.isArray(acc) ? acc : (acc?.data || []);
             const combined = [...benArr, ...accArr];
             
             // Deduplicate by ID
@@ -43,8 +43,8 @@ export class RequestCountService {
           this.managerService.getPendingRequests().pipe(catchError(() => of([])))
         ]).pipe(
           map(([ben, prof]) => {
-            const benArr = Array.isArray(ben) ? ben : [];
-            const profArr = Array.isArray(prof) ? prof : [];
+            const benArr = Array.isArray(ben) ? ben : (ben?.data || []);
+            const profArr = Array.isArray(prof) ? prof : (prof?.data || []);
             const combined = [...benArr, ...profArr];
             
             // Deduplicate by ID

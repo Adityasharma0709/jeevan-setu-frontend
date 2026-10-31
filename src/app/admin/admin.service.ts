@@ -149,8 +149,8 @@ export class AdminService {
         return this.api.get(`${this.endpoint}/sessions`) as Observable<Session[]>;
     }
 
-    getBeneficiaryRequests(): Observable<any[]> {
-        return this.api.get(`${this.endpoint}/beneficiary-requests`) as Observable<any[]>;
+    getBeneficiaryRequests(params?: any): Observable<any> {
+        return this.api.get(`${this.endpoint}/beneficiary-requests`, params);
     }
 
     approveBeneficiaryRequest(id: number): Observable<any> {
@@ -161,8 +161,8 @@ export class AdminService {
         return this.api.patch(`${this.endpoint}/beneficiary-requests/${id}/reject`, { reason });
     }
 
-    getAccountRequests(): Observable<any[]> {
-        return this.api.get(`${this.endpoint}/profile-requests`) as Observable<any[]>;
+    getAccountRequests(params?: any): Observable<any> {
+        return this.api.get(`${this.endpoint}/profile-requests`, params);
     }
 
     approveAccountRequest(id: number): Observable<any> {
