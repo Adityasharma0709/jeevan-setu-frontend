@@ -275,4 +275,26 @@ export class AnalystService {
   updateProfile(data: any): Observable<any> {
     return this.api.put('users/profile', data);
   }
+  getReportLocations(): Observable<{ states: string[]; districtsByState: Record<string, string[]>; allDistricts: string[] }> {
+    const cacheKey = 'report_locations';
+    return this.checkCache(
+      cacheKey,
+      (this.api.get(`analyst/report-locations`) as Observable<any>).pipe(
+        map((res) => res || { states: [], districtsByState: {}, allDistricts: [] }),
+        catchError(() => of({ states: [], districtsByState: {}, allDistricts: [] }))
+      )
+    );
+  }
+
+  getReports(params?: any): Observable<{ data: any[]; meta: any; stats: any }> {
+    return (this.api.get(`analyst/reports`, params) as Observable<any>).pipe(
+      map((res) => res || { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 1 }, stats: { totalReports: 0, screenedCount: 0, unscreenedCount: 0 } }),
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          return of({ data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 1 }, stats: { totalReports: 0, screenedCount: 0, unscreenedCount: 0 } });
+        }
+        return throwError(() => error);
+      })
+    );
+  }
 }

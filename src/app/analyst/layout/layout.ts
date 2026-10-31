@@ -38,6 +38,7 @@ export class AnalystLayout {
   private readonly titleContext = {
     Dashboard: 'Overview of your analyst workspace',
     'Beneficiary Reports': 'All beneficiary reporting data across your assigned projects',
+    Reports: 'Activity and health screening reports across your assigned locations',
     Profile: 'Update your account information',
   } as const;
 
@@ -55,6 +56,12 @@ export class AnalystLayout {
       icon: 'users',
       activePaths: ['/analyst/beneficiary'],
     },
+    {
+      path: '/analyst/reports',
+      label: 'Reports',
+      icon: 'file-text',
+      activePaths: ['/analyst/reports'],
+    },
   ];
 
   readonly mobileNavItems: readonly {
@@ -70,6 +77,12 @@ export class AnalystLayout {
       label: 'Beneficiary',
       icon: 'users',
       activePaths: ['/analyst/beneficiary'],
+    },
+    {
+      path: '/analyst/reports',
+      label: 'Reports',
+      icon: 'file-text',
+      activePaths: ['/analyst/reports'],
     },
   ];
 
@@ -147,6 +160,9 @@ export class AnalystLayout {
 
   private resolveBackTarget(path: string): string {
     if (path === '/analyst/beneficiary') {
+      return '/analyst';
+    }
+    if (path === '/analyst/reports') {
       return '/analyst';
     }
     if (path === '/analyst/profile') {

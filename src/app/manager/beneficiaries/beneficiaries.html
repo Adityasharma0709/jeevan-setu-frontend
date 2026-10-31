@@ -266,11 +266,12 @@
         </button>
       </div>
 
-      <div class="relative w-full overflow-x-auto min-h-[350px]">
+      <div class="relative w-full min-h-[350px]">
         <!-- Standard Circular Loading Overlay during Pagination / Search -->
         <z-table-loader [zLoading]="isPageLoading$ | async" zText="Loading beneficiaries..."></z-table-loader>
 
-        <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
+        <div class="w-full overflow-x-auto min-h-[350px]">
+          <table z-table zType="grid" class="w-max table-auto border-collapse text-left text-[13px] text-slate-900">
         <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
           <tr z-table-row>
             <th z-table-head class="border-b border-slate-300 px-2 py-1.5 text-center whitespace-nowrap">
@@ -660,7 +661,8 @@
             </td>
           </tr>
         </tbody>
-      </table>
+          </table>
+        </div>
       </div>
     </div>
 

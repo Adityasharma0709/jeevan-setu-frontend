@@ -1,0 +1,848 @@
+<div class="activity-page space-y-6 max-w-7xl mx-auto p-5 md:p-6 pb-28 md:pb-20">
+  
+  <!-- ================= OUTREACH PAGE HEADER ================= -->
+  <app-outreach-page-header
+    title="Activity Reports"
+    subtitle="Manage and track health records for your assigned locations."
+    mobileSubtitle="Manage and track health records"
+    [showSearch]="true"
+    [showMobileExtras]="true"
+  >
+    <!-- Header projections: Search bar on desktop -->
+    <div outreachHeaderActions class="flex items-center gap-3">
+      <label class="relative hidden md:block w-64 lg:w-80">
+        <z-icon zType="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
+        <input
+          z-input
+          [formControl]="searchControl"
+          placeholder="Search by UID, name, or activity..."
+          class="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#006666] focus:ring-2 focus:ring-teal-100"
+        />
+      </label>
+    </div>
+
+    <!-- Mobile-only Search and Filters projected into header sticky block -->
+    <div outreachHeaderSearch class="md:hidden space-y-2.5 w-full">
+      <!-- Search Input -->
+      <label class="relative block w-full">
+        <z-icon zType="search" class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"></z-icon>
+        <input
+          z-input
+          [formControl]="searchControl"
+          placeholder="Search by UID, name, or activity..."
+          class="h-10 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#006666] focus:ring-2 focus:ring-teal-100"
+        />
+      </label>
+
+      <!-- Row 2: State & District Filters on Mobile -->
+      <div class="grid grid-cols-2 gap-2 w-full">
+        <z-combobox
+          [options]="stateOptions"
+          [formControl]="stateControl"
+          zWidth="full"
+          placeholder="State"
+          [searchable]="true"
+          searchPlaceholder="Search state..."
+        ></z-combobox>
+
+        <z-combobox
+          [options]="districtOptions"
+          [formControl]="districtControl"
+          zWidth="full"
+          placeholder="District"
+          [searchable]="true"
+          searchPlaceholder="Search district..."
+        ></z-combobox>
+      </div>
+
+      <!-- Row 3: Screening Filter & Date Range Filter -->
+      <div class="grid grid-cols-2 gap-2 w-full">
+        <!-- Screening Filter Popover Button -->
+        <button
+          type="button"
+          zPopover
+          [zContent]="screeningPopoverContent"
+          #mobileScreeningPopover="zPopover"
+          (click)="onOpenScreeningPopover(mobileScreeningPopover)"
+          class="flex h-10 w-full items-center justify-between gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition min-w-0 cursor-pointer"
+          [class]="isScreeningFilterActive ? 'border-[#006666] bg-teal-50/50 text-[#006666]' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'"
+          title="Filter by screening"
+        >
+          <div class="flex items-center gap-1.5 min-w-0 truncate">
+            <z-icon zType="activity" class="h-3.5 w-3.5 shrink-0" [class]="isScreeningFilterActive ? 'text-[#006666]' : 'text-slate-400'"></z-icon>
+            <span class="truncate text-xs">{{ screeningMobileFilterLabel }}</span>
+          </div>
+          <div class="flex items-center gap-0.5 shrink-0">
+            <span
+              *ngIf="isScreeningFilterActive"
+              (click)="selectScreeningFilter('ALL', mobileScreeningPopover); $event.stopPropagation()"
+              class="rounded-full p-0.5 hover:bg-teal-200/50 text-[#006666] cursor-pointer"
+              title="Reset screening filter"
+            >
+              <z-icon zType="x" class="h-3 w-3"></z-icon>
+            </span>
+            <z-icon zType="chevron-down" class="h-3 w-3 text-slate-400"></z-icon>
+          </div>
+        </button>
+
+        <!-- Date Range Popover Button -->
+        <button
+          type="button"
+          zPopover
+          [zContent]="dateRangePopoverContent"
+          #mobileDatePopover="zPopover"
+          (click)="onOpenDatePopover(mobileDatePopover)"
+          class="flex h-10 w-full items-center justify-between gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition min-w-0 cursor-pointer"
+          [class]="isDateFilterActive ? 'border-[#006666] bg-teal-50/50 text-[#006666]' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'"
+          title="Filter by date"
+        >
+          <div class="flex items-center gap-1.5 min-w-0 truncate">
+            <z-icon zType="calendar" class="h-3.5 w-3.5 shrink-0" [class]="isDateFilterActive ? 'text-[#006666]' : 'text-slate-400'"></z-icon>
+            <span class="truncate text-xs">{{ isDateFilterActive ? dateFilterLabel : 'Date Range' }}</span>
+          </div>
+          <span
+            *ngIf="isDateFilterActive"
+            (click)="clearDateFilter(mobileDatePopover); $event.stopPropagation()"
+            class="shrink-0 rounded-full p-0.5 hover:bg-teal-200/50 text-[#006666] cursor-pointer"
+            title="Clear date filter"
+          >
+            <z-icon zType="x" class="h-3 w-3"></z-icon>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Extras (View Switcher) -->
+    <div outreachHeaderMobileExtras class="md:hidden overflow-hidden rounded-md border border-[#F3F4F6] bg-white p-3 space-y-3">
+      <div class="grid grid-cols-2">
+        <button
+          type="button"
+          (click)="setMobileViewMode('quickAccess')"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
+          [ngClass]="mobileViewMode === 'quickAccess' ? 'rounded-xl bg-[#066] text-white font-semibold text-[14px] leading-5' : 'rounded-xl bg-white text-slate-700 font-normal text-[14px] leading-5'"
+        >
+          <z-icon zType="credit-card"></z-icon>
+          Quick access
+        </button>
+        <button
+          type="button"
+          (click)="setMobileViewMode('table')"
+          class="flex flex-1 items-center justify-center gap-2 py-2.5 text-center leading-none transition"
+          [ngClass]="mobileViewMode === 'table' ? 'rounded-xl bg-[#066] text-white font-semibold text-[14px] leading-5' : 'rounded-xl bg-white text-slate-700 font-normal text-[14px] leading-5'"
+        >
+          <z-icon zType="table"></z-icon>
+          Table
+        </button>
+      </div>
+    </div>
+  </app-outreach-page-header>
+
+  <!-- ================= SCREENING FILTER POPOVER TEMPLATE ================= -->
+  <ng-template #screeningPopoverContent>
+    <z-popover class="p-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden space-y-1">
+      <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100">
+        <div class="flex items-center gap-1.5">
+          <z-icon zType="activity" class="h-3.5 w-3.5 text-[#006666]"></z-icon>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-700">Screening Status</span>
+        </div>
+        <button
+          *ngIf="isScreeningFilterActive"
+          type="button"
+          (click)="selectScreeningFilter('ALL')"
+          class="text-[11px] font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+        >
+          Reset
+        </button>
+      </div>
+
+      <div class="space-y-1 pt-0.5">
+        <!-- All Option -->
+        <button
+          type="button"
+          (click)="selectScreeningFilter('ALL')"
+          class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer text-left"
+          [class]="screeningFilter === 'ALL' ? 'bg-teal-50 text-[#006666] font-semibold ring-1 ring-teal-200/60' : 'text-slate-700 hover:bg-slate-50'"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="h-2 w-2 rounded-full bg-slate-300 shrink-0"></span>
+            <div>
+              <span class="block leading-tight font-semibold">All Reports</span>
+              <span class="text-[10px] text-slate-400 font-normal">Show all records</span>
+            </div>
+          </div>
+          <z-icon *ngIf="screeningFilter === 'ALL'" zType="check" class="h-3.5 w-3.5 text-[#006666] shrink-0"></z-icon>
+        </button>
+
+        <!-- Screened Option -->
+        <button
+          type="button"
+          (click)="selectScreeningFilter('YES')"
+          class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer text-left"
+          [class]="screeningFilter === 'YES' ? 'bg-teal-50 text-[#006666] font-semibold ring-1 ring-teal-200/60' : 'text-slate-700 hover:bg-slate-50'"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <div>
+              <span class="block leading-tight font-semibold">Screened</span>
+              <span class="text-[10px] text-slate-400 font-normal">Screening completed (Yes)</span>
+            </div>
+          </div>
+          <z-icon *ngIf="screeningFilter === 'YES'" zType="check" class="h-3.5 w-3.5 text-[#006666] shrink-0"></z-icon>
+        </button>
+
+        <!-- Not Screened Option -->
+        <button
+          type="button"
+          (click)="selectScreeningFilter('NO')"
+          class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer text-left"
+          [class]="screeningFilter === 'NO' ? 'bg-teal-50 text-[#006666] font-semibold ring-1 ring-teal-200/60' : 'text-slate-700 hover:bg-slate-50'"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="h-2 w-2 rounded-full bg-rose-500 shrink-0"></span>
+            <div>
+              <span class="block leading-tight font-semibold">Not Screened</span>
+              <span class="text-[10px] text-slate-400 font-normal">No screening recorded (No)</span>
+            </div>
+          </div>
+          <z-icon *ngIf="screeningFilter === 'NO'" zType="check" class="h-3.5 w-3.5 text-[#006666] shrink-0"></z-icon>
+        </button>
+      </div>
+    </z-popover>
+  </ng-template>
+
+  <!-- ================= DATE RANGE FILTER POPOVER TEMPLATE ================= -->
+  <ng-template #dateRangePopoverContent>
+    <z-popover class="p-3 sm:p-4 w-[calc(100vw-24px)] max-w-sm sm:w-96 space-y-3 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <z-icon zType="calendar" class="h-4 w-4 text-[#006666]"></z-icon>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Filter by Date Range</h3>
+        </div>
+        <button
+          *ngIf="tempFilterDateRange?.length"
+          type="button"
+          (click)="tempFilterDateRange = null"
+          class="text-[11px] font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+        >
+          Reset
+        </button>
+      </div>
+
+      <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-1 sm:p-2 flex justify-center overflow-x-auto">
+        <z-calendar zMode="range" [(value)]="tempFilterDateRange" class="mx-auto"></z-calendar>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-lg gap-2">
+        <span class="text-slate-400 font-medium shrink-0">Selected:</span>
+        <span class="font-bold text-slate-800 text-right truncate">
+          @if (tempFilterDateRange?.length === 2) {
+            {{ tempFilterDateRange?.[0] | date: 'dd/MM/yyyy' }} - {{ tempFilterDateRange?.[1] | date: 'dd/MM/yyyy' }}
+          } @else if (tempFilterDateRange?.length === 1) {
+            {{ tempFilterDateRange?.[0] | date: 'dd/MM/yyyy' }}
+          } @else {
+            No dates selected
+          }
+        </span>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+        <button
+          type="button"
+          z-button
+          zType="outline"
+          (click)="clearDateFilter()"
+          class="h-8 px-3 text-xs"
+        >
+          Clear
+        </button>
+        <button
+          type="button"
+          z-button
+          (click)="applyDateFilter()"
+          class="h-8 px-4 text-xs bg-[#006666] hover:bg-[#005353] text-white"
+        >
+          Apply Filter
+        </button>
+      </div>
+    </z-popover>
+  </ng-template>
+
+  <!-- ================= EXPORT REPORT POPOVER TEMPLATE ================= -->
+  <ng-template #exportPopoverContent>
+    <z-popover class="p-3 sm:p-4 w-[calc(100vw-24px)] max-w-sm sm:w-96 space-y-3 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <img src="excel.png" alt="Excel icon" class="h-4 w-4 object-contain" />
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Export to Excel</h3>
+        </div>
+        <button
+          *ngIf="exportMode === 'RANGE' && exportDateRange?.length"
+          type="button"
+          (click)="exportDateRange = null"
+          class="text-[11px] font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+        >
+          Reset
+        </button>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Export Scope</label>
+        <z-combobox [(ngModel)]="exportMode" [options]="exportOptions" placeholder="Select Export Scope" zWidth="full">
+        </z-combobox>
+      </div>
+
+      @if (exportMode === 'RANGE') {
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-1 sm:p-2 flex justify-center overflow-x-auto">
+          <z-calendar zMode="range" [(value)]="exportDateRange" class="mx-auto"></z-calendar>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-lg gap-2">
+          <span class="text-slate-400 font-medium shrink-0">Selected:</span>
+          <span class="font-bold text-slate-800 text-right truncate">
+            @if (exportDateRange?.length === 2) {
+              {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }} - {{ exportDateRange?.[1] | date: 'dd/MM/yyyy' }}
+            } @else if (exportDateRange?.length === 1) {
+              {{ exportDateRange?.[0] | date: 'dd/MM/yyyy' }}
+            } @else {
+              No dates selected
+            }
+          </span>
+        </div>
+      }
+
+      <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+        <button
+          type="button"
+          z-button
+          zType="outline"
+          (click)="closeExportPopover()"
+          class="h-8 px-3 text-xs"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          z-button
+          (click)="confirmExport()"
+          [disabled]="isExporting"
+          class="h-8 px-4 text-xs bg-[#006666] hover:bg-[#005353] text-white flex items-center gap-1.5"
+        >
+          <z-icon zType="download" class="h-3.5 w-3.5"></z-icon>
+          <span>{{ isExporting ? 'Exporting...' : 'Export' }}</span>
+        </button>
+      </div>
+    </z-popover>
+  </ng-template>
+
+  <!-- ================= REPORTS CONTENT ================= -->
+  <ng-container *ngIf="vm$ | async as vm; else loadingTpl">
+    
+    <!-- Large Screens: Modernized Table View (Prodex-inspired Layout) -->
+    <div class="hidden md:block bg-white border border-gray-100 rounded-2xl shadow-sm">
+      
+      <!-- Unified Header / Toolbar -->
+      <div class="border-b border-slate-200 px-6 py-5 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 bg-slate-50/50 rounded-t-2xl">
+        <!-- Left side: Title -->
+        <div class="flex items-center gap-3">
+          <h2 class="text-xl font-bold text-slate-800">All Activity Reports</h2>
+        </div>
+
+        <!-- Right side: Filters & Action Buttons -->
+        <div class="flex items-center gap-2.5 flex-wrap xl:flex-nowrap">
+          
+          <!-- State Filter Combobox -->
+          <div class="w-36">
+            <z-combobox
+              [options]="stateOptions"
+              [formControl]="stateControl"
+              zWidth="full"
+              placeholder="State"
+              [searchable]="true"
+              searchPlaceholder="State..."
+            ></z-combobox>
+          </div>
+
+          <!-- District Filter Combobox -->
+          <div class="w-36">
+            <z-combobox
+              [options]="districtOptions"
+              [formControl]="districtControl"
+              zWidth="full"
+              placeholder="District"
+              [searchable]="true"
+              searchPlaceholder="District..."
+            ></z-combobox>
+          </div>
+
+          <!-- Screening Filter Popover Button -->
+          <div class="relative inline-block">
+            <button
+              type="button"
+              zPopover
+              [zContent]="screeningPopoverContent"
+              #desktopScreeningPopover="zPopover"
+              (click)="onOpenScreeningPopover(desktopScreeningPopover)"
+              class="flex h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold shadow-sm transition hover:bg-slate-50 cursor-pointer"
+              [class]="isScreeningFilterActive ? 'border-[#006666] bg-teal-50/50 text-[#006666]' : 'border-slate-200 bg-white text-slate-700'"
+            >
+              <z-icon zType="activity" class="h-4 w-4" [class]="isScreeningFilterActive ? 'text-[#006666]' : 'text-slate-400'"></z-icon>
+              <span class="whitespace-nowrap">{{ screeningFilterLabel }}</span>
+              <z-icon zType="chevron-down" class="h-3 w-3 text-slate-400"></z-icon>
+              <span
+                *ngIf="isScreeningFilterActive"
+                (click)="selectScreeningFilter('ALL', desktopScreeningPopover); $event.stopPropagation()"
+                class="ml-0.5 rounded-full p-0.5 hover:bg-teal-200/50 text-[#006666] cursor-pointer"
+                title="Reset screening filter"
+              >
+                <z-icon zType="x" class="h-3 w-3"></z-icon>
+              </span>
+            </button>
+          </div>
+
+          <!-- Date Range Popover Button -->
+          <div class="relative inline-block">
+            <button
+              type="button"
+              zPopover
+              [zContent]="dateRangePopoverContent"
+              #desktopDatePopover="zPopover"
+              (click)="onOpenDatePopover(desktopDatePopover)"
+              class="flex h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold shadow-sm transition cursor-pointer"
+              [class]="isDateFilterActive ? 'border-[#006666] bg-teal-50/50 text-[#006666]' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'"
+            >
+              <z-icon zType="calendar" class="h-4 w-4" [class]="isDateFilterActive ? 'text-[#006666]' : 'text-slate-400'"></z-icon>
+              <span class="whitespace-nowrap">{{ dateFilterLabel }}</span>
+              <span
+                *ngIf="isDateFilterActive"
+                (click)="clearDateFilter(desktopDatePopover); $event.stopPropagation()"
+                class="ml-0.5 rounded-full p-0.5 hover:bg-teal-200/50 text-[#006666] cursor-pointer"
+                title="Clear date filter"
+              >
+                <z-icon zType="x" class="h-3 w-3"></z-icon>
+              </span>
+            </button>
+          </div>
+
+          <!-- Columns Selector Trigger & Dropdown -->
+          <div class="relative inline-block text-left column-selector-container">
+            <button
+              type="button"
+              (click)="toggleColumnSelectorDropdown()"
+              class="inline-flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 cursor-pointer"
+            >
+              <z-icon zType="sliders" class="h-4 w-4 text-slate-500"></z-icon>
+              Columns
+            </button>
+
+            <div
+              *ngIf="showColumnSelector"
+              class="absolute right-0 mt-2 w-72 max-h-[350px] overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 shadow-xl z-50"
+            >
+              <div class="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">
+                Show / Hide Columns
+              </div>
+
+              <div class="space-y-2">
+                <label
+                  *ngFor="let col of columnList"
+                  class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50"
+                >
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="selectedColumns[col.key]"
+                    (click)="$event.stopPropagation()"
+                    class="h-4 w-4 rounded border-slate-300 text-[#006666] focus:ring-[#006666]"
+                  />
+                  <span class="text-xs font-medium text-slate-700">{{ col.label }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Excel Sheet Button with Popover -->
+          <button
+            type="button"
+            zPopover
+            [zContent]="exportPopoverContent"
+            #desktopExportPopover="zPopover"
+            (click)="onOpenExportPopover(desktopExportPopover)"
+            class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[#006666] transition hover:bg-teal-50/50 hover:border-teal-200 cursor-pointer"
+          >
+            <img src="excel.png" alt="excel download button" class="h-5 w-5 object-contain" />
+            <span class="text-xs font-bold leading-none">Download sheet</span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Table Section Wrapper (Position context for non-scrolling loader) -->
+      <div class="relative w-full min-h-[350px]">
+        <!-- Table Loader Overlay (stays fixed & centered in visible container, never scrolls with table) -->
+        <z-table-loader [zLoading]="isPageLoading$ | async" zText="Loading activity reports..."></z-table-loader>
+
+        <!-- Horizontal Scrollable Container for Wide Table -->
+        <div class="w-full overflow-x-auto min-h-[350px]">
+          <table z-table zType="grid" class="w-full min-w-[1200px] table-fixed border-collapse text-left text-[13px] text-slate-900">
+          <thead z-table-header class="bg-slate-50 text-center text-[15px] font-medium leading-tight">
+            <tr z-table-row>
+              <th z-table-head class="w-12 border-b border-slate-300 px-2 py-1.5">
+                <div class="flex flex-col items-center justify-center gap-1">
+                  <span>#</span>
+                </div>
+              </th>
+
+              <!-- Beneficiary ID -->
+              <th
+                *ngIf="selectedColumns['beneficiaryId']"
+                z-table-head
+                class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                (click)="sortBy('beneficiaryId')"
+              >
+                <div class="flex flex-col items-center justify-center gap-1">
+                  <span class="flex items-center gap-1">
+                    Beneficiary<br />ID
+                    <z-icon
+                      [zType]="
+                        (sortCol$ | async) === 'beneficiaryId'
+                          ? (sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down'
+                          : 'chevrons-up-down'
+                      "
+                      [class]="(sortCol$ | async) === 'beneficiaryId' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"
+                    ></z-icon>
+                  </span>
+                </div>
+              </th>
+
+              <!-- Beneficiary Name -->
+              <th
+                *ngIf="selectedColumns['beneficiaryName']"
+                z-table-head
+                class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                (click)="sortBy('beneficiaryName')"
+              >
+                <div class="flex flex-col items-center justify-center gap-1">
+                  <span class="flex items-center gap-1">
+                    Beneficiary<br />Name
+                    <z-icon
+                      [zType]="
+                        (sortCol$ | async) === 'beneficiaryName'
+                          ? (sortDir$ | async) === 'asc' ? 'chevron-up' : 'chevron-down'
+                          : 'chevrons-up-down'
+                      "
+                      [class]="(sortCol$ | async) === 'beneficiaryName' ? 'w-3 h-3 text-[#006666] shrink-0' : 'w-3 h-3 text-slate-400 shrink-0'"
+                    ></z-icon>
+                  </span>
+                </div>
+              </th>
+
+              <!-- Location Columns -->
+              <th *ngIf="selectedColumns['state']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">State</th>
+              <th *ngIf="selectedColumns['district']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">District</th>
+              <th *ngIf="selectedColumns['block']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Block</th>
+              <th *ngIf="selectedColumns['village']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Village</th>
+              <th *ngIf="selectedColumns['school']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">School</th>
+              <th *ngIf="selectedColumns['awc']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">AWC</th>
+              <th *ngIf="selectedColumns['healthCenter']" z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5">Health Centre</th>
+
+              <!-- Beneficiary Details -->
+              <th *ngIf="selectedColumns['age']" z-table-head class="w-20 border-b border-slate-300 px-2 py-1.5">Age</th>
+              <th *ngIf="selectedColumns['group']" z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer" (click)="sortBy('group')">Group</th>
+              <th *ngIf="selectedColumns['beneficiaryType']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Type</th>
+
+              <!-- Activity & Session -->
+              <th *ngIf="selectedColumns['activity']" z-table-head class="w-36 border-b border-slate-300 px-2 py-1.5 cursor-pointer" (click)="sortBy('activity')">Activity</th>
+              <th *ngIf="selectedColumns['session']" z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer" (click)="sortBy('session')">Session</th>
+              <th *ngIf="selectedColumns['sessionDate']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5 cursor-pointer" (click)="sortBy('date')">Session Date</th>
+
+              <!-- Screening Badge -->
+              <th *ngIf="selectedColumns['screening']" z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer" (click)="sortBy('screening')">Screening</th>
+
+              <!-- Vitals -->
+              <th *ngIf="selectedColumns['height']" z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5">Height</th>
+              <th *ngIf="selectedColumns['weight']" z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5">Weight</th>
+              <th *ngIf="selectedColumns['hb']" z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5">Hb</th>
+              <th *ngIf="selectedColumns['bp']" z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5">BP</th>
+              <th *ngIf="selectedColumns['sugar']" z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5">Sugar</th>
+              <th *ngIf="selectedColumns['cervicalCancer']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Cervical Cancer</th>
+              <th *ngIf="selectedColumns['breastCancer']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Breast Cancer</th>
+              <th *ngIf="selectedColumns['pads']" z-table-head class="w-20 border-b border-slate-300 px-2 py-1.5">Pads</th>
+
+              <!-- Maternal Details -->
+              <th *ngIf="selectedColumns['pregnancyStatus']" z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5">Pregnancy Status</th>
+              <th *ngIf="selectedColumns['lmpDate']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">LMP Date</th>
+              <th *ngIf="selectedColumns['edd']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">EDD</th>
+              <th *ngIf="selectedColumns['highRiskPregnant']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">High Risk</th>
+              <th *ngIf="selectedColumns['deliveryDate']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Delivery Date</th>
+              <th *ngIf="selectedColumns['babyName']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Baby Name</th>
+              <th *ngIf="selectedColumns['babyGender']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Baby Gender</th>
+              <th *ngIf="selectedColumns['babyDob']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Baby DOB</th>
+              <th *ngIf="selectedColumns['samMamStatus']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">SAM/MAM</th>
+
+              <!-- Worker / Reporter -->
+              <th *ngIf="selectedColumns['reportedBy']" z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer" (click)="sortBy('reportedBy')">Reported By</th>
+            </tr>
+          </thead>
+
+          <tbody z-table-body class="divide-y divide-slate-100 text-[13px]">
+            @for (report of vm.items; track report.id; let i = $index) {
+              <tr z-table-row class="align-top hover:bg-slate-50/70 transition-colors">
+                
+                <!-- Index -->
+                <td z-table-cell class="px-2 py-3 text-center font-semibold">
+                  {{ vm.startIndex + i + 1 }}
+                </td>
+
+                <!-- Beneficiary ID with blue link -->
+                <td *ngIf="selectedColumns['beneficiaryId']" z-table-cell class="px-2 py-3 text-center">
+                  <span
+                    (click)="viewDetails(report); $event.stopPropagation()"
+                    class="text-blue-600 font-mono cursor-pointer underline hover:text-blue-800 text-xs"
+                    title="Click to view beneficiary detail"
+                  >
+                    {{ report.beneficiaryId || '-' }}
+                  </span>
+                </td>
+
+                <!-- Beneficiary Name -->
+                <td *ngIf="selectedColumns['beneficiaryName']" z-table-cell class="px-2 py-3">
+                  <span class="block font-semibold text-slate-900">
+                    {{ report.beneficiaryName || 'Unknown' }}
+                  </span>
+                </td>
+
+                <!-- Location Fields -->
+                <td *ngIf="selectedColumns['state']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.state || '-' }}</td>
+                <td *ngIf="selectedColumns['district']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.district || '-' }}</td>
+                <td *ngIf="selectedColumns['block']" z-table-cell class="px-2 py-3 text-slate-600">{{ report.block || '-' }}</td>
+                <td *ngIf="selectedColumns['village']" z-table-cell class="px-2 py-3 text-slate-600">{{ report.village || '-' }}</td>
+                <td *ngIf="selectedColumns['school']" z-table-cell class="px-2 py-3 text-slate-600">{{ report.school || '-' }}</td>
+                <td *ngIf="selectedColumns['awc']" z-table-cell class="px-2 py-3 text-slate-600">{{ report.awc || '-' }}</td>
+                <td *ngIf="selectedColumns['healthCenter']" z-table-cell class="px-2 py-3 text-slate-600">{{ report.healthCenter || '-' }}</td>
+
+                <!-- Beneficiary Details -->
+                <td *ngIf="selectedColumns['age']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.age || '-' }}</td>
+                <td *ngIf="selectedColumns['group']" z-table-cell class="px-2 py-3 font-medium text-slate-700">{{ report.group || '-' }}</td>
+                <td *ngIf="selectedColumns['beneficiaryType']" z-table-cell class="px-2 py-3 text-slate-600">{{ report.beneficiaryType || 'General' }}</td>
+
+                <!-- Activity & Session -->
+                <td *ngIf="selectedColumns['activity']" z-table-cell class="px-2 py-3 font-medium text-slate-800">{{ report.activity || '-' }}</td>
+                <td *ngIf="selectedColumns['session']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.session || '-' }}</td>
+                <td *ngIf="selectedColumns['sessionDate']" z-table-cell class="px-2 py-3 text-slate-600 whitespace-nowrap">{{ report.sessionDate || '-' }}</td>
+
+                <!-- Screening Badge -->
+                <td *ngIf="selectedColumns['screening']" z-table-cell class="px-2 py-3 text-center">
+                  <span
+                    [class]="report.screening === 'Yes' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-100 text-slate-600 border-slate-200'"
+                    class="mb-1 inline-flex rounded border px-2 py-0.5 text-[10px] font-bold uppercase"
+                  >
+                    {{ report.screening }}
+                  </span>
+                </td>
+
+                <!-- Vitals -->
+                <td *ngIf="selectedColumns['height']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.height ? report.height + ' cm' : '-' }}</td>
+                <td *ngIf="selectedColumns['weight']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.weight ? report.weight + ' kg' : '-' }}</td>
+                <td *ngIf="selectedColumns['hb']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.hb ? report.hb + ' g/dL' : '-' }}</td>
+                <td *ngIf="selectedColumns['bp']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.bp || '-' }}</td>
+                <td *ngIf="selectedColumns['sugar']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.sugar || '-' }}</td>
+                <td *ngIf="selectedColumns['cervicalCancer']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.cervicalCancer || '-' }}</td>
+                <td *ngIf="selectedColumns['breastCancer']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.breastCancer || '-' }}</td>
+                <td *ngIf="selectedColumns['pads']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.pads || '-' }}</td>
+
+                <!-- Maternal -->
+                <td *ngIf="selectedColumns['pregnancyStatus']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.pregnancyStatus || '-' }}</td>
+                <td *ngIf="selectedColumns['lmpDate']" z-table-cell class="px-2 py-3 text-slate-600 whitespace-nowrap">{{ report.lmpDate || '-' }}</td>
+                <td *ngIf="selectedColumns['edd']" z-table-cell class="px-2 py-3 text-slate-600 whitespace-nowrap">{{ report.edd || '-' }}</td>
+                <td *ngIf="selectedColumns['highRiskPregnant']" z-table-cell class="px-2 py-3 text-slate-700">
+                  <span *ngIf="report.highRiskPregnant === 'Yes'" class="font-bold text-rose-600">Yes</span>
+                  <span *ngIf="report.highRiskPregnant !== 'Yes'">-</span>
+                </td>
+                <td *ngIf="selectedColumns['deliveryDate']" z-table-cell class="px-2 py-3 text-slate-600 whitespace-nowrap">{{ report.deliveryDate || '-' }}</td>
+                <td *ngIf="selectedColumns['babyName']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.babyName || '-' }}</td>
+                <td *ngIf="selectedColumns['babyGender']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.babyGender || '-' }}</td>
+                <td *ngIf="selectedColumns['babyDob']" z-table-cell class="px-2 py-3 text-slate-600 whitespace-nowrap">{{ report.babyDob || '-' }}</td>
+                <td *ngIf="selectedColumns['samMamStatus']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.samMamStatus || '-' }}</td>
+
+                <!-- Worker -->
+                <td *ngIf="selectedColumns['reportedBy']" z-table-cell class="px-2 py-3 text-slate-600 text-center">{{ report.reportedBy || '-' }}</td>
+              </tr>
+            } @empty {
+              <tr z-table-row *ngIf="!(isPageLoading$ | async)">
+                <td z-table-cell [attr.colspan]="getColspan()" class="px-4 py-12 text-center text-sm font-semibold italic text-slate-500">
+                  No activity reports recorded yet.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="p-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50 rounded-b-2xl">
+        <span class="text-xs text-slate-500 font-medium">
+          Showing <span class="font-bold text-slate-800">{{ vm.startIndex + 1 }}</span> to
+          <span class="font-bold text-slate-800">{{ vm.endIndex }}</span> of
+          <span class="font-bold text-slate-800">{{ vm.total }}</span> reports
+        </span>
+
+        <z-pagination
+          [zPageIndex]="vm.page"
+          (zPageIndexChange)="goToPage($event)"
+          [zTotal]="vm.pageCount"
+          [zSize]="'sm'"
+        ></z-pagination>
+      </div>
+
+    </div>
+
+    <!-- Small Screens: Mobile Responsive Cards (Matching Outreach) -->
+    <div *ngIf="mobileViewMode === 'quickAccess'" class="md:hidden space-y-5">
+      <div
+        *ngFor="let report of vm.items"
+        class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition active:bg-[#CCFBF1]/20"
+      >
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <h3 class="wrap-break-word text-[22px] font-extrabold leading-[1.08] tracking-tight text-slate-900">
+              {{ report.beneficiaryName || 'Unknown' }}
+            </h3>
+            <p class="mt-2 text-sm leading-snug text-slate-600">
+              <span
+                (click)="viewDetails(report); $event.stopPropagation()"
+                class="font-medium uppercase tracking-wide text-blue-600 cursor-pointer underline hover:text-blue-800"
+                title="Click to view profile detail"
+              >
+                {{ report.beneficiaryId || '-' }}
+              </span>
+              <span class="mx-1.5 text-slate-300">•</span>
+              <span>Reported On: {{ report.sessionDate || '-' }}</span>
+              <span class="mx-1.5 text-slate-300">•</span>
+              <span>Reported By: {{ report.reportedBy || '-' }}</span>
+            </p>
+
+            <div class="mt-2.5 flex flex-wrap gap-1.5">
+              <span class="inline-flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                <z-icon zType="users" class="w-3.5 h-3.5"></z-icon>
+                {{ report.group || '-' }}
+              </span>
+              <span *ngIf="report.state || report.district" class="inline-flex items-center gap-1 rounded-md bg-slate-50 border border-slate-200 px-2 py-0.5 text-xs text-slate-600">
+                {{ report.state }} {{ report.district ? '(' + report.district + ')' : '' }}
+              </span>
+            </div>
+          </div>
+
+          <span
+            [class]="report.screening === 'Yes' ? 'bg-[#D1FAE5] text-[#166534]' : 'bg-slate-200 text-slate-600'"
+            class="mt-0.5 rounded-full px-4 py-1.5 text-[13px] font-bold uppercase leading-none"
+          >
+            {{ report.screening || 'No' }}
+          </span>
+        </div>
+
+        <div class="my-6 border-t border-slate-100"></div>
+
+        <div class="flex items-center gap-3">
+          <z-icon zType="users" class="h-6 w-6 shrink-0 text-[#006666]"></z-icon>
+          <p class="wrap-break-word text-xl font-extrabold leading-[1.1] text-slate-900">
+            {{ report.activity || '-' }}
+          </p>
+        </div>
+
+        <p class="mt-4 wrap-break-word text-base font-medium leading-[1.35] text-slate-700">
+          Session: {{ report.session || '-' }}
+        </p>
+
+        <div *ngIf="report.screening === 'Yes'" class="mt-3 p-3 bg-emerald-50/50 rounded-xl border border-emerald-100 text-xs space-y-1 text-slate-700">
+          <p class="font-bold text-emerald-800">Screening Details:</p>
+          <p *ngIf="report.height || report.weight">Height: {{ report.height || '-' }} cm • Weight: {{ report.weight || '-' }} kg</p>
+          <p *ngIf="report.hb || report.bp">Hb: {{ report.hb || '-' }} g/dL • BP: {{ report.bp || '-' }}</p>
+        </div>
+
+        <div class="mt-4 flex items-center justify-end">
+          <a
+            [routerLink]="['/analyst/beneficiary', report.beneficiaryDbId]"
+            class="text-xs font-bold text-[#006666] hover:underline flex items-center gap-1"
+          >
+            <span>View Individual Dashboard</span>
+            <z-icon zType="arrow-up-right" class="w-3.5 h-3.5"></z-icon>
+          </a>
+        </div>
+      </div>
+
+      <!-- Mobile Pagination -->
+      <div class="p-4 border-t border-slate-200 flex flex-col items-center justify-between gap-3 bg-white rounded-2xl shadow-sm">
+        <span class="text-xs text-slate-500 font-medium">
+          Showing {{ vm.startIndex + 1 }} to {{ vm.endIndex }} of {{ vm.total }} reports
+        </span>
+        <z-pagination
+          [zPageIndex]="vm.page"
+          (zPageIndexChange)="goToPage($event)"
+          [zTotal]="vm.pageCount"
+          [zSize]="'sm'"
+        ></z-pagination>
+      </div>
+    </div>
+
+    <!-- Mobile View Mode: Table Mode -->
+    <div *ngIf="mobileViewMode === 'table'" class="md:hidden bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      <div class="relative w-full min-h-[350px]">
+        <z-table-loader [zLoading]="isPageLoading$ | async" zText="Loading activity reports..."></z-table-loader>
+        <div class="w-full overflow-x-auto min-h-[350px]">
+          <table z-table zType="grid" class="w-full text-left text-xs whitespace-nowrap">
+          <thead z-table-header class="bg-slate-50 text-center font-medium">
+            <tr z-table-row>
+              <th z-table-head class="p-2 border-b">#</th>
+              <th z-table-head class="p-2 border-b">ID</th>
+              <th z-table-head class="p-2 border-b">Name</th>
+              <th z-table-head class="p-2 border-b">Activity</th>
+              <th z-table-head class="p-2 border-b">Screening</th>
+              <th z-table-head class="p-2 border-b">Date</th>
+            </tr>
+          </thead>
+          <tbody z-table-body class="divide-y divide-slate-100">
+            @for (report of vm.items; track report.id; let i = $index) {
+              <tr z-table-row class="hover:bg-slate-50/70">
+                <td z-table-cell class="p-2 text-center">{{ vm.startIndex + i + 1 }}</td>
+                <td z-table-cell class="p-2 text-blue-600 font-mono underline" (click)="viewDetails(report)">
+                  {{ report.beneficiaryId || '-' }}
+                </td>
+                <td z-table-cell class="p-2 font-medium">{{ report.beneficiaryName || '-' }}</td>
+                <td z-table-cell class="p-2">{{ report.activity || '-' }}</td>
+                <td z-table-cell class="p-2 text-center">
+                  <span [class]="report.screening === 'Yes' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'" class="px-2 py-0.5 rounded text-[10px] font-bold">
+                    {{ report.screening }}
+                  </span>
+                </td>
+                <td z-table-cell class="p-2">{{ report.sessionDate || '-' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <!-- Mobile Table Pagination -->
+      <div class="p-4 border-t border-slate-200 flex flex-col items-center justify-between gap-3 bg-white">
+        <span class="text-xs text-slate-500 font-medium">
+          Showing {{ vm.startIndex + 1 }} to {{ vm.endIndex }} of {{ vm.total }} reports
+        </span>
+        <z-pagination
+          [zPageIndex]="vm.page"
+          (zPageIndexChange)="goToPage($event)"
+          [zTotal]="vm.pageCount"
+          [zSize]="'sm'"
+        ></z-pagination>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <ng-template #loadingTpl>
+    <div class="flex flex-col items-center justify-center w-full min-h-[40vh] gap-3">
+      <ng-lottie [options]="options" height="130px" width="130px"></ng-lottie>
+      <p class="text-xs font-semibold text-slate-500 animate-pulse">Loading activity reports...</p>
+    </div>
+  </ng-template>
+
+</div>

@@ -14,6 +14,7 @@ const routes: Routes = [
     data: { roles: ['ANALYST'] },
     children: [
       { path: '', component: AnalystDashboard, data: { pageTitle: 'Dashboard' } },
+      { path: 'reports', loadComponent: () => import('./reports/reports').then(m => m.AnalystReports), data: { pageTitle: 'Reports' } },
       { path: 'beneficiary', component: AnalystBeneficiary, data: { pageTitle: 'Beneficiary Reports' } },
       { path: 'beneficiary/:id', loadComponent: () => import('@/shared/components/beneficiary-detail').then(m => m.BeneficiaryDetail), data: { pageTitle: 'Beneficiary Detail' } },
       { path: 'profile', loadComponent: () => import('./profile/profile').then(m => m.Profile), data: { pageTitle: 'Profile' } },
