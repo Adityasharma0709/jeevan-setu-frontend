@@ -533,41 +533,15 @@ export class AnalystReports implements OnInit, OnDestroy {
 
       const data = reports.map((r: any, index: number) => {
         const row: any = {};
-        if (this.selectedColumns['index']) row['#'] = index + 1;
-        if (this.selectedColumns['state']) row['State'] = r.state || '-';
-        if (this.selectedColumns['district']) row['District'] = r.district || '-';
-        if (this.selectedColumns['block']) row['Block'] = r.block || '-';
-        if (this.selectedColumns['village']) row['Village'] = r.village || '-';
-        if (this.selectedColumns['school']) row['School'] = r.school || '-';
-        if (this.selectedColumns['awc']) row['AWC'] = r.awc || '-';
-        if (this.selectedColumns['healthCenter']) row['Health Centre'] = r.healthCenter || '-';
-        if (this.selectedColumns['beneficiaryId']) row['Beneficiary ID'] = r.beneficiaryId || '-';
-        if (this.selectedColumns['beneficiaryName']) row['Beneficiary Name'] = r.beneficiaryName || '-';
-        if (this.selectedColumns['age']) row['Age'] = r.age || '-';
-        if (this.selectedColumns['group']) row['Group'] = r.group || '-';
-        if (this.selectedColumns['beneficiaryType']) row['Beneficiary Type'] = r.beneficiaryType || '-';
-        if (this.selectedColumns['activity']) row['Activity'] = r.activity || '-';
-        if (this.selectedColumns['session']) row['Session'] = r.session || '-';
-        if (this.selectedColumns['sessionDate']) row['Session Date'] = r.sessionDate || '-';
-        if (this.selectedColumns['screening']) row['Screening'] = r.screening || 'No';
-        if (this.selectedColumns['height']) row['Height (cm)'] = r.height || '-';
-        if (this.selectedColumns['weight']) row['Weight (kg)'] = r.weight || '-';
-        if (this.selectedColumns['hb']) row['Hb (g/dL)'] = r.hb || '-';
-        if (this.selectedColumns['bp']) row['BP'] = r.bp || '-';
-        if (this.selectedColumns['sugar']) row['Sugar'] = r.sugar || '-';
-        if (this.selectedColumns['cervicalCancer']) row['Cervical Cancer'] = r.cervicalCancer || '-';
-        if (this.selectedColumns['breastCancer']) row['Breast Cancer'] = r.breastCancer || '-';
-        if (this.selectedColumns['pads']) row['Pads'] = r.pads || '-';
-        if (this.selectedColumns['pregnancyStatus']) row['Pregnancy Status'] = r.pregnancyStatus || '-';
-        if (this.selectedColumns['lmpDate']) row['LMP Date'] = r.lmpDate || '-';
-        if (this.selectedColumns['edd']) row['EDD'] = r.edd || '-';
-        if (this.selectedColumns['highRiskPregnant']) row['High Risk Pregnancy'] = r.highRiskPregnant || '-';
-        if (this.selectedColumns['deliveryDate']) row['Date of Delivery'] = r.deliveryDate || '-';
-        if (this.selectedColumns['babyName']) row['Baby Name'] = r.babyName || '-';
-        if (this.selectedColumns['babyGender']) row['Baby Gender'] = r.babyGender || '-';
-        if (this.selectedColumns['babyDob']) row['Baby DOB'] = r.babyDob || '-';
-        if (this.selectedColumns['samMamStatus']) row['SAM/MAM Status'] = r.samMamStatus || '-';
-        if (this.selectedColumns['reportedBy']) row['Reported By'] = r.reportedBy || '-';
+        if (this.selectedColumns['index'] !== false) {
+          row['#'] = index + 1;
+        }
+
+        for (const col of this.columnList) {
+          if (this.selectedColumns[col.key]) {
+            row[col.label] = this.getReportColumnValue(r, col.key);
+          }
+        }
         return row;
       });
 
@@ -588,6 +562,81 @@ export class AnalystReports implements OnInit, OnDestroy {
     }
   }
 
+  private getReportColumnValue(r: any, key: string): any {
+    switch (key) {
+      case 'beneficiaryId':
+        return r.beneficiaryId || '-';
+      case 'beneficiaryName':
+        return r.beneficiaryName || 'Unknown';
+      case 'state':
+        return r.state || '-';
+      case 'district':
+        return r.district || '-';
+      case 'block':
+        return r.block || '-';
+      case 'village':
+        return r.village || '-';
+      case 'school':
+        return r.school || '-';
+      case 'awc':
+        return r.awc || '-';
+      case 'healthCenter':
+        return r.healthCenter || '-';
+      case 'age':
+        return r.age != null && r.age !== '' ? r.age : '-';
+      case 'group':
+        return r.group || '-';
+      case 'beneficiaryType':
+        return r.beneficiaryType || 'General';
+      case 'activity':
+        return r.activity || '-';
+      case 'session':
+        return r.session || '-';
+      case 'sessionDate':
+        return r.sessionDate || '-';
+      case 'screening':
+        return r.screening || 'No';
+      case 'height':
+        return r.height != null && r.height !== '' ? r.height : '-';
+      case 'weight':
+        return r.weight != null && r.weight !== '' ? r.weight : '-';
+      case 'hb':
+        return r.hb != null && r.hb !== '' ? r.hb : '-';
+      case 'bp':
+        return r.bp || '-';
+      case 'sugar':
+        return r.sugar || '-';
+      case 'cervicalCancer':
+        return r.cervicalCancer || '-';
+      case 'breastCancer':
+        return r.breastCancer || '-';
+      case 'pads':
+        return r.pads || '-';
+      case 'pregnancyStatus':
+        return r.pregnancyStatus || '-';
+      case 'lmpDate':
+        return r.lmpDate || '-';
+      case 'edd':
+        return r.edd || '-';
+      case 'highRiskPregnant':
+        return r.highRiskPregnant || '-';
+      case 'deliveryDate':
+        return r.deliveryDate || '-';
+      case 'babyName':
+        return r.babyName || '-';
+      case 'babyGender':
+        return r.babyGender || '-';
+      case 'babyDob':
+        return r.babyDob || '-';
+      case 'samMamStatus':
+        return r.samMamStatus || '-';
+      case 'reportedBy':
+        return r.reportedBy || '-';
+      default:
+        return r[key] ?? '-';
+    }
+  }
+
   // ── Pagination & Mobile Views ────────────────────────────────────────────
   goToPage(page: number): void {
     this.page$.next(page);
