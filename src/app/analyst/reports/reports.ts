@@ -139,6 +139,7 @@ export class AnalystReports implements OnInit, OnDestroy {
     awc: false,
     healthCenter: false,
     age: true,
+    gender: true,
     group: true,
     beneficiaryType: true,
     activity: true,
@@ -176,6 +177,7 @@ export class AnalystReports implements OnInit, OnDestroy {
     { key: 'awc', label: 'AWC' },
     { key: 'healthCenter', label: 'Health Centre' },
     { key: 'age', label: 'Age' },
+    { key: 'gender', label: 'Gender' },
     { key: 'group', label: 'Group' },
     { key: 'beneficiaryType', label: 'Beneficiary Type' },
     { key: 'activity', label: 'Activity' },
@@ -562,81 +564,160 @@ export class AnalystReports implements OnInit, OnDestroy {
     }
   }
 
-  private getReportColumnValue(r: any, key: string): any {
-    switch (key) {
-      case 'beneficiaryId':
-        return r.beneficiaryId || '-';
-      case 'beneficiaryName':
-        return r.beneficiaryName || 'Unknown';
-      case 'state':
-        return r.state || '-';
-      case 'district':
-        return r.district || '-';
-      case 'block':
-        return r.block || '-';
-      case 'village':
-        return r.village || '-';
-      case 'school':
-        return r.school || '-';
-      case 'awc':
-        return r.awc || '-';
-      case 'healthCenter':
-        return r.healthCenter || '-';
-      case 'age':
-        return r.age != null && r.age !== '' ? r.age : '-';
-      case 'group':
-        return r.group || '-';
-      case 'beneficiaryType':
-        return r.beneficiaryType || 'General';
-      case 'activity':
-        return r.activity || '-';
-      case 'session':
-        return r.session || '-';
-      case 'sessionDate':
-        return r.sessionDate || '-';
-      case 'screening':
-        return r.screening || 'No';
-      case 'height':
-        return r.height != null && r.height !== '' ? r.height : '-';
-      case 'weight':
-        return r.weight != null && r.weight !== '' ? r.weight : '-';
-      case 'hb':
-        return r.hb != null && r.hb !== '' ? r.hb : '-';
-      case 'bp':
-        return r.bp || '-';
-      case 'sugar':
-        return r.sugar || '-';
-      case 'cervicalCancer':
-        return r.cervicalCancer || '-';
-      case 'breastCancer':
-        return r.breastCancer || '-';
-      case 'pads':
-        return r.pads || '-';
-      case 'pregnancyStatus':
-        return r.pregnancyStatus || '-';
-      case 'lmpDate':
-        return r.lmpDate || '-';
-      case 'edd':
-        return r.edd || '-';
-      case 'highRiskPregnant':
-        return r.highRiskPregnant || '-';
-      case 'deliveryDate':
-        return r.deliveryDate || '-';
-      case 'babyName':
-        return r.babyName || '-';
-      case 'babyGender':
-        return r.babyGender || '-';
-      case 'babyDob':
-        return r.babyDob || '-';
-      case 'samMamStatus':
-        return r.samMamStatus || '-';
-      case 'reportedBy':
-        return r.reportedBy || '-';
-      default:
-        return r[key] ?? '-';
-    }
-  }
-
+  private getReportColumnValue(r: any, key: string): any {
+
+    switch (key) {
+
+      case 'beneficiaryId':
+
+        return r.beneficiaryId || '-';
+
+      case 'beneficiaryName':
+
+        return r.beneficiaryName || 'Unknown';
+
+      case 'state':
+
+        return r.state || '-';
+
+      case 'district':
+
+        return r.district || '-';
+
+      case 'block':
+
+        return r.block || '-';
+
+      case 'village':
+
+        return r.village || '-';
+
+      case 'school':
+
+        return r.school || '-';
+
+      case 'awc':
+
+        return r.awc || '-';
+
+      case 'healthCenter':
+
+        return r.healthCenter || '-';
+
+      case 'age':
+
+        return r.age != null && r.age !== '' ? r.age : '-';
+
+      case 'gender':
+
+        return r.gender || '-';
+
+      case 'group':
+
+        return r.group || '-';
+
+      case 'beneficiaryType':
+
+        return r.beneficiaryType || 'General';
+
+      case 'activity':
+
+        return r.activity || '-';
+
+      case 'session':
+
+        return r.session || '-';
+
+      case 'sessionDate':
+
+        return r.sessionDate || '-';
+
+      case 'screening':
+
+        return r.screening || 'No';
+
+      case 'height':
+
+        return r.height != null && r.height !== '' ? r.height : '-';
+
+      case 'weight':
+
+        return r.weight != null && r.weight !== '' ? r.weight : '-';
+
+      case 'hb':
+
+        return r.hb != null && r.hb !== '' ? r.hb : '-';
+
+      case 'bp':
+
+        return r.bp || '-';
+
+      case 'sugar':
+
+        return r.sugar || '-';
+
+      case 'cervicalCancer':
+
+        return r.cervicalCancer || '-';
+
+      case 'breastCancer':
+
+        return r.breastCancer || '-';
+
+      case 'pads':
+
+        return r.pads || '-';
+
+      case 'pregnancyStatus':
+
+        return r.pregnancyStatus || '-';
+
+      case 'lmpDate':
+
+        return r.lmpDate || '-';
+
+      case 'edd':
+
+        return r.edd || '-';
+
+      case 'highRiskPregnant':
+
+        return r.highRiskPregnant || '-';
+
+      case 'deliveryDate':
+
+        return r.deliveryDate || '-';
+
+      case 'babyName':
+
+        return r.babyName || '-';
+
+      case 'babyGender':
+
+        return r.babyGender || '-';
+
+      case 'babyDob':
+
+        return r.babyDob || '-';
+
+      case 'samMamStatus':
+
+        return r.samMamStatus || '-';
+
+      case 'reportedBy':
+
+        return r.reportedBy || '-';
+
+      default:
+
+        return r[key] ?? '-';
+
+    }
+
+  }
+
+
+
   // ── Pagination & Mobile Views ────────────────────────────────────────────
   goToPage(page: number): void {
     this.page$.next(page);

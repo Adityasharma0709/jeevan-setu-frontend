@@ -546,6 +546,7 @@
 
               <!-- Beneficiary Details -->
               <th *ngIf="selectedColumns['age']" z-table-head class="w-20 border-b border-slate-300 px-2 py-1.5">Age</th>
+              <th *ngIf="selectedColumns['gender']" z-table-head class="w-24 border-b border-slate-300 px-2 py-1.5">Gender</th>
               <th *ngIf="selectedColumns['group']" z-table-head class="w-32 border-b border-slate-300 px-2 py-1.5 cursor-pointer" (click)="sortBy('group')">Group</th>
               <th *ngIf="selectedColumns['beneficiaryType']" z-table-head class="w-28 border-b border-slate-300 px-2 py-1.5">Type</th>
 
@@ -621,6 +622,7 @@
 
                 <!-- Beneficiary Details -->
                 <td *ngIf="selectedColumns['age']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.age || '-' }}</td>
+                <td *ngIf="selectedColumns['gender']" z-table-cell class="px-2 py-3 text-slate-700">{{ report.gender || '-' }}</td>
                 <td *ngIf="selectedColumns['group']" z-table-cell class="px-2 py-3 font-medium text-slate-700">{{ report.group || '-' }}</td>
                 <td *ngIf="selectedColumns['beneficiaryType']" z-table-cell class="px-2 py-3 text-slate-600">{{ report.beneficiaryType || 'General' }}</td>
 
@@ -725,6 +727,9 @@
               <span class="inline-flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
                 <z-icon zType="users" class="w-3.5 h-3.5"></z-icon>
                 {{ report.group || '-' }}
+              </span>
+              <span *ngIf="report.gender" class="inline-flex items-center gap-1 rounded-md bg-purple-50 border border-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">
+                {{ report.gender }}
               </span>
               <span *ngIf="report.state || report.district" class="inline-flex items-center gap-1 rounded-md bg-slate-50 border border-slate-200 px-2 py-0.5 text-xs text-slate-600">
                 {{ report.state }} {{ report.district ? '(' + report.district + ')' : '' }}
